@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}403 Forbidden - WebCreoling{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 4rem auto; text-align: center; padding: 3rem;">
+    <h1 style="font-size: 3.5rem; font-weight: 800; color: var(--accent-danger);">403</h1>
+    <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem;">Access Forbidden</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Your assigned user role lacks the necessary permissions to access this resource.</p>
+    <a href="{{ url_for('dashboard.index_view') }}" class="btn btn-secondary">Return to Dashboard</a>
+</div>
+{% endblock %}

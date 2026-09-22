@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}User & Role Management (RBAC) - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 700;">User & Role-Based Access Control (RBAC)</h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">Manage user accounts, assign roles (Admin, Editor, Analyst, Viewer), and control system permissions</p>
+</div>
+
+<!-- Add User Card -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">➕ Create New User Account</h3>
+        <span class="badge badge-admin">Admin Action</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.create_user') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 120px; gap: 1rem; align-items: flex-end;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" placeholder="username" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" placeholder="email@example.com" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-control">
+                <option value="viewer">Viewer</option>
+                <option value="analyst">Analyst</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">
+            Create
+        </button>
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">Registered System Accounts</h3>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">{{ users|length }} Active Users</span>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Current Role</th>
+                    <th>Created At</th>
+                    <th>Change Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>#{{ u.id }}</td>
+                    <td style="font-weight: 600; color: #fff;">{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <span class="badge badge-{{ u.role }}">{{ u.role }}</span>
+                    </td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">{{ u.created_at[:10] if u.created_at else 'N/A' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.update_user_role', user_id=u.id) }}" style="display: flex; gap: 0.5rem;">
+                            <select name="role" class="form-control" style="padding: 0.3rem 0.6rem; font-size: 0.85rem; width: 110px;">
+                                <option value="viewer" {{ 'selected' if u.role == 'viewer' }}>Viewer</option>
+                                <option value="analyst" {{ 'selected' if u.role == 'analyst' }}>Analyst</option>
+                                <option value="editor" {{ 'selected' if u.role == 'editor' }}>Editor</option>
+                                <option value="admin" {{ 'selected' if u.role == 'admin' }}>Admin</option>
+                            </select>
+                            <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

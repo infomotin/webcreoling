@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat & RAG - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 700;">Bangla News AI Intelligence & RAG Chat</h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">Conversational news Q&A grounded in SQLite articles + 4 Specialized task executors</p>
+</div>
+
+<!-- Task Mode Selector Tabs -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <button class="btn btn-primary task-tab" onclick="selectTab('rag_qa', this)">💬 Conversational RAG Q&A</button>
+    <button class="btn btn-secondary task-tab" onclick="selectTab('categorize', this)">📂 Categorize News</button>
+    <button class="btn btn-secondary task-tab" onclick="selectTab('headline', this)">📰 Headline Generator</button>
+    <button class="btn btn-secondary task-tab" onclick="selectTab('summarize', this)">📝 Summarizer</button>
+    <button class="btn btn-secondary task-tab" onclick="selectTab('ner', this)">🏷️ Entity Extraction (NER)</button>
+</div>
+
+<!-- Chat Interface Container -->
+<div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+        <div class="chat-bubble chat-assistant">
+            <strong>WebCreoling AI Assistant:</strong><br>
+            নমস্কার / আসসালামু আলাইকুম! আমি বাংলা সংবাদ বিশ্লেষণকারী এআই সহকারী। আপনি যেকোনো খবর সম্পর্কে প্রশ্ন করতে পারেন অথবা নিচের বিশেষায়িত টাস্কগুলো ব্যবহার করতে পারেন:
+            <ul style="margin-top: 0.5rem; margin-left: 1.2rem; font-size: 0.85rem; color: var(--text-secondary);">
+                <li><strong>প্রশ্ন করুন:</strong> "সংসদে কী কী আলোচনা হয়েছে?"</li>
+                <li><strong>সারসংক্ষেপ:</strong> "summarize this: [খবরের বিবরণ...]"</li>
+                <li><strong>শিরোনাম:</strong> "generate a headline for this: [খবর...]"</li>
+                <li><strong>সত্তা নিষ্কাশন:</strong> "extract entities from this: [খবর...]"</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Input Bar -->
+    <form class="chat-input-area" id="chat-form" onsubmit="handleChatSubmit(event)">
+        <input type="text" id="chat-input" class="form-control" placeholder="Ask a question about Bangla news or enter article text..." required autocomplete="off">
+        <button type="submit" id="send-btn" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+            Send &rarr;
+        </button>
+    </form>
+</div>
+
+<script>
+let currentMode = 'rag_qa';
+
+function selectTab(mode, btn) {
+    currentMode = mode;
+    document.querySelectorAll('.task-tab').forEach(b => {
+        b.className = 'btn btn-secondary task-tab';
+    });
+    btn.className = 'btn btn-primary task-tab';
+
+    const input = document.getElementById('chat-input');
+    if (mode === 'rag_qa') {
+        input.placeholder = "Ask a question about Bangla news (e.g. 'সংসদে কী আলোচনা হয়েছে?')...";
+    } else if (mode === 'categorize') {
+        input.placeholder = "Paste article text to classify topic (e.g. 'categorize this article: ...')...";
+    } else if (mode === 'headline') {
+        input.placeholder = "Paste article text to generate headline (e.g. 'generate a headline for this: ...')...";
+    } else if (mode === 'summarize') {
+        input.placeholder = "Paste article text to generate summary (e.g. 'summarize this: ...')...";
+    } else if (mode === 'ner') {
+        input.placeholder = "Paste article text to extract entities (e.g. 'extract entities from this: ...')...";
+    }
+}
+
+async function handleChatSubmit(e) {
+    e.preventDefault();
+    const inputEl = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const messagesContainer = document.getElementById('chat-messages');
+
+    let text = inputEl.value.trim();
+    if (!text) return;
+
+    // Apply command prefix if mode is explicit and prefix not already typed
+    if (currentMode === 'categorize' && !text.toLowerCase().startsWith('categorize')) {
+        text = `categorize this article: ${text}`;
+    } else if (currentMode === 'headline' && !text.toLowerCase().startsWith('headline') && !text.toLowerCase().startsWith('generate')) {
+        text = `generate a headline for this: ${text}`;
+    } else if (currentMode === 'summarize' && !text.toLowerCase().startsWith('summarize')) {
+        text = `summarize this: ${text}`;
+    } else if (currentMode === 'ner' && !text.toLowerCase().startsWith('extract') && !text.toLowerCase().startsWith('ner')) {
+        text = `extract entities from this: ${text}`;
+    }
+
+    // Append User Message Bubble
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble chat-user';
+    userBubble.innerText = inputEl.value.trim();
+    messagesContainer.appendChild(userBubble);
+    inputEl.value = '';
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Append Loading Assistant Bubble
+    const loadingBubble = document.createElement('div');
+    loadingBubble.className = 'chat-bubble chat-assistant';
+    loadingBubble.innerHTML = '<span style="color: var(--accent-primary);">Analyzing and reasoning on CPU...</span>';
+    messagesContainer.appendChild(loadingBubble);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    sendBtn.disabled = true;
+
+    try {
+        const response = await fetch('{{ url_for("chat.send_message_api") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: text})
+        });
+
+        const data = await response.json();
+
+        let citationsHtml = '';
+        if (data.citations && data.citations.length > 0) {
+            citationsHtml = `<div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
+                <strong style="color: var(--accent-warning);">📰 Retrieved Sources (${data.citations.length}):</strong><br>`;
+            data.citations.forEach((cit, i) => {
+                let imgHtml = cit.image_paths && cit.image_paths.length > 0 ? ` [Image: <code>${cit.image_paths[0]}</code>]` : '';
+                citationsHtml += `<div style="margin-top: 0.2rem;">${i+1}. <strong>${cit.title}</strong> (${cit.source}, ${cit.published_at || 'Recent'})${imgHtml}</div>`;
+            });
+            citationsHtml += `</div>`;
+        }
+
+        const taskBadge = data.intent !== 'rag_qa' ? `<span class="badge badge-editor" style="margin-bottom: 0.4rem;">${data.intent.toUpperCase()}</span><br>` : '';
+
+        loadingBubble.innerHTML = `
+            ${taskBadge}
+            <div style="font-size: 0.95rem; line-height: 1.6; color: #fff;">${data.response}</div>
+            ${citationsHtml}
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: right;">Latency: ${data.latency_seconds}s</div>
+        `;
+    } catch (err) {
+        loadingBubble.innerHTML = `<span style="color: var(--accent-danger);">Error processing query: ${err}</span>`;
+    } finally {
+        sendBtn.disabled = false;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+</script>
+{% endblock %}

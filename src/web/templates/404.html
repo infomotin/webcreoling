@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}404 Not Found - WebCreoling{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 4rem auto; text-align: center; padding: 3rem;">
+    <h1 style="font-size: 3.5rem; font-weight: 800; color: var(--accent-primary);">404</h1>
+    <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem;">Page Not Found</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">The requested page or resource does not exist.</p>
+    <a href="{{ url_for('dashboard.index_view') }}" class="btn btn-primary">Return to Dashboard</a>
+</div>
+{% endblock %}

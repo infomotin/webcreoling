@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Login - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="max-width: 460px; margin: 3rem auto;">
+    <div class="card" style="box-shadow: var(--shadow-lg);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">Welcome Back</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Log in to access your Bangla News AI Workspace</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login_view', next=request.args.get('next')) }}">
+            <div class="form-group">
+                <label class="form-label">Username or Email</label>
+                <input type="text" name="username" class="form-control" placeholder="admin or email@example.com" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">
+                Sign In
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Quick Role Login (Pre-seeded Demo Accounts):</p>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button onclick="fillLogin('admin', 'admin123')" class="badge badge-admin" style="cursor: pointer; border: none;">Admin</button>
+                <button onclick="fillLogin('editor', 'editor123')" class="badge badge-editor" style="cursor: pointer; border: none;">Editor</button>
+                <button onclick="fillLogin('analyst', 'analyst123')" class="badge badge-analyst" style="cursor: pointer; border: none;">Analyst</button>
+                <button onclick="fillLogin('viewer', 'viewer123')" class="badge badge-viewer" style="cursor: pointer; border: none;">Viewer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillLogin(username, password) {
+    document.querySelector('input[name="username"]').value = username;
+    document.querySelector('input[name="password"]').value = password;
+}
+</script>
+{% endblock %}

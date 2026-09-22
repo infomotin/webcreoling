@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Scraper Control - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 700;">Bangla News Scraper Center</h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">Manage per-site JS rendering rules, rate limits, and trigger newspaper crawls</p>
+</div>
+
+<!-- Action Cards -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- Portal Crawl Trigger -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">⚡ Trigger Full Portal Crawl</h3>
+            <span class="badge badge-editor">Editor / Admin</span>
+        </div>
+        <form method="POST" action="{{ url_for('scraper.trigger_crawl') }}">
+            <div class="form-group">
+                <label class="form-label">Select Target Portal</label>
+                <select name="site_key" class="form-control" required>
+                    {% for key, site in sites.items() %}
+                        {% if site.enabled and site.js_mode != 'skip' %}
+                        <option value="{{ key }}">{{ site.name }} ({{ site.domain }}) - Mode: {{ site.js_mode }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Max Pages Per Category</label>
+                <input type="number" name="max_pages" class="form-control" value="2" min="1" max="10">
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Traverses category pagination with polite delay jitter.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Start Crawl Job
+            </button>
+        </form>
+    </div>
+
+    <!-- Single URL Scrape -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">🔗 Scrape Individual Article URL</h3>
+            <span class="badge badge-editor">3-Attempt Retry Backoff</span>
+        </div>
+        <form method="POST" action="{{ url_for('scraper.scrape_single_url') }}">
+            <div class="form-group">
+                <label class="form-label">Article URL</label>
+                <input type="url" name="url" class="form-control" placeholder="https://www.prothomalo.com/..." required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category Override (Optional)</label>
+                <select name="category" class="form-control">
+                    <option value="">Auto-Detect Category</option>
+                    <option value="politics">Politics (রাজনীতি)</option>
+                    <option value="sports">Sports (খেলাধুলা)</option>
+                    <option value="business">Business (বাণিজ্য)</option>
+                    <option value="technology">Technology (প্রযুক্তি)</option>
+                    <option value="international">International (আন্তর্জাতিক)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                Scrape & Ingest Article
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Configured Portals Table -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">Configured Bangla Portals & JS Rendering Rules</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">config/sites_config.yaml</span>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Portal Name</th>
+                    <th>Domain</th>
+                    <th>JS Strategy</th>
+                    <th>Categories</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, site in sites.items() %}
+                <tr>
+                    <td style="font-weight: 600; color: #fff;">{{ site.name }}</td>
+                    <td><code>{{ site.domain }}</code></td>
+                    <td>
+                        <span class="badge badge-{{ 'analyst' if site.js_mode == 'hybrid' else ('admin' if site.js_mode == 'skip' else 'editor') }}">
+                            {{ site.js_mode }}
+                        </span>
+                    </td>
+                    <td>{{ site.categories|length if site.categories else 0 }} Sections</td>
+                    <td>
+                        {% if site.enabled and site.js_mode != 'skip' %}
+                        <span style="color: var(--accent-success); font-weight: 600;">Active</span>
+                        {% else %}
+                        <span style="color: var(--accent-danger); font-weight: 600;">Skipped (Login / Paywall)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Scrape Logs Audit Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">Scraping Audit Logs</h3>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Source</th>
+                    <th>Start Time</th>
+                    <th>Saved</th>
+                    <th>Images</th>
+                    <th>Errors</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>#{{ log.id }}</td>
+                    <td style="font-weight: 600;">{{ log.source }}</td>
+                    <td>{{ log.start_time }}</td>
+                    <td><span style="color: var(--accent-success); font-weight: 600;">{{ log.articles_saved }}</span></td>
+                    <td>{{ log.images_downloaded }}</td>
+                    <td>{{ log.errors_count }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'admin' if log.status == 'completed' else 'editor' }}">
+                            {{ log.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted);">No crawl logs available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

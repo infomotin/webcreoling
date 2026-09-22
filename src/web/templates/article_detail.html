@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <a href="{{ url_for('article.list_articles_view') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 1.5rem;">
+        &larr; Back to Articles
+    </a>
+
+    <div class="card" style="padding: 2.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;">
+            <span class="badge badge-category">{{ article.category }}</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">{{ article.source }}</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">•</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">{{ article.published_at or 'Unknown date' }}</span>
+            {% if article.author %}
+            <span style="color: var(--text-muted); font-size: 0.85rem;">•</span>
+            <span style="color: var(--text-muted); font-size: 0.85rem;">প্রতিবেদক: {{ article.author }}</span>
+            {% endif %}
+        </div>
+
+        <h1 style="font-size: 2rem; font-weight: 700; line-height: 1.35; margin-bottom: 1.5rem; color: #fff;">
+            {{ article.title }}
+        </h1>
+
+        <!-- Images Gallery -->
+        {% if article.images %}
+        <div style="margin-bottom: 2rem;">
+            {% for img in article.images %}
+                <div style="border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                    <img src="/{{ img.local_path }}" alt="{{ article.title }}" style="width: 100%; max-height: 450px; object-fit: cover; display: block;">
+                    <div style="padding: 0.5rem 1rem; background: rgba(0,0,0,0.4); font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                        <span>Local Path: <code>{{ img.local_path }}</code></span>
+                        <span>SHA-256: <code>{{ img.file_hash[:12] }}...</code></span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Body Paragraphs -->
+        <div style="font-size: 1.05rem; line-height: 1.85; color: #e5e7eb; white-space: pre-line; margin-bottom: 2rem;">
+            {{ article.content_text }}
+        </div>
+
+        <!-- Quick AI Task Actions (Analyst / Editor / Admin) -->
+        {% if is_analyst %}
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 2rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-secondary);">
+                ⚡ Quick AI Actions on this Article:
+            </h4>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button onclick="runQuickTask('summarize')" class="btn btn-secondary" style="font-size: 0.85rem;">📝 Summarize</button>
+                <button onclick="runQuickTask('headline')" class="btn btn-secondary" style="font-size: 0.85rem;">📰 Generate Headline</button>
+                <button onclick="runQuickTask('ner')" class="btn btn-secondary" style="font-size: 0.85rem;">🏷️ Extract Entities</button>
+                <button onclick="runQuickTask('categorize')" class="btn btn-secondary" style="font-size: 0.85rem;">📂 Classify Category</button>
+            </div>
+
+            <div id="quick-task-result" style="display: none; margin-top: 1.2rem;" class="card">
+                <h5 id="task-name" style="font-size: 0.85rem; font-weight: 600; color: var(--accent-primary); margin-bottom: 0.5rem;"></h5>
+                <p id="task-output" style="font-size: 0.95rem; line-height: 1.6; color: #fff;"></p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1.5rem; display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+            <span>Original URL: <a href="{{ article.url }}" target="_blank" style="color: var(--accent-primary);">{{ article.url }}</a></span>
+            <span>ID: #{{ article.id }}</span>
+        </div>
+    </div>
+</div>
+
+<script>
+async function runQuickTask(taskType) {
+    const content = {{ article.content_text | tojson }};
+    const box = document.getElementById('quick-task-result');
+    const nameEl = document.getElementById('task-name');
+    const outputEl = document.getElementById('task-output');
+
+    box.style.display = 'block';
+    nameEl.innerText = `Processing ${taskType.toUpperCase()} with specialized LoRA model...`;
+    outputEl.innerText = 'Analyzing...';
+
+    let prompt = `${taskType} this article: ${content}`;
+    try {
+        const response = await fetch('/chat/api/message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: prompt})
+        });
+        const data = await response.json();
+        nameEl.innerText = `Result: ${taskType.toUpperCase()}`;
+        outputEl.innerText = data.response || 'No response generated.';
+    } catch (e) {
+        outputEl.innerText = 'Error executing task: ' + e;
+    }
+}
+</script>
+{% endblock %}

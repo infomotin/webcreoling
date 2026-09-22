@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto;">
+    <div class="card">
+        <div class="card-header">
+            <h2 style="font-size: 1.4rem; font-weight: 700;">User Profile</h2>
+            <span class="badge badge-{{ user.role }}">{{ user.role }}</span>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label class="form-label">Username</label>
+            <div class="form-control" style="background: rgba(0,0,0,0.2);">{{ user.username }}</div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label class="form-label">Email</label>
+            <div class="form-control" style="background: rgba(0,0,0,0.2);">{{ user.email }}</div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label class="form-label">Assigned Permissions (RBAC)</label>
+            <ul style="margin-left: 1.2rem; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7;">
+                <li>Browse Dashboard & Scraped Articles: <strong>Allowed</strong></li>
+                <li>SQLite FTS5 Full-Text Search: <strong>Allowed</strong></li>
+                <li>Conversational RAG Q&A: <strong>{{ 'Allowed' if is_analyst else 'Restricted' }}</strong></li>
+                <li>Specialized AI Skills (Summarize, Headline, NER): <strong>{{ 'Allowed' if is_analyst else 'Restricted' }}</strong></li>
+                <li>Trigger Scraping Crawls: <strong>{{ 'Allowed' if is_editor else 'Restricted' }}</strong></li>
+                <li>LLM Training & LoRA Fine-Tuning: <strong>{{ 'Allowed' if is_admin else 'Restricted' }}</strong></li>
+                <li>User Account & Role Management: <strong>{{ 'Allowed' if is_admin else 'Restricted' }}</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

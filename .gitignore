@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Datasets, Checkpoints, and Databases (Heavy files)
+data/checkpoints/
+data/images/
+data/db/*.db
+data/db/*.db-wal
+data/db/*.db-shm
+data/chat_history.jsonl
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+
+# Environment and Logs
+.env
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

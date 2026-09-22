@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Articles Explorer - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.8rem; font-weight: 700;">Article Explorer & FTS5 Search</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Browse and search all ingested Bangla news records in SQLite</p>
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" action="{{ url_for('article.list_articles_view') }}" style="display: flex; gap: 0.5rem; min-width: 320px;">
+        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search news with FTS5 (e.g. সংসদ, বাজেট, ক্রিকেট)...">
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if query %}
+        <a href="{{ url_for('article.list_articles_view') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Category Filter Pills -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('article.list_articles_view') }}" class="btn {{ 'btn-primary' if not selected_category else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">All Topics</a>
+    <a href="{{ url_for('article.list_articles_view', category='politics') }}" class="btn {{ 'btn-primary' if selected_category == 'politics' else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">Politics</a>
+    <a href="{{ url_for('article.list_articles_view', category='sports') }}" class="btn {{ 'btn-primary' if selected_category == 'sports' else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">Sports</a>
+    <a href="{{ url_for('article.list_articles_view', category='business') }}" class="btn {{ 'btn-primary' if selected_category == 'business' else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">Business</a>
+    <a href="{{ url_for('article.list_articles_view', category='technology') }}" class="btn {{ 'btn-primary' if selected_category == 'technology' else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">Technology</a>
+    <a href="{{ url_for('article.list_articles_view', category='international') }}" class="btn {{ 'btn-primary' if selected_category == 'international' else 'btn-secondary' }}" style="padding: 0.35rem 0.8rem; font-size: 0.85rem;">International</a>
+</div>
+
+<!-- Articles List -->
+<div class="grid-3" style="margin-bottom: 2rem;">
+    {% for art in articles %}
+    <div class="card" style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+            <span class="badge badge-category">{{ art.category }}</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ art.source }}</span>
+        </div>
+
+        <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.4;">
+            <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: #fff; text-decoration: none;">
+                {{ art.title }}
+            </a>
+        </h3>
+
+        <p style="color: var(--text-secondary); font-size: 0.85rem; flex: 1; margin-bottom: 1rem;">
+            {{ art.content_text[:150] }}...
+        </p>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted);">
+            <span>{{ art.published_at[:10] if art.published_at else 'Recent' }}</span>
+            <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: var(--accent-primary); font-weight: 600; text-decoration: none;">View Article &rarr;</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1rem;">No articles matched your search query or filter.</p>
+        <a href="{{ url_for('article.list_articles_view') }}" class="btn btn-secondary">Reset Filters</a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem;">
+    {% if page > 1 %}
+    <a href="{{ url_for('article.list_articles_view', page=page-1, q=query, category=selected_category) }}" class="btn btn-secondary">&larr; Previous</a>
+    {% endif %}
+    <span class="btn btn-secondary" style="cursor: default;">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('article.list_articles_view', page=page+1, q=query, category=selected_category) }}" class="btn btn-secondary">Next &rarr;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}LLM Training & LoRA Cockpit - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; font-weight: 700;">CPU-Optimized LLM Training & Fine-Tuning</h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">Train lightweight Causal LMs on domain news text and fine-tune specialized multi-task LoRA adapters</p>
+</div>
+
+<!-- Controls Grid -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- Base Model Pretraining -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">1. Base Causal LM Pretraining (CPU)</h3>
+            <span class="badge badge-admin">Admin Only</span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.2rem;">
+            Pretrains the base architecture (<code>{{ settings.BASE_MODEL_NAME }}</code>) on normalized Bangla news text from SQLite using multi-threaded PyTorch CPU workers.
+        </p>
+
+        <form method="POST" action="{{ url_for('training.train_base_model') }}">
+            <div class="form-group">
+                <label class="form-label">Epochs</label>
+                <input type="number" name="epochs" class="form-control" value="1" min="1" max="10">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Status:</span>
+                {% if base_exists %}
+                <span style="color: var(--accent-success); font-weight: 600;">✓ Checkpoint Saved</span>
+                {% else %}
+                <span style="color: var(--accent-warning);">Not Trained Yet</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Train Base Causal LM
+            </button>
+        </form>
+    </div>
+
+    <!-- Hybrid LoRA Fine-Tuning -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">2. Hybrid Multi-Task LoRA Fine-Tuning</h3>
+            <span class="badge badge-admin">4 Core Skills</span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.2rem;">
+            Applies parameter-efficient LoRA adapters ($r=8, \alpha=16$) over linear projection layers across Categorization, Headline Gen, Summarization, and NER.
+        </p>
+
+        <form method="POST" action="{{ url_for('training.finetune_lora') }}">
+            <div class="form-group">
+                <label class="form-label">LoRA Fine-Tuning Epochs</label>
+                <input type="number" name="epochs" class="form-control" value="2" min="1" max="10">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Status:</span>
+                {% if specialized_exists %}
+                <span style="color: var(--accent-success); font-weight: 600;">✓ LoRA Adapter Ready</span>
+                {% else %}
+                <span style="color: var(--accent-warning);">LoRA Adapter Missing</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                Fine-Tune Hybrid LoRA Model
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Evaluation Report Card -->
+{% if eval_report and eval_report.tasks %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">Specialized Model Evaluation Metrics</h3>
+        <span class="badge badge-category">Multi-Task Benchmark</span>
+    </div>
+
+    <div class="grid-4" style="margin-top: 1rem;">
+        {% set cat = eval_report.tasks.article_categorization %}
+        <div style="padding: 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Categorization</p>
+            <h3 style="font-size: 1.5rem; color: #fff; margin-top: 0.2rem;">{{ (cat.accuracy * 100)|round(1) }}%</h3>
+            <span style="font-size: 0.75rem; color: var(--accent-success);">Topic Accuracy</span>
+        </div>
+
+        {% set head = eval_report.tasks.headline_generation %}
+        <div style="padding: 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Headline Gen</p>
+            <h3 style="font-size: 1.5rem; color: #fff; margin-top: 0.2rem;">{{ head.rougeL }}</h3>
+            <span style="font-size: 0.75rem; color: var(--accent-primary);">ROUGE-L Score</span>
+        </div>
+
+        {% set summ = eval_report.tasks.content_summarization %}
+        <div style="padding: 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Summarization</p>
+            <h3 style="font-size: 1.5rem; color: #fff; margin-top: 0.2rem;">{{ summ.rouge1 }}</h3>
+            <span style="font-size: 0.75rem; color: var(--accent-purple);">ROUGE-1 Score</span>
+        </div>
+
+        {% set ner = eval_report.tasks.named_entity_recognition %}
+        <div style="padding: 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Entity Extraction</p>
+            <h3 style="font-size: 1.5rem; color: #fff; margin-top: 0.2rem;">{{ ner.f1 }}</h3>
+            <span style="font-size: 0.75rem; color: var(--accent-warning);">F1 Entity Score</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- llama.cpp GGUF Export Section -->
+{% if manifest %}
+<div class="card">
+    <div class="card-header">
+        <h3 style="font-size: 1.1rem; font-weight: 600;">llama.cpp & GGUF Quantization Manifest</h3>
+        <span class="badge badge-analyst">Local C++ Inference</span>
+    </div>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+        Convert and quantize the specialized model checkpoint for native offline execution with <code>llama.cpp</code>:
+    </p>
+    <pre style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: var(--radius-sm); color: #34d399; font-size: 0.85rem; overflow-x: auto;">{{ manifest.conversion_command }}</pre>
+</div>
+{% endif %}
+{% endblock %}

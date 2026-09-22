@@ -1,0 +1,279 @@
+# ==============================================================================
+# Sites Configuration for Bangla Newspaper Portals
+# Configurable JavaScript Rendering, Selectors, Rate Limiting & Exclusions
+# ==============================================================================
+
+global_settings:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 WebCreolingNewsBot/1.0"
+  request_timeout_seconds: 15
+  default_rate_limit_delay: 1.0  # seconds between requests to same domain
+  rate_limit_jitter: 0.5         # random +/- jitter to avoid bot pattern detection
+  max_retries: 3
+  backoff_factor: 2.0            # exponential backoff: delay * (backoff_factor ^ attempt)
+  max_concurrent_requests: 5
+
+sites:
+  prothom_alo:
+    name: "Prothom Alo"
+    domain: "prothomalo.com"
+    base_url: "https://www.prothomalo.com"
+    # JS Rendering Mode: 'bs4_only', 'selenium_only', 'hybrid', 'skip'
+    js_mode: "hybrid"
+    requires_login: false
+    has_captcha: false
+    enabled: true
+    categories:
+      - name: "bangladesh"
+        url: "https://www.prothomalo.com/bangladesh"
+        pagination_pattern: "https://www.prothomalo.com/bangladesh?page={page}"
+      - name: "politics"
+        url: "https://www.prothomalo.com/politics"
+        pagination_pattern: "https://www.prothomalo.com/politics?page={page}"
+      - name: "business"
+        url: "https://www.prothomalo.com/business"
+        pagination_pattern: "https://www.prothomalo.com/business?page={page}"
+      - name: "sports"
+        url: "https://www.prothomalo.com/sports"
+        pagination_pattern: "https://www.prothomalo.com/sports?page={page}"
+      - name: "technology"
+        url: "https://www.prothomalo.com/technology"
+        pagination_pattern: "https://www.prothomalo.com/technology?page={page}"
+      - name: "world"
+        url: "https://www.prothomalo.com/world"
+        pagination_pattern: "https://www.prothomalo.com/world?page={page}"
+    selectors:
+      article_links:
+        - "a.headline-title"
+        - "a[href*='/bangladesh/']"
+        - "a[href*='/politics/']"
+        - "a[href*='/business/']"
+        - "a[href*='/sports/']"
+        - "a[href*='/technology/']"
+        - "a[href*='/world/']"
+        - "h2 a"
+        - "h3 a"
+      title:
+        - "h1.headline"
+        - "h1[itemprop='headline']"
+        - "meta[property='og:title']"
+        - "h1"
+      author:
+        - "span.author-name"
+        - "span[itemprop='author']"
+        - "meta[name='author']"
+        - ".contributor-name"
+      published_at:
+        - "time[itemprop='datePublished']"
+        - "meta[property='article:published_time']"
+        - "time"
+        - ".story-time"
+      content:
+        - "div.story-element-text p"
+        - "div[itemprop='articleBody'] p"
+        - "div.content-details p"
+        - "article p"
+      lead_image:
+        - "meta[property='og:image']"
+        - "figure img"
+        - "div.story-element-image img"
+      article_images:
+        - "article img"
+        - "div.content-details img"
+        - "figure img"
+
+  daily_star_bangla:
+    name: "The Daily Star Bangla"
+    domain: "bangla.thedailystar.net"
+    base_url: "https://bangla.thedailystar.net"
+    js_mode: "hybrid"
+    requires_login: false
+    has_captcha: false
+    enabled: true
+    categories:
+      - name: "news"
+        url: "https://bangla.thedailystar.net/news/bangladesh"
+        pagination_pattern: "https://bangla.thedailystar.net/news/bangladesh?page={page}"
+      - name: "politics"
+        url: "https://bangla.thedailystar.net/news/bangladesh/politics"
+        pagination_pattern: "https://bangla.thedailystar.net/news/bangladesh/politics?page={page}"
+      - name: "sports"
+        url: "https://bangla.thedailystar.net/sports"
+        pagination_pattern: "https://bangla.thedailystar.net/sports?page={page}"
+      - name: "tech"
+        url: "https://bangla.thedailystar.net/tech-startup"
+        pagination_pattern: "https://bangla.thedailystar.net/tech-startup?page={page}"
+    selectors:
+      article_links:
+        - "h3.title a"
+        - "h4.title a"
+        - "a.card-link"
+        - ".card a"
+      title:
+        - "h1.article-title"
+        - "h1[itemprop='headline']"
+        - "meta[property='og:title']"
+        - "h1"
+      author:
+        - ".author-name"
+        - "meta[name='author']"
+        - ".article-byline"
+      published_at:
+        - "meta[property='article:published_time']"
+        - ".date-display-single"
+        - "time"
+      content:
+        - ".article-body p"
+        - "div[itemprop='articleBody'] p"
+        - ".node-content p"
+        - "article p"
+      lead_image:
+        - "meta[property='og:image']"
+        - ".article-featured-image img"
+      article_images:
+        - ".article-body img"
+        - "article img"
+
+  bbc_bangla:
+    name: "BBC News Bangla"
+    domain: "bbc.com"
+    base_url: "https://www.bbc.com/bengali"
+    js_mode: "bs4_only"
+    requires_login: false
+    has_captcha: false
+    enabled: true
+    categories:
+      - name: "news"
+        url: "https://www.bbc.com/bengali"
+        pagination_pattern: "https://www.bbc.com/bengali/topics/c83plv2epryt"
+      - name: "bangladesh"
+        url: "https://www.bbc.com/bengali/topics/czj4820og51t"
+        pagination_pattern: "https://www.bbc.com/bengali/topics/czj4820og51t?page={page}"
+    selectors:
+      article_links:
+        - "a[href*='/bengali/articles/']"
+        - "a[href*='/bengali/news-']"
+      title:
+        - "h1#main-heading"
+        - "h1"
+        - "meta[property='og:title']"
+      author:
+        - "div[data-testid='byline']"
+        - ".bbc-137u7g8"
+      published_at:
+        - "time[dateTime]"
+        - "meta[name='article:published_time']"
+      content:
+        - "main p"
+        - "article p"
+        - "div[data-component='text-block'] p"
+      lead_image:
+        - "meta[property='og:image']"
+        - "main img"
+      article_images:
+        - "main img"
+
+  dhaka_post:
+    name: "Dhaka Post"
+    domain: "dhakapost.com"
+    base_url: "https://www.dhakapost.com"
+    js_mode: "hybrid"
+    requires_login: false
+    has_captcha: false
+    enabled: true
+    categories:
+      - name: "national"
+        url: "https://www.dhakapost.com/national"
+        pagination_pattern: "https://www.dhakapost.com/national?page={page}"
+      - name: "politics"
+        url: "https://www.dhakapost.com/politics"
+        pagination_pattern: "https://www.dhakapost.com/politics?page={page}"
+      - name: "sports"
+        url: "https://www.dhakapost.com/sports"
+        pagination_pattern: "https://www.dhakapost.com/sports?page={page}"
+    selectors:
+      article_links:
+        - "h2 a"
+        - "h3 a"
+        - "a[href*='/national/']"
+        - "a[href*='/politics/']"
+        - "a[href*='/sports/']"
+      title:
+        - "h1"
+        - "meta[property='og:title']"
+      author:
+        - ".reporter_name"
+        - "span.author"
+      published_at:
+        - "time"
+        - ".date-time"
+        - "meta[property='article:published_time']"
+      content:
+        - "div.content_detail p"
+        - "div.article-content p"
+        - "article p"
+      lead_image:
+        - "meta[property='og:image']"
+        - ".featured_image img"
+      article_images:
+        - ".content_detail img"
+
+  mock_bangla_portal:
+    name: "Mock Bangla Portal"
+    domain: "127.0.0.1"
+    base_url: "http://127.0.0.1:8765"
+    js_mode: "bs4_only"
+    requires_login: false
+    has_captcha: false
+    enabled: true
+    categories:
+      - name: "politics"
+        url: "http://127.0.0.1:8765/category/politics"
+        pagination_pattern: "http://127.0.0.1:8765/category/politics?page={page}"
+      - name: "sports"
+        url: "http://127.0.0.1:8765/category/sports"
+        pagination_pattern: "http://127.0.0.1:8765/category/sports?page={page}"
+      - name: "business"
+        url: "http://127.0.0.1:8765/category/business"
+        pagination_pattern: "http://127.0.0.1:8765/category/business?page={page}"
+      - name: "technology"
+        url: "http://127.0.0.1:8765/category/technology"
+        pagination_pattern: "http://127.0.0.1:8765/category/technology?page={page}"
+      - name: "international"
+        url: "http://127.0.0.1:8765/category/international"
+        pagination_pattern: "http://127.0.0.1:8765/category/international?page={page}"
+    selectors:
+      article_links:
+        - "a.article-card-link"
+        - "h2.headline a"
+        - ".card-title a"
+      title:
+        - "h1.article-title"
+        - "h1[itemprop='headline']"
+        - "meta[property='og:title']"
+      author:
+        - "span.author-name"
+        - ".byline"
+      published_at:
+        - "time.published-time"
+        - "meta[property='article:published_time']"
+      content:
+        - "div.article-body p"
+        - "div[itemprop='articleBody'] p"
+        - "article p"
+      lead_image:
+        - "meta[property='og:image']"
+        - "img.featured-image"
+      article_images:
+        - "div.article-body img"
+        - "figure img"
+
+  # Example of excluded site requiring login/paywall
+  paywalled_sample_news:
+    name: "Paywalled Sample Site"
+    domain: "paywalled-news.example.com"
+    base_url: "https://paywalled-news.example.com"
+    js_mode: "skip"
+    requires_login: true
+    has_captcha: true
+    enabled: false
+    reason: "Requires subscription login and Cloudflare CAPTCHA"

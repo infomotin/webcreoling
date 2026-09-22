@@ -34,7 +34,7 @@ def index_view():
 def send_message_api():
     """Process a chat message or task command via the AI pipeline."""
     data = request.get_json(force=True, silent=True) or {}
-    user_message = data.get("message", "").strip()
+    user_message = (data.get("message") or data.get("query") or "").strip()
 
     if not user_message:
         return jsonify({"error": "Empty message"}), 400

@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+
+{% block title %}দৈনিক ক্রিয়েলিং বার্তা - The Daily WebCreoling Digital News{% endblock %}
+
+{% block content %}
+<!-- Newspaper Header & Top Bar -->
+<div style="border-bottom: 2px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+    <!-- Top Utility Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.6rem; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+            <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬</span>
+            <span style="margin: 0 0.5rem;">•</span>
+            <span>ঢাকা, বাংলাদেশ (২৮° সে.)</span>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <span>ডলার: ৳১২১.৫০</span>
+            <span>ইউরো: ৳১৩১.২০</span>
+            <a href="#newsletter-box" style="color: #38bdf8; text-decoration: none; font-weight: 500;">📩 নিউজলেটার</a>
+            <a href="#poll-box" style="color: #a78bfa; text-decoration: none; font-weight: 500;">📊 জনমত জরিপ</a>
+        </div>
+    </div>
+
+    <!-- Newspaper Masthead -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; margin: 0; font-family: 'Hind Siliguri', sans-serif;">
+                দৈনিক ক্রিয়েলিং বার্তা
+            </h1>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 2px;">
+                The Daily WebCreoling • AI-Powered Real-Time Bangla Newspaper
+            </p>
+        </div>
+
+        <!-- Search Bar -->
+        <form method="GET" action="{{ url_for('portal.index_view') }}" style="display: flex; gap: 0.5rem; max-width: 320px; width: 100%;">
+            <input type="text" name="q" class="form-control" placeholder="সংবাদ অনুসন্ধান করুন..." value="{{ search_query }}" style="padding: 0.45rem 0.8rem; font-size: 0.85rem;">
+            <button type="submit" class="btn btn-primary btn-sm">অনুসন্ধান</button>
+        </form>
+    </div>
+
+    <!-- Category Ribbon -->
+    <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-top: 0.4rem; border-top: 1px solid var(--border-color); white-space: nowrap;">
+        <a href="{{ url_for('portal.index_view') }}" class="btn btn-sm {% if not category_filter %}btn-primary{% else %}btn-outline{% endif %}">সব খবর</a>
+        <a href="{{ url_for('portal.index_view', category='general') }}" class="btn btn-sm {% if category_filter == 'general' %}btn-primary{% else %}btn-outline{% endif %}">জাতীয়</a>
+        <a href="{{ url_for('portal.index_view', category='politics') }}" class="btn btn-sm {% if category_filter == 'politics' %}btn-primary{% else %}btn-outline{% endif %}">রাজনীতি</a>
+        <a href="{{ url_for('portal.index_view', category='sports') }}" class="btn btn-sm {% if category_filter == 'sports' %}btn-primary{% else %}btn-outline{% endif %}">খেলাধুলা</a>
+        <a href="{{ url_for('portal.index_view', category='business') }}" class="btn btn-sm {% if category_filter == 'business' %}btn-primary{% else %}btn-outline{% endif %}">অর্থনীতি ও বাণিজ্য</a>
+        <a href="{{ url_for('portal.index_view', category='technology') }}" class="btn btn-sm {% if category_filter == 'technology' %}btn-primary{% else %}btn-outline{% endif %}">বিজ্ঞান ও প্রযুক্তি</a>
+        <a href="{{ url_for('portal.index_view', category='international') }}" class="btn btn-sm {% if category_filter == 'international' %}btn-primary{% else %}btn-outline{% endif %}">আন্তর্জাতিক</a>
+    </div>
+</div>
+
+<!-- Breaking News Ticker -->
+{% if breaking_news %}
+<div style="display: flex; align-items: center; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 0.5rem 1rem; margin-bottom: 2rem; overflow: hidden;">
+    <span style="background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 4px; text-transform: uppercase; margin-right: 1rem; white-space: nowrap;">
+        🚨 ব্রেকিং নিউজ
+    </span>
+    <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%;">
+        {% for bn in breaking_news %}
+        <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" style="color: #fca5a5; text-decoration: none; font-size: 0.88rem; font-weight: 500; margin-right: 2rem;">
+            ⚡ {{ bn.title }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Search or Category Filter Active Banner -->
+{% if search_query or category_filter %}
+<div style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; color: #fff;">
+            {% if search_query %}অনুসন্ধানের ফলাফল: "{{ search_query }}"{% else %}বিভাগ: {{ category_filter|capitalize }}{% endif %}
+        </h2>
+        <a href="{{ url_for('portal.index_view') }}" style="color: var(--text-muted); font-size: 0.85rem;">ফিল্টার মুছুন &times;</a>
+    </div>
+
+    {% if filter_results %}
+    <div class="grid-3">
+        {% for art in filter_results %}
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                {% if art.images %}
+                <img src="/{{ art.images[0].local_path if art.images[0].local_path is defined else art.images[0] }}" style="width: 100%; height: 160px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 0.8rem;">
+                {% endif %}
+                <span class="badge badge-category" style="font-size: 0.7rem;">{{ art.category or 'general' }}</span>
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0.5rem 0; line-height: 1.4;">
+                    <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: #fff; text-decoration: none;">
+                        {{ art.title }}
+                    </a>
+                </h3>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">
+                    {{ (art.content_text or '')[:140] }}...
+                </p>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                <span>{{ art.source }}</span>
+                <span>{{ art.published_at or '' }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 2rem;">
+        <p style="color: var(--text-muted);">কোনো সংবাদ পাওয়া যায়নি।</p>
+    </div>
+    {% endif %}
+</div>
+{% else %}
+
+<!-- ========================================================================= -->
+<!-- MAIN FRONT-PAGE GRID: LEAD STORY + AUTO-HIGHLIGHTED + SIDEBAR -->
+<!-- ========================================================================= -->
+<div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 2rem; margin-bottom: 3rem;">
+    <!-- Left Column: Lead Hero + Highlighted Grid -->
+    <div>
+        <!-- Lead Hero Story -->
+        {% if lead_hero %}
+        <div class="card" style="padding: 1.8rem; margin-bottom: 2rem; border-top: 4px solid var(--accent-primary); background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);">
+            {% if lead_hero.images %}
+            <div style="position: relative; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.2rem; max-height: 400px;">
+                <img src="/{{ lead_hero.images[0].local_path }}" alt="{{ lead_hero.title }}" style="width: 100%; height: 100%; max-height: 380px; object-fit: cover; display: block;">
+                <span style="position: absolute; top: 12px; left: 12px; background: #ef4444; color: #fff; font-weight: 700; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 4px; text-transform: uppercase;">
+                    শীর্ষ সংবাদ
+                </span>
+            </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.82rem; color: var(--text-muted);">
+                <span class="badge badge-category">{{ lead_hero.category }}</span>
+                <span>•</span>
+                <span>প্রতিবেদক: {{ lead_hero.author or 'বিশেষ প্রতিবেদক' }}</span>
+                <span>•</span>
+                <span>{{ lead_hero.published_at or 'আজকের খবর' }}</span>
+            </div>
+
+            <h2 style="font-size: 1.85rem; font-weight: 800; line-height: 1.35; color: #fff; margin-bottom: 0.9rem;">
+                <a href="{{ url_for('portal.article_reader_view', article_id=lead_hero.id) }}" style="color: #fff; text-decoration: none;">
+                    {{ lead_hero.title }}
+                </a>
+            </h2>
+
+            <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.65; margin-bottom: 1.2rem;">
+                {{ (lead_hero.summary or lead_hero.content_text)[:280] }}...
+            </p>
+
+            <!-- Interaction Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.85rem;">
+                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                    <button onclick="toggleArticleLike({{ lead_hero.id }}, this)" class="btn btn-outline btn-sm" style="display: flex; align-items: center; gap: 0.4rem;">
+                        <span>❤️</span> <span class="like-count">{{ lead_hero.likes_count or 0 }}</span> লাইক
+                    </button>
+                    <span style="color: var(--text-muted);">👁️ {{ lead_hero.views_count or 0 }} বার পঠিত</span>
+                </div>
+                <a href="{{ url_for('portal.article_reader_view', article_id=lead_hero.id) }}" class="btn btn-primary btn-sm">
+                    সম্পূর্ণ খবর পড়ুন &rarr;
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Auto-Highlighted Post Grid (Inspired from Scraped Portals) -->
+        <div style="margin-bottom: 1rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+                <span>✨</span> আলোচিত ও বিশেষ প্রতিবেদন
+            </h3>
+
+            <div class="grid-2" style="gap: 1.5rem;">
+                {% for art in highlighted %}
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.2rem;">
+                    <div>
+                        {% if art.images %}
+                        <div style="border-radius: var(--radius-sm); overflow: hidden; height: 160px; margin-bottom: 0.8rem;">
+                            <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        {% endif %}
+
+                        <span class="badge badge-category" style="font-size: 0.7rem;">{{ art.category }}</span>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; line-height: 1.4; margin: 0.5rem 0;">
+                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: #fff; text-decoration: none;">
+                                {{ art.title }}
+                            </a>
+                        </h4>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.8rem;">
+                            {{ (art.content_text or '')[:130] }}...
+                        </p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.6rem;">
+                        <button onclick="toggleArticleLike({{ art.id }}, this)" style="background: none; border: none; color: #f43f5e; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
+                            <span>❤️</span> <span class="like-count">{{ art.likes_count or 0 }}</span>
+                        </button>
+                        <span>{{ art.published_at or '' }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Sidebar (Opinion Poll + Trending + Newsletter) -->
+    <div>
+        <!-- 1. Interactive Reader Opinion Poll -->
+        {% if active_poll %}
+        <div id="poll-box" class="card" style="margin-bottom: 2rem; border-top: 3px solid #a855f7;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h4 style="font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.4rem;">
+                    <span>📊</span> জনমত জরিপ
+                </h4>
+                <span class="badge badge-analyst" style="font-size: 0.65rem;">সক্রিয় জরিপ</span>
+            </div>
+
+            <p style="font-size: 0.9rem; font-weight: 600; color: #e2e8f0; line-height: 1.45; margin-bottom: 1rem;">
+                {{ active_poll.question }}
+            </p>
+
+            <form id="pollForm" onsubmit="submitPollVote(event, {{ active_poll.id }})">
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem;">
+                    {% for opt in active_poll.options %}
+                    <label style="display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.85rem;">
+                        <input type="radio" name="poll_option" value="{{ opt.id }}" required style="accent-color: var(--accent-purple);">
+                        <span style="color: #fff;">{{ opt.option_text }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">
+                    ভোট দিন
+                </button>
+            </form>
+
+            <!-- Results container (hidden by default until voted) -->
+            <div id="pollResults" style="display: none; margin-top: 1rem;">
+                <div id="pollBars" style="display: flex; flex-direction: column; gap: 0.6rem;"></div>
+                <p id="pollMessage" style="font-size: 0.75rem; color: var(--accent-success); margin-top: 0.6rem; text-align: center;"></p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 2. Trending / Most Read News -->
+        {% if trending %}
+        <div class="card" style="margin-bottom: 2rem; border-top: 3px solid #f59e0b;">
+            <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>🔥</span> সর্বাধিক পঠিত সংবাদ
+            </h4>
+
+            <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+                {% for art in trending %}
+                <div style="display: flex; gap: 0.8rem; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.8rem;">
+                    <span style="font-size: 1.5rem; font-weight: 800; color: #f59e0b; line-height: 1; opacity: 0.8;">
+                        {{ loop.index }}
+                    </span>
+                    <div>
+                        <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: #e2e8f0; text-decoration: none; font-size: 0.88rem; font-weight: 600; line-height: 1.35; display: block; margin-bottom: 0.2rem;">
+                            {{ art.title }}
+                        </a>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">
+                            👁️ {{ art.views_count or 0 }} বার • ❤️ {{ art.likes_count or 0 }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 3. Newsletter Subscription Box -->
+        <div id="newsletter-box" class="card" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(88, 28, 135, 0.4) 100%); border: 1px solid rgba(96, 165, 250, 0.3);">
+            <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">
+                📩 ব্রেকিং নিউজ ও বুলেটিন
+            </h4>
+            <p style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 1rem;">
+                প্রতিদিনের গুরুত্বপূর্ণ দেশ ও বিদেশের সংবাদ সবার আগে সরাসরি আপনার ইমেইলে পেতে সাবস্ক্রাইব করুন।
+            </p>
+
+            <form onsubmit="submitNewsletter(event)">
+                <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <input type="email" id="subscriberEmail" class="form-control" placeholder="আপনার ইমেইল ঠিকানা দিন" required style="font-size: 0.85rem;">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">
+                    সাবস্ক্রাইব করুন
+                </button>
+            </form>
+            <p id="newsletterStatus" style="font-size: 0.78rem; margin-top: 0.6rem; text-align: center;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- CATEGORY BLOCKS: POLITICS, SPORTS, BUSINESS & TECH -->
+<!-- ========================================================================= -->
+<div style="margin-bottom: 3rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <!-- Politics Block -->
+        {% if politics_news %}
+        <div class="card">
+            <div class="card-header" style="border-bottom: 2px solid #ef4444; padding-bottom: 0.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">🏛️ রাজনীতি</h3>
+                <a href="{{ url_for('portal.index_view', category='politics') }}" style="font-size: 0.78rem; color: #ef4444; text-decoration: none;">আরও &rarr;</a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1rem;">
+                {% for art in politics_news %}
+                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                    {% if art.images %}
+                    <img src="/{{ art.images[0].local_path }}" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    {% endif %}
+                    <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: #e2e8f0; text-decoration: none; font-size: 0.85rem; font-weight: 600; line-height: 1.35;">
+                        {{ art.title }}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Sports Block -->
+        {% if sports_news %}
+        <div class="card">
+            <div class="card-header" style="border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">⚽ খেলাধুলা</h3>
+                <a href="{{ url_for('portal.index_view', category='sports') }}" style="font-size: 0.78rem; color: #3b82f6; text-decoration: none;">আরও &rarr;</a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1rem;">
+                {% for art in sports_news %}
+                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                    {% if art.images %}
+                    <img src="/{{ art.images[0].local_path }}" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px;">
+                    {% endif %}
+                    <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: #e2e8f0; text-decoration: none; font-size: 0.85rem; font-weight: 600; line-height: 1.35;">
+                        {{ art.title }}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT: LIKES, POLL VOTING & NEWSLETTER SUBMISSION -->
+<!-- ========================================================================= -->
+<script>
+// 1. Interactive Article Like Toggle
+async function toggleArticleLike(articleId, btn) {
+    try {
+        const res = await fetch(`/news/api/like/${articleId}`, { method: 'POST' });
+        const data = await res.json();
+        const countSpan = btn.querySelector('.like-count');
+        if (countSpan && data.likes_count !== undefined) {
+            countSpan.innerText = data.likes_count;
+            if (data.liked) {
+                btn.style.borderColor = '#f43f5e';
+                btn.style.color = '#f43f5e';
+            } else {
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }
+        }
+    } catch (e) {
+        console.error("Failed to like article:", e);
+    }
+}
+
+// 2. Interactive Poll Vote Submission
+async function submitPollVote(event, pollId) {
+    event.preventDefault();
+    const checked = document.querySelector('input[name="poll_option"]:checked');
+    if (!checked) return;
+
+    const optionId = checked.value;
+    try {
+        const res = await fetch('/news/api/poll/vote', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+        });
+        const data = await res.json();
+
+        if (data.poll && data.poll.options) {
+            document.getElementById('pollForm').style.display = 'none';
+            const resultsBox = document.getElementById('pollResults');
+            const barsBox = document.getElementById('pollBars');
+            barsBox.innerHTML = '';
+
+            data.poll.options.forEach(opt => {
+                const row = document.createElement('div');
+                row.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #fff; margin-bottom: 2px;">
+                        <span>${opt.option_text}</span>
+                        <strong>${opt.percentage}% (${opt.votes_count} ভোট)</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div style="background: var(--accent-purple); height: 100%; width: ${opt.percentage}%; transition: width 0.5s ease;"></div>
+                    </div>
+                `;
+                barsBox.appendChild(row);
+            });
+
+            document.getElementById('pollMessage').innerText = data.message;
+            resultsBox.style.display = 'block';
+        }
+    } catch (e) {
+        console.error("Failed to vote:", e);
+    }
+}
+
+// 3. Newsletter Subscription Submission
+async function submitNewsletter(event) {
+    event.preventDefault();
+    const emailInput = document.getElementById('subscriberEmail');
+    const statusEl = document.getElementById('newsletterStatus');
+    const email = emailInput.value.trim();
+
+    try {
+        const res = await fetch('/news/api/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        statusEl.innerText = data.message;
+        statusEl.style.color = (data.status === 'success') ? '#34d399' : '#f59e0b';
+        if (data.status === 'success') {
+            emailInput.value = '';
+        }
+    } catch (e) {
+        statusEl.innerText = 'সাবস্ক্রাইব করতে ত্রুটি হয়েছে।';
+        statusEl.style.color = '#ef4444';
+    }
+}
+</script>
+{% endblock %}

@@ -43,6 +43,13 @@ class Article(Base):
     retry_count = Column(Integer, default=0)
     js_rendered = Column(Boolean, default=False)
     
+    # Interactive Newspaper Frontend & Engagement
+    is_featured = Column(Boolean, default=False, index=True)  # Highlighted Lead/Hero story
+    is_breaking = Column(Boolean, default=False, index=True)  # Breaking News Ticker
+    views_count = Column(Integer, default=0)
+    likes_count = Column(Integer, default=0)
+    shares_count = Column(Integer, default=0)
+
     # Audit timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -66,6 +73,11 @@ class Article(Base):
             "scrape_status": self.scrape_status,
             "missing_fields": self.missing_fields or [],
             "retry_count": self.retry_count,
+            "is_featured": self.is_featured,
+            "is_breaking": self.is_breaking,
+            "views_count": self.views_count,
+            "likes_count": self.likes_count,
+            "shares_count": self.shares_count,
             "images": [img.to_dict() for img in self.images] if self.images else [],
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
@@ -105,6 +117,94 @@ class ArticleImage(Base):
             "download_status": self.download_status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class Poll(Base):
+    """Interactive Reader Opinion Poll."""
+    __tablename__ = "polls"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    question = Column(Text, nullable=False)
+    category = Column(String(100), default="national")
+    is_active = Column(Boolean, default=True, index=True)
+    total_votes = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    options = relationship("PollOption", back_populates="poll", cascade="all, delete-orphan")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "question": self.question,
+            "category": self.category,
+            "is_active": self.is_active,
+            "total_votes": self.total_votes,
+            "options": [opt.to_dict(self.total_votes) for opt in self.options],
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PollOption(Base):
+    """Options for an Opinion Poll."""
+    __tablename__ = "poll_options"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    poll_id = Column(Integer, ForeignKey("polls.id", ondelete="CASCADE"), nullable=False, index=True)
+    option_text = Column(String(255), nullable=False)
+    votes_count = Column(Integer, default=0)
+
+    # Relationships
+    poll = relationship("Poll", back_populates="options")
+
+    def to_dict(self, total_votes: int = 0) -> Dict[str, Any]:
+        percentage = (self.votes_count / total_votes * 100) if total_votes > 0 else 0
+        return {
+            "id": self.id,
+            "poll_id": self.poll_id,
+            "option_text": self.option_text,
+            "votes_count": self.votes_count,
+            "percentage": round(percentage, 1),
+        }
+
+
+class PollVote(Base):
+    """Tracks individual IP votes to prevent duplicate voting."""
+    __tablename__ = "poll_votes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    poll_id = Column(Integer, ForeignKey("polls.id", ondelete="CASCADE"), nullable=False, index=True)
+    option_id = Column(Integer, ForeignKey("poll_options.id", ondelete="CASCADE"), nullable=False)
+    voter_ip = Column(String(100), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class NewsletterSubscriber(Base):
+    """Reader newsletter and breaking news subscribers."""
+    __tablename__ = "newsletter_subscribers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(150), unique=True, nullable=False, index=True)
+    is_active = Column(Boolean, default=True)
+    subscribed_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "email": self.email,
+            "is_active": self.is_active,
+            "subscribed_at": self.subscribed_at.isoformat() if self.subscribed_at else None,
+        }
+
+
+class ArticleLike(Base):
+    """Tracks unique article likes by reader IP."""
+    __tablename__ = "article_likes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False, index=True)
+    voter_ip = Column(String(100), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ScrapeLog(Base):
@@ -182,4 +282,5 @@ class User(Base):
 # Composite Indexes for optimal batch querying during training and date filtering
 Index("idx_articles_source_pubdate", Article.source, Article.published_at)
 Index("idx_articles_category_pubdate", Article.category, Article.published_at)
+Index("idx_articles_featured", Article.is_featured, Article.published_at)
 

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Editorial & Newspaper Management - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.8rem; font-weight: 700;">📰 Editorial & Newspaper Frontend Manager</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">
+            Control the public digital newspaper: feature lead stories, manage breaking news tickers, create opinion polls, and monitor subscribers.
+        </p>
+    </div>
+    <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-primary">
+        🌐 Open Public Newspaper &rarr;
+    </a>
+</div>
+
+<!-- Grid: Poll Creator + Subscriber Summary -->
+<div class="grid-2" style="margin-bottom: 2.5rem;">
+    <!-- 1. Opinion Poll Creator -->
+    <div class="card" style="border-top: 3px solid var(--accent-purple);">
+        <div class="card-header">
+            <h3 style="font-size: 1.1rem; font-weight: 600;">📊 Create Reader Opinion Poll</h3>
+            <span class="badge badge-analyst">Live Polls</span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.create_poll') }}">
+            <div class="form-group">
+                <label class="form-label">Poll Question (Bangla / English)</label>
+                <input type="text" name="question" class="form-control" placeholder="e.g. ২০২৬ সালের বাজেটে প্রযুক্তিতে বরাদ্দ কি পর্যাপ্ত?" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Category</label>
+                <input type="text" name="category" class="form-control" value="জাতীয়">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Options (One option per line, minimum 2)</label>
+                <textarea name="options" class="form-control" rows="3" placeholder="হ্যাঁ, যথেষ্ট&#10;না, আরও বাড়ানো উচিত&#10;মন্তব্য নেই" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                Publish Opinion Poll
+            </button>
+        </form>
+    </div>
+
+    <!-- 2. Active Polls & Newsletter Subscribers -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Active Polls List -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="font-size: 1.05rem; font-weight: 600;">Active & Past Polls</h3>
+                <span class="badge badge-category">{{ polls|length }} Total</span>
+            </div>
+            {% if polls %}
+            <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem;">
+                {% for p in polls %}
+                <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: #fff; font-size: 0.85rem; display: block;">{{ p.question }}</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">
+                            {{ p.total_votes }} Votes • Status: {% if p.is_active %}<span style="color: var(--accent-success);">Active</span>{% else %}<span style="color: var(--accent-warning);">Closed</span>{% endif %}
+                        </span>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.toggle_poll_status', poll_id=p.id) }}">
+                        <button type="submit" class="btn btn-sm {% if p.is_active %}btn-outline{% else %}btn-primary{% endif %}">
+                            {% if p.is_active %}Close Poll{% else %}Activate{% endif %}
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--text-muted);">No polls created yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Subscribers List -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="font-size: 1.05rem; font-weight: 600;">📩 Newsletter Subscribers</h3>
+                <span class="badge badge-admin">{{ subscribers|length }} Subscribers</span>
+            </div>
+            {% if subscribers %}
+            <div style="max-height: 140px; overflow-y: auto; font-size: 0.82rem;">
+                <ul style="padding-left: 1.2rem; color: #e2e8f0;">
+                    {% for s in subscribers %}
+                    <li>{{ s.email }} <span style="font-size: 0.7rem; color: var(--text-muted);">({{ s.subscribed_at }})</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--text-muted);">No newsletter subscribers yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Article Editorial Highlighting & Breaking Ticker Table -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 600;">Article Placement & Highlight Controls</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Toggle Lead Story / Featured Hero banner and Breaking News Ticker for the newspaper frontpage.
+            </p>
+        </div>
+        <span class="badge badge-editor">Editorial Controls</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="table" style="font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title & Category</th>
+                    <th>Source</th>
+                    <th>Reads / Likes</th>
+                    <th>Lead Hero Story</th>
+                    <th>Breaking Ticker</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for art in articles %}
+                <tr>
+                    <td style="color: var(--text-muted);">#{{ art.id }}</td>
+                    <td>
+                        <strong style="color: #fff; display: block; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ art.title }}
+                        </strong>
+                        <span class="badge badge-category" style="font-size: 0.65rem;">{{ art.category }}</span>
+                    </td>
+                    <td>{{ art.source }}</td>
+                    <td>
+                        <span>👁️ {{ art.views_count or 0 }}</span> • <span>❤️ {{ art.likes_count or 0 }}</span>
+                    </td>
+                    <td>
+                        {% if art.is_featured %}
+                        <span class="badge badge-admin" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✓ Featured Lead</span>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Standard</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if art.is_breaking %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🚨 Breaking Ticker</span>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">Off</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <form method="POST" action="{{ url_for('admin.toggle_article_featured', article_id=art.id) }}">
+                                <button type="submit" class="btn btn-sm {% if art.is_featured %}btn-outline{% else %}btn-primary{% endif %}">
+                                    {% if art.is_featured %}Unfeature{% else %}Feature Hero{% endif %}
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.toggle_article_breaking', article_id=art.id) }}">
+                                <button type="submit" class="btn btn-sm {% if art.is_breaking %}btn-outline{% else %}btn-secondary{% endif %}">
+                                    {% if art.is_breaking %}Remove Breaking{% else %}Make Breaking{% endif %}
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

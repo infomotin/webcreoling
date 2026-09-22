@@ -1,86 +1,123 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - WebCreoling{% endblock %}
+{% block title %}System Overview & Live Metrics - WebCreoling{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Header & Quick Actions -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-        <h1 style="font-size: 1.8rem; font-weight: 700;">System Overview</h1>
-        <p style="color: var(--text-secondary); font-size: 0.95rem;">Real-time scraping metrics, SQLite storage & AI training status</p>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <h1 style="font-size: 1.8rem; font-weight: 700;">System Overview & Real-Time Analytics</h1>
+            <span class="badge badge-admin">Live SQLite Engine</span>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.2rem;">
+            Real-time scraping metrics, SQLite FTS5 storage, reader engagement, and CPU LLM training status
+        </p>
     </div>
-    {% if is_editor %}
-    <div style="display: flex; gap: 0.75rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-outline" style="border-color: #38bdf8; color: #38bdf8;">
+            📰 Open Public Newspaper &rarr;
+        </a>
+        {% if is_editor %}
         <a href="{{ url_for('scraper.index_view') }}" class="btn btn-primary">⚡ Trigger Scrape</a>
+        {% endif %}
+        {% if is_analyst %}
         <a href="{{ url_for('chat.index_view') }}" class="btn btn-secondary">💬 Open AI Chat</a>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
-<!-- Stat Cards -->
+<!-- Primary Real-Time Metric Stat Cards -->
 <div class="grid-4" style="margin-bottom: 2rem;">
+    <!-- 1. Total Scraped Articles -->
     <div class="card" style="border-left: 4px solid var(--accent-primary);">
-        <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Total Articles</p>
-        <h2 style="font-size: 2.2rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">{{ stats.total_articles }}</h2>
-        <span style="font-size: 0.8rem; color: var(--accent-success);">Indexed in SQLite FTS5</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Total Articles</p>
+            <span style="font-size: 1.2rem;">📑</span>
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_articles }}</h2>
+        <div style="font-size: 0.75rem; color: var(--accent-success); display: flex; justify-content: space-between;">
+            <span>Indexed in FTS5</span>
+            <span>{{ stats.by_source|length }} Sources</span>
+        </div>
     </div>
 
+    <!-- 2. Downloaded & Deduplicated Images -->
     <div class="card" style="border-left: 4px solid var(--accent-purple);">
-        <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Downloaded Images</p>
-        <h2 style="font-size: 2.2rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">{{ stats.total_images }}</h2>
-        <span style="font-size: 0.8rem; color: var(--accent-purple);">SHA-256 Deduplicated</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Stored Images</p>
+            <span style="font-size: 1.2rem;">🖼️</span>
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_images }}</h2>
+        <div style="font-size: 0.75rem; color: #c084fc; display: flex; justify-content: space-between;">
+            <span>SHA-256 Deduplicated</span>
+            <span>Valid Mime</span>
+        </div>
     </div>
 
-    <div class="card" style="border-left: 4px solid var(--accent-success);">
-        <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Active Categories</p>
-        <h2 style="font-size: 2.2rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">{{ stats.by_category|length }}</h2>
-        <span style="font-size: 0.8rem; color: var(--text-secondary);">Politics, Sports, Business...</span>
+    <!-- 3. Reader Engagement (Reads & Likes) -->
+    <div class="card" style="border-left: 4px solid #f43f5e;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Reader Engagement</p>
+            <span style="font-size: 1.2rem;">❤️</span>
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_views }}</h2>
+        <div style="font-size: 0.75rem; color: #fca5a5; display: flex; justify-content: space-between;">
+            <span>Article Reads</span>
+            <span>{{ stats.total_likes }} Likes</span>
+        </div>
     </div>
 
+    <!-- 4. Community & Governance (Users, Polls, Subs) -->
     <div class="card" style="border-left: 4px solid var(--accent-warning);">
-        <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600;">Portals Connected</p>
-        <h2 style="font-size: 2.2rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">{{ stats.by_source|length }}</h2>
-        <span style="font-size: 0.8rem; color: var(--accent-warning);">Prothom Alo, Daily Star, BBC</span>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Platform Accounts</p>
+            <span style="font-size: 1.2rem;">👥</span>
+        </div>
+        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ user_count }}</h2>
+        <div style="font-size: 0.75rem; color: var(--accent-warning); display: flex; justify-content: space-between;">
+            <span>RBAC Users</span>
+            <span>{{ subscriber_count }} Subscribers</span>
+        </div>
     </div>
 </div>
 
+<!-- Charts & Audit Logs Grid -->
 <div class="grid-2" style="margin-bottom: 2rem;">
-    <!-- Category Distribution -->
+    <!-- 1. Category Distribution Chart -->
     <div class="card">
         <div class="card-header">
-            <h3 style="font-size: 1.1rem; font-weight: 600;">Category Breakdown</h3>
-            <span class="badge badge-category">Articles by Topic</span>
-        </div>
-        <div>
-            {% for cat, count in stats.by_category.items() %}
-            <div style="margin-bottom: 0.85rem;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
-                    <span style="font-weight: 500; text-transform: capitalize;">{{ cat }}</span>
-                    <span style="color: var(--text-muted);">{{ count }} articles</span>
-                </div>
-                <div style="background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden;">
-                    <div style="background: var(--accent-gradient); height: 100%; width: {{ (count / (stats.total_articles or 1)) * 100 }}%;"></div>
-                </div>
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 600;">Category Distribution</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Real-time breakdown of scraped news topics</p>
             </div>
-            {% else %}
-            <p style="color: var(--text-muted); font-size: 0.9rem;">No categorized articles yet.</p>
-            {% endfor %}
+            <span class="badge badge-category">{{ stats.by_category|length }} Categories</span>
+        </div>
+        <div style="position: relative; height: 230px; width: 100%;">
+            <canvas id="categoryChart"></canvas>
         </div>
     </div>
 
-    <!-- Recent Scrape Activity -->
+    <!-- 2. Recent Scraper Audit Logs -->
     <div class="card">
         <div class="card-header">
-            <h3 style="font-size: 1.1rem; font-weight: 600;">Recent Crawl Audit Logs</h3>
-            <a href="{{ url_for('scraper.index_view') }}" style="font-size: 0.85rem; color: var(--accent-primary);">View All</a>
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 600;">Recent Scrape Execution Logs</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Real audit history of portal crawls</p>
+            </div>
+            <a href="{{ url_for('scraper.index_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">View All &rarr;</a>
         </div>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Source</th>
+                        <th>Source Portal</th>
                         <th>Status</th>
                         <th>Saved</th>
                         <th>Images</th>
+                        <th>Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,12 +129,13 @@
                                 {{ log.status }}
                             </span>
                         </td>
-                        <td>{{ log.articles_saved }}</td>
+                        <td><strong style="color: #38bdf8;">{{ log.articles_saved }}</strong></td>
                         <td>{{ log.images_downloaded }}</td>
+                        <td style="font-size: 0.72rem; color: var(--text-muted);">{{ log.start_time[:16] if log.start_time else '' }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="color: var(--text-muted); text-align: center;">No scraping logs found.</td>
+                        <td colspan="5" style="color: var(--text-muted); text-align: center;">No scraping logs recorded yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -106,38 +144,121 @@
     </div>
 </div>
 
-<!-- Recent Articles Grid -->
-<div style="margin-top: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-        <h2 style="font-size: 1.3rem; font-weight: 700;">Recent Ingested Articles</h2>
-        <a href="{{ url_for('article.list_articles_view') }}" class="btn btn-secondary" style="font-size: 0.85rem;">Browse All Articles &rarr;</a>
+<!-- Recent Ingested Articles & AI RAG Activity -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- 1. Recent Ingested Articles -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 600;">Latest Ingested News Articles</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Stored with full text and local media</p>
+            </div>
+            <a href="{{ url_for('article.list_articles_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">Browse All &rarr;</a>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            {% for art in recent_articles %}
+            <div style="display: flex; gap: 0.8rem; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                {% if art.images %}
+                <img src="/{{ art.images[0].local_path }}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">
+                {% endif %}
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.2rem;">
+                        <span class="badge badge-category" style="font-size: 0.65rem;">{{ art.category }}</span>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ art.source }}</span>
+                    </div>
+                    <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: #fff; text-decoration: none; font-size: 0.85rem; font-weight: 600; line-height: 1.35; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ art.title }}
+                    </a>
+                </div>
+                <a href="/news/{{ art.id }}" target="_blank" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none; white-space: nowrap;">Newspaper &rarr;</a>
+            </div>
+            {% else %}
+            <p style="color: var(--text-muted); font-size: 0.85rem;">No articles in database yet.</p>
+            {% endfor %}
+        </div>
     </div>
 
-    <div class="grid-3">
-        {% for art in recent_articles %}
-        <div class="card" style="display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
-                <span class="badge badge-category">{{ art.category }}</span>
-                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ art.source }}</span>
+    <!-- 2. Recent AI Chat & RAG Query Audit Log -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 600;">Recent AI Chat & RAG Interactions</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Audited queries from data/chat_history.jsonl</p>
             </div>
-            <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.4;">
-                <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: #fff; text-decoration: none;">
-                    {{ art.title }}
-                </a>
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; flex: 1; margin-bottom: 1rem;">
-                {{ art.content_text[:140] }}...
-            </p>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted);">
-                <span>{{ art.author or 'অনলাইন ডেস্ক' }}</span>
-                <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: var(--accent-primary); font-weight: 600; text-decoration: none;">Read &rarr;</a>
+            {% if is_analyst %}
+            <a href="{{ url_for('chat.index_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">Open Chat &rarr;</a>
+            {% endif %}
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            {% for c in recent_chats %}
+            <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                    <span class="badge badge-{{ 'editor' if c.mode != 'rag_qa' else 'analyst' }}" style="font-size: 0.65rem;">
+                        {{ c.mode.upper() }}
+                    </span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">Latency: {{ c.latency_seconds }}s</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #fff; font-weight: 600; margin-bottom: 0.2rem;">
+                    User: {{ c.user_input[:80] }}
+                </p>
+                <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.35;">
+                    AI: {{ c.response[:100] }}...
+                </p>
             </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem;">
+                No conversational interactions recorded yet. Try asking a question in <a href="{{ url_for('chat.index_view') }}" style="color: var(--accent-primary);">AI Chat</a>!
+            </div>
+            {% endfor %}
         </div>
-        {% else %}
-        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-            <p style="color: var(--text-muted);">No articles in database yet. Trigger a scrape to populate data!</p>
-        </div>
-        {% endfor %}
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById('categoryChart');
+    if (ctx) {
+        const rawCategories = {{ stats.by_category | tojson }};
+        const labels = Object.keys(rawCategories).map(c => c.charAt(0).toUpperCase() + c.slice(1));
+        const values = Object.values(rawCategories);
+
+        const colors = [
+            '#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#34d399', '#f59e0b', '#ef4444'
+        ];
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels.length > 0 ? labels : ['No Data'],
+                datasets: [{
+                    label: 'Articles',
+                    data: values.length > 0 ? values : [0],
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#9ca3af', precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

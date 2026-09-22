@@ -1,11 +1,11 @@
 """
 Admin Management Blueprint.
-Provides User and Role Management for Admin users.
+Provides User Management and Editorial Newspaper Management (Featured stories, Opinion polls, Subscribers).
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from src.storage.database import get_db_session
-from src.storage.repositories import UserRepository
+from src.storage.repositories import UserRepository, ArticleRepository, PortalRepository
 from src.web.auth import login_required, roles_required
 
 admin_bp = Blueprint("admin", __name__)
@@ -68,3 +68,87 @@ def update_user_role(user_id: int):
             flash("User not found.", "danger")
 
     return redirect(url_for("admin.users_view"))
+
+
+@admin_bp.route("/newspaper")
+@login_required
+@roles_required("admin", "editor")
+def newspaper_management_view():
+    """Manage frontend newspaper: highlighted hero stories, polls, and newsletter subscribers."""
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        portal_repo = PortalRepository(session)
+
+        articles = article_repo.get_highlighted_articles(limit=25)
+        polls = portal_repo.list_all_polls()
+        subscribers = portal_repo.list_subscribers()
+
+        return render_template(
+            "admin_newspaper.html",
+            articles=articles,
+            polls=[p.to_dict() for p in polls],
+            subscribers=[s.to_dict() for s in subscribers],
+        )
+
+
+@admin_bp.route("/newspaper/toggle-feature/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def toggle_article_featured(article_id: int):
+    """Toggle article featured/hero status."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        state = repo.toggle_featured(article_id)
+        status_str = "Featured (Lead Story)" if state else "Unfeatured"
+        flash(f"Article #{article_id} is now {status_str}.", "success")
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/toggle-breaking/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def toggle_article_breaking(article_id: int):
+    """Toggle article breaking news ticker status."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        state = repo.toggle_breaking(article_id)
+        status_str = "Added to Breaking News Ticker" if state else "Removed from Breaking News"
+        flash(f"Article #{article_id}: {status_str}.", "success")
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/create-poll", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def create_poll():
+    """Create a new reader opinion poll."""
+    question = request.form.get("question", "").strip()
+    category = request.form.get("category", "জাতীয়").strip()
+    options_raw = request.form.get("options", "").strip()
+
+    options = [opt.strip() for opt in options_raw.splitlines() if opt.strip()]
+
+    if not question or len(options) < 2:
+        flash("Poll must have a question and at least 2 options.", "warning")
+        return redirect(url_for("admin.newspaper_management_view"))
+
+    with get_db_session() as session:
+        repo = PortalRepository(session)
+        repo.create_poll(question=question, options=options, category=category)
+        flash("New reader opinion poll created and published successfully!", "success")
+
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/toggle-poll/<int:poll_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def toggle_poll_status(poll_id: int):
+    """Toggle poll active/closed state."""
+    with get_db_session() as session:
+        repo = PortalRepository(session)
+        state = repo.toggle_poll_status(poll_id)
+        status_str = "Active" if state else "Closed"
+        flash(f"Poll #{poll_id} is now {status_str}.", "success")
+    return redirect(url_for("admin.newspaper_management_view"))
+

@@ -46,8 +46,23 @@ def init_db() -> None:
     logger.info(f"Initializing database at {settings.DATABASE_URL}...")
     Base.metadata.create_all(bind=engine)
 
-    # Initialize FTS5 Virtual Table for RAG search if using SQLite
+    # SQLite column migration check for articles table
     if "sqlite" in settings.DATABASE_URL:
+        with engine.connect() as conn:
+            for col_def in [
+                "is_featured BOOLEAN DEFAULT 0",
+                "is_breaking BOOLEAN DEFAULT 0",
+                "views_count INTEGER DEFAULT 0",
+                "likes_count INTEGER DEFAULT 0",
+                "shares_count INTEGER DEFAULT 0",
+            ]:
+                try:
+                    conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))
+                    conn.commit()
+                except Exception:
+                    # Column already exists or table freshly created
+                    pass
+
         with engine.begin() as conn:
             # Create FTS5 virtual table if it does not exist
             conn.execute(

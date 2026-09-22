@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - দৈনিক ক্রিয়েলিং বার্তা{% endblock %}
+
+{% block content %}
+<div style="max-width: 1080px; margin: 0 auto;">
+    <!-- Breadcrumbs -->
+    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.4rem;">
+        <a href="{{ url_for('portal.index_view') }}" style="color: #38bdf8; text-decoration: none;">প্রচ্ছদ</a>
+        <span>&rsaquo;</span>
+        <a href="{{ url_for('portal.index_view', category=article.category) }}" style="color: var(--text-muted); text-decoration: none;">{{ article.category|capitalize }}</a>
+        <span>&rsaquo;</span>
+        <span style="color: var(--text-secondary);">প্রতিবেদন</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 2rem;">
+        <!-- Main Article Body Column -->
+        <div>
+            <div class="card" style="padding: 2.2rem; margin-bottom: 2rem;">
+                <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.82rem; color: var(--text-muted); flex-wrap: wrap;">
+                    <span class="badge badge-category">{{ article.category }}</span>
+                    <span>•</span>
+                    <span>সূত্র: <strong>{{ article.source }}</strong></span>
+                    <span>•</span>
+                    <span>প্রকাশ: {{ article.published_at or 'আজ' }}</span>
+                    {% if article.author %}
+                    <span>•</span>
+                    <span>প্রতিবেদক: <strong>{{ article.author }}</strong></span>
+                    {% endif %}
+                </div>
+
+                <h1 style="font-size: 2.2rem; font-weight: 800; line-height: 1.35; color: #fff; margin-bottom: 1.2rem; font-family: 'Hind Siliguri', sans-serif;">
+                    {{ article.title }}
+                </h1>
+
+                <!-- Reader Engagement Action Bar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 0.8rem 0; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;">
+                    <!-- Like & Views -->
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button onclick="toggleArticleLike({{ article.id }}, this)" class="btn btn-outline btn-sm" style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span>❤️</span> <span class="like-count">{{ article.likes_count or 0 }}</span> লাইক
+                        </button>
+                        <span style="font-size: 0.82rem; color: var(--text-muted);">👁️ {{ article.views_count or 0 }} বার পঠিত</span>
+                    </div>
+
+                    <!-- Social Sharing Buttons -->
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">শেয়ার করুন:</span>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="Facebook-এ শেয়ার">Facebook</a>
+                        <a href="https://twitter.com/intent/tweet?text={{ article.title }}&url={{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="X / Twitter-এ শেয়ার">X</a>
+                        <a href="https://api.whatsapp.com/send?text={{ article.title }} {{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="WhatsApp-এ শেয়ার">WhatsApp</a>
+                        <button onclick="copyArticleLink()" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">📋 লিংক কপি</button>
+                    </div>
+                </div>
+
+                <!-- Lead Article Image -->
+                {% if article.images %}
+                <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.8rem; border: 1px solid var(--border-color);">
+                    <img src="/{{ article.images[0].local_path }}" alt="{{ article.title }}" style="width: 100%; max-height: 480px; object-fit: cover; display: block;">
+                    {% if article.images[0].caption %}
+                    <div style="padding: 0.6rem 1rem; background: rgba(0,0,0,0.5); font-size: 0.8rem; color: #94a3b8;">
+                        📸 {{ article.images[0].caption }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Full Story Paragraphs -->
+                <div style="font-size: 1.1rem; line-height: 1.85; color: #e2e8f0; white-space: pre-line; margin-bottom: 2rem; font-family: 'Hind Siliguri', sans-serif;">
+                    {{ article.content_text }}
+                </div>
+
+                <!-- Secondary Images Gallery if multiple images exist -->
+                {% if article.images and article.images|length > 1 %}
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 2rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;">📷 আরও ছবি</h4>
+                    <div class="grid-2" style="gap: 1rem;">
+                        {% for img in article.images[1:] %}
+                        <div style="border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color);">
+                            <img src="/{{ img.local_path }}" style="width: 100%; height: 180px; object-fit: cover;">
+                            {% if img.caption %}
+                            <p style="padding: 0.4rem 0.8rem; font-size: 0.75rem; color: var(--text-muted); background: rgba(0,0,0,0.4);">{{ img.caption }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Related Articles Recommendations -->
+            {% if related_articles %}
+            <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <span>📰</span> সম্পর্কিত অন্যান্য সংবাদ
+                </h3>
+                <div class="grid-3" style="gap: 1rem;">
+                    {% for rel in related_articles %}
+                    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1rem;">
+                        <div>
+                            {% if rel.images %}
+                            <img src="/{{ rel.images[0].local_path }}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 4px; margin-bottom: 0.6rem;">
+                            {% endif %}
+                            <h4 style="font-size: 0.95rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.4rem;">
+                                <a href="{{ url_for('portal.article_reader_view', article_id=rel.id) }}" style="color: #fff; text-decoration: none;">
+                                    {{ rel.title }}
+                                </a>
+                            </h4>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ rel.published_at or '' }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Column -->
+        <div>
+            <!-- Opinion Poll Box -->
+            {% if active_poll %}
+            <div class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #a855f7;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">📊 জনমত জরিপ</h4>
+                    <span class="badge badge-analyst" style="font-size: 0.65rem;">সক্রিয়</span>
+                </div>
+                <p style="font-size: 0.88rem; font-weight: 600; color: #e2e8f0; line-height: 1.4; margin-bottom: 0.8rem;">
+                    {{ active_poll.question }}
+                </p>
+
+                <form id="pollForm" onsubmit="submitPollVote(event, {{ active_poll.id }})">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                        {% for opt in active_poll.options %}
+                        <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.82rem;">
+                            <input type="radio" name="poll_option" value="{{ opt.id }}" required style="accent-color: var(--accent-purple);">
+                            <span style="color: #fff;">{{ opt.option_text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">ভোট দিন</button>
+                </form>
+
+                <div id="pollResults" style="display: none; margin-top: 1rem;">
+                    <div id="pollBars" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    <p id="pollMessage" style="font-size: 0.75rem; color: var(--accent-success); margin-top: 0.5rem; text-align: center;"></p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Newsletter Box -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(88, 28, 135, 0.4) 100%); border: 1px solid rgba(96, 165, 250, 0.3);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">
+                    📩 দৈনিক বুলেটিন সাবস্ক্রিপশন
+                </h4>
+                <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 0.8rem;">
+                    গুরুত্বপূর্ণ ব্রেকিং নিউজ সরাসরি আপনার ইমেইলে পেতে যুক্ত হোন।
+                </p>
+
+                <form onsubmit="submitNewsletter(event)">
+                    <input type="email" id="subscriberEmail" class="form-control" placeholder="আপনার ইমেইল" required style="font-size: 0.82rem; margin-bottom: 0.6rem;">
+                    <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">সাবস্ক্রাইব</button>
+                </form>
+                <p id="newsletterStatus" style="font-size: 0.75rem; margin-top: 0.5rem; text-align: center;"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleArticleLike(articleId, btn) {
+    try {
+        const res = await fetch(`/news/api/like/${articleId}`, { method: 'POST' });
+        const data = await res.json();
+        const countSpan = btn.querySelector('.like-count');
+        if (countSpan && data.likes_count !== undefined) {
+            countSpan.innerText = data.likes_count;
+        }
+    } catch (e) {
+        console.error("Like error", e);
+    }
+}
+
+function copyArticleLink() {
+    navigator.clipboard.writeText(window.location.href);
+    alert("খবরের লিংক সফলভাবে কপি করা হয়েছে!");
+}
+
+async function submitPollVote(event, pollId) {
+    event.preventDefault();
+    const checked = document.querySelector('input[name="poll_option"]:checked');
+    if (!checked) return;
+
+    const optionId = checked.value;
+    try {
+        const res = await fetch('/news/api/poll/vote', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ poll_id: pollId, option_id: optionId })
+        });
+        const data = await res.json();
+
+        if (data.poll && data.poll.options) {
+            document.getElementById('pollForm').style.display = 'none';
+            const resultsBox = document.getElementById('pollResults');
+            const barsBox = document.getElementById('pollBars');
+            barsBox.innerHTML = '';
+
+            data.poll.options.forEach(opt => {
+                const row = document.createElement('div');
+                row.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #fff; margin-bottom: 2px;">
+                        <span>${opt.option_text}</span>
+                        <strong>${opt.percentage}% (${opt.votes_count} ভোট)</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden;">
+                        <div style="background: var(--accent-purple); height: 100%; width: ${opt.percentage}%;"></div>
+                    </div>
+                `;
+                barsBox.appendChild(row);
+            });
+
+            document.getElementById('pollMessage').innerText = data.message;
+            resultsBox.style.display = 'block';
+        }
+    } catch (e) {
+        console.error("Poll error", e);
+    }
+}
+
+async function submitNewsletter(event) {
+    event.preventDefault();
+    const emailInput = document.getElementById('subscriberEmail');
+    const statusEl = document.getElementById('newsletterStatus');
+    const email = emailInput.value.trim();
+
+    try {
+        const res = await fetch('/news/api/subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        statusEl.innerText = data.message;
+        statusEl.style.color = (data.status === 'success') ? '#34d399' : '#f59e0b';
+        if (data.status === 'success') emailInput.value = '';
+    } catch (e) {
+        statusEl.innerText = 'সাবস্ক্রাইব করতে ত্রুটি হয়েছে।';
+        statusEl.style.color = '#ef4444';
+    }
+}
+</script>
+{% endblock %}

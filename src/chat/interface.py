@@ -163,11 +163,27 @@ class ChatPipeline:
             latency_seconds=latency,
         )
 
+        # Build rich related posts list
+        related_posts = []
+        for art in retrieved_articles:
+            related_posts.append({
+                "id": art.get("id"),
+                "title": art.get("title"),
+                "source": art.get("source"),
+                "category": art.get("category", "general"),
+                "published_at": art.get("published_at"),
+                "url": art.get("url"),
+                "snippet": art.get("snippet", ""),
+                "lead_image": art.get("lead_image"),
+                "image_paths": art.get("images", []),
+            })
+
         return {
             "intent": intent,
             "user_input": user_input,
             "response": final_text,
             "citations": citations,
+            "related_posts": related_posts,
             "latency_seconds": round(latency, 3),
         }
 

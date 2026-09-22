@@ -18,18 +18,39 @@ class RAGEngine:
         self.top_k = top_k
 
     def search_relevant_articles(self, query: str, top_k: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Query SQLite FTS5 index for articles matching the user query."""
+        """Query SQLite FTS5 index for articles matching the user query with fallback."""
         k = top_k or self.top_k
         with get_db_session() as session:
             repo = ArticleRepository(session)
             results = repo.search_fts(query, top_k=k)
-            # Attach image paths if available
+            
+            # Fallback if no direct keyword match: try individual tokens or recent articles
+            if not results:
+                tokens = [t.strip() for t in query.split() if len(t.strip()) > 2]
+                for tok in tokens:
+                    results = repo.search_fts(tok, top_k=k)
+                    if results:
+                        break
+            
+            if not results:
+                # Retrieve latest articles as general relevant context
+                recent = repo.get_highlighted_articles(limit=k)
+                results = [a.to_dict() for a in recent]
+
+            # Attach rich metadata and image paths
             for item in results:
                 article = repo.get_by_id(item["id"])
                 if article and article.images:
                     item["images"] = [img.local_path for img in article.images]
+                    item["lead_image"] = article.images[0].local_path
                 else:
                     item["images"] = []
+                    item["lead_image"] = None
+                
+                content = item.get("content_text") or ""
+                item["snippet"] = (content[:160] + "...") if len(content) > 160 else content
+                item["category"] = item.get("category") or "general"
+                item["author"] = item.get("author") or "ডেস্ক রিপোর্ট"
         return results
 
     def build_rag_prompt(self, user_question: str, retrieved_articles: List[Dict[str, Any]]) -> str:

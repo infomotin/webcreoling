@@ -241,3 +241,23 @@ def finetune_lora():
 
     return redirect(url_for("training.index_view"))
 
+
+@training_bp.route("/api/hf-models", methods=["GET"])
+@login_required
+def get_hf_models_api():
+    """Return recommended and cached lightweight Hugging Face models."""
+    downloaded_dir = settings.CHECKPOINTS_DIR / "downloaded_models"
+    cached_models = []
+    if downloaded_dir.exists():
+        for item in downloaded_dir.iterdir():
+            if item.is_dir() and ((item / "config.json").exists() or (item / "tokenizer.json").exists()):
+                cached_models.append(item.name.replace("_", "/"))
+
+    return jsonify({
+        "status": "success",
+        "recommended_models": RECOMMENDED_LIGHTWEIGHT_MODELS,
+        "cached_models": cached_models,
+    })
+
+
+

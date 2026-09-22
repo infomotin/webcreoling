@@ -1,20 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}AI Chat & RAG - WebCreoling{% endblock %}
+{% block title %}AI Chat & RAG Intelligence - WebCreoling{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 1.5rem;">
-    <h1 style="font-size: 1.8rem; font-weight: 700;">Bangla News AI Intelligence & RAG Chat</h1>
-    <p style="color: var(--text-secondary); font-size: 0.95rem;">Conversational news Q&A grounded in SQLite articles + 4 Specialized task executors</p>
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 style="font-size: 1.8rem; font-weight: 700;">Bangla News AI Intelligence & RAG Chat</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem;">Conversational Q&A grounded in SQLite articles with related post recommendations & specialized skill execution</p>
+    </div>
+    <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-outline btn-sm">
+        📰 Browse Public Newspaper &rarr;
+    </a>
 </div>
 
 <!-- Task Mode Selector Tabs -->
-<div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
     <button class="btn btn-primary task-tab" onclick="selectTab('rag_qa', this)">💬 Conversational RAG Q&A</button>
     <button class="btn btn-secondary task-tab" onclick="selectTab('categorize', this)">📂 Categorize News</button>
     <button class="btn btn-secondary task-tab" onclick="selectTab('headline', this)">📰 Headline Generator</button>
     <button class="btn btn-secondary task-tab" onclick="selectTab('summarize', this)">📝 Summarizer</button>
     <button class="btn btn-secondary task-tab" onclick="selectTab('ner', this)">🏷️ Entity Extraction (NER)</button>
+</div>
+
+<!-- Quick Suggestion Prompts -->
+<div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; font-size: 0.8rem;">
+    <span style="color: var(--text-muted); align-self: center;">💡 Suggestions:</span>
+    <button onclick="askPrompt('জাতীয় সংসদে কোন কোন বিষয় নিয়ে আলোচনা হয়েছে?')" class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); cursor: pointer;">
+        সংসদে বাজেট আলোচনা
+    </button>
+    <button onclick="askPrompt('মিরপুর স্টেডিয়ামে ক্রিকেট ম্যাচ ও সিরিজের সর্বশেষ খবর কী?')" class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); cursor: pointer;">
+        মিরপুরে ক্রিকেট ম্যাচ
+    </button>
+    <button onclick="askPrompt('প্রযুক্তি খাত ও আধুনিক এআই অবকাঠামো নিয়ে কী খবর আছে?')" class="badge" style="background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); cursor: pointer;">
+        প্রযুক্তি ও এআই উন্নয়ন
+    </button>
 </div>
 
 <!-- Chat Interface Container -->
@@ -24,9 +43,9 @@
             <strong>WebCreoling AI Assistant:</strong><br>
             নমস্কার / আসসালামু আলাইকুম! আমি বাংলা সংবাদ বিশ্লেষণকারী এআই সহকারী। আপনি যেকোনো খবর সম্পর্কে প্রশ্ন করতে পারেন অথবা নিচের বিশেষায়িত টাস্কগুলো ব্যবহার করতে পারেন:
             <ul style="margin-top: 0.5rem; margin-left: 1.2rem; font-size: 0.85rem; color: var(--text-secondary);">
-                <li><strong>প্রশ্ন করুন:</strong> "সংসদে কী কী আলোচনা হয়েছে?"</li>
+                <li><strong>প্রশ্ন করুন:</strong> "সংসদে বাজেট নিয়ে কী সিদ্ধান্ত হলো?"</li>
                 <li><strong>সারসংক্ষেপ:</strong> "summarize this: [খবরের বিবরণ...]"</li>
-                <li><strong>শিরোনাম:</strong> "generate a headline for this: [খবর...]"</li>
+                <li><strong>শিরোনাম তৈরি:</strong> "generate a headline for this: [খবর...]"</li>
                 <li><strong>সত্তা নিষ্কাশন:</strong> "extract entities from this: [খবর...]"</li>
             </ul>
         </div>
@@ -65,6 +84,11 @@ function selectTab(mode, btn) {
     }
 }
 
+function askPrompt(promptText) {
+    document.getElementById('chat-input').value = promptText;
+    document.getElementById('chat-form').dispatchEvent(new Event('submit', { cancelable: true }));
+}
+
 async function handleChatSubmit(e) {
     e.preventDefault();
     const inputEl = document.getElementById('chat-input');
@@ -74,7 +98,6 @@ async function handleChatSubmit(e) {
     let text = inputEl.value.trim();
     if (!text) return;
 
-    // Apply command prefix if mode is explicit and prefix not already typed
     if (currentMode === 'categorize' && !text.toLowerCase().startsWith('categorize')) {
         text = `categorize this article: ${text}`;
     } else if (currentMode === 'headline' && !text.toLowerCase().startsWith('headline') && !text.toLowerCase().startsWith('generate')) {
@@ -96,7 +119,7 @@ async function handleChatSubmit(e) {
     // Append Loading Assistant Bubble
     const loadingBubble = document.createElement('div');
     loadingBubble.className = 'chat-bubble chat-assistant';
-    loadingBubble.innerHTML = '<span style="color: var(--accent-primary);">Analyzing and reasoning on CPU...</span>';
+    loadingBubble.innerHTML = '<span style="color: var(--accent-primary);">Analyzing context from SQLite database & reasoning on CPU...</span>';
     messagesContainer.appendChild(loadingBubble);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
@@ -111,15 +134,47 @@ async function handleChatSubmit(e) {
 
         const data = await response.json();
 
-        let citationsHtml = '';
-        if (data.citations && data.citations.length > 0) {
-            citationsHtml = `<div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted);">
-                <strong style="color: var(--accent-warning);">📰 Retrieved Sources (${data.citations.length}):</strong><br>`;
-            data.citations.forEach((cit, i) => {
-                let imgHtml = cit.image_paths && cit.image_paths.length > 0 ? ` [Image: <code>${cit.image_paths[0]}</code>]` : '';
-                citationsHtml += `<div style="margin-top: 0.2rem;">${i+1}. <strong>${cit.title}</strong> (${cit.source}, ${cit.published_at || 'Recent'})${imgHtml}</div>`;
+        // 1. Render Related Posts Cards
+        let relatedPostsHtml = '';
+        if (data.related_posts && data.related_posts.length > 0) {
+            relatedPostsHtml = `
+                <div style="margin-top: 1.2rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                        <strong style="color: #38bdf8; font-size: 0.88rem;">📰 সম্পর্কিত সংবাদ ও প্রতিবেদন (${data.related_posts.length}):</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">SQLite FTS5 Ranked</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.8rem;">
+            `;
+
+            data.related_posts.forEach(post => {
+                let imgTag = '';
+                if (post.lead_image) {
+                    imgTag = `<img src="/${post.lead_image}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 4px; margin-bottom: 0.5rem;">`;
+                }
+
+                relatedPostsHtml += `
+                    <div style="background: rgba(0,0,0,0.35); padding: 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            ${imgTag}
+                            <span class="badge badge-category" style="font-size: 0.65rem;">${post.category}</span>
+                            <h4 style="font-size: 0.88rem; font-weight: 700; line-height: 1.35; margin: 0.4rem 0;">
+                                <a href="/news/${post.id}" target="_blank" style="color: #fff; text-decoration: none;">
+                                    ${post.title}
+                                </a>
+                            </h4>
+                            <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.6rem;">
+                                ${post.snippet}
+                            </p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.4rem;">
+                            <span>${post.source}</span>
+                            <a href="/news/${post.id}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 600;">খবর পড়ুন &rarr;</a>
+                        </div>
+                    </div>
+                `;
             });
-            citationsHtml += `</div>`;
+
+            relatedPostsHtml += `</div></div>`;
         }
 
         const taskBadge = data.intent !== 'rag_qa' ? `<span class="badge badge-editor" style="margin-bottom: 0.4rem;">${data.intent.toUpperCase()}</span><br>` : '';
@@ -127,8 +182,8 @@ async function handleChatSubmit(e) {
         loadingBubble.innerHTML = `
             ${taskBadge}
             <div style="font-size: 0.95rem; line-height: 1.6; color: #fff;">${data.response}</div>
-            ${citationsHtml}
-            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; text-align: right;">Latency: ${data.latency_seconds}s</div>
+            ${relatedPostsHtml}
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.6rem; text-align: right;">Latency: ${data.latency_seconds}s • CPU Inference</div>
         `;
     } catch (err) {
         loadingBubble.innerHTML = `<span style="color: var(--accent-danger);">Error processing query: ${err}</span>`;

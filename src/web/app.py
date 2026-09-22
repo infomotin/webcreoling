@@ -59,12 +59,14 @@ def create_app(test_config: dict = None) -> Flask:
     # Register Blueprints
     from src.web.routes.auth_bp import auth_bp
     from src.web.routes.dashboard_bp import dashboard_bp
+    from src.web.routes.portal_bp import portal_bp
     from src.web.routes.scraper_bp import scraper_bp
     from src.web.routes.article_bp import article_bp
     from src.web.routes.training_bp import training_bp
     from src.web.routes.chat_bp import chat_bp
     from src.web.routes.admin_bp import admin_bp
 
+    app.register_blueprint(portal_bp, url_prefix="/news")
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(dashboard_bp, url_prefix="")
     app.register_blueprint(scraper_bp, url_prefix="/scraper")

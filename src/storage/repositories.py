@@ -9,7 +9,17 @@ from sqlalchemy import func, text, desc
 from sqlalchemy.orm import Session, joinedload
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
-from src.storage.models import Article, ArticleImage, ScrapeLog
+from src.storage.models import (
+    Article,
+    ArticleImage,
+    ScrapeLog,
+    Poll,
+    PollOption,
+    PollVote,
+    NewsletterSubscriber,
+    ArticleLike,
+    User,
+)
 
 logger = get_logger("webcreoling.storage.repositories")
 
@@ -219,10 +229,162 @@ class ArticleRepository:
             )
             return [a.to_dict() for a in fallback_res]
 
+    def get_lead_hero_article(self) -> Optional[Article]:
+        """Fetch the primary highlighted lead/hero story for the newspaper frontpage."""
+        # Check explicit featured first
+        hero = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.is_featured == True)
+            .order_by(Article.published_at.desc(), Article.id.desc())
+            .first()
+        )
+        if not hero:
+            # Fallback to the latest article that has an image
+            hero = (
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .join(ArticleImage)
+                .order_by(Article.published_at.desc(), Article.id.desc())
+                .first()
+            )
+        if not hero:
+            hero = (
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .order_by(Article.id.desc())
+                .first()
+            )
+        return hero
+
+    def get_highlighted_articles(self, limit: int = 6, exclude_id: Optional[int] = None) -> List[Article]:
+        """Fetch top auto-highlighted articles with related images for newspaper grid."""
+        query = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(func.length(Article.content_text) > 80)
+        )
+        if exclude_id:
+            query = query.filter(Article.id != exclude_id)
+
+        # Order by featured first, then likes, views, and recency
+        query = query.order_by(
+            Article.is_featured.desc(),
+            Article.likes_count.desc(),
+            Article.views_count.desc(),
+            Article.id.desc()
+        ).limit(limit)
+
+        return query.all()
+
+    def get_breaking_news(self, limit: int = 5) -> List[Article]:
+        """Fetch breaking news items for ticker."""
+        breaking = (
+            self.session.query(Article)
+            .filter(Article.is_breaking == True)
+            .order_by(Article.published_at.desc(), Article.id.desc())
+            .limit(limit)
+            .all()
+        )
+        if not breaking:
+            breaking = (
+                self.session.query(Article)
+                .order_by(Article.id.desc())
+                .limit(limit)
+                .all()
+            )
+        return breaking
+
+    def get_trending_articles(self, limit: int = 5) -> List[Article]:
+        """Fetch most read / most trending articles."""
+        return (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .order_by((Article.views_count * 2 + Article.likes_count * 5).desc(), Article.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def get_articles_by_category(self, category: str, limit: int = 4, exclude_id: Optional[int] = None) -> List[Article]:
+        """Fetch articles belonging to a specific news category."""
+        query = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.category == category)
+        )
+        if exclude_id:
+            query = query.filter(Article.id != exclude_id)
+        return query.order_by(Article.id.desc()).limit(limit).all()
+
+    def get_related_articles(self, article_id: int, category: Optional[str] = None, limit: int = 3) -> List[Article]:
+        """Fetch related articles based on category and recency."""
+        query = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.id != article_id)
+        )
+        if category:
+            query = query.filter(Article.category == category)
+        return query.order_by(Article.id.desc()).limit(limit).all()
+
+    def increment_views(self, article_id: int) -> int:
+        """Increment view count for an article."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.views_count = (article.views_count or 0) + 1
+            self.session.flush()
+            return article.views_count
+        return 0
+
+    def toggle_like(self, article_id: int, voter_ip: str) -> Dict[str, Any]:
+        """Toggle reader like on an article."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if not article:
+            return {"liked": False, "likes_count": 0}
+
+        existing_like = (
+            self.session.query(ArticleLike)
+            .filter(ArticleLike.article_id == article_id, ArticleLike.voter_ip == voter_ip)
+            .first()
+        )
+
+        if existing_like:
+            self.session.delete(existing_like)
+            article.likes_count = max(0, (article.likes_count or 0) - 1)
+            liked = False
+        else:
+            new_like = ArticleLike(article_id=article_id, voter_ip=voter_ip)
+            self.session.add(new_like)
+            article.likes_count = (article.likes_count or 0) + 1
+            liked = True
+
+        self.session.flush()
+        return {"liked": liked, "likes_count": article.likes_count}
+
+    def toggle_featured(self, article_id: int) -> bool:
+        """Toggle featured/lead status of an article."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.is_featured = not bool(article.is_featured)
+            self.session.flush()
+            return article.is_featured
+        return False
+
+    def toggle_breaking(self, article_id: int) -> bool:
+        """Toggle breaking news ticker status of an article."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.is_breaking = not bool(article.is_breaking)
+            self.session.flush()
+            return article.is_breaking
+        return False
+
     def get_database_stats(self) -> Dict[str, Any]:
         """Aggregate statistical summary of database records."""
         total_articles = self.session.query(func.count(Article.id)).scalar() or 0
         total_images = self.session.query(func.count(ArticleImage.id)).scalar() or 0
+        total_views = self.session.query(func.sum(Article.views_count)).scalar() or 0
+        total_likes = self.session.query(func.sum(Article.likes_count)).scalar() or 0
 
         # Group by source
         source_counts = dict(
@@ -248,6 +410,8 @@ class ArticleRepository:
         return {
             "total_articles": total_articles,
             "total_images": total_images,
+            "total_views": total_views,
+            "total_likes": total_likes,
             "by_source": source_counts,
             "by_category": category_counts,
             "by_status": status_counts,
@@ -369,3 +533,110 @@ class UserRepository:
                 self.create_user(username=username, email=email, password=pwd, role=role)
                 created[username] = role
         return created
+
+
+class PortalRepository:
+    """Repository managing Opinion Polls, Voting, and Newsletter Subscribers."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_active_poll(self) -> Optional[Poll]:
+        """Fetch current active opinion poll with options."""
+        return (
+            self.session.query(Poll)
+            .options(joinedload(Poll.options))
+            .filter(Poll.is_active == True)
+            .order_by(Poll.id.desc())
+            .first()
+        )
+
+    def vote_poll(self, poll_id: int, option_id: int, voter_ip: str) -> Dict[str, Any]:
+        """Cast vote for a poll option with duplicate IP check."""
+        poll = self.session.query(Poll).filter(Poll.id == poll_id, Poll.is_active == True).first()
+        if not poll:
+            return {"status": "error", "message": "ভোটগ্রহণ সক্রিয় নয় বা পাওয়া যায়নি।"}
+
+        existing_vote = (
+            self.session.query(PollVote)
+            .filter(PollVote.poll_id == poll_id, PollVote.voter_ip == voter_ip)
+            .first()
+        )
+        if existing_vote:
+            return {
+                "status": "already_voted",
+                "message": "আপনি ইতিমধ্যে এই জরিপে ভোট দিয়েছেন।",
+                "poll": poll.to_dict(),
+            }
+
+        option = self.session.query(PollOption).filter(PollOption.id == option_id, PollOption.poll_id == poll_id).first()
+        if not option:
+            return {"status": "error", "message": "অবৈধ অপশন।"}
+
+        option.votes_count = (option.votes_count or 0) + 1
+        poll.total_votes = (poll.total_votes or 0) + 1
+        vote = PollVote(poll_id=poll_id, option_id=option_id, voter_ip=voter_ip)
+        self.session.add(vote)
+        self.session.flush()
+
+        return {
+            "status": "success",
+            "message": "আপনার ভোট সফলভাবে গ্রহণ করা হয়েছে!",
+            "poll": poll.to_dict(),
+        }
+
+    def create_poll(self, question: str, options: List[str], category: str = "national") -> Poll:
+        """Create a new poll with choices."""
+        poll = Poll(question=question.strip(), category=category, is_active=True, total_votes=0)
+        self.session.add(poll)
+        self.session.flush()
+
+        for opt in options:
+            if opt.strip():
+                p_opt = PollOption(poll_id=poll.id, option_text=opt.strip(), votes_count=0)
+                self.session.add(p_opt)
+
+        self.session.flush()
+        return poll
+
+    def list_all_polls(self) -> List[Poll]:
+        """List all polls for editorial administration."""
+        return self.session.query(Poll).options(joinedload(Poll.options)).order_by(Poll.id.desc()).all()
+
+    def toggle_poll_status(self, poll_id: int) -> bool:
+        """Toggle poll active/inactive status."""
+        poll = self.session.query(Poll).filter(Poll.id == poll_id).first()
+        if poll:
+            poll.is_active = not bool(poll.is_active)
+            self.session.flush()
+            return poll.is_active
+        return False
+
+    def add_subscriber(self, email: str) -> Dict[str, Any]:
+        """Add email subscriber to newsletter."""
+        cleaned = email.strip().lower()
+        if not cleaned or "@" not in cleaned:
+            return {"status": "error", "message": "সঠিক ইমেইল ঠিকানা প্রদান করুন।"}
+
+        existing = self.session.query(NewsletterSubscriber).filter(NewsletterSubscriber.email == cleaned).first()
+        if existing:
+            return {"status": "already_subscribed", "message": "আপনি আগেই সাবস্ক্রাইব করেছেন!"}
+
+        sub = NewsletterSubscriber(email=cleaned)
+        self.session.add(sub)
+        self.session.flush()
+        return {"status": "success", "message": "ধন্যবাদ! ব্রেকিং নিউজ ও সাপ্তাহিক বুলেটিনে যুক্ত হয়েছেন।"}
+
+    def list_subscribers(self) -> List[NewsletterSubscriber]:
+        """List all newsletter subscribers."""
+        return self.session.query(NewsletterSubscriber).order_by(NewsletterSubscriber.id.desc()).all()
+
+    def seed_default_poll(self) -> None:
+        """Seed initial active poll if none exists."""
+        active = self.get_active_poll()
+        if not active:
+            self.create_poll(
+                question="২০২৬ সালের বাজেটে প্রযুক্তিতে এআই অটোমেশন ও স্মার্ট বাংলাদেশ অবকাঠামোতে বরাদ্দ কি পর্যাপ্ত?",
+                options=["হ্যাঁ, যথেষ্ট", "না, আরও বাড়ানো উচিত", "মন্তব্য নেই"],
+                category="জাতীয়",
+            )

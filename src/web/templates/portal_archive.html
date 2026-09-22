@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}আর্কাইভ - প্রথম আলো | Prothom Alo News Archive - {{ selected_date }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/newspaper_prothomalo.css') }}">
+<style>
+.palo-archive-picker-card {
+    background: #f8fafc;
+    border: 1px solid var(--palo-border);
+    border-top: 4px solid var(--palo-red);
+    border-radius: var(--palo-radius-sm);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+.palo-archive-date-chip {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: #fff;
+    border: 1px solid var(--palo-border);
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--palo-heading);
+    text-decoration: none;
+    transition: all 0.2s;
+    margin: 0.2rem;
+}
+.palo-archive-date-chip:hover,
+.palo-archive-date-chip.active {
+    background: var(--palo-red);
+    color: #fff;
+    border-color: var(--palo-red);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="palo-newspaper-canvas">
+
+    <!-- Top Utility Bar -->
+    <div class="palo-topbar">
+        <div class="palo-topbar-left">
+            <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩</span>
+            <span>•</span>
+            <span class="palo-edition-tag">আর্কাইভ সংস্করণ</span>
+        </div>
+        <div class="palo-topbar-right">
+            <a href="{{ url_for('portal.index_view') }}" class="palo-top-link">&larr; প্রচ্ছদে ফিরে যান</a>
+            <a href="{{ url_for('dashboard.index_view') }}" class="palo-top-link" style="color: var(--palo-red); font-weight: 700;">
+                ⚡ AI কন্ট্রোল প্যানেল
+            </a>
+        </div>
+    </div>
+
+    <!-- Masthead -->
+    <div class="palo-masthead">
+        <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap">
+            <div class="palo-logo-emblem">আ</div>
+            <div class="palo-logo-text">
+                <h1 class="palo-brand-title">প্রথম<span>আলো</span></h1>
+                <span class="palo-brand-tagline">The Daily Prothom Alo • সংবাদ আর্কাইভ ও পুরনো পাতা</span>
+            </div>
+        </a>
+        <div class="palo-masthead-actions">
+            <form method="GET" action="{{ url_for('portal.index_view') }}" class="palo-search-form">
+                <input type="text" name="q" class="palo-search-input" placeholder="প্রথম আলো খুঁজুন...">
+                <button type="submit" class="palo-search-btn">🔍</button>
+            </form>
+            <a href="{{ url_for('chat.index_view') }}" class="palo-epaper-btn">
+                <span>🤖</span> AI চ্যাট
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="palo-navbar">
+        <ul class="palo-nav-list">
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view') }}" class="palo-nav-link">প্রচ্ছদ</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='politics') }}" class="palo-nav-link">রাজনীতি</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='bangladesh') }}" class="palo-nav-link">বাংলাদেশ</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='business') }}" class="palo-nav-link">বাণিজ্য</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='international') }}" class="palo-nav-link">বিশ্ব</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-nav-link">খেলা</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='technology') }}" class="palo-nav-link">বিজ্ঞান ও প্রযুক্তি</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.archive_view') }}" class="palo-nav-link active">আর্কাইভ</a></li>
+        </ul>
+    </nav>
+
+    <!-- Breaking News Ticker if available -->
+    {% if breaking_news %}
+    <div class="palo-breaking-ticker">
+        <div class="palo-breaking-badge">
+            <span class="palo-pulse-dot"></span> ব্রেকিং
+        </div>
+        <div class="palo-ticker-content">
+            {% for bn in breaking_news %}
+            <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" class="palo-ticker-link">
+                ⚡ {{ bn.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===================================================================== -->
+    <!-- ARCHIVE DATE PICKER TOOLBAR                                           -->
+    <!-- ===================================================================== -->
+    <div class="palo-archive-picker-card">
+        <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 800; color: var(--palo-heading); margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📅</span> প্রথম আলো সংবাদ আর্কাইভ (তারিখ অনুযায়ী অনুসন্ধান)
+        </h2>
+
+        <form method="GET" action="{{ url_for('portal.archive_view') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.2rem;">
+            <!-- Date Picker -->
+            <div style="flex: 1; min-width: 220px;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--palo-heading); margin-bottom: 0.4rem;">
+                    তারিখ নির্বাচন করুন:
+                </label>
+                <input type="date" name="date" value="{{ selected_date }}" class="palo-search-input" style="border-radius: var(--palo-radius-sm); padding: 0.55rem 0.8rem; background: #fff;">
+            </div>
+
+            <!-- Category Filter -->
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--palo-heading); margin-bottom: 0.4rem;">
+                    নির্দিষ্ট বিভাগ (ঐচ্ছিক):
+                </label>
+                <select name="category" class="palo-search-input" style="border-radius: var(--palo-radius-sm); padding: 0.55rem 0.8rem; background: #fff;">
+                    <option value="">সকল বিভাগ</option>
+                    <option value="politics" {% if category == 'politics' %}selected{% endif %}>রাজনীতি</option>
+                    <option value="bangladesh" {% if category == 'bangladesh' %}selected{% endif %}>বাংলাদেশ</option>
+                    <option value="business" {% if category == 'business' %}selected{% endif %}>বাণিজ্য ও অর্থনীতি</option>
+                    <option value="international" {% if category == 'international' %}selected{% endif %}>আন্তর্জাতিক</option>
+                    <option value="sports" {% if category == 'sports' %}selected{% endif %}>খেলাধুলা</option>
+                    <option value="technology" {% if category == 'technology' %}selected{% endif %}>বিজ্ঞান ও প্রযুক্তি</option>
+                    <option value="news" {% if category == 'news' %}selected{% endif %}>মতামত</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="palo-btn-vote" style="padding: 0.6rem 1.8rem; font-size: 0.92rem; border-radius: var(--palo-radius-sm); margin: 0;">
+                    আর্কাইভ থেকে খুঁজুন
+                </button>
+            </div>
+        </form>
+
+        <!-- Quick Date Chips -->
+        {% if available_dates %}
+        <div style="border-top: 1px solid var(--palo-border); padding-top: 0.8rem;">
+            <span style="font-size: 0.8rem; color: var(--palo-text-muted); font-weight: 700; margin-right: 0.5rem;">
+                উপলভ্য আর্কাইভ তারিখসমূহ:
+            </span>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.4rem;">
+                {% for d in available_dates[:15] %}
+                <a href="{{ url_for('portal.archive_view', date=d, category=category or '') }}" class="palo-archive-date-chip {% if d == selected_date %}active{% endif %}">
+                    {{ d }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- ARCHIVE RESULTS SUMMARY BANNER                                        -->
+    <!-- ===================================================================== -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.6rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.35rem; font-weight: 800; color: var(--palo-heading); margin: 0;">
+            📰 {{ selected_date }} তারিখে প্রকাশিত সংবাদসমূহ
+        </h3>
+        <span style="font-size: 0.85rem; color: var(--palo-text-muted);">
+            মোট পাওয়া গেছে: <strong>{{ total_count }}</strong> টি প্রতিবেদন | পৃষ্ঠা: <strong>{{ page }}</strong> / {{ total_pages }}
+        </span>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- ARCHIVE ARTICLE FEED (3-COLUMN GRID)                                  -->
+    <!-- ===================================================================== -->
+    {% if articles %}
+    <div class="palo-grid-4" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem;">
+        {% for art in articles %}
+        <div class="palo-grid-card">
+            <div>
+                {% if art.images %}
+                <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" class="palo-grid-thumb">
+                {% endif %}
+                <span style="font-size: 0.72rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase;">
+                    {{ art.category or 'সাধারণ' }}
+                </span>
+                <h4 class="palo-grid-title" style="margin-top: 0.3rem;">
+                    <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
+                        {{ art.title }}
+                    </a>
+                </h4>
+                <p style="font-size: 0.82rem; color: #4b5563; line-height: 1.5; margin-bottom: 0.6rem;">
+                    {{ (art.content_text or '')[:110] }}...
+                </p>
+            </div>
+            <div class="palo-card-meta">
+                <span>{{ art.published_at or selected_date }}</span>
+                <span>•</span>
+                <span>সূত্র: {{ art.source }}</span>
+                <span>•</span>
+                <span>❤️ {{ art.likes_count or 0 }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 2rem; margin-bottom: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--palo-border);">
+        {% if page > 1 %}
+        <a href="{{ url_for('portal.archive_view', date=selected_date, category=category or '', page=page-1) }}" class="palo-share-btn">
+            &larr; পূর্ববর্তী পৃষ্ঠা
+        </a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+        <a href="{{ url_for('portal.archive_view', date=selected_date, category=category or '', page=p) }}" class="palo-share-btn" style="{% if p == page %}background: var(--palo-red); color: #fff; border-color: var(--palo-red); font-weight: 700;{% endif %}">
+            {{ p }}
+        </a>
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <a href="{{ url_for('portal.archive_view', date=selected_date, category=category or '', page=page+1) }}" class="palo-share-btn">
+            পরবর্তী পৃষ্ঠা &rarr;
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align: center; padding: 4rem 2rem; background: var(--palo-bg-gray); border-radius: var(--palo-radius-sm); margin-bottom: 3rem;">
+        <div style="font-size: 3rem; margin-bottom: 0.5rem;">📅</div>
+        <h4 style="font-size: 1.2rem; font-weight: 700; color: var(--palo-heading); margin-bottom: 0.4rem;">
+            {{ selected_date }} তারিখে কোনো সংবাদ সংরক্ষিত নেই।
+        </h4>
+        <p style="color: var(--palo-text-muted); font-size: 0.9rem; margin-bottom: 1.2rem;">
+            অনুগ্রহ করে অন্য কোনো তারিখ নির্বাচন করুন অথবা সকল সংবাদ দেখতে প্রচ্ছদে যান।
+        </p>
+        <a href="{{ url_for('portal.index_view') }}" class="palo-btn-vote" style="display: inline-block; padding: 0.5rem 1.5rem; text-decoration: none; width: auto;">
+            প্রচ্ছদে ফিরে যান
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Footer -->
+<footer class="palo-footer">
+    <div class="palo-footer-inner">
+        <div class="palo-footer-grid">
+            <div class="palo-footer-brand">
+                <h3>প্রথম<span>আলো</span></h3>
+                <p style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">
+                    সত্যের সন্ধানে নির্ভীক। ক্রিয়েলিং এআই প্ল্যাটফর্ম দ্বারা পরিচালিত রিয়েল-টাইম ডিজিটাল সংস্করণ ও সংবাদ আর্কাইভ।
+                </p>
+            </div>
+            <div class="palo-footer-col">
+                <h4>বিভাগসমূহ</h4>
+                <ul class="palo-footer-links">
+                    <li><a href="{{ url_for('portal.section_view', category='politics') }}">রাজনীতি</a></li>
+                    <li><a href="{{ url_for('portal.section_view', category='bangladesh') }}">বাংলাদেশ</a></li>
+                    <li><a href="{{ url_for('portal.section_view', category='business') }}">অর্থনীতি</a></li>
+                    <li><a href="{{ url_for('portal.section_view', category='sports') }}">খেলাধুলা</a></li>
+                </ul>
+            </div>
+            <div class="palo-footer-col">
+                <h4>সেবা</h4>
+                <ul class="palo-footer-links">
+                    <li><a href="{{ url_for('chat.index_view') }}">এআই চ্যাট ও আরএজি</a></li>
+                    <li><a href="{{ url_for('portal.archive_view') }}">সংবাদ আর্কাইভ</a></li>
+                    <li><a href="{{ url_for('dashboard.index_view') }}">সিস্টেম ড্যাশবোর্ড</a></li>
+                </ul>
+            </div>
+            <div class="palo-footer-col">
+                <h4>মোবাইল সংস্করণ</h4>
+                <p style="font-size: 0.82rem;">যেকোনো সময় সব খবর আপনার হাতের মুঠোয়।</p>
+            </div>
+        </div>
+        <div class="palo-footer-bottom">
+            <div>স্বত্ব © ২০২৬ প্রথম আলো ক্লোন - ক্রিয়েলিং এআই। সর্বস্বত্ব সংরক্ষিত।</div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

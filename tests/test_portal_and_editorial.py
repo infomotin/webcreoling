@@ -16,10 +16,41 @@ def client():
 
 
 def test_public_newspaper_portal_view(client):
-    """Public digital newspaper frontpage should load without requiring login."""
+    """Public digital newspaper frontpage should load without requiring login in Prothom Alo style."""
     response = client.get("/news")
     assert response.status_code == 200
-    assert "দৈনিক ক্রিয়েলিং বার্তা".encode("utf-8") in response.data or b"WebCreoling" in response.data
+    assert "প্রথম".encode("utf-8") in response.data or b"Prothom" in response.data
+
+
+def test_section_wise_news_view(client):
+    """Test dedicated section/category pages in Prothom Alo clone layout."""
+    # Politics section
+    res_politics = client.get("/news/section/politics")
+    assert res_politics.status_code == 200
+    assert "রাজনীতি".encode("utf-8") in res_politics.data
+
+    # Business section
+    res_business = client.get("/news/section/business")
+    assert res_business.status_code == 200
+    assert "বাণিজ্য".encode("utf-8") in res_business.data
+
+    # Sports section
+    res_sports = client.get("/news/section/sports")
+    assert res_sports.status_code == 200
+    assert "খেলা".encode("utf-8") in res_sports.data
+
+
+def test_archive_view_with_selected_date(client):
+    """Test newspaper archive viewing with date picker and selected date querying."""
+    # General archive page
+    res_archive = client.get("/news/archive")
+    assert res_archive.status_code == 200
+    assert "আর্কাইভ".encode("utf-8") in res_archive.data
+
+    # Specific date archive
+    res_date = client.get("/news/archive?date=2026-09-22")
+    assert res_date.status_code == 200
+    assert "2026-09-22".encode("utf-8") in res_date.data
 
 
 def test_newspaper_article_view_and_like(client):
@@ -86,3 +117,4 @@ def test_editorial_management_access_control(client):
     res_editor = client.get("/admin/newspaper", follow_redirects=True)
     assert res_editor.status_code == 200
     assert b"Editorial &amp; Newspaper Management" in res_editor.data or b"Editorial & Newspaper Management" in res_editor.data
+

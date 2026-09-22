@@ -68,6 +68,61 @@ def index_view():
         )
 
 
+@portal_bp.route("/section/<category>")
+def section_view(category: str):
+    """Render dedicated category/section news page in Prothom Alo style."""
+    page = request.args.get("page", 1, type=int)
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        portal_repo = PortalRepository(session)
+
+        data = article_repo.get_section_page_data(category=category, page=page, page_size=12)
+        breaking_news = article_repo.get_breaking_news(limit=5)
+        active_poll = portal_repo.get_active_poll()
+
+        return render_template(
+            "portal_section.html",
+            category=category,
+            section_hero=data["section_hero"],
+            articles=data["articles"],
+            section_trending=data["section_trending"],
+            total_count=data["total_count"],
+            page=data["page"],
+            total_pages=data["total_pages"],
+            breaking_news=breaking_news,
+            active_poll=active_poll.to_dict() if active_poll else None,
+        )
+
+
+@portal_bp.route("/archive")
+def archive_view():
+    """Render archive explorer page with date picker, category filter, and historical date browsing."""
+    date_str = request.args.get("date", "").strip() or None
+    category = request.args.get("category", "").strip() or None
+    page = request.args.get("page", 1, type=int)
+
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        portal_repo = PortalRepository(session)
+
+        data = article_repo.get_archive_articles(date_str=date_str, category=category, page=page, page_size=15)
+        breaking_news = article_repo.get_breaking_news(limit=5)
+        active_poll = portal_repo.get_active_poll()
+
+        return render_template(
+            "portal_archive.html",
+            selected_date=data["selected_date"],
+            available_dates=data["available_dates"],
+            articles=data["articles"],
+            total_count=data["total_count"],
+            page=data["page"],
+            total_pages=data["total_pages"],
+            category=data["category"],
+            breaking_news=breaking_news,
+            active_poll=active_poll.to_dict() if active_poll else None,
+        )
+
+
 @portal_bp.route("/<int:article_id>")
 def article_reader_view(article_id: int):
     """Render full professional article reader view."""

@@ -379,6 +379,120 @@ class ArticleRepository:
             return article.is_breaking
         return False
 
+    def get_section_page_data(self, category: str, page: int = 1, page_size: int = 12) -> Dict[str, Any]:
+        """Fetch section articles, lead hero for the category, and trending in that section."""
+        query = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.category == category)
+        )
+        total_count = query.count()
+
+        # Lead hero in section: first article with image or first article
+        section_hero = query.filter(Article.images.any()).order_by(Article.id.desc()).first()
+        if not section_hero:
+            section_hero = query.order_by(Article.id.desc()).first()
+
+        exclude_id = section_hero.id if section_hero else None
+
+        articles_query = query
+        if exclude_id and page == 1:
+            articles_query = articles_query.filter(Article.id != exclude_id)
+
+        articles = (
+            articles_query
+            .order_by(Article.published_at.desc(), Article.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        # Section trending
+        section_trending = (
+            query.order_by((Article.views_count * 2 + Article.likes_count * 5).desc(), Article.id.desc())
+            .limit(5)
+            .all()
+        )
+
+        total_pages = max(1, (total_count + page_size - 1) // page_size)
+
+        return {
+            "category": category,
+            "section_hero": section_hero,
+            "articles": articles,
+            "section_trending": section_trending,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages,
+        }
+
+    def get_available_archive_dates(self, limit: int = 60) -> List[str]:
+        """Fetch distinct dates available in the archive."""
+        try:
+            dates = (
+                self.session.query(func.date(Article.published_at))
+                .filter(Article.published_at != None)
+                .distinct()
+                .order_by(func.date(Article.published_at).desc())
+                .limit(limit)
+                .all()
+            )
+            date_list = [d[0] for d in dates if d[0]]
+            if not date_list:
+                dates_c = (
+                    self.session.query(func.date(Article.created_at))
+                    .distinct()
+                    .order_by(func.date(Article.created_at).desc())
+                    .limit(limit)
+                    .all()
+                )
+                date_list = [d[0] for d in dates_c if d[0]]
+            return date_list or [datetime.utcnow().strftime("%Y-%m-%d")]
+        except Exception:
+            return [datetime.utcnow().strftime("%Y-%m-%d")]
+
+    def get_archive_articles(
+        self,
+        date_str: Optional[str] = None,
+        category: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 15,
+    ) -> Dict[str, Any]:
+        """Fetch articles for the selected archive date with optional category filtering and pagination."""
+        available_dates = self.get_available_archive_dates()
+        target_date = date_str or (available_dates[0] if available_dates else datetime.utcnow().strftime("%Y-%m-%d"))
+
+        query = self.session.query(Article).options(joinedload(Article.images))
+
+        # Date filter
+        query = query.filter(
+            (func.date(Article.published_at) == target_date) | 
+            (func.date(Article.created_at) == target_date)
+        )
+
+        if category:
+            query = query.filter(Article.category == category)
+
+        total_count = query.count()
+        articles = (
+            query.order_by(Article.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        total_pages = max(1, (total_count + page_size - 1) // page_size)
+
+        return {
+            "selected_date": target_date,
+            "available_dates": available_dates,
+            "articles": articles,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages,
+            "category": category,
+        }
+
     def get_database_stats(self) -> Dict[str, Any]:
         """Aggregate statistical summary of database records."""
         total_articles = self.session.query(func.count(Article.id)).scalar() or 0

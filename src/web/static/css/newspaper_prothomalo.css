@@ -817,10 +817,11 @@ body.palo-body-canvas {
     background: var(--palo-red-dark);
 }
 
-/* Newsletter Box */
+/* Newsletter Box (100% Light Theme) */
 .palo-newsletter-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #ffffff;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-top: 3px solid var(--palo-red);
     border-radius: var(--palo-radius-sm);
     padding: 1.35rem;
 }
@@ -828,7 +829,7 @@ body.palo-body-canvas {
 .palo-newsletter-title {
     font-size: 1.05rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--palo-heading);
     margin: 0 0 0.45rem 0;
     display: flex;
     align-items: center;
@@ -837,8 +838,8 @@ body.palo-body-canvas {
 
 .palo-newsletter-desc {
     font-size: 0.82rem;
-    color: #cbd5e1;
-    line-height: 1.45;
+    color: #475569;
+    line-height: 1.5;
     margin-bottom: 0.95rem;
 }
 
@@ -846,17 +847,23 @@ body.palo-body-canvas {
     width: 100%;
     padding: 0.55rem 0.85rem;
     border-radius: var(--palo-radius-sm);
-    border: 1px solid #475569;
-    background: #334155;
-    color: #ffffff;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: var(--palo-heading);
     font-size: 0.85rem;
     outline: none;
     margin-bottom: 0.65rem;
     font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.palo-input-newsletter::placeholder {
+    color: #94a3b8;
 }
 
 .palo-input-newsletter:focus {
     border-color: var(--palo-red);
+    box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15);
 }
 
 .palo-btn-newsletter {
@@ -1091,15 +1098,16 @@ body.palo-body-canvas {
 }
 
 /* --------------------------------------------------------------------------
-   9. FULL-WIDTH AUTHENTIC PROTHOM ALO FOOTER
+   9. FULL-WIDTH AUTHENTIC PROTHOM ALO FOOTER (100% LIGHT THEME)
    -------------------------------------------------------------------------- */
 .palo-footer {
     width: 100%;
-    background: #111827;
-    color: #94a3b8;
+    background: #f8fafc;
+    color: #475569;
     padding: 3.5rem 0 1.5rem 0;
     margin-top: auto;
     border-top: 3px solid var(--palo-red);
+    border-bottom: 1px solid var(--palo-border);
 }
 
 .palo-footer-grid {
@@ -1112,8 +1120,9 @@ body.palo-body-canvas {
 .palo-footer-brand h3 {
     font-family: 'Noto Serif Bengali', serif;
     font-size: 1.9rem;
-    color: #ffffff;
+    color: var(--palo-heading);
     margin: 0 0 0.6rem 0;
+    font-weight: 900;
 }
 
 .palo-footer-brand h3 span {
@@ -1124,7 +1133,7 @@ body.palo-body-canvas {
     font-size: 0.85rem;
     line-height: 1.65;
     margin-bottom: 1rem;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .palo-footer-contact {
@@ -1134,10 +1143,11 @@ body.palo-body-canvas {
 }
 
 .palo-footer-col h4 {
-    color: #ffffff;
+    color: var(--palo-heading);
     font-size: 1rem;
     font-weight: 800;
     margin: 0 0 0.85rem 0;
+    font-family: 'Hind Siliguri', sans-serif;
 }
 
 .palo-footer-links {
@@ -1150,18 +1160,34 @@ body.palo-body-canvas {
 }
 
 .palo-footer-links a {
-    color: #94a3b8;
+    color: #475569;
     text-decoration: none;
     font-size: 0.86rem;
     transition: color 0.2s;
+    font-weight: 500;
 }
 
 .palo-footer-links a:hover {
     color: var(--palo-red);
+    text-decoration: underline;
+}
+
+.palo-app-badge {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1e293b;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .palo-footer-bottom {
-    border-top: 1px solid #1e293b;
+    border-top: 1px solid #e2e8f0;
     padding-top: 1.6rem;
     display: flex;
     justify-content: space-between;

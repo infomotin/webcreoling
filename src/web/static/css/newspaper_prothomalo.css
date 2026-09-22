@@ -1,7 +1,7 @@
 /* ==========================================================================
-   PROTHOM ALO CLONE DESIGN SYSTEM (প্রথম আলো ডিজিটাল সংস্করণ)
-   Crafted with pixel-perfect authentic aesthetics, crisp Bengali typography,
-   editorial layouts, and modern responsive components.
+   PROTHOM ALO FULL-WIDTH PLAIN DESIGN & 100% RESPONSIVE CSS
+   Clean White Paper Canvas, Pixel-Perfect Bengali Typography,
+   Asymmetric Editorial Grids, Full-Width Edge-to-Edge Bands & Fluid Mobile Layouts.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Noto+Serif+Bengali:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
@@ -18,37 +18,83 @@
     --palo-border-light: #f4f4f5;
     --palo-bg: #ffffff;
     --palo-bg-soft: #fafafa;
-    --palo-bg-gray: #f4f4f5;
+    --palo-bg-gray: #f8fafc;
     --palo-blue: #0284c7;
     --palo-green: #059669;
     --palo-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --palo-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --palo-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
     --palo-radius-sm: 4px;
     --palo-radius-md: 8px;
     --palo-radius-lg: 12px;
 }
 
-/* Base Newspaper Canvas Reset */
-.palo-newspaper-canvas {
-    background-color: #ffffff;
-    color: var(--palo-text);
-    font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+/* --------------------------------------------------------------------------
+   GLOBAL RESET & FULL-WIDTH PLAIN CANVAS
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
     font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body.palo-body-canvas {
+    background-color: #ffffff !important;
+    color: var(--palo-text);
+    font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
     line-height: 1.6;
-    margin: 0 auto;
-    max-width: 1280px;
-    padding: 0 1rem;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* Full Width Inner Content Container */
+.palo-container {
+    width: 100%;
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.palo-main-content {
+    flex: 1 0 auto;
+    padding-top: 1rem;
+    padding-bottom: 3rem;
 }
 
 /* --------------------------------------------------------------------------
-   1. TOP UTILITY BAR
+   1. TOP UTILITY BAR (FULL-WIDTH BAND)
    -------------------------------------------------------------------------- */
-.palo-topbar {
+.palo-header-band {
+    width: 100%;
+    background: #ffffff;
+    border-bottom: 1px solid var(--palo-border);
+}
+
+.palo-topbar-band {
+    width: 100%;
+    border-bottom: 1px solid var(--palo-border);
+    background: #ffffff;
+}
+
+.palo-topbar-inner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--palo-border);
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
     font-size: 0.82rem;
     color: var(--palo-text-muted);
     flex-wrap: wrap;
@@ -58,44 +104,69 @@
 .palo-topbar-left {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .palo-topbar-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.palo-dot-sep {
+    color: #cbd5e1;
 }
 
 .palo-edition-tag {
     background: #f1f5f9;
-    color: #475569;
+    color: #334155;
     padding: 0.15rem 0.5rem;
     border-radius: 3px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.75rem;
+}
+
+.palo-rate-item {
+    color: #475569;
+    font-weight: 500;
 }
 
 .palo-top-link {
     color: var(--palo-text-muted);
     text-decoration: none;
+    font-weight: 600;
     transition: color 0.2s;
-    font-weight: 500;
 }
 
 .palo-top-link:hover {
     color: var(--palo-red);
 }
 
+.palo-admin-link {
+    color: var(--palo-red) !important;
+    background: var(--palo-red-light);
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
 /* --------------------------------------------------------------------------
-   2. BRAND MASTHEAD & LOGO
+   2. BRAND MASTHEAD & SEARCH BAR
    -------------------------------------------------------------------------- */
-.palo-masthead {
+.palo-masthead-band {
+    width: 100%;
+    background: #ffffff;
+    border-bottom: 2px solid var(--palo-heading);
+}
+
+.palo-masthead-inner {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.25rem 0 1rem 0;
-    border-bottom: 2px solid var(--palo-heading);
+    padding-top: 1.1rem;
+    padding-bottom: 0.9rem;
     gap: 1.5rem;
     flex-wrap: wrap;
 }
@@ -103,7 +174,7 @@
 .palo-logo-wrap {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.9rem;
     text-decoration: none;
 }
 
@@ -117,7 +188,8 @@
     justify-content: center;
     box-shadow: 0 4px 10px rgba(225, 29, 72, 0.35);
     color: #ffffff;
-    font-size: 1.5rem;
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.6rem;
     font-weight: 900;
     flex-shrink: 0;
 }
@@ -129,11 +201,11 @@
 
 .palo-brand-title {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 2.6rem;
+    font-size: 2.7rem;
     font-weight: 900;
     color: var(--palo-heading);
     line-height: 1;
-    letter-spacing: -0.8px;
+    letter-spacing: -1px;
     margin: 0;
 }
 
@@ -145,14 +217,15 @@
     font-size: 0.78rem;
     color: var(--palo-text-muted);
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     margin-top: 3px;
 }
 
 .palo-masthead-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.85rem;
+    flex-wrap: wrap;
 }
 
 .palo-search-form {
@@ -162,65 +235,67 @@
 
 .palo-search-input {
     width: 100%;
-    padding: 0.45rem 2.2rem 0.45rem 0.9rem;
+    padding: 0.5rem 2.2rem 0.5rem 0.95rem;
     border: 1px solid var(--palo-border);
-    border-radius: 20px;
+    border-radius: 22px;
     font-size: 0.85rem;
     outline: none;
     background: var(--palo-bg-soft);
     font-family: inherit;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .palo-search-input:focus {
-    background: #fff;
+    background: #ffffff;
     border-color: var(--palo-red);
     box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
 }
 
 .palo-search-btn {
     position: absolute;
-    right: 8px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
     color: var(--palo-text-muted);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 .palo-epaper-btn {
     background: var(--palo-bg-gray);
     color: var(--palo-heading);
     border: 1px solid var(--palo-border);
-    padding: 0.45rem 0.9rem;
+    padding: 0.48rem 1rem;
     border-radius: 20px;
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.84rem;
+    font-weight: 700;
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .palo-epaper-btn:hover {
     background: var(--palo-red);
-    color: #fff;
+    color: #ffffff;
     border-color: var(--palo-red);
 }
 
 /* --------------------------------------------------------------------------
    3. STICKY CATEGORY NAVIGATION BAR
    -------------------------------------------------------------------------- */
-.palo-navbar {
+.palo-navbar-band {
     position: sticky;
     top: 0;
     z-index: 100;
     background: #ffffff;
     border-bottom: 1px solid var(--palo-border);
     box-shadow: var(--palo-shadow-sm);
+    width: 100%;
 }
 
 .palo-nav-list {
@@ -231,6 +306,7 @@
     padding: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
     white-space: nowrap;
 }
 
@@ -244,11 +320,11 @@
 
 .palo-nav-link {
     display: block;
-    padding: 0.65rem 0.85rem;
+    padding: 0.75rem 0.95rem;
     color: var(--palo-heading);
     text-decoration: none;
-    font-size: 0.92rem;
-    font-weight: 600;
+    font-size: 0.94rem;
+    font-weight: 700;
     position: relative;
     transition: color 0.2s ease;
 }
@@ -263,8 +339,8 @@
     content: '';
     position: absolute;
     bottom: 0;
-    left: 0.85rem;
-    right: 0.85rem;
+    left: 0.95rem;
+    right: 0.95rem;
     height: 3px;
     background: var(--palo-red);
     border-radius: 2px 2px 0 0;
@@ -273,41 +349,50 @@
 /* --------------------------------------------------------------------------
    4. TRENDING TOPICS SUB-RIBBON
    -------------------------------------------------------------------------- */
-.palo-trending-bar {
+.palo-trending-band {
+    width: 100%;
+    background: var(--palo-bg-soft);
+    border-bottom: 1px solid var(--palo-border-light);
+}
+
+.palo-trending-inner {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.45rem 0;
-    border-bottom: 1px solid var(--palo-border-light);
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
     font-size: 0.82rem;
     overflow-x: auto;
-    white-space: nowrap;
     scrollbar-width: none;
+    white-space: nowrap;
 }
 
-.palo-trending-bar::-webkit-scrollbar {
+.palo-trending-inner::-webkit-scrollbar {
     display: none;
 }
 
 .palo-trending-label {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--palo-red);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
     flex-shrink: 0;
 }
 
+.palo-trending-chips {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+
 .palo-tag-chip {
-    background: var(--palo-bg-gray);
+    background: #ffffff;
     color: #334155;
-    padding: 0.18rem 0.6rem;
-    border-radius: 12px;
+    padding: 0.2rem 0.65rem;
+    border-radius: 14px;
     text-decoration: none;
     font-size: 0.78rem;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.2s;
-    border: 1px solid transparent;
+    border: 1px solid var(--palo-border);
 }
 
 .palo-tag-chip:hover {
@@ -325,24 +410,24 @@
     background: #fff1f2;
     border: 1px solid #fecdd3;
     border-radius: var(--palo-radius-sm);
-    padding: 0.4rem 0.8rem;
-    margin: 0.8rem 0 1.5rem 0;
+    padding: 0.45rem 0.85rem;
+    margin: 1rem 0 1.5rem 0;
     overflow: hidden;
 }
 
 .palo-breaking-badge {
     background: var(--palo-red);
-    color: #fff;
+    color: #ffffff;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;
     padding: 0.2rem 0.6rem;
     border-radius: 3px;
-    margin-right: 0.8rem;
+    margin-right: 0.85rem;
     white-space: nowrap;
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+    flex-shrink: 0;
 }
 
 .palo-pulse-dot {
@@ -372,7 +457,7 @@
     text-decoration: none;
     font-size: 0.88rem;
     font-weight: 600;
-    margin-right: 1.8rem;
+    margin-right: 2rem;
     transition: color 0.2s;
 }
 
@@ -381,28 +466,40 @@
     text-decoration: underline;
 }
 
+/* Flash Alerts */
+.palo-alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--palo-radius-sm);
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.palo-alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.palo-alert-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.palo-alert-danger  { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
 /* --------------------------------------------------------------------------
    6. FRONT-PAGE 3-COLUMN ASYMMETRIC GRID
    -------------------------------------------------------------------------- */
 .palo-home-grid {
     display: grid;
-    grid-template-columns: 1fr 1.8fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
+    grid-template-columns: 1fr 1.8fr 1.1fr;
+    gap: 1.8rem;
+    margin-bottom: 2.8rem;
 }
 
-/* Column 1: Left Major News Column */
+/* Left Column */
 .palo-col-left {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1.25rem;
     border-right: 1px solid var(--palo-border-light);
-    padding-right: 1.2rem;
+    padding-right: 1.25rem;
 }
 
 .palo-lead-subcard {
     border-bottom: 1px solid var(--palo-border-light);
-    padding-bottom: 1.2rem;
+    padding-bottom: 1.25rem;
 }
 
 .palo-lead-subcard:last-child {
@@ -428,9 +525,9 @@
 }
 
 .palo-subcard-snippet {
-    font-size: 0.84rem;
+    font-size: 0.85rem;
     color: var(--palo-text);
-    line-height: 1.5;
+    line-height: 1.55;
     margin-bottom: 0.5rem;
 }
 
@@ -442,7 +539,7 @@
     gap: 0.4rem;
 }
 
-/* Column 2: Center Big Hero Lead */
+/* Center Column */
 .palo-col-center {
     display: flex;
     flex-direction: column;
@@ -450,8 +547,8 @@
 
 .palo-hero-box {
     border-bottom: 1px solid var(--palo-border-light);
-    padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
+    padding-bottom: 1.6rem;
+    margin-bottom: 1.6rem;
 }
 
 .palo-hero-img-wrap {
@@ -459,15 +556,15 @@
     border-radius: var(--palo-radius-sm);
     overflow: hidden;
     margin-bottom: 1rem;
-    background: #000;
+    background: #f1f5f9;
 }
 
 .palo-hero-img {
     width: 100%;
-    max-height: 380px;
+    max-height: 420px;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s ease;
+    transition: transform 0.35s ease;
 }
 
 .palo-hero-img-wrap:hover .palo-hero-img {
@@ -476,12 +573,12 @@
 
 .palo-hero-title {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 2.1rem;
-    font-weight: 800;
+    font-size: 2.25rem;
+    font-weight: 900;
     line-height: 1.25;
     color: var(--palo-heading);
-    margin: 0 0 0.8rem 0;
-    letter-spacing: -0.3px;
+    margin: 0 0 0.85rem 0;
+    letter-spacing: -0.4px;
 }
 
 .palo-hero-title a {
@@ -495,45 +592,44 @@
 }
 
 .palo-hero-summary {
-    font-size: 0.96rem;
+    font-size: 0.98rem;
     color: #3f3f46;
-    line-height: 1.65;
-    margin-bottom: 1rem;
+    line-height: 1.68;
+    margin-bottom: 1.1rem;
 }
 
 .palo-hero-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-top: 0.8rem;
+    padding-top: 0.9rem;
     border-top: 1px solid var(--palo-border-light);
     font-size: 0.85rem;
 }
 
 .palo-btn-like {
-    background: #fff;
+    background: #ffffff;
     border: 1px solid #fecdd3;
     color: var(--palo-red);
-    padding: 0.3rem 0.75rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 20px;
     font-size: 0.82rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .palo-btn-like:hover {
     background: #fff1f2;
 }
 
-/* Secondary stories under Hero */
 .palo-center-subgrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.2rem;
+    gap: 1.25rem;
 }
 
 .palo-subgrid-card {
@@ -543,14 +639,14 @@
 
 .palo-subgrid-thumb {
     width: 100%;
-    height: 130px;
+    height: 140px;
     object-fit: cover;
     border-radius: var(--palo-radius-sm);
     margin-bottom: 0.6rem;
 }
 
 .palo-subgrid-title {
-    font-size: 0.98rem;
+    font-size: 1rem;
     font-weight: 700;
     line-height: 1.35;
     margin: 0 0 0.3rem 0;
@@ -565,20 +661,20 @@
     color: var(--palo-red);
 }
 
-/* Column 3: Right Sidebar (Tabs, Opinion Poll, Newsletter) */
+/* Right Sidebar */
 .palo-col-right {
     border-left: 1px solid var(--palo-border-light);
-    padding-left: 1.2rem;
+    padding-left: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.6rem;
 }
 
 /* Tabbed Ranking Card (সর্বশেষ / পঠিত) */
 .palo-tab-card {
     border: 1px solid var(--palo-border);
     border-radius: var(--palo-radius-sm);
-    background: #fff;
+    background: #ffffff;
     overflow: hidden;
 }
 
@@ -590,12 +686,12 @@
 
 .palo-tab-btn {
     flex: 1;
-    padding: 0.65rem 0.5rem;
+    padding: 0.7rem 0.5rem;
     text-align: center;
     background: none;
     border: none;
-    font-size: 0.92rem;
-    font-weight: 700;
+    font-size: 0.94rem;
+    font-weight: 800;
     color: var(--palo-text-muted);
     cursor: pointer;
     transition: all 0.2s;
@@ -603,7 +699,7 @@
 }
 
 .palo-tab-btn.active {
-    background: #fff;
+    background: #ffffff;
     color: var(--palo-red);
     border-bottom: 2px solid var(--palo-red);
     margin-bottom: -2px;
@@ -612,14 +708,14 @@
 .palo-rank-list {
     display: flex;
     flex-direction: column;
-    padding: 0.8rem;
+    padding: 0.9rem;
 }
 
 .palo-rank-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.65rem 0;
+    gap: 0.85rem;
+    padding: 0.7rem 0;
     border-bottom: 1px solid var(--palo-border-light);
 }
 
@@ -630,16 +726,16 @@
 
 .palo-rank-num {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-size: 1.45rem;
+    font-weight: 900;
     color: var(--palo-red);
     line-height: 1;
-    min-width: 22px;
+    min-width: 24px;
 }
 
 .palo-rank-title {
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
     line-height: 1.35;
     color: var(--palo-heading);
     text-decoration: none;
@@ -656,44 +752,45 @@
     border: 1px solid #e2e8f0;
     border-top: 3px solid var(--palo-red);
     border-radius: var(--palo-radius-sm);
-    padding: 1.2rem;
+    padding: 1.25rem;
 }
 
 .palo-poll-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.7rem;
 }
 
 .palo-poll-badge {
     background: #ffe4e6;
     color: var(--palo-red-dark);
     font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.15rem 0.45rem;
+    font-weight: 800;
+    padding: 0.15rem 0.5rem;
     border-radius: 3px;
 }
 
 .palo-poll-question {
-    font-size: 0.92rem;
+    font-size: 0.94rem;
     font-weight: 700;
     color: var(--palo-heading);
-    line-height: 1.45;
-    margin-bottom: 0.9rem;
+    line-height: 1.48;
+    margin-bottom: 0.95rem;
 }
 
 .palo-poll-option {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.45rem 0.65rem;
+    gap: 0.65rem;
+    padding: 0.5rem 0.75rem;
     background: #ffffff;
     border: 1px solid var(--palo-border);
     border-radius: var(--palo-radius-sm);
     cursor: pointer;
-    font-size: 0.84rem;
-    margin-bottom: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
     transition: all 0.2s;
 }
 
@@ -704,11 +801,11 @@
 .palo-btn-vote {
     width: 100%;
     background: var(--palo-red);
-    color: #fff;
+    color: #ffffff;
     border: none;
-    padding: 0.5rem;
-    font-weight: 700;
-    font-size: 0.85rem;
+    padding: 0.55rem;
+    font-weight: 800;
+    font-size: 0.88rem;
     border-radius: var(--palo-radius-sm);
     cursor: pointer;
     transition: background 0.2s;
@@ -723,38 +820,38 @@
 /* Newsletter Box */
 .palo-newsletter-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #fff;
+    color: #ffffff;
     border-radius: var(--palo-radius-sm);
-    padding: 1.25rem;
+    padding: 1.35rem;
 }
 
 .palo-newsletter-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0 0 0.4rem 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.45rem 0;
     display: flex;
     align-items: center;
     gap: 0.4rem;
 }
 
 .palo-newsletter-desc {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #cbd5e1;
-    line-height: 1.4;
-    margin-bottom: 0.9rem;
+    line-height: 1.45;
+    margin-bottom: 0.95rem;
 }
 
 .palo-input-newsletter {
     width: 100%;
-    padding: 0.5rem 0.8rem;
+    padding: 0.55rem 0.85rem;
     border-radius: var(--palo-radius-sm);
     border: 1px solid #475569;
     background: #334155;
-    color: #fff;
+    color: #ffffff;
     font-size: 0.85rem;
     outline: none;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.65rem;
     font-family: inherit;
 }
 
@@ -765,11 +862,11 @@
 .palo-btn-newsletter {
     width: 100%;
     background: var(--palo-red);
-    color: #fff;
+    color: #ffffff;
     border: none;
-    padding: 0.5rem;
-    font-weight: 700;
-    font-size: 0.85rem;
+    padding: 0.55rem;
+    font-weight: 800;
+    font-size: 0.88rem;
     border-radius: var(--palo-radius-sm);
     cursor: pointer;
     transition: background 0.2s;
@@ -788,27 +885,26 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid var(--palo-heading);
-    padding-bottom: 0.4rem;
-    margin-bottom: 1.2rem;
+    padding-bottom: 0.45rem;
+    margin-bottom: 1.3rem;
 }
 
 .palo-section-title {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 1.35rem;
-    font-weight: 800;
+    font-size: 1.4rem;
+    font-weight: 900;
     color: var(--palo-heading);
     margin: 0;
     border-left: 4px solid var(--palo-red);
-    padding-left: 0.6rem;
+    padding-left: 0.65rem;
     line-height: 1;
 }
 
 .palo-section-more {
-    font-size: 0.84rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--palo-red);
     text-decoration: none;
-    transition: gap 0.2s;
     display: flex;
     align-items: center;
     gap: 0.2rem;
@@ -822,8 +918,8 @@
 .palo-grid-4 {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.2rem;
-    margin-bottom: 2.5rem;
+    gap: 1.4rem;
+    margin-bottom: 2.8rem;
 }
 
 .palo-grid-card {
@@ -836,10 +932,10 @@
 
 .palo-grid-thumb {
     width: 100%;
-    height: 150px;
+    height: 160px;
     object-fit: cover;
     border-radius: var(--palo-radius-sm);
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.65rem;
     transition: transform 0.3s;
 }
 
@@ -848,10 +944,10 @@
 }
 
 .palo-grid-title {
-    font-size: 1rem;
+    font-size: 1.02rem;
     font-weight: 700;
     line-height: 1.35;
-    margin: 0 0 0.4rem 0;
+    margin: 0 0 0.45rem 0;
 }
 
 .palo-grid-title a {
@@ -863,16 +959,16 @@
     color: var(--palo-red);
 }
 
-/* Category Two-Column Split (Politics vs Business / Sports) */
+/* Split Column */
 .palo-split-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2.5rem;
+    gap: 2.2rem;
+    margin-bottom: 2.8rem;
 }
 
 /* --------------------------------------------------------------------------
-   8. ARTICLE READER VIEW (প্রচ্ছদ > বিস্তারিত পাঠ)
+   8. ARTICLE READER & ARCHIVE SPECIFIC STYLES
    -------------------------------------------------------------------------- */
 .palo-reader-layout {
     display: grid;
@@ -886,23 +982,24 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     color: var(--palo-text-muted);
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.95rem;
 }
 
 .palo-breadcrumbs a {
     color: var(--palo-red);
     text-decoration: none;
+    font-weight: 600;
 }
 
 .palo-reader-headline {
     font-family: 'Noto Serif Bengali', serif;
     font-size: 2.5rem;
-    font-weight: 800;
+    font-weight: 900;
     color: var(--palo-heading);
     line-height: 1.25;
-    margin: 0 0 1rem 0;
+    margin: 0 0 1.1rem 0;
     letter-spacing: -0.5px;
 }
 
@@ -910,25 +1007,25 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
+    padding: 0.85rem 0;
     border-top: 1px solid var(--palo-border);
     border-bottom: 1px solid var(--palo-border);
     margin-bottom: 1.5rem;
-    font-size: 0.84rem;
+    font-size: 0.85rem;
     color: var(--palo-text-muted);
     flex-wrap: wrap;
-    gap: 0.8rem;
+    gap: 0.85rem;
 }
 
 .palo-author-info {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
 }
 
 .palo-author-avatar {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #fee2e2;
     color: var(--palo-red);
@@ -936,26 +1033,27 @@
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 1rem;
+    font-size: 1.1rem;
 }
 
 .palo-share-toolbar {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
+    flex-wrap: wrap;
 }
 
 .palo-share-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.35rem 0.7rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 4px;
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-decoration: none;
     border: 1px solid var(--palo-border);
-    background: #fff;
+    background: #ffffff;
     color: var(--palo-text);
     transition: all 0.2s;
     cursor: pointer;
@@ -967,75 +1065,79 @@
     background: #fff1f2;
 }
 
-.palo-share-btn.fb:hover { background: #1877f2; color: #fff; border-color: #1877f2; }
-.palo-share-btn.tw:hover { background: #000; color: #fff; border-color: #000; }
-.palo-share-btn.wa:hover { background: #25d366; color: #fff; border-color: #25d366; }
-
 .palo-article-lead-img {
     width: 100%;
-    max-height: 480px;
+    max-height: 520px;
     object-fit: cover;
     border-radius: var(--palo-radius-sm);
     display: block;
 }
 
 .palo-img-caption {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--palo-text-muted);
-    padding: 0.4rem 0.2rem;
+    padding: 0.45rem 0.2rem;
     border-bottom: 1px solid var(--palo-border-light);
     margin-bottom: 1.5rem;
 }
 
 .palo-article-body {
     font-family: 'Hind Siliguri', sans-serif;
-    font-size: 1.18rem;
-    line-height: 1.9;
+    font-size: 1.2rem;
+    line-height: 1.92;
     color: #1f2937;
     white-space: pre-line;
     margin-bottom: 2rem;
 }
 
 /* --------------------------------------------------------------------------
-   9. PROTHOM ALO FOOTER
+   9. FULL-WIDTH AUTHENTIC PROTHOM ALO FOOTER
    -------------------------------------------------------------------------- */
 .palo-footer {
+    width: 100%;
     background: #111827;
     color: #94a3b8;
-    padding: 3rem 0 1.5rem 0;
-    margin-top: 3rem;
+    padding: 3.5rem 0 1.5rem 0;
+    margin-top: auto;
     border-top: 3px solid var(--palo-red);
-}
-
-.palo-footer-inner {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 1rem;
 }
 
 .palo-footer-grid {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr 1.5fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
+    gap: 2.2rem;
+    margin-bottom: 2.5rem;
 }
 
 .palo-footer-brand h3 {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 1.8rem;
-    color: #fff;
-    margin: 0 0 0.5rem 0;
+    font-size: 1.9rem;
+    color: #ffffff;
+    margin: 0 0 0.6rem 0;
 }
 
 .palo-footer-brand h3 span {
     color: var(--palo-red);
 }
 
+.palo-footer-desc {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    color: #94a3b8;
+}
+
+.palo-footer-contact {
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.6;
+}
+
 .palo-footer-col h4 {
-    color: #fff;
+    color: #ffffff;
     font-size: 1rem;
-    font-weight: 700;
-    margin: 0 0 0.8rem 0;
+    font-weight: 800;
+    margin: 0 0 0.85rem 0;
 }
 
 .palo-footer-links {
@@ -1044,13 +1146,13 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.5rem;
 }
 
 .palo-footer-links a {
     color: #94a3b8;
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.86rem;
     transition: color 0.2s;
 }
 
@@ -1060,19 +1162,33 @@
 
 .palo-footer-bottom {
     border-top: 1px solid #1e293b;
-    padding-top: 1.5rem;
+    padding-top: 1.6rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #64748b;
     flex-wrap: wrap;
     gap: 1rem;
 }
 
 /* --------------------------------------------------------------------------
-   10. RESPONSIVE BREAKPOINTS
+   10. 100% RESPONSIVE ADAPTIVE BREAKPOINTS
    -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .palo-container {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+    .palo-home-grid {
+        grid-template-columns: 1fr 1.6fr 1fr;
+        gap: 1.4rem;
+    }
+    .palo-hero-title {
+        font-size: 1.95rem;
+    }
+}
+
 @media (max-width: 1024px) {
     .palo-home-grid {
         grid-template-columns: 1fr 1.5fr;
@@ -1082,22 +1198,29 @@
         border-left: none;
         border-top: 1px solid var(--palo-border-light);
         padding-left: 0;
-        padding-top: 1.5rem;
+        padding-top: 1.6rem;
     }
     .palo-reader-layout {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
     .palo-grid-4 {
         grid-template-columns: repeat(2, 1fr);
     }
     .palo-footer-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 1.8rem;
     }
 }
 
 @media (max-width: 768px) {
+    .palo-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
     .palo-home-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
     .palo-col-left {
         border-right: none;
@@ -1110,14 +1233,52 @@
     }
     .palo-split-2 {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
     .palo-hero-title {
-        font-size: 1.6rem;
+        font-size: 1.65rem;
     }
     .palo-reader-headline {
-        font-size: 1.8rem;
+        font-size: 1.85rem;
+    }
+    .palo-search-form {
+        width: 100%;
+    }
+    .palo-masthead-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .palo-masthead-actions {
+        width: 100%;
+        justify-content: space-between;
     }
     .palo-footer-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .palo-brand-title {
+        font-size: 2.2rem;
+    }
+    .palo-topbar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .palo-topbar-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .palo-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    .palo-center-subgrid {
+        grid-template-columns: 1fr;
+    }
+    .palo-article-body {
+        font-size: 1.1rem;
+        line-height: 1.8;
     }
 }

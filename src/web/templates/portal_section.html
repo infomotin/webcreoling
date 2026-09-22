@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "portal_base.html" %}
 
 {% block title %}
 {% if category == 'politics' %}রাজনীতি - প্রথম আলো | Prothom Alo Politics Section
@@ -11,83 +11,12 @@
 {% endif %}
 {% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/newspaper_prothomalo.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="palo-newspaper-canvas">
-
-    <!-- Top Utility Bar -->
-    <div class="palo-topbar">
-        <div class="palo-topbar-left">
-            <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩</span>
-            <span>•</span>
-            <span class="palo-edition-tag">ঢাকা সংস্করণ</span>
-        </div>
-        <div class="palo-topbar-right">
-            <a href="{{ url_for('portal.index_view') }}" class="palo-top-link">&larr; প্রচ্ছদে ফিরে যান</a>
-            <a href="{{ url_for('portal.archive_view') }}" class="palo-top-link">📅 আর্কাইভ</a>
-            <a href="{{ url_for('dashboard.index_view') }}" class="palo-top-link" style="color: var(--palo-red); font-weight: 700;">
-                ⚡ AI কন্ট্রোল প্যানেল
-            </a>
-        </div>
-    </div>
-
-    <!-- Masthead & Brand -->
-    <div class="palo-masthead">
-        <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap">
-            <div class="palo-logo-emblem">আ</div>
-            <div class="palo-logo-text">
-                <h1 class="palo-brand-title">প্রথম<span>আলো</span></h1>
-                <span class="palo-brand-tagline">The Daily Prothom Alo • বিভাগীয় বিশেষ পাতা</span>
-            </div>
-        </a>
-        <div class="palo-masthead-actions">
-            <form method="GET" action="{{ url_for('portal.index_view') }}" class="palo-search-form">
-                <input type="text" name="q" class="palo-search-input" placeholder="প্রথম আলো খুঁজুন...">
-                <button type="submit" class="palo-search-btn">🔍</button>
-            </form>
-            <a href="{{ url_for('chat.index_view') }}" class="palo-epaper-btn">
-                <span>🤖</span> AI চ্যাট
-            </a>
-        </div>
-    </div>
-
-    <!-- Sticky Navigation Bar -->
-    <nav class="palo-navbar">
-        <ul class="palo-nav-list">
-            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view') }}" class="palo-nav-link">প্রচ্ছদ</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='politics') }}" class="palo-nav-link {% if category == 'politics' %}active{% endif %}">রাজনীতি</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='bangladesh') }}" class="palo-nav-link {% if category == 'bangladesh' %}active{% endif %}">বাংলাদেশ</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='business') }}" class="palo-nav-link {% if category == 'business' %}active{% endif %}">বাণিজ্য</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='international') }}" class="palo-nav-link {% if category == 'international' %}active{% endif %}">বিশ্ব</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-nav-link {% if category == 'sports' %}active{% endif %}">খেলা</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.section_view', category='technology') }}" class="palo-nav-link {% if category == 'technology' %}active{% endif %}">বিজ্ঞান ও প্রযুক্তি</a></li>
-            <li class="palo-nav-item"><a href="{{ url_for('portal.archive_view') }}" class="palo-nav-link">আর্কাইভ</a></li>
-        </ul>
-    </nav>
-
-    <!-- Breaking News Ticker if available -->
-    {% if breaking_news %}
-    <div class="palo-breaking-ticker">
-        <div class="palo-breaking-badge">
-            <span class="palo-pulse-dot"></span> ব্রেকিং
-        </div>
-        <div class="palo-ticker-content">
-            {% for bn in breaking_news %}
-            <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" class="palo-ticker-link">
-                ⚡ {{ bn.title }}
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
+{% block portal_content %}
 
     <!-- ===================================================================== -->
     <!-- SECTION TITLE BANNER & SUB-TAGS                                       -->
     <!-- ===================================================================== -->
-    <div style="margin: 1.5rem 0 2rem 0; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.8rem;">
+    <div style="margin: 1rem 0 2rem 0; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.8rem;">
         <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <span style="font-size: 0.82rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
@@ -282,46 +211,9 @@
 
     </div>
 
-</div>
+{% endblock %}
 
-<!-- Footer -->
-<footer class="palo-footer">
-    <div class="palo-footer-inner">
-        <div class="palo-footer-grid">
-            <div class="palo-footer-brand">
-                <h3>প্রথম<span>আলো</span></h3>
-                <p style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">
-                    সত্যের সন্ধানে নির্ভীক। ক্রিয়েলিং এআই প্ল্যাটফর্ম দ্বারা পরিচালিত রিয়েল-টাইম ডিজিটাল সংস্করণ।
-                </p>
-            </div>
-            <div class="palo-footer-col">
-                <h4>বিভাগসমূহ</h4>
-                <ul class="palo-footer-links">
-                    <li><a href="{{ url_for('portal.section_view', category='politics') }}">রাজনীতি</a></li>
-                    <li><a href="{{ url_for('portal.section_view', category='bangladesh') }}">বাংলাদেশ</a></li>
-                    <li><a href="{{ url_for('portal.section_view', category='business') }}">অর্থনীতি</a></li>
-                    <li><a href="{{ url_for('portal.section_view', category='sports') }}">খেলাধুলা</a></li>
-                </ul>
-            </div>
-            <div class="palo-footer-col">
-                <h4>সেবা</h4>
-                <ul class="palo-footer-links">
-                    <li><a href="{{ url_for('chat.index_view') }}">এআই চ্যাট ও আরএজি</a></li>
-                    <li><a href="{{ url_for('portal.archive_view') }}">সংবাদ আর্কাইভ</a></li>
-                    <li><a href="{{ url_for('dashboard.index_view') }}">সিস্টেম ড্যাশবোর্ড</a></li>
-                </ul>
-            </div>
-            <div class="palo-footer-col">
-                <h4>মোবাইল সংস্করণ</h4>
-                <p style="font-size: 0.82rem;">যেকোনো সময় সব খবর আপনার হাতের মুঠোয়।</p>
-            </div>
-        </div>
-        <div class="palo-footer-bottom">
-            <div>স্বত্ব © ২০২৬ প্রথম আলো ক্লোন - ক্রিয়েলিং এআই। সর্বস্বত্ব সংরক্ষিত।</div>
-        </div>
-    </div>
-</footer>
-
+{% block scripts %}
 <script>
 // Article Like
 async function toggleArticleLike(articleId, btn) {
@@ -399,11 +291,11 @@ async function submitNewsletter(event) {
         });
         const data = await res.json();
         statusEl.innerText = data.message;
-        statusEl.style.color = (data.status === 'success') ? '#34d399' : '#f59e0b';
+        statusEl.style.color = (data.status === 'success') ? '#15803d' : '#b45309';
         if (data.status === 'success') emailInput.value = '';
     } catch (e) {
         statusEl.innerText = 'সাবস্ক্রাইব করতে ত্রুটি হয়েছে।';
-        statusEl.style.color = '#ef4444';
+        statusEl.style.color = '#b91c1c';
     }
 }
 </script>

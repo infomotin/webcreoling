@@ -98,12 +98,13 @@ class HybridFineTuner:
         batch_size: int = settings.TRAIN_BATCH_SIZE,
         learning_rate: float = 3e-4,
         articles_limit: Optional[int] = None,
+        selected_tasks: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
-        Train hybrid LoRA adapter on combined 4-task dataset.
+        Train hybrid LoRA adapter on combined or task-specific dataset.
         Saves final specialized model and adapters.
         """
-        logger.info("Extracting articles from SQLite for hybrid multi-task fine-tuning...")
+        logger.info(f"Extracting articles from SQLite for fine-tuning on tasks: {selected_tasks or 'ALL'}...")
         with get_db_session() as session:
             repo = ArticleRepository(session)
             articles = repo.get_training_dataset(limit=articles_limit)
@@ -127,8 +128,8 @@ class HybridFineTuner:
                 for i, a in enumerate(MOCK_ARTICLES)
             ]
 
-        # Build Multi-Task Dataset
-        multi_task_ds = SpecializedTaskManager.build_multi_task_dataset(articles)
+        # Build Task-Specific or Multi-Task Dataset
+        multi_task_ds = SpecializedTaskManager.build_multi_task_dataset(articles, selected_tasks=selected_tasks)
 
         # Tokenize
         tokenizer = self.tokenizer
@@ -199,6 +200,6 @@ class HybridFineTuner:
             "eval_loss": eval_metrics.get("eval_loss", 0.0),
             "total_samples": len(tokenized_ds["train"]) + len(tokenized_ds["validation"]),
             "epochs": num_epochs,
-            "tasks_covered": ["categorization", "headline_generation", "summarization", "ner"],
+            "tasks_covered": selected_tasks or ["categorization", "headline_generation", "summarization", "ner"],
         }
         return summary

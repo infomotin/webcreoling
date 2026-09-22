@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}LLM Training, LoRA Deep Dive & Learning Lab - WebCreoling{% endblock %}
+{% block title %}LLM Training, Hugging Face Hub & LoRA Cockpit - WebCreoling{% endblock %}
 
 {% block content %}
 <!-- Include Chart.js for dynamic interactive training curves -->
@@ -11,211 +11,329 @@
     <div>
         <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.4rem;">
             <h1 style="font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                LLM Training, LoRA Cockpit & Research Lab
+                LLM Training & Hugging Face Hub Cockpit
             </h1>
-            <span class="badge badge-admin">v2.4 CPU & JAX/Flax Blueprint</span>
+            <span class="badge badge-admin">v2.5 HF Hub & Task-Based</span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 800px;">
-            A complete interactive framework for pre-training, parameter-efficient fine-tuning (LoRA), NF4 quantization theory, functional JAX/Flax architectures, and structured SFT reasoning.
+        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 850px;">
+            Download lightweight pre-trained LLMs from Hugging Face, run <strong>Task-Based LoRA fine-tuning</strong> on custom news skills, and <strong>export & push your trained models directly to Hugging Face Hub</strong>.
         </p>
     </div>
 
     <!-- Quick Navigation Pills -->
     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <a href="#cockpit" class="btn btn-sm btn-outline">⚡ Training Cockpit</a>
-        <a href="#lora-math" class="btn btn-sm btn-outline">📐 LoRA Decomposition</a>
+        <a href="#hf-downloader" class="btn btn-sm btn-outline">🤗 Download from HF</a>
+        <a href="#task-tuning" class="btn btn-sm btn-primary">🎯 Task-Based Training</a>
+        <a href="#hf-exporter" class="btn btn-sm btn-outline">🚀 Push to Hugging Face</a>
+        <a href="#lora-math" class="btn btn-sm btn-outline">📐 LoRA Math</a>
         <a href="#quant-nf4" class="btn btn-sm btn-outline">🧮 NF4 Quantization</a>
-        <a href="#flax-pytorch" class="btn btn-sm btn-outline">🚀 Flax vs PyTorch</a>
+        <a href="#flax-pytorch" class="btn btn-sm btn-outline">⚡ Flax vs PyTorch</a>
         <a href="#roadmap" class="btn btn-sm btn-outline">📚 4-Week Roadmap</a>
         <a href="#sft-playground" class="btn btn-sm btn-outline">🧪 SFT Playground</a>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- 1. LIVE TRAINING & FINE-TUNING COCKPIT -->
+<!-- 1. HUGGING FACE MODEL HUB DOWNLOADER -->
 <!-- ========================================================================= -->
-<div id="cockpit" style="margin-bottom: 2.5rem;">
+<div id="hf-downloader" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>⚡</span> 1. Active Training & Adapter Cockpit
+            <span>🤗</span> 1. Download Lightweight LLMs from Hugging Face Hub
         </h2>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Platform: PyTorch CPU / SIMD AVX2 Accelerated</span>
+        <span class="badge" style="background: rgba(255, 210, 30, 0.15); color: #fbbf24;">Hugging Face Hub API</span>
     </div>
 
-    <div class="grid-2" style="margin-bottom: 1.5rem;">
-        <!-- Base Model Pretraining -->
-        <div class="card" style="border-top: 3px solid var(--accent-primary);">
-            <div class="card-header">
-                <div>
-                    <h3 style="font-size: 1.05rem; font-weight: 600;">Base Causal LM Pre-Training</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Domain pre-training on scraped Bangla corpus</p>
-                </div>
-                <span class="badge badge-admin">Admin</span>
-            </div>
-
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.4;">
-                Trains the base causal language model (<code>{{ settings.BASE_MODEL_NAME }}</code>) using multi-threaded PyTorch CPU workers and domain text extracted from SQLite.
-            </p>
-
-            <form method="POST" action="{{ url_for('training.train_base_model') }}">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Epochs</label>
-                        <input type="number" name="epochs" class="form-control" value="1" min="1" max="10">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Batch Size (CPU)</label>
-                        <input type="number" class="form-control" value="{{ settings.TRAIN_BATCH_SIZE }}" disabled>
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; font-size: 0.85rem; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm);">
-                    <span style="color: var(--text-muted);">Model Checkpoint:</span>
-                    {% if base_exists %}
-                    <span style="color: var(--accent-success); font-weight: 600;">✓ Checkpoint Saved</span>
-                    {% else %}
-                    <span style="color: var(--accent-warning);">Not Trained Yet</span>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    🚀 Pre-Train Base Causal LM
-                </button>
-            </form>
-        </div>
-
-        <!-- Hybrid LoRA Fine-Tuning -->
-        <div class="card" style="border-top: 3px solid var(--accent-purple);">
-            <div class="card-header">
-                <div>
-                    <h3 style="font-size: 1.05rem; font-weight: 600;">Multi-Task LoRA Fine-Tuning</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">4 Core Skills: Categorization, Headlines, Summary, NER</p>
-                </div>
-                <span class="badge badge-analyst">Hybrid LoRA</span>
-            </div>
-
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.4;">
-                Attaches low-rank adaptation matrices ($r=8, \alpha=16$) to self-attention projection layers ($Q, V$) to specialize the base model across all 4 news processing tasks.
-            </p>
-
-            <form method="POST" action="{{ url_for('training.finetune_lora') }}">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">LoRA Epochs</label>
-                        <input type="number" name="epochs" class="form-control" value="2" min="1" max="10">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">LoRA Rank ($r$)</label>
-                        <input type="text" class="form-control" value="r=8, α=16" disabled>
-                    </div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; font-size: 0.85rem; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm);">
-                    <span style="color: var(--text-muted);">Specialized LoRA:</span>
-                    {% if specialized_exists %}
-                    <span style="color: var(--accent-success); font-weight: 600;">✓ LoRA Adapter Ready</span>
-                    {% else %}
-                    <span style="color: var(--accent-warning);">Adapter Missing</span>
-                    {% endif %}
-                </div>
-
-                <button type="submit" class="btn btn-secondary" style="width: 100%;">
-                    🎯 Fine-Tune Multi-Task LoRA
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Live Loss & Perplexity Analytics Chart -->
-    <div class="card" style="margin-bottom: 1.5rem;">
-        <div class="card-header">
+    <!-- Recommended Lightweight Models Grid -->
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+        {% for m in recommended_models %}
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid {% if m.recommended %}#38bdf8{% else %}#6b7280{% endif %};">
             <div>
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Training Dynamics & Convergence Curves</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Cross-Entropy Loss vs. Epochs & Perplexity Decay</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">{{ m.name }}</h4>
+                    {% if m.recommended %}
+                    <span class="badge badge-category" style="font-size: 0.65rem;">Recommended</span>
+                    {% endif %}
+                </div>
+                <p style="font-size: 0.78rem; color: #94a3b8; font-family: monospace; margin-bottom: 0.5rem;">{{ m.id }}</p>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 1rem;">
+                    {{ m.description }}
+                </p>
             </div>
-            <div style="display: flex; gap: 0.5rem;">
-                <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Train Loss</span>
-                <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">Validation Loss</span>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem; padding: 0.4rem 0.6rem; background: rgba(0,0,0,0.25); border-radius: 4px;">
+                    <span>Params: <strong style="color: #fff;">{{ m.params }}</strong></span>
+                    <span>Disk: <strong style="color: #38bdf8;">~{{ m.size_mb }} MB</strong></span>
+                </div>
+                <form method="POST" action="{{ url_for('training.download_hf_model') }}">
+                    <input type="hidden" name="model_id" value="{{ m.id }}">
+                    <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">
+                        ⬇️ Download & Cache
+                    </button>
+                </form>
             </div>
         </div>
-        <div style="position: relative; height: 260px; width: 100%;">
-            <canvas id="lossChart"></canvas>
-        </div>
+        {% endfor %}
     </div>
 
-    <!-- Evaluation Report Benchmark -->
-    {% if eval_report and eval_report.tasks %}
+    <!-- Custom Model Download Form -->
     <div class="card">
         <div class="card-header">
-            <h3 style="font-size: 1.05rem; font-weight: 600;">Multi-Task Specialized Benchmark Performance</h3>
-            <span class="badge badge-category">Evaluated Checkpoint</span>
+            <h3 style="font-size: 1rem; font-weight: 600;">Download Custom Hugging Face Model ID</h3>
+            <span class="badge badge-admin">Admin Action</span>
+        </div>
+        <form method="POST" action="{{ url_for('training.download_hf_model') }}" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Hugging Face Model ID</label>
+                <input type="text" name="model_id" class="form-control" placeholder="e.g. HuggingFaceTB/SmolLM2-135M or Qwen/Qwen2.5-0.5B" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Hugging Face Token (Optional for Private/Gated)</label>
+                <input type="password" name="hf_token" class="form-control" placeholder="hf_xxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">
+                ⚡ Download Model
+            </button>
+        </form>
+
+        {% if cached_models %}
+        <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color); font-size: 0.82rem;">
+            <span style="color: var(--text-muted);">Locally Cached Models: </span>
+            {% for cm in cached_models %}
+            <span class="badge badge-category" style="margin-right: 0.3rem;">{{ cm }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 2. TASK-BASED FINE-TUNING COCKPIT -->
+<!-- ========================================================================= -->
+<div id="task-tuning" style="margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎯</span> 2. Task-Based LoRA Fine-Tuning Cockpit
+        </h2>
+        <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">Selectable Skill Adapters</span>
+    </div>
+
+    <div class="card" style="border-top: 3px solid var(--accent-purple);">
+        <form method="POST" action="{{ url_for('training.finetune_task_based') }}">
+            <!-- Task Selection Checkboxes -->
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label" style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">
+                    Select Specialized Tasks to Train:
+                </label>
+                <div class="grid-4" style="gap: 1rem;">
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
+                        <input type="checkbox" name="tasks" value="categorize" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
+                        <div>
+                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📂 Categorization</strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Topic classification across 7 news genres.</span>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
+                        <input type="checkbox" name="tasks" value="headline" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
+                        <div>
+                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📰 Headline Gen</strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Generate punchy headlines from article body text.</span>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
+                        <input type="checkbox" name="tasks" value="summarize" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
+                        <div>
+                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📝 Summarization</strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Abstractive/extractive article summarization.</span>
+                        </div>
+                    </label>
+
+                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
+                        <input type="checkbox" name="tasks" value="ner" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
+                        <div>
+                            <strong style="color: #fff; font-size: 0.85rem; display: block;">🏷️ Entity (NER)</strong>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Extract Person, Location, and Org entities.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Hyperparameters Grid -->
+            <div class="grid-4" style="gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Base Model Architecture</label>
+                    <select name="base_model_choice" class="form-control">
+                        <option value="default" selected>Default ({{ settings.BASE_MODEL_NAME }})</option>
+                        {% for cm in cached_models %}
+                        <option value="{{ cm }}">Cached: {{ cm }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Training Epochs</label>
+                    <input type="number" name="epochs" class="form-control" value="2" min="1" max="10">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">LoRA Rank ($r$)</label>
+                    <select name="lora_r" class="form-control">
+                        <option value="4">r=4 (Ultra-Lightweight)</option>
+                        <option value="8" selected>r=8 (Standard Balanced)</option>
+                        <option value="16">r=16 (High Capacity)</option>
+                        <option value="32">r=32 (Complex Reasoning)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Learning Rate ($\eta$)</label>
+                    <input type="text" name="learning_rate" class="form-control" value="0.0003">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.8rem;">
+                ⚡ Launch Task-Based LoRA Fine-Tuning
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 3. EXPORT & PUSH TO HUGGING FACE HUB -->
+<!-- ========================================================================= -->
+<div id="hf-exporter" style="margin-bottom: 2.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🚀</span> 3. Export & Push Fine-Tuned Model to Hugging Face Hub
+        </h2>
+        <span class="badge badge-analyst">One-Click Model Publisher</span>
+    </div>
+
+    <div class="card" style="border-top: 3px solid #10b981;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
+            Directly upload your trained LoRA adapter weights, tokenizer, and an automatically generated <strong>Model Card (README.md)</strong> with evaluation metrics and Python inference code to your Hugging Face account.
+        </p>
+
+        <form method="POST" action="{{ url_for('training.export_to_hf_hub') }}">
+            <div style="display: grid; grid-template-columns: 1.5fr 1.5fr 1fr; gap: 1rem; margin-bottom: 1.2rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Target Repository ID</label>
+                    <input type="text" name="repo_id" class="form-control" placeholder="e.g. your-username/bangla-news-lora-smollm" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Hugging Face Write Access Token</label>
+                    <input type="password" name="hf_token" class="form-control" placeholder="hf_xxxxxxxxxxxxxxxxxxxx" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Repository Visibility</label>
+                    <select name="is_private" class="form-control">
+                        <option value="0" selected>Public</option>
+                        <option value="1">Private</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    Status: {% if specialized_exists %}<strong style="color: var(--accent-success);">✓ Trained LoRA Adapter Ready to Push</strong>{% else %}<strong style="color: var(--accent-warning);">LoRA Adapter Not Found (Train first)</strong>{% endif %}
+                </span>
+                <button type="submit" class="btn btn-secondary" style="padding: 0.6rem 1.8rem;">
+                    🚀 Publish Model to Hugging Face Hub
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 4. LIVE LOSS & BENCHMARK ANALYTICS -->
+<!-- ========================================================================= -->
+<div class="card" style="margin-bottom: 2.5rem;">
+    <div class="card-header">
+        <div>
+            <h3 style="font-size: 1.05rem; font-weight: 600;">Training Dynamics & Multi-Task Benchmark Metrics</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Cross-Entropy Loss Curve & Evaluated Task Accuracies</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Train Loss</span>
+            <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">Validation Loss</span>
+        </div>
+    </div>
+    <div style="position: relative; height: 240px; width: 100%; margin-bottom: 1.5rem;">
+        <canvas id="lossChart"></canvas>
+    </div>
+
+    <!-- Evaluation Benchmark Metrics -->
+    {% if eval_report and eval_report.tasks %}
+    <div class="grid-4" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.2rem;">
+        {% set cat = eval_report.tasks.article_categorization %}
+        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Categorization</p>
+            <h3 style="font-size: 1.5rem; color: #60a5fa; margin: 0.2rem 0;">{{ (cat.accuracy * 100)|round(1) }}%</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-success);">Top-1 Accuracy</span>
         </div>
 
-        <div class="grid-4" style="margin-top: 1rem;">
-            {% set cat = eval_report.tasks.article_categorization %}
-            <div style="padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Categorization</p>
-                <h3 style="font-size: 1.6rem; color: #60a5fa; margin: 0.3rem 0;">{{ (cat.accuracy * 100)|round(1) }}%</h3>
-                <span style="font-size: 0.75rem; color: var(--accent-success);">Top-1 Accuracy</span>
-            </div>
+        {% set head = eval_report.tasks.headline_generation %}
+        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Headline Gen</p>
+            <h3 style="font-size: 1.5rem; color: #a78bfa; margin: 0.2rem 0;">{{ head.rougeL }}</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-primary);">ROUGE-L Score</span>
+        </div>
 
-            {% set head = eval_report.tasks.headline_generation %}
-            <div style="padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Headline Generation</p>
-                <h3 style="font-size: 1.6rem; color: #a78bfa; margin: 0.3rem 0;">{{ head.rougeL }}</h3>
-                <span style="font-size: 0.75rem; color: var(--accent-primary);">ROUGE-L Score</span>
-            </div>
+        {% set summ = eval_report.tasks.content_summarization %}
+        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Summarization</p>
+            <h3 style="font-size: 1.5rem; color: #34d399; margin: 0.2rem 0;">{{ summ.rouge1 }}</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-success);">ROUGE-1 Score</span>
+        </div>
 
-            {% set summ = eval_report.tasks.content_summarization %}
-            <div style="padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Summarization</p>
-                <h3 style="font-size: 1.6rem; color: #34d399; margin: 0.3rem 0;">{{ summ.rouge1 }}</h3>
-                <span style="font-size: 0.75rem; color: var(--accent-success);">ROUGE-1 Score</span>
-            </div>
-
-            {% set ner = eval_report.tasks.named_entity_recognition %}
-            <div style="padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-                <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Named Entity (NER)</p>
-                <h3 style="font-size: 1.6rem; color: #f59e0b; margin: 0.3rem 0;">{{ ner.f1 }}</h3>
-                <span style="font-size: 0.75rem; color: var(--accent-warning);">Micro F1 Score</span>
-            </div>
+        {% set ner = eval_report.tasks.named_entity_recognition %}
+        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Named Entity (NER)</p>
+            <h3 style="font-size: 1.5rem; color: #f59e0b; margin: 0.2rem 0;">{{ ner.f1 }}</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-warning);">Micro F1 Score</span>
         </div>
     </div>
     {% endif %}
 </div>
 
 <!-- ========================================================================= -->
-<!-- 2. MATHEMATICAL DEEP DIVE: LoRA DECOMPOSITION -->
+<!-- 5. MATHEMATICAL DEEP DIVE: LoRA DECOMPOSITION -->
 <!-- ========================================================================= -->
 <div id="lora-math" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>📐</span> 2. The Mathematics of LoRA Decomposition
+            <span>📐</span> 5. The Mathematics of LoRA Decomposition
         </h2>
         <span class="badge" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa;">Matrix Algebra</span>
     </div>
 
-    <div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card">
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: center;">
             <div>
                 <h3 style="font-size: 1.1rem; font-weight: 600; color: #93c5fd; margin-bottom: 0.8rem;">
-                    Low-Rank Intrinsic Dimension Hypothesis
+                    Low-Rank Intrinsic Dimension Factorization
                 </h3>
                 <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.8rem;">
-                    During full fine-tuning, the weight update matrix $\Delta W \in \mathbb{R}^{d \times k}$ has a very low "intrinsic dimension" ($r \ll \min(d, k)$). LoRA factorizes the dense update into two low-rank matrices:
+                    During fine-tuning, dense weight updates $\Delta W \in \mathbb{R}^{d \times k}$ reside on a low intrinsic manifold. LoRA factorizes this into two small rank-$r$ matrices:
                 </p>
                 <div style="padding: 1rem; background: rgba(0,0,0,0.5); border-radius: var(--radius-sm); border: 1px solid rgba(96, 165, 250, 0.3); font-family: 'Fira Code', monospace; color: #67e8f9; font-size: 1rem; text-align: center; margin-bottom: 0.8rem;">
                     $$h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} (B \cdot A) x$$
                 </div>
                 <ul style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; padding-left: 1.2rem;">
-                    <li><strong>$W_0 \in \mathbb{R}^{d \times k}$</strong>: Frozen pre-trained base weight matrix (Zero gradient computation).</li>
+                    <li><strong>$W_0 \in \mathbb{R}^{d \times k}$</strong>: Frozen base model weights.</li>
                     <li><strong>$A \in \mathbb{R}^{r \times k}$</strong>: Down-projection matrix initialized with random Gaussian $\mathcal{N}(0, \sigma^2)$.</li>
-                    <li><strong>$B \in \mathbb{R}^{d \times r}$</strong>: Up-projection matrix initialized to <strong>0</strong> (ensures $\Delta W = 0$ at step 0).</li>
-                    <li><strong>$\frac{\alpha}{r}$</strong>: Constant scaling factor balancing base model knowledge with adapter updates.</li>
+                    <li><strong>$B \in \mathbb{R}^{d \times r}$</strong>: Up-projection matrix initialized to <strong>0</strong> ($\Delta W = 0$ at start).</li>
+                    <li><strong>$\frac{\alpha}{r}$</strong>: Scaling constant balancing base knowledge and adapter adjustments.</li>
                 </ul>
             </div>
 
-            <!-- Live Interactive Parameter Reduction Calculator -->
+            <!-- Live Parameter Reduction Calculator -->
             <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                 <h4 style="font-size: 0.95rem; font-weight: 600; color: #f3f4f6; margin-bottom: 1rem;">
                     🧮 Live Parameter Reduction Calculator
@@ -269,19 +387,19 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- 3. QUANTIZATION THEORY & NF4 BINS -->
+<!-- 6. QUANTIZATION THEORY & NF4 BINS -->
 <!-- ========================================================================= -->
 <div id="quant-nf4" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧮</span> 3. NF4 (NormalFloat4) Quantization Mechanics
+            <span>🧮</span> 6. NF4 (NormalFloat4) Quantization Mechanics
         </h2>
         <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #34d399;">Information Theory</span>
     </div>
 
-    <div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card">
         <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.2rem;">
-            Pretrained neural network weights empirically follow a Gaussian distribution $\mathcal{N}(0, \sigma^2)$. Standard 4-bit integer quantization (INT4) uses uniform intervals, leading to high quantization errors near zero where most weights reside. <strong>NF4 builds 16 information-theoretically optimal non-uniform quantiles</strong> containing an equal number of expected data points.
+            Pre-trained neural weights follow a Gaussian distribution $\mathcal{N}(0, \sigma^2)$. Uniform 4-bit integer quantization causes significant errors near zero. <strong>NF4 constructs 16 information-theoretically optimal quantiles</strong> with equal expected information density.
         </p>
 
         <!-- 16 NF4 Quantile Bins Visualization -->
@@ -307,31 +425,30 @@
             <div style="background: #1e3a8a; padding: 6px 2px; border-radius: 3px; color: #93c5fd;" title="q15 = 1.00">+1.00</div>
         </div>
 
-        <!-- Double Quantization Breakdown -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; font-size: 0.85rem;">
             <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #60a5fa;">
                 <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">1. Block Quantization</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Weights chunked into blocks of $B=64$. Each block shares a 32-bit float scale factor $c_1$.</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Weights chunked into blocks of $B=64$ with shared 32-bit float scale factors.</span>
             </div>
             <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #c084fc;">
                 <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">2. Double Quantization (DQ)</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Quantizes the 32-bit quantization constants $c_1$ into 8-bit integers with block size $B_2=256$, saving 0.37 bits/param.</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Quantizes the 32-bit float scale factors into 8-bit integers, saving 0.37 bits/param.</span>
             </div>
             <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #34d399;">
                 <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">3. Paged Optimizers</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Uses CUDA unified memory to page 32-bit Adam states to CPU RAM during peak activation spikes, eliminating OOM crashes.</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Pages Adam states to CPU RAM during peak activation spikes, preventing GPU OOM.</span>
             </div>
         </div>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- 4. HIGH-PERFORMANCE BLUEPRINT: JAX/FLAX vs. PYTORCH -->
+<!-- 7. HIGH-PERFORMANCE BLUEPRINT: JAX/FLAX vs. PYTORCH -->
 <!-- ========================================================================= -->
 <div id="flax-pytorch" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🚀</span> 4. Dual Framework Architecture: PyTorch vs. JAX / Flax
+            <span>⚡</span> 7. Dual Framework Architecture: PyTorch vs. JAX / Flax
         </h2>
         <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">Engineering Comparison</span>
     </div>
@@ -352,7 +469,7 @@
             <div>
                 <h3 style="font-size: 1.1rem; font-weight: 600; color: #f59e0b;">Functional State Management with JAX & Flax NNX</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                    Pure functions, XLA JIT Compilation, and Immutable <code>TrainState</code> for TPU Pod and multi-GPU cluster scaling.
+                    Pure functions, XLA JIT Compilation, and Immutable <code>TrainState</code> for TPU Pod scaling.
                 </p>
             </div>
             <span class="badge badge-analyst">Google JAX / TPU Native</span>
@@ -364,7 +481,7 @@
 <span style="color: #ff7b72;">from</span> flax.training.train_state <span style="color: #ff7b72;">import</span> TrainState
 <span style="color: #ff7b72;">import</span> optax
 
-<span style="color: #8b949e;"># 1. Functional LoRA Linear Layer Definition in Flax NNX</span>
+<span style="color: #8b949e;"># Functional LoRA Linear Layer in Flax NNX</span>
 <span style="color: #ff7b72;">class</span> <span style="color: #f0883e;">LoRALinearFlax</span>(nnx.Module):
     <span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">__init__</span>(self, in_features: <span style="color: #79c0ff;">int</span>, out_features: <span style="color: #79c0ff;">int</span>, rank: <span style="color: #79c0ff;">int</span> = <span style="color: #79c0ff;">8</span>, alpha: <span style="color: #79c0ff;">float</span> = <span style="color: #79c0ff;">16.0</span>, rngs: nnx.Rngs = <span style="color: #79c0ff;">None</span>):
         self.base_w = nnx.Param(jax.random.normal(rngs.params(), (in_features, out_features)))
@@ -375,41 +492,10 @@
     <span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">__call__</span>(self, x: jax.Array) -&gt; jax.Array:
         base_out = jnp.dot(x, self.base_w.value)
         lora_out = jnp.dot(jnp.dot(x, self.lora_a.value), self.lora_b.value) * self.scaling
-        <span style="color: #ff7b72;">return</span> base_out + lora_out
-
-<span style="color: #8b949e;"># 2. Pure JIT-Compiled Training Step</span>
-<span style="color: #d2a8ff;">@jax.jit</span>
-<span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">train_step</span>(state: TrainState, batch: <span style="color: #79c0ff;">dict</span>) -&gt; tuple[TrainState, jax.Array]:
-    <span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">loss_fn</span>(params):
-        logits = state.apply_fn({<span style="color: #a5d6ff;">'params'</span>: params}, batch[<span style="color: #a5d6ff;">'input_ids'</span>])
-        loss = optax.softmax_cross_entropy_with_integer_labels(logits=logits, labels=batch[<span style="color: #a5d6ff;">'labels'</span>])
-        <span style="color: #ff7b72;">return</span> jnp.mean(loss)
-
-    loss, grads = jax.value_and_grad(loss_fn)(state.params)
-    new_state = state.apply_gradients(grads=grads)
-    <span style="color: #ff7b72;">return</span> new_state, loss</code></pre>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; font-size: 0.82rem;">
-            <div style="background: rgba(0,0,0,0.25); padding: 0.8rem; border-radius: var(--radius-sm);">
-                <strong style="color: #60a5fa;">Advantages of JAX/Flax on TPUs:</strong>
-                <ul style="padding-left: 1.2rem; color: var(--text-secondary); margin-top: 0.3rem;">
-                    <li>Zero Python runtime overhead due to end-to-end XLA graph compilation.</li>
-                    <li>Mesh sharding with <code>jax.experimental.shard_map</code> across TPU Pods.</li>
-                    <li>Pure functions guarantee thread safety and deterministic reproduction.</li>
-                </ul>
-            </div>
-            <div style="background: rgba(0,0,0,0.25); padding: 0.8rem; border-radius: var(--radius-sm);">
-                <strong style="color: #c084fc;">Production Web Backend Integration:</strong>
-                <ul style="padding-left: 1.2rem; color: var(--text-secondary); margin-top: 0.3rem;">
-                    <li>FastAPI / Flask sends asynchronous RPC jobs to Celery / Ray workers.</li>
-                    <li>TPU memory handles high token-throughput streaming without GIL locks.</li>
-                    <li>Checkpoints serialized via TensorStore / Orbax for instant hot-swapping.</li>
-                </ul>
-            </div>
-        </div>
+        <span style="color: #ff7b72;">return</span> base_out + lora_out</code></pre>
     </div>
 
-    <!-- PyTorch Content (Hidden by default) -->
+    <!-- PyTorch Content -->
     <div id="torchContent" class="card" style="margin-bottom: 1.5rem; display: none;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
             <div>
@@ -422,102 +508,79 @@
         </div>
 
         <pre style="background: #0d1117; padding: 1.2rem; border-radius: var(--radius-sm); color: #e6edf3; font-size: 0.85rem; overflow-x: auto; line-height: 1.4; border: 1px solid #30363d;"><code><span style="color: #ff7b72;">from</span> peft <span style="color: #ff7b72;">import</span> LoraConfig, get_peft_model, TaskType
-<span style="color: #ff7b72;">from</span> transformers <span style="color: #ff7b72;">import</span> AutoModelForCausalLM, TrainingArguments, Trainer
+<span style="color: #ff7b72;">from</span> transformers <span style="color: #ff7b72;">import</span> AutoModelForCausalLM
 
-<span style="color: #8b949e;"># 1. Parameter-Efficient Adapter Configuration</span>
 lora_config = LoraConfig(
     r=<span style="color: #79c0ff;">8</span>,
     lora_alpha=<span style="color: #79c0ff;">16</span>,
-    target_modules=[<span style="color: #a5d6ff;">"c_attn"</span>, <span style="color: #a5d6ff;">"q_proj"</span>, <span style="color: #a5d6ff;">"v_proj"</span>],
-    lora_dropout=<span style="color: #79c0ff;">0.05</span>,
-    bias=<span style="color: #a5d6ff;">"none"</span>,
+    target_modules=[<span style="color: #a5d6ff;">"q_proj"</span>, <span style="color: #a5d6ff;">"v_proj"</span>, <span style="color: #a5d6ff;">"c_attn"</span>],
     task_type=TaskType.CAUSAL_LM
 )
-
-<span style="color: #8b949e;"># 2. Wrap Model with LoRA Adapter Layers</span>
-base_model = AutoModelForCausalLM.from_pretrained(<span style="color: #a5d6ff;">"distilgpt2"</span>)
-model = get_peft_model(base_model, lora_config)
-model.print_trainable_parameters()  <span style="color: #8b949e;"># Trainable: ~0.8% of base</span></code></pre>
+model = get_peft_model(base_model, lora_config)</code></pre>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- 5. 4-WEEK STRUCTURED LEARNING FRAMEWORK & ROADMAP -->
+<!-- 8. 4-WEEK LEARNING FRAMEWORK & ROADMAP -->
 <!-- ========================================================================= -->
 <div id="roadmap" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>📚</span> 5. 4-Week Fine-Tuning Learning Framework & Project Manual
+            <span>📚</span> 8. 4-Week Fine-Tuning Learning Framework & Project Manual
         </h2>
         <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #c084fc;">Curriculum</span>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-        <!-- Week 1 -->
         <div class="card" style="border-top: 3px solid #60a5fa; padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 700; text-transform: uppercase;">Week 1</span>
-                <span class="badge" style="font-size: 0.7rem;">Theory</span>
-            </div>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">Mathematical Foundations & Quantization</h3>
+            <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 700; text-transform: uppercase;">Week 1</span>
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Theory & Quantization</h3>
             <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Low-Rank Matrix decomposition ($W_0 + \frac{\alpha}{r}BA$).</li>
-                <li>NF4 quantile derivation & Double Quantization.</li>
-                <li>Self-Attention vs. FlashAttention-2 matrix tiling.</li>
+                <li>LoRA Low-Rank factorization.</li>
+                <li>NF4 quantile derivation.</li>
+                <li>FlashAttention matrix tiling.</li>
             </ul>
         </div>
 
-        <!-- Week 2 -->
         <div class="card" style="border-top: 3px solid #34d399; padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                <span style="font-size: 0.75rem; color: #34d399; font-weight: 700; text-transform: uppercase;">Week 2</span>
-                <span class="badge" style="font-size: 0.7rem;">Environment</span>
-            </div>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">Hardware & Kernel Setup</h3>
+            <span style="font-size: 0.75rem; color: #34d399; font-weight: 700; text-transform: uppercase;">Week 2</span>
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Hardware & Setup</h3>
             <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Unsloth Triton kernel optimization on Colab T4.</li>
-                <li>JAX/Flax TPU VM environment configuration.</li>
-                <li>CPU SIMD OpenMP thread scheduling.</li>
+                <li>Unsloth Triton kernels on T4.</li>
+                <li>Flax TPU VM environment.</li>
+                <li>CPU SIMD thread scheduling.</li>
             </ul>
         </div>
 
-        <!-- Week 3 -->
         <div class="card" style="border-top: 3px solid #f59e0b; padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                <span style="font-size: 0.75rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">Week 3</span>
-                <span class="badge" style="font-size: 0.7rem;">Data Pipeline</span>
-            </div>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">SFT & Reasoning Pattern Formatting</h3>
+            <span style="font-size: 0.75rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">Week 3</span>
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">SFT Reasoning Data</h3>
             <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Bangla Unicode NFC normalization & ZWNJ hygiene.</li>
-                <li>ChatML reasoning token tags (<code>&lt;thought&gt;</code>).</li>
-                <li>Loss masking on input prompt tokens.</li>
+                <li>Bangla Unicode NFC hygiene.</li>
+                <li>ChatML <code>&lt;thought&gt;</code> tags.</li>
+                <li>Prompt token loss masking.</li>
             </ul>
         </div>
 
-        <!-- Week 4 -->
         <div class="card" style="border-top: 3px solid #ec4899; padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                <span style="font-size: 0.75rem; color: #ec4899; font-weight: 700; text-transform: uppercase;">Week 4</span>
-                <span class="badge" style="font-size: 0.7rem;">Evaluation</span>
-            </div>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">Training & Logic Benchmark Testing</h3>
+            <span style="font-size: 0.75rem; color: #ec4899; font-weight: 700; text-transform: uppercase;">Week 4</span>
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Training & Logic Eval</h3>
             <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Cosine annealing LR schedule & Weight Decay.</li>
-                <li>ROUGE, BLEU, and NER F1 automated metrics.</li>
-                <li>Unseen Bangla logic puzzle reasoning benchmarks.</li>
+                <li>Cosine annealing LR schedule.</li>
+                <li>ROUGE, BLEU & NER F1 scores.</li>
+                <li>Logic puzzle reasoning test.</li>
             </ul>
         </div>
     </div>
 </div>
 
 <!-- ========================================================================= -->
-<!-- 6. INTERACTIVE SFT JSONL DATASET PLAYGROUND -->
+<!-- 9. INTERACTIVE SFT JSONL DATASET PLAYGROUND -->
 <!-- ========================================================================= -->
 <div id="sft-playground" style="margin-bottom: 2.5rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
         <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧪</span> 6. Interactive SFT Reasoning Dataset Playground
+            <span>🧪</span> 9. Interactive SFT Reasoning Dataset Playground
         </h2>
         <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">ChatML Schema</span>
     </div>
@@ -532,7 +595,7 @@ model.print_trainable_parameters()  <span style="color: #8b949e;"># Trainable: ~
             <div>
                 <div class="form-group">
                     <label class="form-label">System Directive</label>
-                    <input type="text" id="sftSystem" class="form-control" value="You are a senior Bangla news analyst and reasoning engine.">
+                    <input type="text" id="sftSystem" class="form-control" value="You are an expert Bangla AI language model.">
                 </div>
 
                 <div class="form-group">
@@ -562,7 +625,7 @@ model.print_trainable_parameters()  <span style="color: #8b949e;"># Trainable: ~
                     <span id="tokenCountBadge" class="badge badge-category">Est: ~110 tokens</span>
                 </div>
                 <pre id="sftOutput" style="background: #090d16; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); color: #34d399; font-size: 0.8rem; height: 280px; overflow-y: auto; white-space: pre-wrap; font-family: 'Fira Code', monospace;"><|im_start|>system
-You are a senior Bangla news analyst and reasoning engine.<|im_end|>
+You are an expert Bangla AI language model.<|im_end|>
 <|im_start|>user
 বাংলাদেশের জাতীয় সংসদে ২০২৬-২৭ অর্থবছরের বাজেট নিয়ে প্রধান তিনটি সিদ্ধান্ত কী?<|im_end|>
 <|im_start|>thought
@@ -570,43 +633,6 @@ You are a senior Bangla news analyst and reasoning engine.<|im_end|>
 <|im_start|>assistant
 জাতীয় সংসদে ঘোষিত বাজেটের প্রধান তিনটি সিদ্ধান্ত হলো: ১. প্রযুক্তি খাতে ১৫% বরাদ্দ বৃদ্ধি, ২. স্বাস্থ্য বীমা সম্প্রসারণ, ৩. আধুনিক রেল নেটওয়ার্ক প্রকল্প。<|im_end|></pre>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 7. llama.cpp GGUF QUANTIZATION GENERATOR -->
-<!-- ========================================================================= -->
-<div id="manifest-sec" class="card">
-    <div class="card-header">
-        <div>
-            <h3 style="font-size: 1.05rem; font-weight: 600;">7. llama.cpp & GGUF Quantization Hub</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Export and quantize LoRA merged weights for native C++ CPU/GPU inference</p>
-        </div>
-        <span class="badge badge-analyst">GGUF Quantizer</span>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; align-items: center; margin-top: 0.8rem;">
-        <div>
-            <div class="form-group">
-                <label class="form-label">Quantization Method</label>
-                <select id="quantPreset" class="form-control" onchange="updateLlamaCommand()">
-                    <option value="q4_k_m" selected>Q4_K_M (Recommended - High speed, 4.5 bits/weight)</option>
-                    <option value="q5_k_m">Q5_K_M (Enhanced Accuracy - 5.5 bits/weight)</option>
-                    <option value="q8_0">Q8_0 (Near FP16 Quality - 8.5 bits/weight)</option>
-                    <option value="f16">F16 (Unquantized - Full 16-bit Float)</option>
-                </select>
-            </div>
-
-            <pre id="llamaCmd" style="background: #090d16; padding: 1rem; border-radius: var(--radius-sm); color: #38bdf8; font-size: 0.85rem; overflow-x: auto; border: 1px solid var(--border-color); font-family: monospace;">python llama.cpp/convert_hf_to_gguf.py data/checkpoints/final_specialized_model --outtype q4_k_m --outfile data/checkpoints/bangla_model_q4_k_m.gguf</pre>
-        </div>
-
-        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45;">
-            <strong style="color: #fff; display: block; margin-bottom: 0.4rem;">💡 Inference Run Command:</strong>
-            <code>./llama-cli -m data/checkpoints/bangla_model_q4_k_m.gguf -p "সংবাদ: " -n 128 -t 4</code>
-            <p style="margin-top: 0.6rem; color: var(--text-muted); font-size: 0.78rem;">
-                Compatible with Ollama, LM Studio, and llama.cpp native C++ servers on Windows, Linux, and Apple Silicon.
-            </p>
         </div>
     </div>
 </div>
@@ -674,14 +700,7 @@ async function previewSFT() {
     }
 }
 
-// 4. llama.cpp Command Builder
-function updateLlamaCommand() {
-    const quant = document.getElementById("quantPreset").value;
-    const cmd = `python llama.cpp/convert_hf_to_gguf.py data/checkpoints/final_specialized_model --outtype ${quant} --outfile data/checkpoints/bangla_model_${quant}.gguf`;
-    document.getElementById("llamaCmd").innerText = cmd;
-}
-
-// 5. Initialize Chart.js Convergence Curves
+// 4. Initialize Chart.js Convergence Curves
 document.addEventListener("DOMContentLoaded", () => {
     recalcLoRA();
 

@@ -92,10 +92,20 @@ class SpecializedTaskManager:
         return entities
 
     @classmethod
-    def build_multi_task_dataset(cls, articles: List[Article]) -> DatasetDict:
+    def build_multi_task_dataset(
+        cls,
+        articles: List[Article],
+        selected_tasks: Optional[List[str]] = None,
+    ) -> DatasetDict:
         """
-        Construct a balanced multi-task training dataset containing all 4 specialized skills.
+        Construct a task-specific or multi-task training dataset.
+        selected_tasks can be any subset of ['categorize', 'headline', 'summarize', 'ner'] or None (all).
         """
+        if not selected_tasks:
+            selected_tasks = ["categorize", "headline", "summarize", "ner"]
+        else:
+            selected_tasks = [t.lower().strip() for t in selected_tasks]
+
         samples = []
 
         for art in articles:
@@ -109,34 +119,47 @@ class SpecializedTaskManager:
                 continue
 
             # 1. Categorization Sample
-            samples.append({
-                "task": "categorize",
-                "text": cls.format_categorize_sample(content, category),
-                "target": category,
-            })
+            if "categorize" in selected_tasks or "categorization" in selected_tasks or "all" in selected_tasks:
+                samples.append({
+                    "task": "categorize",
+                    "text": cls.format_categorize_sample(content, category),
+                    "target": category,
+                })
 
             # 2. Headline Generation Sample
-            samples.append({
-                "task": "headline",
-                "text": cls.format_headline_sample(content, title),
-                "target": title,
-            })
+            if "headline" in selected_tasks or "headline_generation" in selected_tasks or "all" in selected_tasks:
+                samples.append({
+                    "task": "headline",
+                    "text": cls.format_headline_sample(content, title),
+                    "target": title,
+                })
 
             # 3. Summarization Sample
-            samples.append({
-                "task": "summarize",
-                "text": cls.format_summarize_sample(content, summary),
-                "target": summary,
-            })
+            if "summarize" in selected_tasks or "summarization" in selected_tasks or "all" in selected_tasks:
+                samples.append({
+                    "task": "summarize",
+                    "text": cls.format_summarize_sample(content, summary),
+                    "target": summary,
+                })
 
             # 4. Named Entity Recognition Sample
+            if "ner" in selected_tasks or "named_entity_recognition" in selected_tasks or "all" in selected_tasks:
+                samples.append({
+                    "task": "ner",
+                    "text": cls.format_ner_sample(content, entities),
+                    "target": json.dumps(entities or cls.heuristic_extract_entities(content), ensure_ascii=False),
+                })
+
+        logger.info(f"Built task-specific dataset with {len(samples)} total samples across tasks: {selected_tasks}.")
+        if not samples:
+            # Add at least one dummy sample to prevent dataset creation errors
             samples.append({
-                "task": "ner",
-                "text": cls.format_ner_sample(content, entities),
-                "target": json.dumps(entities or cls.heuristic_extract_entities(content), ensure_ascii=False),
+                "task": "summarize",
+                "text": "[টাস্ক: সারসংক্ষেপ তৈরি]\nখবর: বাংলাদেশ একটি সুন্দর দেশ।\n-> সারসংক্ষেপ: বাংলাদেশ সুন্দর দেশ।\n<|endoftext|>",
+                "target": "বাংলাদেশ সুন্দর দেশ।",
             })
 
-        logger.info(f"Built multi-task hybrid dataset with {len(samples)} total samples across 4 tasks.")
         dataset = Dataset.from_list(samples)
-        split = dataset.train_test_split(test_size=0.15, seed=42)
+        test_size = 0.15 if len(samples) > 5 else 0.01
+        split = dataset.train_test_split(test_size=test_size, seed=42)
         return DatasetDict({"train": split["train"], "validation": split["test"]})

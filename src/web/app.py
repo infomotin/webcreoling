@@ -52,6 +52,7 @@ def create_app(test_config: dict = None) -> Flask:
 
     # Route to serve downloaded article images safely
     @app.route("/media/images/<path:filename>")
+    @app.route("/data/images/<path:filename>")
     def serve_media_images(filename: str):
         return send_from_directory(str(settings.IMAGES_DIR), filename)
 

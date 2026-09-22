@@ -49,6 +49,7 @@ class Article(Base):
     views_count = Column(Integer, default=0)
     likes_count = Column(Integer, default=0)
     shares_count = Column(Integer, default=0)
+    scheduled_at = Column(DateTime, nullable=True, index=True)  # Future publishing release timestamp
 
     # Audit timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
@@ -78,6 +79,7 @@ class Article(Base):
             "views_count": self.views_count,
             "likes_count": self.likes_count,
             "shares_count": self.shares_count,
+            "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
             "images": [img.to_dict() for img in self.images] if self.images else [],
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
@@ -283,4 +285,85 @@ class User(Base):
 Index("idx_articles_source_pubdate", Article.source, Article.published_at)
 Index("idx_articles_category_pubdate", Article.category, Article.published_at)
 Index("idx_articles_featured", Article.is_featured, Article.published_at)
+
+
+class SiteConfig(Base):
+    """Stores key-value site configurations, settings, footer, branding, rates, weather, and AI pilot mode."""
+    __tablename__ = "site_configs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(JSON, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "key": self.key,
+            "value": self.value,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class Advertisement(Base):
+    """Stores dynamic advertisement banners for newspaper slots."""
+    __tablename__ = "advertisements"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(255), nullable=False)
+    slot = Column(String(50), nullable=False, index=True)  # 'header_top', 'sidebar_square', 'article_mid', 'footer_sticky'
+    image_url = Column(String(1024), nullable=False)
+    target_url = Column(String(1024), nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    views_count = Column(Integer, default=0)
+    clicks_count = Column(Integer, default=0)
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        ctr = (self.clicks_count / self.views_count * 100) if self.views_count > 0 else 0.0
+        return {
+            "id": self.id,
+            "title": self.title,
+            "slot": self.slot,
+            "image_url": self.image_url,
+            "target_url": self.target_url,
+            "is_active": self.is_active,
+            "views_count": self.views_count,
+            "clicks_count": self.clicks_count,
+            "ctr": round(ctr, 2),
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class EditorialAuditLog(Base):
+    """Audit log trail tracking all editorial and administrative actions in the Newsroom."""
+    __tablename__ = "editorial_audit_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    username = Column(String(80), nullable=False, index=True)
+    action = Column(String(100), nullable=False, index=True)  # 'article_create', 'article_edit', 'article_archive', 'settings_save', 'ad_create', etc.
+    resource_type = Column(String(50), nullable=False)  # 'article', 'site_config', 'advertisement', 'poll', 'system'
+    resource_id = Column(String(100), nullable=True)
+    details = Column(JSON, nullable=True)
+    ip_address = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "username": self.username,
+            "action": self.action,
+            "resource_type": self.resource_type,
+            "resource_id": self.resource_id,
+            "details": self.details or {},
+            "ip_address": self.ip_address,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
 

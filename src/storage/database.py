@@ -55,6 +55,7 @@ def init_db() -> None:
                 "views_count INTEGER DEFAULT 0",
                 "likes_count INTEGER DEFAULT 0",
                 "shares_count INTEGER DEFAULT 0",
+                "scheduled_at DATETIME",
             ]:
                 try:
                     conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))

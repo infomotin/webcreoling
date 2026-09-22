@@ -254,6 +254,15 @@
             </div>
             {% endif %}
 
+            <!-- Sidebar Square Ad Slot (300x250) -->
+            {% if active_ads and active_ads.sidebar_square %}
+            <div style="margin-bottom: 1.5rem; text-align: center;">
+                <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.sidebar_square.id) }}" target="_blank" style="display: block; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <img src="{{ active_ads.sidebar_square.image_url }}" alt="{{ active_ads.sidebar_square.title }}" style="width: 100%; max-height: 250px; object-fit: cover;">
+                </a>
+            </div>
+            {% endif %}
+
             <!-- 3. Newsletter Subscription Box -->
             <div id="newsletter-box" class="palo-newsletter-card">
                 <h4 class="palo-newsletter-title">
@@ -273,6 +282,15 @@
 
         </div>
     </div>
+
+    <!-- Mid Section Ad Banner (728x90) -->
+    {% if active_ads and active_ads.article_mid %}
+    <div style="margin: 1.5rem 0 2.5rem 0; text-align: center;">
+        <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.article_mid.id) }}" target="_blank" style="display: inline-block; width: 100%; max-width: 728px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0;">
+            <img src="{{ active_ads.article_mid.image_url }}" alt="{{ active_ads.article_mid.title }}" style="width: 100%; max-height: 90px; object-fit: cover;">
+        </a>
+    </div>
+    {% endif %}
 
     <!-- ===================================================================== -->
     <!-- 2. FEATURE CAROUSEL & SPECIAL GRID (বিশেষ আয়োজন)                      -->

@@ -252,3 +252,229 @@ def test_editorial_poll_and_subscriber_management(client):
 
     res_del_sub = client.post(f"/admin/newspaper/delete-subscriber/{sub_id}", follow_redirects=True)
     assert res_del_sub.status_code == 200
+
+
+def test_site_branding_and_settings(client):
+    """Test saving portal branding, exchange rates, and weather ticker configs."""
+    # Login as Admin
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    res_save = client.post(
+        "/admin/newspaper/settings/save",
+        data={
+            "site_title": "প্রথম আলো টেস্ট পোর্টাল",
+            "site_tagline": "ডিজিটাল এআই সংস্করণ",
+            "logo_text": "প্রথম আলো",
+            "edition": "ঢাকা টেস্ট সংস্করণ",
+            "usd_rate": "১২২.০০",
+            "eur_rate": "১৩৩.০০",
+            "weather_city": "চট্টগ্রাম",
+            "weather_temp": "২৯° সে.",
+            "weather_desc": "রৌদ্রোজ্জ্বল",
+        },
+        follow_redirects=True,
+    )
+    assert res_save.status_code == 200
+
+    # Verify tab renders saved configs
+    res_tab = client.get("/admin/newspaper?tab=settings")
+    assert res_tab.status_code == 200
+    assert "১২২.০০".encode("utf-8") in res_tab.data
+    assert "চট্টগ্রাম".encode("utf-8") in res_tab.data
+
+    # Verify public portal reflects new branding
+    res_public = client.get("/news")
+    assert res_public.status_code == 200
+    assert "চট্টগ্রাম".encode("utf-8") in res_public.data
+
+
+def test_dynamic_footer_management(client):
+    """Test saving dynamic footer, address, and credentials."""
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    res_save = client.post(
+        "/admin/newspaper/footer/save",
+        data={
+            "editor_in_chief": "ভারপ্রাপ্ত সম্পাদক: টেস্ট এডিটর",
+            "publisher": "ক্রিয়েলিং এআই মিডিয়া",
+            "office_address": "কারওয়ান বাজার, ঢাকা",
+            "contact_email": "test_editorial@prothomalo.com",
+            "contact_phone": "+8801700000000",
+            "copyright_text": "© ২০২৬ টেস্ট স্বত্ব সংরক্ষিত।",
+            "facebook_url": "https://facebook.com/test",
+            "youtube_url": "https://youtube.com/test",
+            "twitter_url": "https://twitter.com/test",
+            "android_app_url": "https://play.google.com/test",
+            "ios_app_url": "https://apple.com/test",
+        },
+        follow_redirects=True,
+    )
+    assert res_save.status_code == 200
+
+    # Verify tab
+    res_tab = client.get("/admin/newspaper?tab=footer")
+    assert res_tab.status_code == 200
+    assert "test_editorial@prothomalo.com".encode("utf-8") in res_tab.data
+
+
+def test_advertisement_crud_and_click_tracking(client):
+    """Test ad banner creation, toggling, impression count, and click redirection."""
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    # 1. Create Ad
+    res_create = client.post(
+        "/admin/newspaper/ads/create",
+        data={
+            "title": "ইউনিট টেস্ট বিজ্ঞাপন",
+            "slot": "header_top",
+            "image_url": "https://example.com/test_banner.jpg",
+            "target_url": "https://example.com/promo-target",
+            "is_active": "1",
+        },
+        follow_redirects=True,
+    )
+    assert res_create.status_code == 200
+
+    # Retrieve ad id
+    from src.storage.repositories import AdvertisementRepository
+    with get_db_session() as session:
+        ad_repo = AdvertisementRepository(session)
+        ads = ad_repo.get_all_ads()
+        test_ad = [a for a in ads if a.title == "ইউনিট টেস্ট বিজ্ঞাপন"][0]
+        ad_id = test_ad.id
+
+    # 2. Toggle Status
+    res_toggle = client.post(f"/admin/newspaper/ads/toggle/{ad_id}", follow_redirects=True)
+    assert res_toggle.status_code == 200
+
+    # 3. Ad Click Tracking & Redirect
+    res_click = client.get(f"/news/ad/click/{ad_id}", follow_redirects=False)
+    assert res_click.status_code == 302
+    assert res_click.location == "https://example.com/promo-target"
+
+    # 4. Delete Ad
+    res_del = client.post(f"/admin/newspaper/ads/delete/{ad_id}", follow_redirects=True)
+    assert res_del.status_code == 200
+
+
+def test_scheduled_publishing_workflow(client):
+    """Test article scheduled publishing with future datetime and publish-now action."""
+    client.post(
+        "/auth/login",
+        data={"username": "editor", "password": "editor123"},
+        follow_redirects=True,
+    )
+
+    # 1. Create Scheduled Article
+    res_create = client.post(
+        "/admin/newspaper/article/create",
+        data={
+            "title": "ভবিষ্যতে প্রকাশিতব্য আন্তর্জাতিক রিপোর্ট",
+            "category": "international",
+            "author": "আন্তর্জাতিক ডেস্ক",
+            "summary": "শিডিউল সারসংক্ষেপ",
+            "content_text": "এই সংবাদটি নির্ধারিত সময়ে স্বয়ংক্রিয়ভাবে প্রকাশ পাবে।",
+            "scheduled_at": "2026-10-01T10:00",
+            "status": "scheduled",
+        },
+        follow_redirects=True,
+    )
+    assert res_create.status_code == 200
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        sched_articles = repo.get_scheduled_articles()
+        target = [a for a in sched_articles if "ভবিষ্যতে প্রকাশিতব্য" in a.title][0]
+        art_id = target.id
+        assert target.scrape_status == "scheduled"
+
+    # 2. Publish Now
+    res_now = client.post(f"/admin/newspaper/scheduler/publish-now/{art_id}", follow_redirects=True)
+    assert res_now.status_code == 200
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        published = repo.get_by_id(art_id)
+        assert published.scrape_status == "completed"
+
+    # Cleanup
+    client.post(f"/admin/newspaper/article/delete/{art_id}")
+
+
+def test_security_and_audit_logging(client):
+    """Test editorial audit action trail and logging."""
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    res_audit_tab = client.get("/admin/newspaper?tab=security")
+    assert res_audit_tab.status_code == 200
+    assert "অডিট ট্রেইল".encode("utf-8") in res_audit_tab.data or "নিরাপত্তা".encode("utf-8") in res_audit_tab.data
+
+
+def test_server_monitoring_telemetry(client):
+    """Test server telemetry health metrics tab."""
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    res_mon = client.get("/admin/newspaper?tab=monitor")
+    assert res_mon.status_code == 200
+    assert "CPU".encode("utf-8") in res_mon.data
+    assert "RAM".encode("utf-8") in res_mon.data
+
+
+def test_ai_pilot_analysis_api(client):
+    """Test AI Pilot content analyzer endpoint."""
+    client.post(
+        "/auth/login",
+        data={"username": "editor", "password": "editor123"},
+        follow_redirects=True,
+    )
+
+    # 1. Save AI Pilot config
+    res_cfg = client.post(
+        "/admin/newspaper/aipilot/save",
+        data={
+            "enabled": "1",
+            "auto_headline": "1",
+            "auto_summary": "1",
+            "auto_categorize": "1",
+            "auto_hero_ranking": "1",
+            "model_name": "webcreoling-lora-v1",
+        },
+        follow_redirects=True,
+    )
+    assert res_cfg.status_code == 200
+
+    # 2. AJAX AI Pilot analysis
+    res_analysis = client.post(
+        "/admin/newspaper/aipilot/analyze",
+        json={
+            "title": "জাতীয় সংসদে নতুন প্রযুক্তি বাজেট প্রস্তাব পাস",
+            "content_text": "জাতীয় সংসদে আজ তথ্যপ্রযুক্তি খাতে বাজেট বরাদ্দ বাড়ানোর বিষয়ে সিদ্ধান্ত গৃহীত হয়েছে। প্রধানমন্ত্রী নতুন এআই উদ্ভাবনী ল্যাব ও সফটওয়্যার পার্ক নির্মাণের ওপর গুরুত্বারোপ করেন। দেশের যুবসমাজ এতে ব্যাপকভাবে উপকৃত হবে।",
+        },
+    )
+    assert res_analysis.status_code == 200
+    data = res_analysis.get_json()
+    assert data["status"] == "success"
+    assert "predicted_category" in data["data"]
+    assert "generated_summary" in data["data"]
+    assert len(data["data"]["suggested_headlines"]) > 0
+

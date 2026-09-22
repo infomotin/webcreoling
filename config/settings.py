@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     IMAGES_DIR: Path = DATA_DIR / "images"
     PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
     CHECKPOINTS_DIR: Path = DATA_DIR / "checkpoints"
+    MODELS_DIR: Path = DATA_DIR / "checkpoints"
     LOGS_DIR: Path = PROJECT_ROOT / "logs"
     CONFIG_DIR: Path = PROJECT_ROOT / "config"
 

@@ -7,9 +7,41 @@ lead hero banners, auto-highlighted articles, opinion polls, likes, social share
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from src.storage.database import get_db_session
 from src.storage.models import Article
-from src.storage.repositories import ArticleRepository, PortalRepository
+from src.storage.repositories import (
+    ArticleRepository,
+    PortalRepository,
+    SiteConfigRepository,
+    AdvertisementRepository,
+)
 
 portal_bp = Blueprint("portal", __name__)
+
+
+@portal_bp.context_processor
+def inject_portal_globals():
+    """Inject dynamic site branding, dynamic footer, and active ad banners into all portal views."""
+    try:
+        with get_db_session() as session:
+            cfg_repo = SiteConfigRepository(session)
+            ad_repo = AdvertisementRepository(session)
+            cfg_repo.seed_default_configs()
+            ad_repo.seed_default_ads()
+
+            branding = cfg_repo.get_config("branding", {})
+            footer = cfg_repo.get_config("footer", {})
+            ads = ad_repo.get_active_ads_dict()
+
+            return {
+                "site_branding": branding,
+                "site_footer": footer,
+                "active_ads": ads,
+            }
+    except Exception:
+        return {
+            "site_branding": {},
+            "site_footer": {},
+            "active_ads": {},
+        }
 
 
 @portal_bp.route("")
@@ -22,9 +54,18 @@ def index_view():
     with get_db_session() as session:
         article_repo = ArticleRepository(session)
         portal_repo = PortalRepository(session)
+        ad_repo = AdvertisementRepository(session)
+
+        # Process any pending scheduled releases
+        article_repo.process_scheduled_publishing()
 
         # Seed default poll if none exists
         portal_repo.seed_default_poll()
+
+        # Track impression on header ad
+        active_header = ad_repo.get_active_ad_by_slot("header_top")
+        if active_header:
+            ad_repo.record_impression(active_header.id)
 
         lead_hero = article_repo.get_lead_hero_article()
         exclude_id = lead_hero.id if lead_hero else None
@@ -129,6 +170,12 @@ def article_reader_view(article_id: int):
     with get_db_session() as session:
         article_repo = ArticleRepository(session)
         portal_repo = PortalRepository(session)
+        ad_repo = AdvertisementRepository(session)
+
+        # Track impression on mid article ad
+        mid_ad = ad_repo.get_active_ad_by_slot("article_mid")
+        if mid_ad:
+            ad_repo.record_impression(mid_ad.id)
 
         # Increment view count
         article_repo.increment_views(article_id)
@@ -149,6 +196,17 @@ def article_reader_view(article_id: int):
             breaking_news=breaking_news,
             active_poll=active_poll.to_dict() if active_poll else None,
         )
+
+
+@portal_bp.route("/ad/click/<int:ad_id>")
+def ad_click_redirect(ad_id: int):
+    """Record ad click and redirect user to target destination."""
+    with get_db_session() as session:
+        ad_repo = AdvertisementRepository(session)
+        target_url = ad_repo.record_click(ad_id)
+        if target_url:
+            return redirect(target_url)
+    return redirect(url_for("portal.index_view"))
 
 
 @portal_bp.route("/api/like/<int:article_id>", methods=["POST"])
@@ -188,3 +246,4 @@ def subscribe_newsletter_api():
         portal_repo = PortalRepository(session)
         res = portal_repo.add_subscriber(email)
         return jsonify(res)
+

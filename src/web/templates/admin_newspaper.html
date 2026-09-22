@@ -34,10 +34,10 @@
 
         <div class="nr-kpi-card">
             <div>
-                <div class="nr-kpi-val" style="color: var(--nr-primary);">{{ kpis.featured_count + kpis.breaking_count }}</div>
-                <div class="nr-kpi-label">শীর্ষ ও ব্রেকিং সংবাদ</div>
+                <div class="nr-kpi-val" style="color: #2563eb;">{{ scheduled_articles|length }}</div>
+                <div class="nr-kpi-label">নির্ধারিত রিলিজ (Scheduled)</div>
             </div>
-            <div class="nr-kpi-icon featured">⚡</div>
+            <div class="nr-kpi-icon" style="background: #dbeafe; color: #2563eb;">⏱️</div>
         </div>
 
         <div class="nr-kpi-card">
@@ -50,15 +50,750 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- TAB CONTENT ROUTING (POLLS / SUBSCRIBERS / ARCHIVE / ARTICLES)        -->
+    <!-- 2. TAB CONTENT ROUTING                                                -->
     <!-- ===================================================================== -->
 
-    {% if active_tab == 'polls' %}
+    {% if active_tab == 'settings' %}
     <!-- ===================================================================== -->
-    <!-- 2. OPINION POLLS MANAGEMENT SECTION                                   -->
+    <!-- TAB: PORTAL SETTINGS & LOGO BRANDING                                  -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">⚙️ পোর্টাল কনফিগারেশন, লোগো ও লাইভ তথ্য</h3>
+            <span class="nr-badge nr-badge-category">ব্র্যান্ডিং সেটিংস</span>
+        </div>
+        <div class="nr-card-body">
+            <form method="POST" action="{{ url_for('admin.save_portal_settings') }}">
+                {% set b = site_configs.branding or {} %}
+                
+                <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--nr-text-dark); margin-bottom: 1rem; border-bottom: 1px solid var(--nr-border); padding-bottom: 0.5rem;">
+                    ১. পোর্টাল ব্র্যান্ড আইডেন্টিটি
+                </h4>
+                
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">পোর্টালের নাম / ব্র্যান্ড শিরোনাম *</label>
+                        <input type="text" name="site_title" class="nr-form-control" value="{{ b.site_title or 'প্রথম আলো' }}" required>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সংস্করণ ট্যাগ (Edition)</label>
+                        <input type="text" name="edition" class="nr-form-control" value="{{ b.edition or 'বাংলাদেশ সংস্করণ' }}">
+                    </div>
+                </div>
+
+                <div class="nr-form-group">
+                    <label class="nr-form-label">ট্যাগলাইন / স্লোগান</label>
+                    <input type="text" name="site_tagline" class="nr-form-control" value="{{ b.site_tagline or 'অনলাইন বাংলা দৈনিক ও এআই সংবাদ প্ল্যাটফর্ম' }}">
+                </div>
+
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">লোগো টেক্সট (Fallback Text)</label>
+                        <input type="text" name="logo_text" class="nr-form-control" value="{{ b.logo_text or 'প্রথম আলো' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">কাস্টম লোগো ছবির URL (ঐচ্ছিক)</label>
+                        <input type="text" name="logo_image" class="nr-form-control" value="{{ b.logo_image or '' }}" placeholder="https://example.com/logo.png">
+                    </div>
+                </div>
+
+                <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--nr-text-dark); margin: 1.5rem 0 1rem 0; border-bottom: 1px solid var(--nr-border); padding-bottom: 0.5rem;">
+                    ২. লাইভ মুদ্রা বিনিময় ও আবহাওয়া টিকার
+                </h4>
+
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">USD / টাকা রেট (USD to BDT)</label>
+                        <input type="text" name="usd_rate" class="nr-form-control" value="{{ b.usd_rate or '১২১.৫০' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">EUR / টাকা রেট (EUR to BDT)</label>
+                        <input type="text" name="eur_rate" class="nr-form-control" value="{{ b.eur_rate or '১৩২.২০' }}">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 1rem;">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">আবহাওয়া শহর</label>
+                        <input type="text" name="weather_city" class="nr-form-control" value="{{ b.weather_city or 'ঢাকা' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">তাপমাত্রা</label>
+                        <input type="text" name="weather_temp" class="nr-form-control" value="{{ b.weather_temp or '২৮° সে.' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">আবহাওয়ার বিবরণ</label>
+                        <input type="text" name="weather_desc" class="nr-form-control" value="{{ b.weather_desc or 'আংশিক মেঘলা' }}">
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <button type="submit" class="nr-btn nr-btn-primary" style="padding: 0.65rem 1.8rem;">
+                        💾 সেটিংস সংরক্ষণ করুন
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% elif active_tab == 'footer' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: DYNAMIC FOOTER MANAGEMENT                                        -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">🦶 ডায়নামিক ফুটার, সম্পাদকীয় ঠিকানা ও সোশ্যাল লিংকস</h3>
+            <span class="nr-badge nr-badge-category">ফুটার কনফিগারেশন</span>
+        </div>
+        <div class="nr-card-body">
+            <form method="POST" action="{{ url_for('admin.save_dynamic_footer') }}">
+                {% set f = site_configs.footer or {} %}
+                
+                <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--nr-text-dark); margin-bottom: 1rem; border-bottom: 1px solid var(--nr-border); padding-bottom: 0.5rem;">
+                    ১. প্রকাশক ও সম্পাদকীয় তথ্য
+                </h4>
+
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সম্পাদক ও প্রকাশক লাইন</label>
+                        <input type="text" name="editor_in_chief" class="nr-form-control" value="{{ f.editor_in_chief or 'সম্পাদক ও প্রকাশক: মোঃ মতিউর রহমান (ভারপ্রাপ্ত)' }}" required>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">মিডিয়া / কোম্পানি নাম</label>
+                        <input type="text" name="publisher" class="nr-form-control" value="{{ f.publisher or 'প্রথম আলো এআই ও মিডিয়া ল্যাব' }}">
+                    </div>
+                </div>
+
+                <div class="nr-form-group">
+                    <label class="nr-form-label">অফিস ও নিউজরুম ঠিকানা</label>
+                    <input type="text" name="office_address" class="nr-form-control" value="{{ f.office_address or 'প্রগতি ইনস্যুরেন্স ভবন, ২০–২১ কারওয়ান বাজার, ঢাকা ১২১৫।' }}">
+                </div>
+
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">যোগাযোগ ইমেইল</label>
+                        <input type="email" name="contact_email" class="nr-form-control" value="{{ f.contact_email or 'newsroom@prothomalo.com' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">যোগাযোগ ফোন / হটলাইন</label>
+                        <input type="text" name="contact_phone" class="nr-form-control" value="{{ f.contact_phone or '+৮৮০ ২ ৮১৮০০৭৮' }}">
+                    </div>
+                </div>
+
+                <div class="nr-form-group">
+                    <label class="nr-form-label">কপিরাইট নোটিশ</label>
+                    <input type="text" name="copyright_text" class="nr-form-control" value="{{ f.copyright_text or '© ২০২৬ প্রথম আলো অনলাইন সংস্করণ। সর্বস্বত্ব সংরক্ষিত।' }}">
+                </div>
+
+                <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--nr-text-dark); margin: 1.5rem 0 1rem 0; border-bottom: 1px solid var(--nr-border); padding-bottom: 0.5rem;">
+                    ২. সোশ্যাল মিডিয়া ও মোবাইল অ্যাপ ডাউনলোড লিংক
+                </h4>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ফেসবুক পেজ লিংক</label>
+                        <input type="text" name="facebook_url" class="nr-form-control" value="{{ f.facebook_url or 'https://facebook.com/DailyProthomAlo' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ইউটিউব চ্যানেল লিংক</label>
+                        <input type="text" name="youtube_url" class="nr-form-control" value="{{ f.youtube_url or 'https://youtube.com/c/ProthomAlo' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">টুইটার / X লিংক</label>
+                        <input type="text" name="twitter_url" class="nr-form-control" value="{{ f.twitter_url or 'https://twitter.com/ProthomAlo' }}">
+                    </div>
+                </div>
+
+                <div class="nr-form-grid-2">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">Google Play Store অ্যাপ URL</label>
+                        <input type="text" name="android_app_url" class="nr-form-control" value="{{ f.android_app_url or 'https://play.google.com' }}">
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">Apple App Store অ্যাপ URL</label>
+                        <input type="text" name="ios_app_url" class="nr-form-control" value="{{ f.ios_app_url or 'https://apple.com/app-store' }}">
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <button type="submit" class="nr-btn nr-btn-primary" style="padding: 0.65rem 1.8rem;">
+                        💾 ফুটার তথ্য সংরক্ষণ করুন
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% elif active_tab == 'ads' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: ADVERTISEMENT MANAGEMENT                                         -->
+    <!-- ===================================================================== -->
+    <div style="display: grid; grid-template-columns: 1fr 1.7fr; gap: 1.5rem;">
+        <!-- Create Ad Card -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">📢 নতুন বিজ্ঞাপন ব্যানার যুক্ত করুন</h3>
+            </div>
+            <div class="nr-card-body">
+                <form method="POST" action="{{ url_for('admin.create_ad') }}">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">বিজ্ঞাপনের শিরোনাম / ক্যাম্পেইন নাম *</label>
+                        <input type="text" name="title" class="nr-form-control" placeholder="যেমন: বিকাশ ক্যাশব্যাক অফার" required>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">বিজ্ঞাপনের স্থান (Slot) *</label>
+                        <select name="slot" class="nr-form-control" required>
+                            <option value="header_top">হেডার টপ ব্যানার (728x90)</option>
+                            <option value="sidebar_square">সাইডবার স্কয়ার ব্যানার (300x250)</option>
+                            <option value="article_mid">প্রতিবেদনের মাঝে ব্যানার (728x90)</option>
+                            <option value="footer_sticky">ফুটার স্টিকি ব্যানার</option>
+                        </select>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ব্যানার ছবির URL *</label>
+                        <input type="text" name="image_url" class="nr-form-control" placeholder="https://example.com/banner.jpg" required>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ক্লিক গন্তব্য লিংক (Target URL) *</label>
+                        <input type="text" name="target_url" class="nr-form-control" placeholder="https://client-site.com/promo" required>
+                    </div>
+
+                    <div style="margin-bottom: 1.2rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" name="is_active" value="1" checked style="accent-color: var(--nr-primary);">
+                            <span>অবিলম্বে বিজ্ঞাপনটি সক্রিয় রাখুন</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="nr-btn nr-btn-primary" style="width: 100%; padding: 0.65rem;">
+                        বিজ্ঞাপন যুক্ত করুন
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ads Table -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">বিজ্ঞাপন ব্যানার তালিকা ও পারফরম্যান্স</h3>
+                <span class="nr-badge nr-badge-category">{{ ads|length }} টি ব্যানার</span>
+            </div>
+            <div class="nr-card-body" style="padding: 0;">
+                {% if ads %}
+                <div style="overflow-x: auto;">
+                    <table class="nr-table">
+                        <thead>
+                            <tr>
+                                <th>ছবি</th>
+                                <th>বিজ্ঞাপন ও স্থান</th>
+                                <th>ইমপ্রেশন / ক্লিক</th>
+                                <th>CTR</th>
+                                <th>অবস্থা</th>
+                                <th>অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ad in ads %}
+                            <tr>
+                                <td>
+                                    <img src="{{ ad.image_url }}" alt="{{ ad.title }}" style="width: 70px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid var(--nr-border);">
+                                </td>
+                                <td>
+                                    <div style="font-weight: 800; font-size: 0.9rem; color: var(--nr-text-dark);">
+                                        {{ ad.title }}
+                                    </div>
+                                    <span class="nr-ad-slot-badge">{{ ad.slot }}</span>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.8rem; font-weight: 600;">
+                                        <span>👁️ {{ ad.views_count }}</span>
+                                        <span style="margin-left: 0.4rem;">🖱️ {{ ad.clicks_count }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 800; color: #2563eb;">{{ ad.ctr }}%</span>
+                                </td>
+                                <td>
+                                    {% if ad.is_active %}
+                                    <span class="nr-badge nr-badge-published">সক্রিয়</span>
+                                    {% else %}
+                                    <span class="nr-badge nr-badge-archived">স্থগিত</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.3rem;">
+                                        <form method="POST" action="{{ url_for('admin.toggle_ad', ad_id=ad.id) }}">
+                                            <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline">
+                                                {% if ad.is_active %}বন্ধ করুন{% else %}চালু করুন{% endif %}
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin.delete_ad', ad_id=ad.id) }}" onsubmit="return confirm('এই বিজ্ঞাপনটি মুছে ফেলতে চান?')">
+                                            <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline">মুছুন</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="padding: 2.5rem; text-align: center; color: var(--nr-text-muted);">
+                    কোনো বিজ্ঞাপন ব্যানার পাওয়া যায়নি। নতুন ব্যানার যুক্ত করুন।
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% elif active_tab == 'scheduler' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: TIME-BASED SCHEDULER                                             -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <div>
+                <h3 class="nr-card-title">⏱️ নির্ধারিত সময়ভিত্তিক প্রকাশনা কিউ (Publishing Scheduler)</h3>
+                <span style="font-size: 0.82rem; color: var(--nr-text-muted);">
+                    নির্ধারিত সময় এলে সংবাদগুলো স্বয়ংক্রিয়ভাবে লাইভ পোর্টাল ও ব্রেকিং টিকারে প্রকাশিত হবে।
+                </span>
+            </div>
+            <button type="button" class="nr-btn nr-btn-primary" onclick="openNewArticleModal()">
+                <span>⏱️</span> শিডিউল সংবাদ লিখুন
+            </button>
+        </div>
+        <div class="nr-card-body" style="padding: 0;">
+            {% if scheduled_articles %}
+            <div style="overflow-x: auto;">
+                <table class="nr-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ছবি</th>
+                            <th>সংবাদের শিরোনাম</th>
+                            <th>বিভাগ</th>
+                            <th>নির্ধারিত প্রকাশের সময়সূচী</th>
+                            <th>অবস্থা</th>
+                            <th style="text-align: right;">অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for art in scheduled_articles %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--nr-text-muted);">#{{ art.id }}</td>
+                            <td>
+                                {% if art.images %}
+                                <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 55px; height: 38px; object-fit: cover; border-radius: 4px;">
+                                {% else %}
+                                <div style="width: 55px; height: 38px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">ছবি নেই</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="font-weight: 800; font-size: 0.92rem; color: var(--nr-text-dark);">
+                                    {{ art.title }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--nr-text-muted);">
+                                    {{ (art.summary or art.content_text or '')[:70] }}...
+                                </div>
+                            </td>
+                            <td>
+                                <span class="nr-badge nr-badge-category">{{ art.category }}</span>
+                            </td>
+                            <td>
+                                <strong style="color: #2563eb; font-size: 0.88rem;">
+                                    📅 {{ art.scheduled_at or 'নির্দিষ্ট করা নেই' }}
+                                </strong>
+                            </td>
+                            <td>
+                                <span class="nr-badge nr-badge-pending">⏳ নির্ধারিত কিউ</span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                                    <form method="POST" action="{{ url_for('admin.publish_scheduled_now', article_id=art.id) }}">
+                                        <button type="submit" class="nr-btn nr-btn-sm nr-btn-success" title="এখনই লাইভ প্রকাশ করুন">
+                                            🚀 অবিলম্বে প্রকাশ
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.delete_article', article_id=art.id) }}" onsubmit="return confirm('এই শিডিউল সংবাদটি মুছে ফেলতে চান?')">
+                                        <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline">
+                                            মুছুন
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 3rem; text-align: center; color: var(--nr-text-muted);">
+                <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem;">কোনো নির্ধারিত সংবাদ কিউতে নেই।</p>
+                <p style="font-size: 0.85rem;">নতুন সংবাদ লেখার সময় "নির্ধারিত রিলিজ সময়" বেছে দিলে তা এই কিউতে যুক্ত হবে।</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif active_tab == 'security' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: SECURITY & AUDIT LOGS                                            -->
+    <!-- ===================================================================== -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+        <!-- RBAC Role Matrix Card -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">🔒 নিরাপত্তা ও রোল অনুমতি</h3>
+            </div>
+            <div class="nr-card-body" style="font-size: 0.88rem;">
+                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
+                    <div style="font-weight: 800; color: #dc2626;">👑 অ্যাডমিন (Admin)</div>
+                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">পূর্ণ ক্ষমতা: সেটিংস, বিজ্ঞাপন, অডিট লগ, ইউজার রোল ও মুছে ফেলা।</div>
+                </div>
+                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
+                    <div style="font-weight: 800; color: #0284c7;">✍️ সম্পাদক (Editor)</div>
+                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">সংবাদ তৈরি, সম্পাদন, শিডিউলিং, অনুমোদন ও জরিপ পরিচালনা।</div>
+                </div>
+                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
+                    <div style="font-weight: 800; color: #7c3aed;">📊 বিশ্লেষক (Analyst)</div>
+                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">এনগেজমেন্ট মেট্রিক্স, এআই মডেল ট্রেইনিং ও রিটেনশন ভিউ।</div>
+                </div>
+                <div>
+                    <div style="font-weight: 800; color: #475569;">👁️ পাঠক/ভিউয়ার (Viewer)</div>
+                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">শুধু রিড-অনলি এক্সেস।</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Trail Card -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">📜 সম্পাদকীয় অ্যাকশন অডিট ট্রেইল</h3>
+                <span class="nr-badge nr-badge-category">সর্বশেষ ৪০টি অ্যাকশন</span>
+            </div>
+            <div class="nr-card-body" style="padding: 0;">
+                {% if audit_logs %}
+                <div style="overflow-x: auto;">
+                    <table class="nr-table">
+                        <thead>
+                            <tr>
+                                <th>সময়</th>
+                                <th>ইউজার</th>
+                                <th>অ্যাকশন</th>
+                                <th>রিসোর্স</th>
+                                <th>IP ঠিকানা</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in audit_logs %}
+                            <tr>
+                                <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                                    {{ log.created_at[:19].replace('T', ' ') if log.created_at else '' }}
+                                </td>
+                                <td>
+                                    <strong style="color: var(--nr-text-dark);">{{ log.username }}</strong>
+                                </td>
+                                <td>
+                                    {% if 'create' in log.action %}
+                                    <span class="nr-audit-pill nr-audit-create">{{ log.action }}</span>
+                                    {% elif 'edit' in log.action or 'approve' in log.action or 'toggle' in log.action %}
+                                    <span class="nr-audit-pill nr-audit-edit">{{ log.action }}</span>
+                                    {% elif 'delete' in log.action %}
+                                    <span class="nr-audit-pill nr-audit-delete">{{ log.action }}</span>
+                                    {% elif 'save' in log.action or 'settings' in log.action %}
+                                    <span class="nr-audit-pill nr-audit-settings">{{ log.action }}</span>
+                                    {% else %}
+                                    <span class="nr-audit-pill nr-audit-default">{{ log.action }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.8rem; font-family: monospace;">{{ log.resource_type }} #{{ log.resource_id or '-' }}</span>
+                                </td>
+                                <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                                    {{ log.ip_address or '127.0.0.1' }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="padding: 2.5rem; text-align: center; color: var(--nr-text-muted);">
+                    এখনও কোনো অডিট লগ রেকর্ড নেই।
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% elif active_tab == 'monitor' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: SERVER HEALTH & MONITORING                                       -->
+    <!-- ===================================================================== -->
+    {% set m = server_telemetry or {} %}
+    
+    <div class="nr-telemetry-grid">
+        <!-- CPU Usage -->
+        <div class="nr-telemetry-card">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">CPU ব্যবহার</span>
+                <span>⚡</span>
+            </div>
+            <div class="nr-telemetry-val">{{ m.cpu_percent }}%</div>
+            <div class="nr-progress-bar-bg">
+                <div class="nr-progress-bar-fill" style="width: {{ m.cpu_percent }}%; background: {% if m.cpu_percent > 80 %}#ef4444{% elif m.cpu_percent > 50 %}#f59e0b{% else %}#10b981{% endif %};"></div>
+            </div>
+        </div>
+
+        <!-- RAM Memory -->
+        <div class="nr-telemetry-card">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">RAM মেমোরি</span>
+                <span>💾</span>
+            </div>
+            <div class="nr-telemetry-val">{{ m.ram_percent }}%</div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                ব্যবহৃত: <strong>{{ m.ram_used_gb }} GB</strong> / {{ m.ram_total_gb }} GB
+            </div>
+            <div class="nr-progress-bar-bg">
+                <div class="nr-progress-bar-fill" style="width: {{ m.ram_percent }}%; background: #3b82f6;"></div>
+            </div>
+        </div>
+
+        <!-- Disk Storage -->
+        <div class="nr-telemetry-card">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">ডিস্ক স্টোরেজ</span>
+                <span>💽</span>
+            </div>
+            <div class="nr-telemetry-val">{{ m.disk_percent }}%</div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                ব্যবহৃত: <strong>{{ m.disk_used_gb }} GB</strong> / {{ m.disk_total_gb }} GB
+            </div>
+            <div class="nr-progress-bar-bg">
+                <div class="nr-progress-bar-fill" style="width: {{ m.disk_percent }}%; background: #8b5cf6;"></div>
+            </div>
+        </div>
+
+        <!-- SQLite DB Size -->
+        <div class="nr-telemetry-card">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">SQLite ডাটাবেস সাইজ</span>
+                <span>🗄️</span>
+            </div>
+            <div class="nr-telemetry-val">{{ m.db_size_mb }} MB</div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                মোট সংরক্ষিত সংবাদ: <strong>{{ m.total_articles }}</strong> টি
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Deep Dive -->
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem;">
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">🖥️ সার্ভার ও রানটাইম পরিবেশ</h3>
+            </div>
+            <div class="nr-card-body" style="font-size: 0.9rem;">
+                <table class="nr-table">
+                    <tbody>
+                        <tr>
+                            <td><strong>সার্ভার প্ল্যাটফর্ম:</strong></td>
+                            <td>{{ m.platform }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>পাইথন ভার্সন:</strong></td>
+                            <td>Python {{ m.python_version }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>স্ক্র্যাপার পাইপলাইন স্ট্যাটাস:</strong></td>
+                            <td>
+                                <span class="nr-badge nr-badge-published">{{ m.scraper_status|upper }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>সর্বশেষ স্ক্র্যাপ সময়:</strong></td>
+                            <td>{{ m.last_scrape_time or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>এআই LoRA মডেল চেকপয়েন্ট:</strong></td>
+                            <td>
+                                {% if m.has_lora_checkpoint %}
+                                <span class="nr-badge nr-badge-published">✓ Adapter Weights Available</span>
+                                {% else %}
+                                <span class="nr-badge nr-badge-category">Base Model Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">📊 ডাটাবেস এন্ট্রি পরিসংখ্যান</h3>
+            </div>
+            <div class="nr-card-body">
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--nr-border-light);">
+                        <span>প্রকাশিত সংবাদ:</span>
+                        <strong>{{ m.total_published }} টি</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--nr-border-light);">
+                        <span>নির্ধারিত শিডিউল সংবাদ:</span>
+                        <strong>{{ m.total_scheduled }} টি</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--nr-border-light);">
+                        <span>আর্কাইভড সংবাদ:</span>
+                        <strong>{{ m.total_archived }} টি</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.5rem; border-bottom: 1px solid var(--nr-border-light);">
+                        <span>ডাউনলোডকৃত ছবি:</span>
+                        <strong>{{ m.total_images }} টি</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>ই-বুলেটিন সাবস্ক্রাইবার:</span>
+                        <strong>{{ m.total_subscribers }} জন</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif active_tab == 'aipilot' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: AI PILOT MODE                                                    -->
+    <!-- ===================================================================== -->
+    {% set ai = site_configs.aipilot or {} %}
+
+    <div class="nr-ai-pilot-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <h2 style="font-size: 1.4rem; font-weight: 900; color: #fff; margin: 0;">
+                    🤖 এআই পাইলট মোড (AI Pilot Newsroom Assistant)
+                </h2>
+                <span class="nr-ai-badge">LoRA Fine-Tuned</span>
+            </div>
+            <span style="font-size: 0.85rem; color: #a5b4fc;">স্বয়ংক্রিয় সম্পাদকীয় এআই সহকারী</span>
+        </div>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; max-width: 850px;">
+            এআই পাইলট মোড সক্রিয় থাকলে নিউজরুম সম্পাদকদের জন্য স্বয়ংক্রিয়ভাবে আকর্ষণীয় বাংলা শিরোনাম জেনারেট, মূল সারসংক্ষেপ রচনা, নির্ভুল ক্যাটাগরি প্রেডিকশন এবং ফ্রন্টপেজ হিরো স্টোরি র‍্যাঙ্কিং সহায়তা প্রদান করে।
+        </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem;">
+        <!-- AI Pilot Settings Form -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">⚙️ এআই পাইলট কনফিগারেশন</h3>
+            </div>
+            <div class="nr-card-body">
+                <form method="POST" action="{{ url_for('admin.save_aipilot_settings') }}">
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" name="enabled" value="1" {% if ai.enabled %}checked{% endif %} style="accent-color: #6366f1;">
+                            <span>এআই পাইলট অটোমেশন সক্রিয় রাখুন</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--nr-text-body);">
+                            <input type="checkbox" name="auto_headline" value="1" {% if ai.auto_headline %}checked{% endif %} style="accent-color: #6366f1;">
+                            <span>স্বয়ংক্রিয় বিকল্প শিরোনাম সাজেশন (Auto-Headline)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--nr-text-body);">
+                            <input type="checkbox" name="auto_summary" value="1" {% if ai.auto_summary %}checked{% endif %} style="accent-color: #6366f1;">
+                            <span>স্বয়ংক্রিয় বাংলা সারসংক্ষেপ জেনারেশন (Auto-Summary)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--nr-text-body);">
+                            <input type="checkbox" name="auto_categorize" value="1" {% if ai.auto_categorize %}checked{% endif %} style="accent-color: #6366f1;">
+                            <span>বিষয়বস্তু অনুযায়ী ক্যাটাগরি প্রেডিকশন (Auto-Categorize)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--nr-text-body);">
+                            <input type="checkbox" name="auto_hero_ranking" value="1" {% if ai.auto_hero_ranking %}checked{% endif %} style="accent-color: #6366f1;">
+                            <span>লিড হিরো স্টোরি র‍্যাঙ্কিং সহকারী (Auto-Hero Rank)</span>
+                        </label>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সক্রিয় এআই মডেল</label>
+                        <input type="text" name="model_name" class="nr-form-control" value="{{ ai.model_name or 'webcreoling-lora-v1' }}">
+                    </div>
+
+                    <button type="submit" class="nr-btn nr-btn-primary" style="width: 100%; padding: 0.65rem;">
+                        💾 কনফিগারেশন সংরক্ষণ করুন
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI Pilot Live Assistant Tester -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">🧪 এআই পাইলট টেস্ট ও কন্টেন্ট বিশ্লেষণ</h3>
+                <span class="nr-badge nr-badge-category">ইন্টারেক্টিভ টেস্ট</span>
+            </div>
+            <div class="nr-card-body">
+                <div class="nr-form-group">
+                    <label class="nr-form-label">খসড়া শিরোনাম (ঐচ্ছিক):</label>
+                    <input type="text" id="aiTestTitle" class="nr-form-control" placeholder="যেমন: ঢাকায় মেট্রোরেলের নতুন রুটের উদ্বোধন">
+                </div>
+
+                <div class="nr-form-group">
+                    <label class="nr-form-label">সংবাদের মূল বিবরণী:</label>
+                    <textarea id="aiTestContent" class="nr-form-control" rows="4" placeholder="এখানে বাংলা সংবাদ প্রতিবেদন পেস্ট করুন..."></textarea>
+                </div>
+
+                <button type="button" class="nr-btn nr-btn-primary" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none;" onclick="runAIPilotAnalysis()">
+                    ⚡ এআই বিশ্লেষণ ও শিরোনাম জেনারেট করুন
+                </button>
+
+                <!-- Analysis Result Container -->
+                <div id="aiAnalysisResult" style="display: none; margin-top: 1.25rem; background: #f8fafc; border: 1px solid var(--nr-border); border-radius: 8px; padding: 1.2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                        <span style="font-weight: 800; color: var(--nr-text-dark);">📊 এআই বিশ্লেষণ ফলাফল:</span>
+                        <span id="aiSentimentBadge" class="nr-badge nr-badge-published">নিরপেক্ষ</span>
+                    </div>
+
+                    <div style="margin-bottom: 0.8rem; font-size: 0.85rem;">
+                        <strong>অনুমিত বিভাগ:</strong> <span id="aiPredictedCat" class="nr-badge nr-badge-category">জাতীয়</span>
+                        <span style="margin-left: 0.8rem;"><strong>পাঠের আনুমানিক সময়:</strong> <span id="aiReadTime">১</span> মিনিট</span>
+                    </div>
+
+                    <div style="margin-bottom: 0.8rem;">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--nr-text-muted); margin-bottom: 0.2rem;">এআই প্রস্তাবিত সারসংক্ষেপ:</div>
+                        <p id="aiSummaryText" style="font-size: 0.88rem; color: var(--nr-text-dark); line-height: 1.4; background: #ffffff; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--nr-border);"></p>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--nr-text-muted); margin-bottom: 0.4rem;">প্রস্তাবিত বিকল্প শিরোনামসমূহ (ক্লিক করে কপি করুন):</div>
+                        <div id="aiHeadlinesList" style="display: flex; flex-direction: column; gap: 0.35rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% elif active_tab == 'polls' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: OPINION POLLS MANAGEMENT                                         -->
     <!-- ===================================================================== -->
     <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem;">
-        <!-- Create Poll Card -->
         <div class="nr-card">
             <div class="nr-card-header">
                 <h3 class="nr-card-title">📊 নতুন জনমত জরিপ তৈরি</h3>
@@ -93,7 +828,6 @@
             </div>
         </div>
 
-        <!-- Polls List & Results -->
         <div class="nr-card">
             <div class="nr-card-header">
                 <h3 class="nr-card-title">সক্রিয় ও অতীতের জরিপসমূহ</h3>
@@ -123,7 +857,7 @@
                                         {% if p.is_active %}স্থগিত করুন{% else %}সক্রিয় করুন{% endif %}
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ url_for('admin.delete_poll', poll_id=p.id) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই জরিপটি মুছে ফেলতে চান?')">
+                                <form method="POST" action="{{ url_for('admin.delete_poll', poll_id=p.id) }}" onsubmit="return confirm('এই জরিপটি মুছে ফেলতে চান?')">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline">
                                         মুছুন
                                     </button>
@@ -131,7 +865,6 @@
                             </div>
                         </div>
 
-                        <!-- Results Breakdown Bars -->
                         <div style="display: flex; flex-direction: column; gap: 0.4rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
                             {% for opt in p.options %}
                             <div>
@@ -159,7 +892,7 @@
 
     {% elif active_tab == 'subscribers' %}
     <!-- ===================================================================== -->
-    <!-- 3. NEWSLETTER SUBSCRIBERS SECTION                                     -->
+    <!-- TAB: NEWSLETTER SUBSCRIBERS                                           -->
     <!-- ===================================================================== -->
     <div class="nr-card">
         <div class="nr-card-header">
@@ -204,7 +937,7 @@
 
     {% elif active_tab == 'archive' %}
     <!-- ===================================================================== -->
-    <!-- 4. ARCHIVE OVERVIEW & DATE BROWSER                                    -->
+    <!-- TAB: ARCHIVE BROWSER                                                  -->
     <!-- ===================================================================== -->
     <div class="nr-card">
         <div class="nr-card-header">
@@ -231,10 +964,9 @@
 
     {% else %}
     <!-- ===================================================================== -->
-    <!-- 5. MAIN ARTICLES MANAGEMENT FEED & FILTER TOOLBAR                     -->
+    <!-- TAB: MAIN ARTICLES FEED & FILTER TOOLBAR                              -->
     <!-- ===================================================================== -->
     <div class="nr-card">
-        <!-- Card Header with Actions -->
         <div class="nr-card-header">
             <div>
                 <h3 class="nr-card-title">
@@ -250,9 +982,7 @@
             </button>
         </div>
 
-        <!-- Filter Toolbar -->
         <div class="nr-filter-bar">
-            <!-- Status Pills -->
             <div class="nr-status-pills">
                 <a href="{{ url_for('admin.newspaper_management_view', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if not status_filter %}active{% endif %}">
                     সকল ({{ kpis.total_articles }})
@@ -268,7 +998,6 @@
                 </a>
             </div>
 
-            <!-- Category Filter Dropdown Form -->
             <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" style="display: flex; gap: 0.5rem; align-items: center;">
                 <input type="hidden" name="status" value="{{ status_filter }}">
                 <input type="hidden" name="q" value="{{ search_query }}">
@@ -282,7 +1011,6 @@
             </form>
         </div>
 
-        <!-- Articles Data Table -->
         <div style="overflow-x: auto;">
             <table class="nr-table">
                 <thead>
@@ -303,7 +1031,6 @@
                     <tr>
                         <td style="color: var(--nr-text-muted); font-weight: 700;">#{{ art.id }}</td>
                         
-                        <!-- Thumbnail -->
                         <td>
                             {% if art.images %}
                             <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--nr-border);">
@@ -312,7 +1039,6 @@
                             {% endif %}
                         </td>
 
-                        <!-- Title & Content Preview -->
                         <td style="max-width: 320px;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" target="_blank" style="font-weight: 800; font-size: 0.95rem; color: var(--nr-text-dark); text-decoration: none; display: block; line-height: 1.35; margin-bottom: 0.2rem;">
                                 {{ art.title }}
@@ -322,7 +1048,6 @@
                             </p>
                         </td>
 
-                        <!-- Category & Author -->
                         <td>
                             <span class="nr-badge nr-badge-category" style="margin-bottom: 3px; display: inline-block;">
                                 {{ art.category or 'সাধারণ' }}
@@ -332,7 +1057,6 @@
                             </div>
                         </td>
 
-                        <!-- Metrics -->
                         <td>
                             <div style="font-size: 0.78rem; font-weight: 600;">
                                 <span>👁️ {{ art.views_count or 0 }}</span>
@@ -343,10 +1067,11 @@
                             </div>
                         </td>
 
-                        <!-- Status Badge -->
                         <td>
                             {% if art.scrape_status == 'completed' %}
                             <span class="nr-badge nr-badge-published">✓ প্রকাশিত</span>
+                            {% elif art.scrape_status == 'scheduled' %}
+                            <span class="nr-badge nr-badge-pending">⏱️ নির্ধারিত</span>
                             {% elif art.scrape_status in ['pending', 'draft', 'partial'] %}
                             <span class="nr-badge nr-badge-pending">⏳ অপেক্ষমাণ</span>
                             {% elif art.scrape_status == 'archived' %}
@@ -356,7 +1081,6 @@
                             {% endif %}
                         </td>
 
-                        <!-- Flags (Hero / Breaking) -->
                         <td>
                             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                 {% if art.is_featured %}
@@ -371,10 +1095,8 @@
                             </div>
                         </td>
 
-                        <!-- Actions Toolbar -->
                         <td style="text-align: right;">
                             <div style="display: flex; gap: 0.3rem; justify-content: flex-end; flex-wrap: wrap;">
-                                <!-- Approval Button (if pending) -->
                                 {% if art.scrape_status in ['pending', 'draft', 'partial'] %}
                                 <form method="POST" action="{{ url_for('admin.approve_article', article_id=art.id) }}">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-success" title="অনুমোদন ও প্রকাশ করুন">
@@ -383,26 +1105,22 @@
                                 </form>
                                 {% endif %}
 
-                                <!-- Edit Button (Modal trigger) -->
-                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}')" title="সম্পাদনা করুন">
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}', '{{ art.scheduled_at or "" }}')" title="সম্পাদনা করুন">
                                     ✏️ এডিট
                                 </button>
 
-                                <!-- Toggle Featured Lead -->
                                 <form method="POST" action="{{ url_for('admin.toggle_article_featured', article_id=art.id) }}">
-                                    <button type="submit" class="nr-btn nr-btn-sm {% if art.is_featured %}nr-btn-outline{% else %}nr-btn-outline{% endif %}" title="শীর্ষ সংবাদ টগল">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline" title="শীর্ষ সংবাদ টগল">
                                         {% if art.is_featured %}⭐ সরান{% else %}⭐ শীর্ষ{% endif %}
                                     </button>
                                 </form>
 
-                                <!-- Toggle Breaking Ticker -->
                                 <form method="POST" action="{{ url_for('admin.toggle_article_breaking', article_id=art.id) }}">
                                     <button type="submit" class="nr-btn nr-btn-sm {% if art.is_breaking %}nr-btn-danger-outline{% else %}nr-btn-outline{% endif %}" title="ব্রেকিং টিকার টগল">
-                                        {% if art.is_breaking %}🚨 টিকার বন্ধ{% else %}🚨 ব্রেকিং{% endif %}
+                                        {% if art.is_breaking %}🚨 বন্ধ{% else %}🚨 ব্রেকিং{% endif %}
                                     </button>
                                 </form>
 
-                                <!-- Archive / Restore -->
                                 {% if art.scrape_status == 'archived' %}
                                 <form method="POST" action="{{ url_for('admin.restore_article', article_id=art.id) }}">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline" title="আর্কাইভ থেকে আনুন">
@@ -417,7 +1135,6 @@
                                 </form>
                                 {% endif %}
 
-                                <!-- Delete -->
                                 <form method="POST" action="{{ url_for('admin.delete_article', article_id=art.id) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই সংবাদটি স্থায়ীভাবে মুছে ফেলতে চান?')">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline" title="মুছে ফেলুন">
                                         🗑️
@@ -438,7 +1155,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         {% if total_pages > 1 %}
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.4rem; border-top: 1px solid var(--nr-border); background: #f8fafc; flex-wrap: wrap; gap: 0.8rem;">
             <div style="font-size: 0.85rem; color: var(--nr-text-muted);">
@@ -476,9 +1192,14 @@
     <div id="newArticleModal" class="nr-modal-backdrop">
         <div class="nr-modal-box">
             <div class="nr-modal-header">
-                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
-                    ✍️ নতুন সংবাদ রচনা ও প্রকাশনা
-                </h3>
+                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
+                        ✍️ নতুন সংবাদ রচনা ও প্রকাশনা
+                    </h3>
+                    <button type="button" class="nr-btn nr-btn-sm" style="background: #4f46e5; color: #fff; font-size: 0.78rem;" onclick="autoFillComposerAI('new')">
+                        🤖 এআই দিয়ে পূরণ করুন
+                    </button>
+                </div>
                 <button type="button" onclick="closeNewArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
             </div>
             
@@ -486,21 +1207,13 @@
                 <div class="nr-modal-body">
                     <div class="nr-form-group">
                         <label class="nr-form-label">সংবাদের শিরোনাম (Headline) *</label>
-                        <input type="text" name="title" class="nr-form-control" placeholder="আকর্ষণীয় ও স্পষ্ট শিরোনাম দিন..." required>
+                        <input type="text" id="newTitle" name="title" class="nr-form-control" placeholder="আকর্ষণীয় ও স্পষ্ট শিরোনাম দিন..." required>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="nr-form-group">
                             <label class="nr-form-label">বিভাগ (Category) *</label>
-                            <select name="category" class="nr-form-control" required>
-                                <option value="politics">রাজনীতি (Politics)</option>
-                                <option value="bangladesh">বাংলাদেশ (Bangladesh)</option>
-                                <option value="business">অর্থনীতি ও বাণিজ্য (Business)</option>
-                                <option value="international">আন্তর্জাতিক (International)</option>
-                                <option value="sports">খেলাধুলা (Sports)</option>
-                                <option value="technology">বিজ্ঞান ও প্রযুক্তি (Technology)</option>
-                                <option value="news">মতামত ও সম্পাদকীয় (Opinion)</option>
-                            </select>
+                            <input type="text" id="newCategory" name="category" class="nr-form-control" placeholder="যেমন: রাজনীতি, অর্থনীতি, খেলাধুলা" value="জাতীয়" required>
                         </div>
 
                         <div class="nr-form-group">
@@ -511,17 +1224,24 @@
 
                     <div class="nr-form-group">
                         <label class="nr-form-label">সংক্ষিপ্ত সারসংক্ষেপ (Summary)</label>
-                        <textarea name="summary" class="nr-form-control" rows="2" placeholder="মূল সংবাদের এক বা দুই বাক্যের সারাংশ..."></textarea>
+                        <textarea id="newSummary" name="summary" class="nr-form-control" rows="2" placeholder="মূল সংবাদের এক বা দুই বাক্যের সারাংশ..."></textarea>
                     </div>
 
                     <div class="nr-form-group">
                         <label class="nr-form-label">মূল সংবাদ বিবরণ (Article Body) *</label>
-                        <textarea name="content_text" class="nr-form-control" rows="7" placeholder="বিস্তারিত প্রতিবেদন এখানে বাংলায় লিখুন..." required></textarea>
+                        <textarea id="newContentText" name="content_text" class="nr-form-control" rows="7" placeholder="বিস্তারিত প্রতিবেদন এখানে বাংলায় লিখুন..." required></textarea>
                     </div>
 
-                    <div class="nr-form-group">
-                        <label class="nr-form-label">ফিচার ছবির পাথ (Image Path)</label>
-                        <input type="text" name="image_path" class="nr-form-control" placeholder="যেমন: data/images/bbc_bangla/2026-09/example.jpg">
+                    <div class="nr-form-grid-2">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">ফিচার ছবির পাথ (Image Path)</label>
+                            <input type="text" name="image_path" class="nr-form-control" placeholder="যেমন: data/images/bbc_bangla/example.jpg">
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">⏱️ নির্ধারিত প্রকাশের সময়সূচী (Scheduled Release)</label>
+                            <input type="datetime-local" name="scheduled_at" class="nr-form-control">
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--nr-border);">
@@ -540,7 +1260,7 @@
                 <div class="nr-modal-footer">
                     <button type="button" class="nr-btn nr-btn-outline" onclick="closeNewArticleModal()">বাতিল</button>
                     <button type="submit" name="status" value="draft" class="nr-btn nr-btn-outline">খসড়া রাখুন</button>
-                    <button type="submit" name="status" value="completed" class="nr-btn nr-btn-primary">সরাসরি প্রকাশ করুন</button>
+                    <button type="submit" name="status" value="completed" class="nr-btn nr-btn-primary">প্রকাশ / শিডিউল করুন</button>
                 </div>
             </form>
         </div>
@@ -552,9 +1272,14 @@
     <div id="editArticleModal" class="nr-modal-backdrop">
         <div class="nr-modal-box">
             <div class="nr-modal-header">
-                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
-                    ✏️ সংবাদ সম্পাদনা ও আপডেট
-                </h3>
+                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
+                        ✏️ সংবাদ সম্পাদনা ও আপডেট
+                    </h3>
+                    <button type="button" class="nr-btn nr-btn-sm" style="background: #4f46e5; color: #fff; font-size: 0.78rem;" onclick="autoFillComposerAI('edit')">
+                        🤖 এআই দিয়ে পূরণ করুন
+                    </button>
+                </div>
                 <button type="button" onclick="closeEditArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
             </div>
             
@@ -587,9 +1312,16 @@
                         <textarea id="editContentText" name="content_text" class="nr-form-control" rows="7" required></textarea>
                     </div>
 
-                    <div class="nr-form-group">
-                        <label class="nr-form-label">ফিচার ছবির পাথ</label>
-                        <input type="text" id="editImagePath" name="image_path" class="nr-form-control">
+                    <div class="nr-form-grid-2">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">ফিচার ছবির পাথ</label>
+                            <input type="text" id="editImagePath" name="image_path" class="nr-form-control">
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">⏱️ নির্ধারিত প্রকাশের সময়সূচী</label>
+                            <input type="datetime-local" id="editScheduledAt" name="scheduled_at" class="nr-form-control">
+                        </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -597,6 +1329,7 @@
                             <label class="nr-form-label">স্ট্যাটাস</label>
                             <select id="editStatus" name="status" class="nr-form-control">
                                 <option value="completed">প্রকাশিত (Completed)</option>
+                                <option value="scheduled">নির্ধারিত শিডিউল (Scheduled)</option>
                                 <option value="pending">অনুমোদন অপেক্ষমাণ (Pending)</option>
                                 <option value="draft">খসড়া (Draft)</option>
                                 <option value="archived">আর্কাইভড (Archived)</option>
@@ -629,7 +1362,6 @@
 
 {% block scripts %}
 <script>
-// Open and Close Modal Helpers
 function openNewArticleModal() {
     document.getElementById('newArticleModal').classList.add('show');
 }
@@ -638,7 +1370,7 @@ function closeNewArticleModal() {
     document.getElementById('newArticleModal').classList.remove('show');
 }
 
-function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status) {
+function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt) {
     const form = document.getElementById('editArticleForm');
     form.action = `/admin/newspaper/article/edit/${id}`;
 
@@ -652,6 +1384,12 @@ function openEditArticleModal(id, title, category, author, summary, content, ima
     document.getElementById('editFeatured').checked = Boolean(isFeatured);
     document.getElementById('editBreaking').checked = Boolean(isBreaking);
 
+    if (scheduledAt && scheduledAt.length >= 16) {
+        document.getElementById('editScheduledAt').value = scheduledAt.substring(0, 16);
+    } else {
+        document.getElementById('editScheduledAt').value = '';
+    }
+
     document.getElementById('editArticleModal').classList.add('show');
 }
 
@@ -659,7 +1397,89 @@ function closeEditArticleModal() {
     document.getElementById('editArticleModal').classList.remove('show');
 }
 
-// Close modals on clicking outside backdrop
+// AI Pilot Analysis in Tab
+function runAIPilotAnalysis() {
+    const title = document.getElementById('aiTestTitle').value.trim();
+    const content_text = document.getElementById('aiTestContent').value.trim();
+
+    if (!content_text) {
+        alert('বিশ্লেষণের জন্য সংবাদের মূল বিবরণী প্রদান করুন।');
+        return;
+    }
+
+    fetch('/admin/newspaper/aipilot/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, content_text: content_text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const d = data.data;
+            document.getElementById('aiPredictedCat').textContent = d.predicted_category;
+            document.getElementById('aiReadTime').textContent = d.reading_time_mins;
+            document.getElementById('aiSentimentBadge').textContent = d.sentiment;
+            document.getElementById('aiSummaryText').textContent = d.generated_summary;
+
+            const list = document.getElementById('aiHeadlinesList');
+            list.innerHTML = '';
+            d.suggested_headlines.forEach(hl => {
+                const chip = document.createElement('div');
+                chip.style.cssText = 'background: #ffffff; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #1e293b;';
+                chip.innerHTML = `💡 ${hl} <span style="font-size: 0.72rem; color: #6366f1; float: right;">ক্লিক করে শিরোনামে নিন &rarr;</span>`;
+                chip.onclick = () => {
+                    document.getElementById('aiTestTitle').value = hl;
+                };
+                list.appendChild(chip);
+            });
+
+            document.getElementById('aiAnalysisResult').style.display = 'block';
+        } else {
+            alert(data.message || 'বিশ্লেষণ ব্যর্থ হয়েছে।');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('সার্ভার যোগাযোগে ত্রুটি ঘটেছে।');
+    });
+}
+
+// AI Pilot Auto-fill helper inside Modal
+function autoFillComposerAI(type) {
+    const titleEl = document.getElementById(type === 'new' ? 'newTitle' : 'editTitle');
+    const contentEl = document.getElementById(type === 'new' ? 'newContentText' : 'editContentText');
+    const summaryEl = document.getElementById(type === 'new' ? 'newSummary' : 'editSummary');
+    const categoryEl = document.getElementById(type === 'new' ? 'newCategory' : 'editCategory');
+
+    const content_text = contentEl.value.trim();
+    const title = titleEl.value.trim();
+
+    if (!content_text) {
+        alert('অনুগ্রহ করে আগে সংবাদের বিবরণ পেস্ট বা লিখুন, তারপর এআই ফিল বাটন চাপুন।');
+        return;
+    }
+
+    fetch('/admin/newspaper/aipilot/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, content_text: content_text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const d = data.data;
+            if (!titleEl.value && d.suggested_headlines.length > 0) {
+                titleEl.value = d.suggested_headlines[0];
+            }
+            summaryEl.value = d.generated_summary;
+            categoryEl.value = d.predicted_category;
+            alert('✓ এআই পাইলট স্বয়ংক্রিয়ভাবে সারসংক্ষেপ ও বিভাগ পূরণ করেছে!');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+// Close modals on backdrop click
 window.onclick = function(event) {
     const newModal = document.getElementById('newArticleModal');
     const editModal = document.getElementById('editArticleModal');

@@ -55,7 +55,17 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', status='completed') }}" class="nr-nav-item {% if status_filter == 'completed' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='scheduler') }}" class="nr-nav-item {% if active_tab == 'scheduler' or request.args.get('tab') == 'scheduler' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>⏱️</span>
+                    <span>নির্ধারিত সময়সূচী (Scheduler)</span>
+                </div>
+                {% if scheduled_articles %}
+                <span class="nr-nav-badge" style="background: #2563eb; color: #fff;">{{ scheduled_articles|length }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', status='completed') }}" class="nr-nav-item {% if status_filter == 'completed' and not active_tab %}active{% endif %}">
                 <div class="nr-nav-left">
                     <span>✅</span>
                     <span>প্রকাশিত সংবাদসমূহ</span>
@@ -75,7 +85,27 @@
                 {% endif %}
             </a>
 
-            <div class="nr-nav-heading">ইন্টারঅ্যাক্টিভ পোর্টাল সেবা</div>
+            <div class="nr-nav-heading">এআই ও অটোমেশন</div>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='aipilot') }}" class="nr-nav-item {% if active_tab == 'aipilot' or request.args.get('tab') == 'aipilot' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>🤖</span>
+                    <span>এআই পাইলট মোড</span>
+                </div>
+                <span class="nr-nav-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;">PRO</span>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='ads') }}" class="nr-nav-item {% if active_tab == 'ads' or request.args.get('tab') == 'ads' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📢</span>
+                    <span>বিজ্ঞাপন ব্যবস্থাপনা (Ads)</span>
+                </div>
+                {% if ads %}
+                <span class="nr-nav-badge">{{ ads|length }}</span>
+                {% endif %}
+            </a>
+
+            <div class="nr-nav-heading">ইন্টারঅ্যাক্টিভ সেবা</div>
 
             <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="nr-nav-item {% if active_tab == 'polls' or request.args.get('tab') == 'polls' %}active{% endif %}">
                 <div class="nr-nav-left">
@@ -91,20 +121,41 @@
                 </div>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='archive') }}" class="nr-nav-item {% if active_tab == 'archive' or request.args.get('tab') == 'archive' %}active{% endif %}">
+            <div class="nr-nav-heading">সেটিংস ও সিস্টেম</div>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="nr-nav-item {% if active_tab == 'settings' or request.args.get('tab') == 'settings' %}active{% endif %}">
                 <div class="nr-nav-left">
-                    <span>📅</span>
-                    <span>সংবাদ আর্কাইভ হিস্ট্রি</span>
+                    <span>⚙️</span>
+                    <span>পোর্টাল সেটিংস ও ব্র্যান্ডিং</span>
                 </div>
             </a>
 
-            <div class="nr-nav-heading">সিস্টেম ও অ্যাডমিন</div>
+            <a href="{{ url_for('admin.newspaper_management_view', tab='footer') }}" class="nr-nav-item {% if active_tab == 'footer' or request.args.get('tab') == 'footer' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>🦶</span>
+                    <span>ডায়নামিক ফুটার কনফিগ</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>🔒</span>
+                    <span>সিকিউরিটি ও অডিট লগ</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="nr-nav-item {% if active_tab == 'monitor' or request.args.get('tab') == 'monitor' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📈</span>
+                    <span>সার্ভার মনিটরিং ও হেলথ</span>
+                </div>
+            </a>
 
             {% if current_user and current_user.role == 'admin' %}
             <a href="{{ url_for('admin.users_view') }}" class="nr-nav-item">
                 <div class="nr-nav-left">
                     <span>👥</span>
-                    <span>ব্যবহারকারী ব্যবস্থাপনা</span>
+                    <span>ইউজার RBAC রোলস</span>
                 </div>
             </a>
             {% endif %}

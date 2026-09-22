@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>{% block title %}প্রথম আলো - Prothom Alo Digital Clone Edition | সত্যের সন্ধানে নির্ভীক{% endblock %}</title>
+    <title>{% block title %}{{ site_branding.site_title or 'প্রথম আলো' }} - অনলাইন ডিজিটাল সংস্করণ{% endblock %}</title>
     
     <!-- Google Fonts for Bengali Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
 <body class="palo-body-canvas">
 
     <!-- ===================================================================== -->
-    <!-- 1. FULL WIDTH TOP UTILITY BAR                                         -->
+    <!-- 1. FULL WIDTH TOP UTILITY BAR (DYNAMIC BRANDING & RATES)               -->
     <!-- ===================================================================== -->
     <header class="palo-header-band">
         <div class="palo-topbar-band">
@@ -25,34 +25,47 @@
                 <div class="palo-topbar-left">
                     <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩</span>
                     <span class="palo-dot-sep">•</span>
-                    <span class="palo-edition-tag">ঢাকা সংস্করণ</span>
+                    <span class="palo-edition-tag">{{ site_branding.edition or 'বাংলাদেশ সংস্করণ' }}</span>
                     <span class="palo-dot-sep">•</span>
-                    <span>⛅ ঢাকা ৩০° সে.</span>
+                    <span>⛅ {{ site_branding.weather_city or 'ঢাকা' }} {{ site_branding.weather_temp or '২৮° সে.' }} ({{ site_branding.weather_desc or 'আংশিক মেঘলা' }})</span>
                 </div>
                 <div class="palo-topbar-right">
-                    <span class="palo-rate-item">ডলার ৳১২১.৫০</span>
-                    <span class="palo-rate-item">ইউরো ৳১৩১.২০</span>
+                    <span class="palo-rate-item">ডলার ৳{{ site_branding.usd_rate or '১২১.৫০' }}</span>
+                    <span class="palo-rate-item">ইউরো ৳{{ site_branding.eur_rate or '১৩২.২০' }}</span>
                     <a href="{{ url_for('portal.archive_view') }}" class="palo-top-link">📅 আর্কাইভ</a>
                     <a href="{{ url_for('portal.index_view') }}#poll-box" class="palo-top-link">📊 জনমত জরিপ</a>
-                    <a href="{{ url_for('dashboard.index_view') }}" class="palo-top-link palo-admin-link">
-                        ⚡ AI কন্ট্রোল প্যানেল
+                    <a href="{{ url_for('admin.newspaper_management_view') }}" class="palo-top-link palo-admin-link">
+                        🛡️ সম্পাদকীয় CMS
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- ================================================================= -->
-        <!-- 2. BRAND MASTHEAD & SEARCH BAR                                    -->
+        <!-- 2. BRAND MASTHEAD & HEADER AD BANNER                              -->
         <!-- ================================================================= -->
         <div class="palo-masthead-band">
             <div class="palo-container palo-masthead-inner">
                 <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap">
+                    {% if site_branding.logo_image %}
+                    <img src="{{ site_branding.logo_image }}" alt="{{ site_branding.site_title }}" style="height: 52px; object-fit: contain;">
+                    {% else %}
                     <div class="palo-logo-emblem">আ</div>
                     <div class="palo-logo-text">
-                        <h1 class="palo-brand-title">প্রথম<span>আলো</span></h1>
-                        <span class="palo-brand-tagline">The Daily Prothom Alo • ক্রিয়েলিং এআই সংস্করণ</span>
+                        <h1 class="palo-brand-title">{{ site_branding.logo_text or site_branding.site_title or 'প্রথম আলো' }}</h1>
+                        <span class="palo-brand-tagline">{{ site_branding.site_tagline or 'অনলাইন বাংলা দৈনিক ও এআই সংবাদ প্ল্যাটফর্ম' }}</span>
                     </div>
+                    {% endif %}
                 </a>
+
+                <!-- Header Top Ad (728x90 Banner) if active -->
+                {% if active_ads and active_ads.header_top %}
+                <div class="palo-header-ad-wrap" style="display: flex; align-items: center; justify-content: center;">
+                    <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.header_top.id) }}" target="_blank" style="display: inline-block; max-width: 600px; max-height: 75px; overflow: hidden; border-radius: 4px; border: 1px solid #e2e8f0;">
+                        <img src="{{ active_ads.header_top.image_url }}" alt="{{ active_ads.header_top.title }}" style="width: 100%; height: 75px; object-fit: cover;">
+                    </a>
+                </div>
+                {% endif %}
 
                 <div class="palo-masthead-actions">
                     <form method="GET" action="{{ url_for('portal.index_view') }}" class="palo-search-form">
@@ -176,19 +189,21 @@
     </main>
 
     <!-- ===================================================================== -->
-    <!-- 7. FULL WIDTH AUTHENTIC PROTHOM ALO FOOTER                            -->
+    <!-- 7. FULL WIDTH DYNAMIC FOOTER                                          -->
     <!-- ===================================================================== -->
     <footer class="palo-footer">
         <div class="palo-container">
             <div class="palo-footer-grid">
                 <div class="palo-footer-brand">
-                    <h3>প্রথম<span>আলো</span></h3>
+                    <h3>{{ site_branding.site_title or 'প্রথম আলো' }}</h3>
                     <p class="palo-footer-desc">
-                        সত্যের সন্ধানে নির্ভীক। কৃত্রিম বুদ্ধিমত্তা, রিয়েল-টাইম স্ক্র্যাপিং ও প্রাকৃতিক ভাষা প্রক্রিয়াকরণ দ্বারা পরিচালিত ডিজিটাল প্ল্যাটফর্ম।
+                        {{ site_branding.site_tagline or 'সত্যের সন্ধানে নির্ভীক। কৃত্রিম বুদ্ধিমত্তা ও রিয়েল-টাইম স্ক্র্যাপিং দ্বারা পরিচালিত ডিজিটাল প্ল্যাটফর্ম।' }}
                     </p>
                     <p class="palo-footer-contact">
-                        <strong>ভারপ্রাপ্ত সম্পাদক ও প্রকাশক:</strong> ক্রিয়েলিং এআই পাবলিকেশনস লিমিটেড<br>
-                        প্রগতি সরণি, ঢাকা-১২১২, বাংলাদেশ।
+                        <strong>{{ site_footer.editor_in_chief or 'ভারপ্রাপ্ত সম্পাদক ও প্রকাশক: মোঃ মতিউর রহমান' }}</strong><br>
+                        {{ site_footer.office_address or 'প্রগতি ইনস্যুরেন্স ভবন, ২০–২১ কারওয়ান বাজার, ঢাকা ১২১৫।' }}<br>
+                        {% if site_footer.contact_email %}ইমেইল: {{ site_footer.contact_email }} | {% endif %}
+                        {% if site_footer.contact_phone %}ফোন: {{ site_footer.contact_phone }}{% endif %}
                     </p>
                 </div>
 
@@ -211,26 +226,38 @@
                         <li><a href="{{ url_for('portal.archive_view') }}">সংবাদ আর্কাইভ</a></li>
                         <li><a href="{{ url_for('portal.index_view') }}#poll-box">জনমত জরিপ</a></li>
                         <li><a href="{{ url_for('portal.index_view') }}#newsletter-box">ই-বুলেটিন সাবস্ক্রিপশন</a></li>
-                        <li><a href="{{ url_for('admin.newspaper_management_view') }}">সম্পাদকীয় ব্যবস্থাপনা</a></li>
+                        <li><a href="{{ url_for('admin.newspaper_management_view') }}">সম্পাদকীয় CMS</a></li>
                         <li><a href="{{ url_for('dashboard.index_view') }}">সিস্টেম ড্যাশবোর্ড</a></li>
                     </ul>
                 </div>
 
                 <div class="palo-footer-col">
                     <h4>মোবাইল অ্যাপ ও সোশ্যাল</h4>
-                    <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 0.8rem;">
-                        সবসময় যেকোনো প্রান্ত থেকে আপডেট পেতে আমাদের সাথে থাকুন।
-                    </p>
+                    <div style="display: flex; gap: 0.6rem; margin-bottom: 0.8rem; font-size: 1.2rem;">
+                        {% if site_footer.facebook_url %}
+                        <a href="{{ site_footer.facebook_url }}" target="_blank" title="Facebook" style="text-decoration: none;">📘</a>
+                        {% endif %}
+                        {% if site_footer.youtube_url %}
+                        <a href="{{ site_footer.youtube_url }}" target="_blank" title="YouTube" style="text-decoration: none;">▶️</a>
+                        {% endif %}
+                        {% if site_footer.twitter_url %}
+                        <a href="{{ site_footer.twitter_url }}" target="_blank" title="Twitter / X" style="text-decoration: none;">🐦</a>
+                        {% endif %}
+                    </div>
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <span class="palo-app-badge">📱 Android App</span>
-                        <span class="palo-app-badge">🍎 iOS App</span>
+                        {% if site_footer.android_app_url %}
+                        <a href="{{ site_footer.android_app_url }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">📱 Android App</a>
+                        {% endif %}
+                        {% if site_footer.ios_app_url %}
+                        <a href="{{ site_footer.ios_app_url }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">🍎 iOS App</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
 
             <div class="palo-footer-bottom">
                 <div>
-                    স্বত্ব © ২০২৬ প্রথম আলো ক্লোন - ক্রিয়েলিং এআই ইঞ্জিন। সর্বস্বত্ব সংরক্ষিত।
+                    {{ site_footer.copyright_text or '© ২০২৬ প্রথম আলো অনলাইন সংস্করণ। সর্বস্বত্ব সংরক্ষিত।' }}
                 </div>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                     <span>গোপনীয়তা নীতি</span>

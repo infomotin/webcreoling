@@ -678,8 +678,135 @@ html, body {
 }
 
 /* =========================================================================
-   5. RESPONSIVE ADAPTATIONS
+   6. ADVANCED MODULES: MONITORING, AI PILOT, ADS, AUDIT
    ========================================================================= */
+
+/* Server Health Gauges */
+.nr-telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.nr-telemetry-card {
+    background: #ffffff;
+    border: 1px solid var(--nr-border);
+    border-radius: var(--nr-radius);
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    box-shadow: var(--nr-shadow-sm);
+}
+
+.nr-telemetry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nr-telemetry-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--nr-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nr-telemetry-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--nr-text-dark);
+    font-family: 'Inter', sans-serif;
+}
+
+.nr-progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nr-progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+/* AI Pilot Mode Assistant */
+.nr-ai-pilot-box {
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: var(--nr-radius);
+    padding: 1.8rem;
+    border: 1px solid #312e81;
+    box-shadow: 0 10px 25px rgba(30, 27, 75, 0.4);
+    margin-bottom: 1.5rem;
+}
+
+.nr-ai-badge {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.nr-ai-suggestion-chip {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nr-ai-suggestion-chip:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: #818cf8;
+    color: #ffffff;
+}
+
+/* Ad Banner Slots */
+.nr-ad-slot-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: monospace;
+}
+
+/* Audit Log Timeline */
+.nr-audit-pill {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.nr-audit-create { background: #dcfce7; color: #166534; }
+.nr-audit-edit { background: #e0f2fe; color: #075985; }
+.nr-audit-delete { background: #fee2e2; color: #991b1b; }
+.nr-audit-settings { background: #fef3c7; color: #92400e; }
+.nr-audit-default { background: #f1f5f9; color: #475569; }
+
+/* 2-Column Form Layouts */
+.nr-form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
 @media (max-width: 1024px) {
     .nr-sidebar {
         width: 230px;
@@ -707,4 +834,9 @@ html, body {
     .nr-content {
         padding: 1rem;
     }
+    .nr-form-grid-2 {
+        grid-template-columns: 1fr;
+    }
 }
+
+

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}সম্পাদকীয় নিউজরুম কন্ট্রোল - প্রথম আলো ডিজিটাল CMS{% endblock %}</title>
+
+    <!-- Google Bengali & Sans Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Noto+Serif+Bengali:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Dedicated Newsroom CMS CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/newsroom_admin.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="nr-layout">
+
+    <!-- ===================================================================== -->
+    <!-- 1. NEWSROOM SIDEBAR NAVIGATION                                        -->
+    <!-- ===================================================================== -->
+    <aside class="nr-sidebar">
+        <!-- Brand Header -->
+        <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-sidebar-brand">
+            <div class="nr-brand-badge">আ</div>
+            <div>
+                <div class="nr-brand-title">প্রথম<span>আলো</span></div>
+                <span class="nr-brand-sub">সম্পাদকীয় নিউজরুম CMS</span>
+            </div>
+        </a>
+
+        <!-- Navigation Links -->
+        <nav class="nr-sidebar-nav">
+            <div class="nr-nav-heading">সম্পাদকীয় নিয়ন্ত্রণ</div>
+
+            <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-nav-item {% if not status_filter and not request.args.get('tab') and request.endpoint == 'admin.newspaper_management_view' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📰</span>
+                    <span>সকল সংবাদ ফিড</span>
+                </div>
+                {% if kpis %}
+                <span class="nr-nav-badge">{{ kpis.total_articles }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', status='pending') }}" class="nr-nav-item {% if status_filter == 'pending' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>🛡️</span>
+                    <span>অনুমোদন কিউ (Review)</span>
+                </div>
+                {% if kpis and kpis.pending_count > 0 %}
+                <span class="nr-nav-badge" style="background: var(--nr-warning); color: #fff;">{{ kpis.pending_count }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', status='completed') }}" class="nr-nav-item {% if status_filter == 'completed' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>✅</span>
+                    <span>প্রকাশিত সংবাদসমূহ</span>
+                </div>
+                {% if kpis %}
+                <span class="nr-nav-badge">{{ kpis.published_count }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', status='archived') }}" class="nr-nav-item {% if status_filter == 'archived' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📦</span>
+                    <span>আর্কাইভড সংবাদ</span>
+                </div>
+                {% if kpis %}
+                <span class="nr-nav-badge">{{ kpis.archived_count }}</span>
+                {% endif %}
+            </a>
+
+            <div class="nr-nav-heading">ইন্টারঅ্যাক্টিভ পোর্টাল সেবা</div>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="nr-nav-item {% if active_tab == 'polls' or request.args.get('tab') == 'polls' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📊</span>
+                    <span>মতামত জরিপ (Polls)</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='subscribers') }}" class="nr-nav-item {% if active_tab == 'subscribers' or request.args.get('tab') == 'subscribers' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📩</span>
+                    <span>ই-বুলেটিন গ্রাহকবৃন্দ</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='archive') }}" class="nr-nav-item {% if active_tab == 'archive' or request.args.get('tab') == 'archive' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>📅</span>
+                    <span>সংবাদ আর্কাইভ হিস্ট্রি</span>
+                </div>
+            </a>
+
+            <div class="nr-nav-heading">সিস্টেম ও অ্যাডমিন</div>
+
+            {% if current_user and current_user.role == 'admin' %}
+            <a href="{{ url_for('admin.users_view') }}" class="nr-nav-item">
+                <div class="nr-nav-left">
+                    <span>👥</span>
+                    <span>ব্যবহারকারী ব্যবস্থাপনা</span>
+                </div>
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('dashboard.index_view') }}" class="nr-nav-item">
+                <div class="nr-nav-left">
+                    <span>⚡</span>
+                    <span>এআই মডেল ড্যাশবোর্ড</span>
+                </div>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer: Jump to Live Public Portal -->
+        <div class="nr-sidebar-footer">
+            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="nr-live-portal-btn">
+                <span>🌐</span>
+                <span>লাইভ পোর্টাল দেখুন &rarr;</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===================================================================== -->
+    <!-- 2. MAIN NEWSROOM CONTENT WRAPPER                                      -->
+    <!-- ===================================================================== -->
+    <div class="nr-main">
+
+        <!-- Top Utility Header Bar -->
+        <header class="nr-topbar">
+            <div class="nr-topbar-left">
+                <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" class="nr-topbar-search">
+                    <span class="nr-search-icon">🔍</span>
+                    <input type="text" name="q" value="{{ search_query or '' }}" class="nr-topbar-input" placeholder="শিরোনাম, রিপোর্টার বা বিষয় খুঁজুন...">
+                </form>
+            </div>
+
+            <div class="nr-topbar-right">
+                <!-- Write New Article Modal Trigger Button -->
+                <button type="button" class="nr-btn-new-article" onclick="openNewArticleModal()">
+                    <span>✍️</span> নতুন সংবাদ প্রকাশ
+                </button>
+
+                <!-- Current Logged-in User Pill -->
+                <div class="nr-user-badge">
+                    <div class="nr-user-avatar">
+                        {{ (current_user.username if current_user else 'E')[0].upper() }}
+                    </div>
+                    <div>
+                        <div class="nr-user-name">{{ current_user.username if current_user else 'সম্পাদক' }}</div>
+                        <span class="nr-user-role">{{ current_user.role if current_user else 'editor' }}</span>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('auth.logout_view') }}" class="nr-logout-link" title="লগআউট">
+                    🚪 প্রস্থান
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Notifications Banner -->
+        <div class="nr-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div>
+                    {% for cat, msg in messages %}
+                    <div class="nr-alert nr-alert-{{ cat }}">
+                        <span>{{ msg }}</span>
+                        <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; cursor: pointer; font-weight: 800;">✕</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Main Dynamic Content Block -->
+            {% block newsroom_content %}{% endblock %}
+        </div>
+
+    </div>
+
+</div>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

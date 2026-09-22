@@ -361,6 +361,235 @@ class ArticleRepository:
         self.session.flush()
         return {"liked": liked, "likes_count": article.likes_count}
 
+    def create_editorial_article(
+        self,
+        title: str,
+        category: str,
+        content_text: str,
+        author: Optional[str] = None,
+        summary: Optional[str] = None,
+        image_path: Optional[str] = None,
+        is_featured: bool = False,
+        is_breaking: bool = False,
+        status: str = "completed",
+    ) -> Article:
+        """Create and publish a new article directly from the editorial desk."""
+        import uuid
+        import hashlib
+
+        normalized_title = BanglaTextNormalizer.normalize_article_text(title.strip())
+        normalized_content = BanglaTextNormalizer.normalize_article_text(content_text.strip())
+        slug = uuid.uuid4().hex[:10]
+        url = f"https://prothomalo.com/editorial/{slug}"
+
+        article = Article(
+            url=url,
+            source="প্রথম আলো সম্পাদকীয় ডেস্ক",
+            title=normalized_title,
+            author=author.strip() if author else "প্রথম আলো নিজস্ব প্রতিবেদক",
+            published_at=datetime.utcnow() if status == "completed" else None,
+            category=category.strip() or "general",
+            content_text=normalized_content,
+            summary=summary.strip() if summary else normalized_content[:200] + "...",
+            scrape_status=status,
+            is_featured=is_featured,
+            is_breaking=is_breaking,
+            views_count=0,
+            likes_count=0,
+            shares_count=0,
+        )
+        self.session.add(article)
+        self.session.flush()
+
+        if image_path and image_path.strip():
+            clean_path = image_path.strip().lstrip("/")
+            file_hash = hashlib.sha256(clean_path.encode("utf-8")).hexdigest()[:16]
+            img_obj = ArticleImage(
+                article_id=article.id,
+                original_url=url,
+                local_path=clean_path,
+                file_hash=file_hash,
+                is_lead_image=True,
+                download_status="downloaded",
+            )
+            self.session.add(img_obj)
+            self.session.flush()
+
+        return article
+
+    def update_editorial_article(
+        self,
+        article_id: int,
+        title: Optional[str] = None,
+        category: Optional[str] = None,
+        author: Optional[str] = None,
+        summary: Optional[str] = None,
+        content_text: Optional[str] = None,
+        image_path: Optional[str] = None,
+        is_featured: Optional[bool] = None,
+        is_breaking: Optional[bool] = None,
+        status: Optional[str] = None,
+    ) -> Optional[Article]:
+        """Update an existing article from the editorial desk."""
+        import hashlib
+        article = self.get_by_id(article_id)
+        if not article:
+            return None
+
+        if title is not None:
+            article.title = BanglaTextNormalizer.normalize_article_text(title.strip())
+        if category is not None:
+            article.category = category.strip()
+        if author is not None:
+            article.author = author.strip()
+        if summary is not None:
+            article.summary = summary.strip()
+        if content_text is not None:
+            article.content_text = BanglaTextNormalizer.normalize_article_text(content_text.strip())
+        if is_featured is not None:
+            article.is_featured = is_featured
+        if is_breaking is not None:
+            article.is_breaking = is_breaking
+        if status is not None:
+            article.scrape_status = status
+            if status == "completed" and not article.published_at:
+                article.published_at = datetime.utcnow()
+
+        if image_path and image_path.strip():
+            clean_path = image_path.strip().lstrip("/")
+            file_hash = hashlib.sha256(clean_path.encode("utf-8")).hexdigest()[:16]
+            if article.images:
+                lead_img = article.images[0]
+                lead_img.local_path = clean_path
+                lead_img.file_hash = file_hash
+            else:
+                img_obj = ArticleImage(
+                    article_id=article.id,
+                    original_url=article.url,
+                    local_path=clean_path,
+                    file_hash=file_hash,
+                    is_lead_image=True,
+                    download_status="downloaded",
+                )
+                self.session.add(img_obj)
+
+        article.updated_at = datetime.utcnow()
+        self.session.flush()
+        return article
+
+    def delete_article(self, article_id: int) -> bool:
+        """Permanently delete an article and its associated images."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            self.session.delete(article)
+            self.session.flush()
+            return True
+        return False
+
+    def approve_article(self, article_id: int) -> bool:
+        """Approve and publish a draft or pending article."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.scrape_status = "completed"
+            if not article.published_at:
+                article.published_at = datetime.utcnow()
+            article.updated_at = datetime.utcnow()
+            self.session.flush()
+            return True
+        return False
+
+    def archive_article(self, article_id: int) -> bool:
+        """Move an article to the archived state."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.scrape_status = "archived"
+            article.is_featured = False
+            article.is_breaking = False
+            article.updated_at = datetime.utcnow()
+            self.session.flush()
+            return True
+        return False
+
+    def restore_article(self, article_id: int) -> bool:
+        """Restore an archived article back to published status."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if article:
+            article.scrape_status = "completed"
+            article.updated_at = datetime.utcnow()
+            self.session.flush()
+            return True
+        return False
+
+    def list_editorial_articles(
+        self,
+        search_query: Optional[str] = None,
+        category: Optional[str] = None,
+        status: Optional[str] = None,
+        is_featured: Optional[bool] = None,
+        is_breaking: Optional[bool] = None,
+        page: int = 1,
+        page_size: int = 15,
+    ) -> Dict[str, Any]:
+        """Fetch filtered and paginated articles for the newsroom editorial management desk."""
+        query = self.session.query(Article).options(joinedload(Article.images))
+
+        if search_query and search_query.strip():
+            q = f"%{search_query.strip()}%"
+            query = query.filter((Article.title.like(q)) | (Article.content_text.like(q)) | (Article.author.like(q)))
+
+        if category and category.strip():
+            query = query.filter(Article.category == category.strip())
+
+        if status and status.strip():
+            if status == "pending":
+                query = query.filter(Article.scrape_status.in_(["pending", "draft", "partial"]))
+            else:
+                query = query.filter(Article.scrape_status == status.strip())
+
+        if is_featured is not None:
+            query = query.filter(Article.is_featured == is_featured)
+
+        if is_breaking is not None:
+            query = query.filter(Article.is_breaking == is_breaking)
+
+        total_count = query.count()
+        articles = (
+            query.order_by(Article.published_at.desc().nullslast(), Article.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        total_pages = max(1, (total_count + page_size - 1) // page_size)
+
+        return {
+            "articles": articles,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages,
+            "search_query": search_query or "",
+            "category_filter": category or "",
+            "status_filter": status or "",
+        }
+
+    def get_editorial_kpis(self) -> Dict[str, int]:
+        """Fetch real-time newsroom key performance indicators."""
+        total_articles = self.session.query(func.count(Article.id)).scalar() or 0
+        published_count = self.session.query(func.count(Article.id)).filter(Article.scrape_status == "completed").scalar() or 0
+        pending_count = self.session.query(func.count(Article.id)).filter(Article.scrape_status.in_(["draft", "pending", "partial"])).scalar() or 0
+        archived_count = self.session.query(func.count(Article.id)).filter(Article.scrape_status == "archived").scalar() or 0
+        featured_count = self.session.query(func.count(Article.id)).filter(Article.is_featured == True).scalar() or 0
+        breaking_count = self.session.query(func.count(Article.id)).filter(Article.is_breaking == True).scalar() or 0
+
+        return {
+            "total_articles": total_articles,
+            "published_count": published_count,
+            "pending_count": pending_count,
+            "archived_count": archived_count,
+            "featured_count": featured_count,
+            "breaking_count": breaking_count,
+        }
+
     def toggle_featured(self, article_id: int) -> bool:
         """Toggle featured/lead status of an article."""
         article = self.session.query(Article).filter(Article.id == article_id).first()
@@ -744,6 +973,24 @@ class PortalRepository:
     def list_subscribers(self) -> List[NewsletterSubscriber]:
         """List all newsletter subscribers."""
         return self.session.query(NewsletterSubscriber).order_by(NewsletterSubscriber.id.desc()).all()
+
+    def delete_poll(self, poll_id: int) -> bool:
+        """Delete an opinion poll and its options/votes."""
+        poll = self.session.query(Poll).filter(Poll.id == poll_id).first()
+        if poll:
+            self.session.delete(poll)
+            self.session.flush()
+            return True
+        return False
+
+    def delete_subscriber(self, subscriber_id: int) -> bool:
+        """Delete a newsletter subscriber."""
+        sub = self.session.query(NewsletterSubscriber).filter(NewsletterSubscriber.id == subscriber_id).first()
+        if sub:
+            self.session.delete(sub)
+            self.session.flush()
+            return True
+        return False
 
     def seed_default_poll(self) -> None:
         """Seed initial active poll if none exists."""

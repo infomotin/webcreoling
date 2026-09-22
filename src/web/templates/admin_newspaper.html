@@ -1,173 +1,674 @@
-{% extends "base.html" %}
+{% extends "newsroom_base.html" %}
 
-{% block title %}Editorial & Newspaper Management - WebCreoling{% endblock %}
+{% block title %}সম্পাদকীয় নিউজরুম ড্যাশবোর্ড - প্রথম আলো ডিজিটাল CMS{% endblock %}
 
-{% block content %}
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-        <h1 style="font-size: 1.8rem; font-weight: 700;">📰 Editorial & Newspaper Frontend Manager</h1>
-        <p style="color: var(--text-secondary); font-size: 0.95rem;">
-            Control the public digital newspaper: feature lead stories, manage breaking news tickers, create opinion polls, and monitor subscribers.
-        </p>
-    </div>
-    <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-primary">
-        🌐 Open Public Newspaper &rarr;
-    </a>
-</div>
+{% block newsroom_content %}
 
-<!-- Grid: Poll Creator + Subscriber Summary -->
-<div class="grid-2" style="margin-bottom: 2.5rem;">
-    <!-- 1. Opinion Poll Creator -->
-    <div class="card" style="border-top: 3px solid var(--accent-purple);">
-        <div class="card-header">
-            <h3 style="font-size: 1.1rem; font-weight: 600;">📊 Create Reader Opinion Poll</h3>
-            <span class="badge badge-analyst">Live Polls</span>
+    <!-- ===================================================================== -->
+    <!-- 1. REAL-TIME EDITORIAL KPI METRIC CARDS                               -->
+    <!-- ===================================================================== -->
+    <div class="nr-kpi-grid">
+        <div class="nr-kpi-card">
+            <div>
+                <div class="nr-kpi-val">{{ kpis.total_articles }}</div>
+                <div class="nr-kpi-label">মোট সংরক্ষিত সংবাদ</div>
+            </div>
+            <div class="nr-kpi-icon articles">📰</div>
         </div>
-        <form method="POST" action="{{ url_for('admin.create_poll') }}">
-            <div class="form-group">
-                <label class="form-label">Poll Question (Bangla / English)</label>
-                <input type="text" name="question" class="form-control" placeholder="e.g. ২০২৬ সালের বাজেটে প্রযুক্তিতে বরাদ্দ কি পর্যাপ্ত?" required>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label">Category</label>
-                <input type="text" name="category" class="form-control" value="জাতীয়">
+        <div class="nr-kpi-card">
+            <div>
+                <div class="nr-kpi-val" style="color: var(--nr-success);">{{ kpis.published_count }}</div>
+                <div class="nr-kpi-label">সরাসরি প্রকাশিত</div>
             </div>
+            <div class="nr-kpi-icon published">✅</div>
+        </div>
 
-            <div class="form-group">
-                <label class="form-label">Options (One option per line, minimum 2)</label>
-                <textarea name="options" class="form-control" rows="3" placeholder="হ্যাঁ, যথেষ্ট&#10;না, আরও বাড়ানো উচিত&#10;মন্তব্য নেই" required></textarea>
+        <div class="nr-kpi-card">
+            <div>
+                <div class="nr-kpi-val" style="color: var(--nr-warning);">{{ kpis.pending_count }}</div>
+                <div class="nr-kpi-label">অনুমোদন অপেক্ষমাণ</div>
             </div>
+            <div class="nr-kpi-icon pending">🛡️</div>
+        </div>
 
-            <button type="submit" class="btn btn-secondary" style="width: 100%;">
-                Publish Opinion Poll
-            </button>
-        </form>
+        <div class="nr-kpi-card">
+            <div>
+                <div class="nr-kpi-val" style="color: var(--nr-primary);">{{ kpis.featured_count + kpis.breaking_count }}</div>
+                <div class="nr-kpi-label">শীর্ষ ও ব্রেকিং সংবাদ</div>
+            </div>
+            <div class="nr-kpi-icon featured">⚡</div>
+        </div>
+
+        <div class="nr-kpi-card">
+            <div>
+                <div class="nr-kpi-val" style="color: var(--nr-purple);">{{ kpis.archived_count }}</div>
+                <div class="nr-kpi-label">সংরক্ষিত আর্কাইভ</div>
+            </div>
+            <div class="nr-kpi-icon archived">📦</div>
+        </div>
     </div>
 
-    <!-- 2. Active Polls & Newsletter Subscribers -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <!-- Active Polls List -->
-        <div class="card">
-            <div class="card-header">
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Active & Past Polls</h3>
-                <span class="badge badge-category">{{ polls|length }} Total</span>
+    <!-- ===================================================================== -->
+    <!-- TAB CONTENT ROUTING (POLLS / SUBSCRIBERS / ARCHIVE / ARTICLES)        -->
+    <!-- ===================================================================== -->
+
+    {% if active_tab == 'polls' %}
+    <!-- ===================================================================== -->
+    <!-- 2. OPINION POLLS MANAGEMENT SECTION                                   -->
+    <!-- ===================================================================== -->
+    <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem;">
+        <!-- Create Poll Card -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">📊 নতুন জনমত জরিপ তৈরি</h3>
             </div>
-            {% if polls %}
-            <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem;">
-                {% for p in polls %}
-                <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong style="color: #fff; font-size: 0.85rem; display: block;">{{ p.question }}</strong>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">
-                            {{ p.total_votes }} Votes • Status: {% if p.is_active %}<span style="color: var(--accent-success);">Active</span>{% else %}<span style="color: var(--accent-warning);">Closed</span>{% endif %}
-                        </span>
+            <div class="nr-card-body">
+                <form method="POST" action="{{ url_for('admin.create_poll') }}">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">জরিপের প্রশ্ন (বাংলায়):</label>
+                        <input type="text" name="question" class="nr-form-control" placeholder="যেমন: নতুন শিল্পনীতি কি বিনিয়োগ বাড়াতে সক্ষম হবে?" required>
                     </div>
-                    <form method="POST" action="{{ url_for('admin.toggle_poll_status', poll_id=p.id) }}">
-                        <button type="submit" class="btn btn-sm {% if p.is_active %}btn-outline{% else %}btn-primary{% endif %}">
-                            {% if p.is_active %}Close Poll{% else %}Activate{% endif %}
-                        </button>
-                    </form>
-                </div>
-                {% endfor %}
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">বিভাগ / টপিক:</label>
+                        <select name="category" class="nr-form-control">
+                            <option value="জাতীয়">জাতীয়</option>
+                            <option value="অর্থনীতি">অর্থনীতি ও বাণিজ্য</option>
+                            <option value="রাজনীতি">রাজনীতি</option>
+                            <option value="খেলাধুলা">খেলাধুলা</option>
+                            <option value="প্রযুক্তি">বিজ্ঞান ও প্রযুক্তি</option>
+                        </select>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">বিকল্পসমূহ (প্রতি লাইনে একটি করে অপশন, অন্তত ২টি):</label>
+                        <textarea name="options" class="nr-form-control" rows="4" placeholder="হ্যাঁ&#10;না&#10;মন্তব্য নেই" required></textarea>
+                    </div>
+
+                    <button type="submit" class="nr-btn nr-btn-primary" style="width: 100%; padding: 0.65rem;">
+                        জরিপ প্রকাশ ও সক্রিয় করুন
+                    </button>
+                </form>
             </div>
-            {% else %}
-            <p style="font-size: 0.82rem; color: var(--text-muted);">No polls created yet.</p>
-            {% endif %}
         </div>
 
-        <!-- Subscribers List -->
-        <div class="card">
-            <div class="card-header">
-                <h3 style="font-size: 1.05rem; font-weight: 600;">📩 Newsletter Subscribers</h3>
-                <span class="badge badge-admin">{{ subscribers|length }} Subscribers</span>
+        <!-- Polls List & Results -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">সক্রিয় ও অতীতের জরিপসমূহ</h3>
+                <span class="nr-badge nr-badge-category">{{ polls|length }} টি জরিপ</span>
             </div>
-            {% if subscribers %}
-            <div style="max-height: 140px; overflow-y: auto; font-size: 0.82rem;">
-                <ul style="padding-left: 1.2rem; color: #e2e8f0;">
-                    {% for s in subscribers %}
-                    <li>{{ s.email }} <span style="font-size: 0.7rem; color: var(--text-muted);">({{ s.subscribed_at }})</span></li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% else %}
-            <p style="font-size: 0.82rem; color: var(--text-muted);">No newsletter subscribers yet.</p>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Article Editorial Highlighting & Breaking Ticker Table -->
-<div class="card">
-    <div class="card-header">
-        <div>
-            <h3 style="font-size: 1.1rem; font-weight: 600;">Article Placement & Highlight Controls</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
-                Toggle Lead Story / Featured Hero banner and Breaking News Ticker for the newspaper frontpage.
-            </p>
-        </div>
-        <span class="badge badge-editor">Editorial Controls</span>
-    </div>
-
-    <div style="overflow-x: auto;">
-        <table class="table" style="font-size: 0.85rem;">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Title & Category</th>
-                    <th>Source</th>
-                    <th>Reads / Likes</th>
-                    <th>Lead Hero Story</th>
-                    <th>Breaking Ticker</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for art in articles %}
-                <tr>
-                    <td style="color: var(--text-muted);">#{{ art.id }}</td>
-                    <td>
-                        <strong style="color: #fff; display: block; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            {{ art.title }}
-                        </strong>
-                        <span class="badge badge-category" style="font-size: 0.65rem;">{{ art.category }}</span>
-                    </td>
-                    <td>{{ art.source }}</td>
-                    <td>
-                        <span>👁️ {{ art.views_count or 0 }}</span> • <span>❤️ {{ art.likes_count or 0 }}</span>
-                    </td>
-                    <td>
-                        {% if art.is_featured %}
-                        <span class="badge badge-admin" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✓ Featured Lead</span>
-                        {% else %}
-                        <span style="color: var(--text-muted); font-size: 0.75rem;">Standard</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if art.is_breaking %}
-                        <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🚨 Breaking Ticker</span>
-                        {% else %}
-                        <span style="color: var(--text-muted); font-size: 0.75rem;">Off</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 0.4rem;">
-                            <form method="POST" action="{{ url_for('admin.toggle_article_featured', article_id=art.id) }}">
-                                <button type="submit" class="btn btn-sm {% if art.is_featured %}btn-outline{% else %}btn-primary{% endif %}">
-                                    {% if art.is_featured %}Unfeature{% else %}Feature Hero{% endif %}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ url_for('admin.toggle_article_breaking', article_id=art.id) }}">
-                                <button type="submit" class="btn btn-sm {% if art.is_breaking %}btn-outline{% else %}btn-secondary{% endif %}">
-                                    {% if art.is_breaking %}Remove Breaking{% else %}Make Breaking{% endif %}
-                                </button>
-                            </form>
+            <div class="nr-card-body" style="padding: 0;">
+                {% if polls %}
+                <div style="display: flex; flex-direction: column;">
+                    {% for p in polls %}
+                    <div style="padding: 1.2rem; border-bottom: 1px solid var(--nr-border-light); display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div>
+                                <h4 style="font-size: 1rem; font-weight: 800; color: var(--nr-text-dark); margin-bottom: 0.2rem;">
+                                    {{ p.question }}
+                                </h4>
+                                <div style="font-size: 0.78rem; color: var(--nr-text-muted); display: flex; gap: 0.5rem; align-items: center;">
+                                    <span>বিভাগ: <strong>{{ p.category }}</strong></span>
+                                    <span>•</span>
+                                    <span>মোট ভোট: <strong>{{ p.total_votes }}</strong></span>
+                                    <span>•</span>
+                                    <span>অবস্থা: {% if p.is_active %}<strong style="color: var(--nr-success);">সক্রিয়</strong>{% else %}<strong style="color: var(--nr-text-muted);">স্থগিত</strong>{% endif %}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <form method="POST" action="{{ url_for('admin.toggle_poll_status', poll_id=p.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm {% if p.is_active %}nr-btn-outline{% else %}nr-btn-success{% endif %}">
+                                        {% if p.is_active %}স্থগিত করুন{% else %}সক্রিয় করুন{% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('admin.delete_poll', poll_id=p.id) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই জরিপটি মুছে ফেলতে চান?')">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline">
+                                        মুছুন
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+                        <!-- Results Breakdown Bars -->
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem; background: #f8fafc; padding: 0.8rem; border-radius: 6px;">
+                            {% for opt in p.options %}
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px;">
+                                    <span>{{ opt.option_text }}</span>
+                                    <span>{{ opt.percentage }}% ({{ opt.votes_count }} ভোট)</span>
+                                </div>
+                                <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div style="background: var(--nr-primary); height: 100%; width: {{ opt.percentage }}%;"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="padding: 2rem; text-align: center; color: var(--nr-text-muted);">
+                    কোনো জনমত জরিপ পাওয়া যায়নি।
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-</div>
+
+    {% elif active_tab == 'subscribers' %}
+    <!-- ===================================================================== -->
+    <!-- 3. NEWSLETTER SUBSCRIBERS SECTION                                     -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">📩 প্রথম আলো ই-বুলেটিন গ্রাহক তালিকা</h3>
+            <span class="nr-badge nr-badge-category">মোট সাবস্ক্রাইবার: {{ subscribers|length }} জন</span>
+        </div>
+        <div class="nr-card-body" style="padding: 0;">
+            {% if subscribers %}
+            <table class="nr-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ইমেইল ঠিকানা</th>
+                        <th>সাবস্ক্রিপশনের সময়</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscribers %}
+                    <tr>
+                        <td>#{{ sub.id }}</td>
+                        <td><strong>{{ sub.email }}</strong></td>
+                        <td>{{ sub.subscribed_at }}</td>
+                        <td><span class="nr-badge nr-badge-published">সক্রিয় সদস্য</span></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('admin.delete_subscriber', subscriber_id=sub.id) }}" onsubmit="return confirm('এই গ্রাহককে তালিকা থেকে বাদ দিতে চান?')">
+                                <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline">মুছুন</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="padding: 2rem; text-align: center; color: var(--nr-text-muted);">
+                এখনও কোনো ই-বুলেটিন সাবস্ক্রাইবার নেই।
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% elif active_tab == 'archive' %}
+    <!-- ===================================================================== -->
+    <!-- 4. ARCHIVE OVERVIEW & DATE BROWSER                                    -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">📅 সংবাদ আর্কাইভ ও রিটেনশন ম্যানেজার</h3>
+            <a href="{{ url_for('portal.archive_view') }}" target="_blank" class="nr-btn nr-btn-outline nr-btn-sm">
+                পাবলিক আর্কাইভ পাতা দেখুন &rarr;
+            </a>
+        </div>
+        <div class="nr-card-body">
+            <p style="color: var(--nr-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                তারিখভিত্তিক সংরক্ষিত সংবাদসমূহ দেখুন এবং যেকোনো নির্দিষ্ট তারিখের প্রকাশিত সংবাদের বিস্তারিত পরিদর্শন করুন।
+            </p>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
+                {% for d in archive_dates %}
+                <a href="{{ url_for('portal.archive_view', date=d) }}" target="_blank" style="padding: 0.6rem 1.2rem; background: #f8fafc; border: 1px solid var(--nr-border); border-radius: 6px; font-weight: 700; color: var(--nr-text-dark); text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>📅</span>
+                    <span>{{ d }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- ===================================================================== -->
+    <!-- 5. MAIN ARTICLES MANAGEMENT FEED & FILTER TOOLBAR                     -->
+    <!-- ===================================================================== -->
+    <div class="nr-card">
+        <!-- Card Header with Actions -->
+        <div class="nr-card-header">
+            <div>
+                <h3 class="nr-card-title">
+                    📰 সম্পাদকীয় সংবাদ ব্যবস্থাপনা ও ফিল্টার
+                </h3>
+                <span style="font-size: 0.82rem; color: var(--nr-text-muted);">
+                    মোট পাওয়া গেছে: <strong>{{ total_count }}</strong> টি প্রতিবেদন | পৃষ্ঠা: <strong>{{ page }}</strong> / {{ total_pages }}
+                </span>
+            </div>
+
+            <button type="button" class="nr-btn nr-btn-primary" onclick="openNewArticleModal()">
+                <span>✍️</span> নতুন সংবাদ লিখুন
+            </button>
+        </div>
+
+        <!-- Filter Toolbar -->
+        <div class="nr-filter-bar">
+            <!-- Status Pills -->
+            <div class="nr-status-pills">
+                <a href="{{ url_for('admin.newspaper_management_view', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if not status_filter %}active{% endif %}">
+                    সকল ({{ kpis.total_articles }})
+                </a>
+                <a href="{{ url_for('admin.newspaper_management_view', status='completed', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if status_filter == 'completed' %}active{% endif %}">
+                    প্রকাশিত ({{ kpis.published_count }})
+                </a>
+                <a href="{{ url_for('admin.newspaper_management_view', status='pending', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if status_filter == 'pending' %}active{% endif %}">
+                    অনুমোদন অপেক্ষমাণ ({{ kpis.pending_count }})
+                </a>
+                <a href="{{ url_for('admin.newspaper_management_view', status='archived', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if status_filter == 'archived' %}active{% endif %}">
+                    আর্কাইভড ({{ kpis.archived_count }})
+                </a>
+            </div>
+
+            <!-- Category Filter Dropdown Form -->
+            <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                
+                <select name="category" onchange="this.form.submit()" class="nr-form-control" style="width: auto; padding: 0.35rem 0.8rem; font-size: 0.85rem;">
+                    <option value="">সকল বিভাগ</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <!-- Articles Data Table -->
+        <div style="overflow-x: auto;">
+            <table class="nr-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">ID</th>
+                        <th style="width: 70px;">ছবি</th>
+                        <th>সংবাদের শিরোনাম ও বিবরণ</th>
+                        <th>বিভাগ ও রিপোর্টার</th>
+                        <th>এনগেজমেন্ট</th>
+                        <th>অবস্থা</th>
+                        <th>লেবেল</th>
+                        <th style="text-align: right; min-width: 220px;">সম্পাদকীয় অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if articles %}
+                    {% for art in articles %}
+                    <tr>
+                        <td style="color: var(--nr-text-muted); font-weight: 700;">#{{ art.id }}</td>
+                        
+                        <!-- Thumbnail -->
+                        <td>
+                            {% if art.images %}
+                            <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--nr-border);">
+                            {% else %}
+                            <div style="width: 60px; height: 42px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">ছবি নেই</div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Title & Content Preview -->
+                        <td style="max-width: 320px;">
+                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" target="_blank" style="font-weight: 800; font-size: 0.95rem; color: var(--nr-text-dark); text-decoration: none; display: block; line-height: 1.35; margin-bottom: 0.2rem;">
+                                {{ art.title }}
+                            </a>
+                            <p style="font-size: 0.78rem; color: var(--nr-text-muted); line-height: 1.4; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ (art.summary or art.content_text or '')[:90] }}...
+                            </p>
+                        </td>
+
+                        <!-- Category & Author -->
+                        <td>
+                            <span class="nr-badge nr-badge-category" style="margin-bottom: 3px; display: inline-block;">
+                                {{ art.category or 'সাধারণ' }}
+                            </span>
+                            <div style="font-size: 0.75rem; color: var(--nr-text-muted);">
+                                👤 {{ art.author or 'প্রথম আলো' }}
+                            </div>
+                        </td>
+
+                        <!-- Metrics -->
+                        <td>
+                            <div style="font-size: 0.78rem; font-weight: 600;">
+                                <span>👁️ {{ art.views_count or 0 }}</span>
+                                <span style="margin-left: 0.4rem;">❤️ {{ art.likes_count or 0 }}</span>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--nr-text-muted); margin-top: 2px;">
+                                {{ art.published_at or 'আজ' }}
+                            </div>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td>
+                            {% if art.scrape_status == 'completed' %}
+                            <span class="nr-badge nr-badge-published">✓ প্রকাশিত</span>
+                            {% elif art.scrape_status in ['pending', 'draft', 'partial'] %}
+                            <span class="nr-badge nr-badge-pending">⏳ অপেক্ষমাণ</span>
+                            {% elif art.scrape_status == 'archived' %}
+                            <span class="nr-badge nr-badge-archived">📦 আর্কাইভড</span>
+                            {% else %}
+                            <span class="nr-badge nr-badge-category">{{ art.scrape_status }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Flags (Hero / Breaking) -->
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                {% if art.is_featured %}
+                                <span class="nr-badge nr-badge-featured">⭐ শীর্ষ সংবাদ</span>
+                                {% endif %}
+                                {% if art.is_breaking %}
+                                <span class="nr-badge nr-badge-breaking">🚨 ব্রেকিং</span>
+                                {% endif %}
+                                {% if not art.is_featured and not art.is_breaking %}
+                                <span style="font-size: 0.75rem; color: #94a3b8;">সাধারণ</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Actions Toolbar -->
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 0.3rem; justify-content: flex-end; flex-wrap: wrap;">
+                                <!-- Approval Button (if pending) -->
+                                {% if art.scrape_status in ['pending', 'draft', 'partial'] %}
+                                <form method="POST" action="{{ url_for('admin.approve_article', article_id=art.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-success" title="অনুমোদন ও প্রকাশ করুন">
+                                        ✓ অনুমোদন
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Edit Button (Modal trigger) -->
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}')" title="সম্পাদনা করুন">
+                                    ✏️ এডিট
+                                </button>
+
+                                <!-- Toggle Featured Lead -->
+                                <form method="POST" action="{{ url_for('admin.toggle_article_featured', article_id=art.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm {% if art.is_featured %}nr-btn-outline{% else %}nr-btn-outline{% endif %}" title="শীর্ষ সংবাদ টগল">
+                                        {% if art.is_featured %}⭐ সরান{% else %}⭐ শীর্ষ{% endif %}
+                                    </button>
+                                </form>
+
+                                <!-- Toggle Breaking Ticker -->
+                                <form method="POST" action="{{ url_for('admin.toggle_article_breaking', article_id=art.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm {% if art.is_breaking %}nr-btn-danger-outline{% else %}nr-btn-outline{% endif %}" title="ব্রেকিং টিকার টগল">
+                                        {% if art.is_breaking %}🚨 টিকার বন্ধ{% else %}🚨 ব্রেকিং{% endif %}
+                                    </button>
+                                </form>
+
+                                <!-- Archive / Restore -->
+                                {% if art.scrape_status == 'archived' %}
+                                <form method="POST" action="{{ url_for('admin.restore_article', article_id=art.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline" title="আর্কাইভ থেকে আনুন">
+                                        🔄 আন-আর্কাইভ
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('admin.archive_article', article_id=art.id) }}">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline" title="আর্কাইভে পাঠান">
+                                        📦 আর্কাইভ
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                <!-- Delete -->
+                                <form method="POST" action="{{ url_for('admin.delete_article', article_id=art.id) }}" onsubmit="return confirm('আপনি কি নিশ্চিত যে এই সংবাদটি স্থায়ীভাবে মুছে ফেলতে চান?')">
+                                    <button type="submit" class="nr-btn nr-btn-sm nr-btn-danger-outline" title="মুছে ফেলুন">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 3rem; color: var(--nr-text-muted);">
+                            কোনো সংবাদ পাওয়া যায়নি। ফিল্টার পরিবর্তন করে বা নতুন সংবাদ যুক্ত করে চেষ্টা করুন।
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.4rem; border-top: 1px solid var(--nr-border); background: #f8fafc; flex-wrap: wrap; gap: 0.8rem;">
+            <div style="font-size: 0.85rem; color: var(--nr-text-muted);">
+                পৃষ্ঠা <strong>{{ page }}</strong> এর মোট <strong>{{ total_pages }}</strong> পৃষ্ঠা
+            </div>
+            <div style="display: flex; gap: 0.35rem;">
+                {% if page > 1 %}
+                <a href="{{ url_for('admin.newspaper_management_view', page=page-1, status=status_filter, category=category_filter, q=search_query) }}" class="nr-btn nr-btn-outline nr-btn-sm">
+                    &larr; পূর্ববর্তী
+                </a>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                {% if p == page or (p >= page - 2 and p <= page + 2) %}
+                <a href="{{ url_for('admin.newspaper_management_view', page=p, status=status_filter, category=category_filter, q=search_query) }}" class="nr-btn nr-btn-sm {% if p == page %}nr-btn-primary{% else %}nr-btn-outline{% endif %}">
+                    {{ p }}
+                </a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <a href="{{ url_for('admin.newspaper_management_view', page=page+1, status=status_filter, category=category_filter, q=search_query) }}" class="nr-btn nr-btn-outline nr-btn-sm">
+                    পরবর্তী &rarr;
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: CREATE NEW ARTICLE MODAL COMPOSER                            -->
+    <!-- ===================================================================== -->
+    <div id="newArticleModal" class="nr-modal-backdrop">
+        <div class="nr-modal-box">
+            <div class="nr-modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
+                    ✍️ নতুন সংবাদ রচনা ও প্রকাশনা
+                </h3>
+                <button type="button" onclick="closeNewArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin.create_article') }}">
+                <div class="nr-modal-body">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সংবাদের শিরোনাম (Headline) *</label>
+                        <input type="text" name="title" class="nr-form-control" placeholder="আকর্ষণীয় ও স্পষ্ট শিরোনাম দিন..." required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">বিভাগ (Category) *</label>
+                            <select name="category" class="nr-form-control" required>
+                                <option value="politics">রাজনীতি (Politics)</option>
+                                <option value="bangladesh">বাংলাদেশ (Bangladesh)</option>
+                                <option value="business">অর্থনীতি ও বাণিজ্য (Business)</option>
+                                <option value="international">আন্তর্জাতিক (International)</option>
+                                <option value="sports">খেলাধুলা (Sports)</option>
+                                <option value="technology">বিজ্ঞান ও প্রযুক্তি (Technology)</option>
+                                <option value="news">মতামত ও সম্পাদকীয় (Opinion)</option>
+                            </select>
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">প্রতিবেদক / রিপোর্টার</label>
+                            <input type="text" name="author" class="nr-form-control" placeholder="যেমন: বিশেষ প্রতিবেদক, ঢাকা">
+                        </div>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সংক্ষিপ্ত সারসংক্ষেপ (Summary)</label>
+                        <textarea name="summary" class="nr-form-control" rows="2" placeholder="মূল সংবাদের এক বা দুই বাক্যের সারাংশ..."></textarea>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">মূল সংবাদ বিবরণ (Article Body) *</label>
+                        <textarea name="content_text" class="nr-form-control" rows="7" placeholder="বিস্তারিত প্রতিবেদন এখানে বাংলায় লিখুন..." required></textarea>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ফিচার ছবির পাথ (Image Path)</label>
+                        <input type="text" name="image_path" class="nr-form-control" placeholder="যেমন: data/images/bbc_bangla/2026-09/example.jpg">
+                    </div>
+
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--nr-border);">
+                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" name="is_featured" value="1" style="accent-color: var(--nr-primary);">
+                            <span>⭐ শীর্ষ সংবাদ (Hero Lead Story)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" name="is_breaking" value="1" style="accent-color: #ef4444;">
+                            <span>🚨 ব্রেকিং নিউজ টিকার (Breaking Ticker)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="nr-modal-footer">
+                    <button type="button" class="nr-btn nr-btn-outline" onclick="closeNewArticleModal()">বাতিল</button>
+                    <button type="submit" name="status" value="draft" class="nr-btn nr-btn-outline">খসড়া রাখুন</button>
+                    <button type="submit" name="status" value="completed" class="nr-btn nr-btn-primary">সরাসরি প্রকাশ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: EDIT ARTICLE MODAL                                           -->
+    <!-- ===================================================================== -->
+    <div id="editArticleModal" class="nr-modal-backdrop">
+        <div class="nr-modal-box">
+            <div class="nr-modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
+                    ✏️ সংবাদ সম্পাদনা ও আপডেট
+                </h3>
+                <button type="button" onclick="closeEditArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
+            </div>
+            
+            <form id="editArticleForm" method="POST" action="">
+                <div class="nr-modal-body">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সংবাদের শিরোনাম</label>
+                        <input type="text" id="editTitle" name="title" class="nr-form-control" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">বিভাগ</label>
+                            <input type="text" id="editCategory" name="category" class="nr-form-control" required>
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">প্রতিবেদক</label>
+                            <input type="text" id="editAuthor" name="author" class="nr-form-control">
+                        </div>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সারসংক্ষেপ</label>
+                        <textarea id="editSummary" name="summary" class="nr-form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">মূল প্রতিবেদন</label>
+                        <textarea id="editContentText" name="content_text" class="nr-form-control" rows="7" required></textarea>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">ফিচার ছবির পাথ</label>
+                        <input type="text" id="editImagePath" name="image_path" class="nr-form-control">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">স্ট্যাটাস</label>
+                            <select id="editStatus" name="status" class="nr-form-control">
+                                <option value="completed">প্রকাশিত (Completed)</option>
+                                <option value="pending">অনুমোদন অপেক্ষমাণ (Pending)</option>
+                                <option value="draft">খসড়া (Draft)</option>
+                                <option value="archived">আর্কাইভড (Archived)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--nr-border);">
+                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" id="editFeatured" name="is_featured" value="1" style="accent-color: var(--nr-primary);">
+                            <span>⭐ শীর্ষ সংবাদ (Hero Lead)</span>
+                        </label>
+
+                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
+                            <input type="checkbox" id="editBreaking" name="is_breaking" value="1" style="accent-color: #ef4444;">
+                            <span>🚨 ব্রেকিং নিউজ টিকার</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="nr-modal-footer">
+                    <button type="button" class="nr-btn nr-btn-outline" onclick="closeEditArticleModal()">বাতিল</button>
+                    <button type="submit" class="nr-btn nr-btn-primary">আপডেট সংরক্ষণ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Open and Close Modal Helpers
+function openNewArticleModal() {
+    document.getElementById('newArticleModal').classList.add('show');
+}
+
+function closeNewArticleModal() {
+    document.getElementById('newArticleModal').classList.remove('show');
+}
+
+function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status) {
+    const form = document.getElementById('editArticleForm');
+    form.action = `/admin/newspaper/article/edit/${id}`;
+
+    document.getElementById('editTitle').value = title || '';
+    document.getElementById('editCategory').value = category || '';
+    document.getElementById('editAuthor').value = author || '';
+    document.getElementById('editSummary').value = summary || '';
+    document.getElementById('editContentText').value = content || '';
+    document.getElementById('editImagePath').value = imagePath || '';
+    document.getElementById('editStatus').value = status || 'completed';
+    document.getElementById('editFeatured').checked = Boolean(isFeatured);
+    document.getElementById('editBreaking').checked = Boolean(isBreaking);
+
+    document.getElementById('editArticleModal').classList.add('show');
+}
+
+function closeEditArticleModal() {
+    document.getElementById('editArticleModal').classList.remove('show');
+}
+
+// Close modals on clicking outside backdrop
+window.onclick = function(event) {
+    const newModal = document.getElementById('newArticleModal');
+    const editModal = document.getElementById('editArticleModal');
+    if (event.target === newModal) {
+        newModal.classList.remove('show');
+    }
+    if (event.target === editModal) {
+        editModal.classList.remove('show');
+    }
+}
+</script>
 {% endblock %}

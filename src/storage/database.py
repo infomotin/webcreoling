@@ -56,6 +56,11 @@ def init_db() -> None:
                 "likes_count INTEGER DEFAULT 0",
                 "shares_count INTEGER DEFAULT 0",
                 "scheduled_at DATETIME",
+                "block_number INTEGER",
+                "block_hash VARCHAR(64)",
+                "prev_hash VARCHAR(64)",
+                "digital_signature VARCHAR(128)",
+                "is_ledger_verified BOOLEAN DEFAULT 1",
             ]:
                 try:
                     conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))

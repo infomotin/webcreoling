@@ -12,6 +12,7 @@ from src.storage.repositories import (
     PortalRepository,
     SiteConfigRepository,
     AdvertisementRepository,
+    BlockchainLedgerRepository,
 )
 
 portal_bp = Blueprint("portal", __name__)
@@ -189,12 +190,55 @@ def article_reader_view(article_id: int):
         breaking_news = article_repo.get_breaking_news(limit=5)
         active_poll = portal_repo.get_active_poll()
 
+        # Cryptographic Blockchain Verification Details
+        ledger_repo = BlockchainLedgerRepository(session)
+        is_valid, msg, ledger_info = ledger_repo.verify_article_ledger(article_id)
+
         return render_template(
             "portal_article.html",
             article=article,
             related_articles=related,
             breaking_news=breaking_news,
             active_poll=active_poll.to_dict() if active_poll else None,
+            ledger_info=ledger_info,
+            is_ledger_verified=is_valid,
+        )
+
+
+@portal_bp.route("/verify/<int:article_id>")
+def article_verification_certificate_view(article_id: int):
+    """Public Cryptographic Proof Certificate for News Article Verification."""
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        ledger_repo = BlockchainLedgerRepository(session)
+        article = article_repo.get_by_id(article_id)
+
+        if not article:
+            flash("যাচাইকৃত আর্টিকেল পাওয়া যায়নি।", "warning")
+            return redirect(url_for("portal.index_view"))
+
+        is_valid, reason, details = ledger_repo.verify_article_ledger(article_id)
+        block = ledger_repo.get_block_by_article_id(article_id)
+        blockchain_stats = ledger_repo.get_blockchain_stats()
+
+        if request.args.get("format") == "json":
+            return jsonify({
+                "article_id": article_id,
+                "is_valid": is_valid,
+                "reason": reason,
+                "proof": details,
+                "block": block.to_dict() if block else None,
+                "stats": blockchain_stats,
+            })
+
+        return render_template(
+            "portal_verify.html",
+            article=article,
+            is_valid=is_valid,
+            reason=reason,
+            details=details,
+            block=block.to_dict() if block else None,
+            blockchain_stats=blockchain_stats,
         )
 
 

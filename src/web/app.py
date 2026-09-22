@@ -32,11 +32,22 @@ def create_app(test_config: dict = None) -> Flask:
     if test_config:
         app.config.update(test_config)
 
-    # Ensure database is initialized and seed default users
+    # Ensure database is initialized and seed default users & security rules
     init_db()
     with get_db_session() as session:
         user_repo = UserRepository(session)
         user_repo.seed_default_users()
+        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository
+        sec_repo = SecurityRepository(session)
+        sec_repo.seed_default_security_rules()
+        ledger_repo = BlockchainLedgerRepository(session)
+        ledger_repo.ensure_genesis_block()
+
+    # Enterprise WAF Security & Threat Defense Guard
+    from src.web.security import run_security_firewall
+    @app.before_request
+    def security_firewall_hook():
+        return run_security_firewall()
 
     # Context processor to make current_user available across all templates
     @app.context_processor

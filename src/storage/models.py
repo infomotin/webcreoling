@@ -51,6 +51,13 @@ class Article(Base):
     shares_count = Column(Integer, default=0)
     scheduled_at = Column(DateTime, nullable=True, index=True)  # Future publishing release timestamp
 
+    # Blockchain Cryptographic Ledger Verification
+    block_number = Column(Integer, nullable=True, index=True)
+    block_hash = Column(String(64), nullable=True, index=True)
+    prev_hash = Column(String(64), nullable=True)
+    digital_signature = Column(String(128), nullable=True)
+    is_ledger_verified = Column(Boolean, default=True)
+
     # Audit timestamps
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -80,6 +87,11 @@ class Article(Base):
             "likes_count": self.likes_count,
             "shares_count": self.shares_count,
             "scheduled_at": self.scheduled_at.isoformat() if self.scheduled_at else None,
+            "block_number": self.block_number,
+            "block_hash": self.block_hash,
+            "prev_hash": self.prev_hash,
+            "digital_signature": self.digital_signature,
+            "is_ledger_verified": self.is_ledger_verified,
             "images": [img.to_dict() for img in self.images] if self.images else [],
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
@@ -346,8 +358,8 @@ class EditorialAuditLog(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=True, index=True)
     username = Column(String(80), nullable=False, index=True)
-    action = Column(String(100), nullable=False, index=True)  # 'article_create', 'article_edit', 'article_archive', 'settings_save', 'ad_create', etc.
-    resource_type = Column(String(50), nullable=False)  # 'article', 'site_config', 'advertisement', 'poll', 'system'
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=False)
     resource_id = Column(String(100), nullable=True)
     details = Column(JSON, nullable=True)
     ip_address = Column(String(100), nullable=True)
@@ -363,6 +375,122 @@ class EditorialAuditLog(Base):
             "resource_id": self.resource_id,
             "details": self.details or {},
             "ip_address": self.ip_address,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ==============================================================================
+# Enterprise Security & Cryptographic Blockchain Models
+# ==============================================================================
+
+class BlockedIP(Base):
+    """Stores blacklisted IP addresses, ban reasons, strike scores, and expiration."""
+    __tablename__ = "blocked_ips"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ip_address = Column(String(100), unique=True, nullable=False, index=True)
+    reason = Column(String(255), default="Suspicious automated traffic")
+    blocked_by = Column(String(80), default="WAF_AUTO")  # 'WAF_AUTO' or admin username
+    threat_score = Column(Integer, default=100)
+    expires_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "ip_address": self.ip_address,
+            "reason": self.reason,
+            "blocked_by": self.blocked_by,
+            "threat_score": self.threat_score,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BlockedCountry(Base):
+    """Geographic firewall country blacklist with activation state."""
+    __tablename__ = "blocked_countries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    country_code = Column(String(10), unique=True, nullable=False, index=True)  # ISO-2 e.g. "RU", "KP"
+    country_name = Column(String(100), nullable=False)
+    reason = Column(String(255), default="Geographic firewall policy")
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "country_code": self.country_code,
+            "country_name": self.country_name,
+            "reason": self.reason,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class SecurityThreatLog(Base):
+    """Live audit trail of detected web attacks, malicious payloads, and defensive actions."""
+    __tablename__ = "security_threat_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    threat_type = Column(String(50), nullable=False, index=True)  # 'SQL_INJECTION', 'XSS_ATTACK', 'PATH_TRAVERSAL', 'RCE_COMMAND', 'GEO_BLOCKED', 'IP_BLACKLIST'
+    ip_address = Column(String(100), nullable=False, index=True)
+    request_path = Column(String(1024), nullable=False)
+    request_method = Column(String(10), default="GET")
+    payload_sample = Column(Text, nullable=True)
+    country_code = Column(String(10), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    action_taken = Column(String(50), default="BLOCKED_403")  # 'BLOCKED_403', 'LOGGED_ONLY', 'AUTO_BANNED_IP'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "threat_type": self.threat_type,
+            "ip_address": self.ip_address,
+            "request_path": self.request_path,
+            "request_method": self.request_method,
+            "payload_sample": self.payload_sample,
+            "country_code": self.country_code,
+            "user_agent": self.user_agent,
+            "action_taken": self.action_taken,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ArticleBlockLedger(Base):
+    """Cryptographic Blockchain-Style Immutable Ledger for News Article Verification."""
+    __tablename__ = "article_block_ledger"
+
+    block_number = Column(Integer, primary_key=True, autoincrement=False)
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="SET NULL"), nullable=True, index=True)
+    title_hash = Column(String(64), nullable=False)
+    content_hash = Column(String(64), nullable=False)
+    author_hash = Column(String(64), nullable=False)
+    merkle_root = Column(String(64), nullable=False)
+    prev_block_hash = Column(String(64), nullable=False, index=True)
+    block_hash = Column(String(64), unique=True, nullable=False, index=True)
+    digital_signature = Column(String(128), nullable=False)
+    nonce = Column(Integer, default=0)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    verification_status = Column(String(50), default="VALID")  # 'VALID', 'TAMPERED', 'ORPHANED'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "block_number": self.block_number,
+            "article_id": self.article_id,
+            "title_hash": self.title_hash,
+            "content_hash": self.content_hash,
+            "author_hash": self.author_hash,
+            "merkle_root": self.merkle_root,
+            "prev_block_hash": self.prev_block_hash,
+            "block_hash": self.block_hash,
+            "digital_signature": self.digital_signature,
+            "nonce": self.nonce,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "verification_status": self.verification_status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

@@ -1,0 +1,142 @@
+{% extends "portal_base.html" %}
+
+{% block title %}ক্রিপ্টোগ্রাফিক ভেরিফিকেশন সার্টিফিকেট — {{ article.title }} | প্রথম আলো{% endblock %}
+
+{% block portal_content %}
+<div style="background: #f8fafc; padding: 40px 0 60px 0; min-height: 80vh;">
+    <div style="max-width: 900px; margin: 0 auto; padding: 0 16px;">
+        
+        <!-- Breadcrumb -->
+        <div style="font-size: 13px; color: #64748b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+            <a href="/news/" style="color: #64748b; text-decoration: none;">হোম</a>
+            <span>›</span>
+            <a href="/news/{{ article.id }}" style="color: #64748b; text-decoration: none;">মূল সংবাদ</a>
+            <span>›</span>
+            <span style="color: #0f172a; font-weight: 600;">ক্রিপ্টোগ্রাফিক সনদপত্র</span>
+        </div>
+
+        <!-- Certificate Container -->
+        <div style="background: #ffffff; border: 2px solid {% if is_valid %}#10b981{% else %}#ef4444{% endif %}; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); overflow: hidden; position: relative;">
+            
+            <!-- Certificate Header Banner -->
+            <div style="background: linear-gradient(135deg, {% if is_valid %}#064e3b, #047857{% else %}#7f1d1d, #b91c1c{% endif %}); color: #ffffff; padding: 32px 36px; text-align: center;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.15); margin-bottom: 16px; font-size: 32px; border: 2px solid rgba(255,255,255,0.3);">
+                    {% if is_valid %}🛡️{% else %}⚠️{% endif %}
+                </div>
+                <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;">
+                    প্রথম আলো এন্টারপ্রাইজ ক্রিপ্টোগ্রাফিক লেজার সনদ
+                </h1>
+                <p style="font-size: 14px; opacity: 0.9; max-width: 600px; margin: 0 auto;">
+                    SHA-256 মারকেল ট্রি হ্যাশ ও ডিজিটাল এইচম্যাক স্বাক্ষরে সংরক্ষিত অপরিবর্তনীয় প্রমাণ
+                </p>
+
+                <div style="margin-top: 18px; display: inline-block; background: {% if is_valid %}#10b981{% else %}#ef4444{% endif %}; color: #ffffff; padding: 6px 18px; border-radius: 20px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    {% if is_valid %}
+                        ✓ শতভাগ নিরাপদ ও ডিজিটাল সার্টিফাইড (VALID & SEALED)
+                    {% else %}
+                        ✗ টেম্পারিং বা পরিবর্তন সনাক্ত হয়েছে (TAMPERED)
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Certificate Body -->
+            <div style="padding: 36px;">
+                
+                <!-- Article Snapshot -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+                    <div style="font-size: 12px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 6px;">সনদপ্রাপ্ত সংবাদের শিরোনাম:</div>
+                    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.4; margin-bottom: 12px;">
+                        {{ article.title }}
+                    </h2>
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #64748b;">
+                        <div><strong>প্রতিবেদক:</strong> {{ article.author or 'প্রথম আলো নিজস্ব প্রতিবেদক' }}</div>
+                        <div><strong>ক্যাটাগরি:</strong> {{ article.category }}</div>
+                        <div><strong>প্রকাশকাল:</strong> {{ article.published_at.strftime('%d %B %Y, %I:%M %p') if article.published_at else 'সরাসরি প্রকাশ' }}</div>
+                        <div><strong>আর্টিকেল আইডি:</strong> #{{ article.id }}</div>
+                    </div>
+                </div>
+
+                <!-- Cryptographic Hashes Grid -->
+                <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <span>🔐</span> ক্রিপ্টোগ্রাফিক ব্লক ও হ্যাশ প্রুফ ডিটেইলস
+                </h3>
+
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    
+                    <!-- Block Number -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="font-weight: 600; color: #475569; font-size: 14px;">ব্লক সিকোয়েন্স নম্বর (Block Index):</span>
+                        <span style="font-family: monospace; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 6px; font-size: 14px;">
+                            #{{ block.block_number if block else (details.block_number or 0) }}
+                        </span>
+                    </div>
+
+                    <!-- Block Hash -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 6px;">ব্লক সিগনেচার হ্যাশ (SHA-256 Block Hash):</div>
+                        <div style="font-family: monospace; font-size: 12px; color: #0f172a; word-break: break-all; background: #f1f5f9; padding: 10px 12px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                            {{ block.block_hash if block else details.block_hash }}
+                        </div>
+                    </div>
+
+                    <!-- Merkle Root -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 6px;">মারকেল রুট ডাইজেস্ট (Merkle Root Tree):</div>
+                        <div style="font-family: monospace; font-size: 12px; color: #0f172a; word-break: break-all; background: #f1f5f9; padding: 10px 12px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                            {{ block.merkle_root if block else details.merkle_root }}
+                        </div>
+                    </div>
+
+                    <!-- Previous Block Hash -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 6px;">পূর্ববর্তী ব্লক হ্যাশ চেইন লিংক (Parent Block Hash):</div>
+                        <div style="font-family: monospace; font-size: 12px; color: #64748b; word-break: break-all; background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            {{ block.prev_block_hash if block else details.prev_block_hash }}
+                        </div>
+                    </div>
+
+                    <!-- Digital Signature -->
+                    <div style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 6px;">সার্ভার ডিজিটাল সাইন (HMAC-SHA256 Digital Signature):</div>
+                        <div style="font-family: monospace; font-size: 12px; color: #166534; word-break: break-all; background: #f0fdf4; padding: 10px 12px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                            {{ block.digital_signature if block else details.digital_signature }}
+                        </div>
+                    </div>
+
+                    <!-- Timestamp -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <span style="font-weight: 600; color: #475569; font-size: 14px;">লেজারে ব্লক মিন্ট সময়:</span>
+                        <span style="font-size: 13px; color: #0f172a; font-weight: 500;">
+                            {{ block.timestamp if block else details.timestamp }} UTC
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- Explanation Box -->
+                <div style="margin-top: 28px; background: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px 20px; border-radius: 0 8px 8px 0; font-size: 13px; color: #1e40af; line-height: 1.6;">
+                    <strong>লেজার ভেরিফিকেশন কীভাবে কাজ করে?</strong> এই সংবাদটি প্রকাশের মুহূর্তে এর শিরোনাম, বডি টেক্সট এবং প্রতিবেদকের তথ্যের ওপর একটি অপরিবর্তনীয় ক্রিপ্টোগ্রাফিক হ্যাশ তৈরি করে ব্লকচেইন লেজারে সিল করা হয়েছে। মূল টেক্সটের ১টি অক্ষরও পরিবর্তন করা হলে এর হ্যাশ সম্পূর্ণ পরিবর্তিত হয়ে অকার্যকর হয়ে যাবে।
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="margin-top: 32px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center;">
+                    <a href="/news/{{ article.id }}" style="display: inline-flex; align-items: center; gap: 8px; background: #0284c7; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; transition: 0.2s;">
+                        <span>← মূল সংবাদে ফিরে যান</span>
+                    </a>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="window.print()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                            🖨️ প্রিন্ট সনদ
+                        </button>
+                        <button onclick="navigator.clipboard.writeText(window.location.href); alert('সার্টিফিকেট লিঙ্ক কপি করা হয়েছে!');" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                            🔗 লিঙ্ক কপি করুন
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

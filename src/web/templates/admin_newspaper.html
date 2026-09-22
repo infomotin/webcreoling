@@ -450,92 +450,456 @@
 
     {% elif active_tab == 'security' %}
     <!-- ===================================================================== -->
-    <!-- TAB: SECURITY & AUDIT LOGS                                            -->
+    <!-- TAB: ENTERPRISE SECURITY OPERATIONS CENTER (SOC) & BLOCKCHAIN LEDGER  -->
     <!-- ===================================================================== -->
-    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
-        <!-- RBAC Role Matrix Card -->
-        <div class="nr-card">
-            <div class="nr-card-header">
-                <h3 class="nr-card-title">🔒 নিরাপত্তা ও রোল অনুমতি</h3>
+    
+    <!-- Threat Meter & Defense Telemetry Header -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem;">
+        <div class="nr-telemetry-card" style="border-left: 4px solid {{ sec_metrics.threat_color }};">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">সার্ভার থ্রেট লেভেল</span>
+                <span style="font-size: 1.2rem;">🛡️</span>
             </div>
-            <div class="nr-card-body" style="font-size: 0.88rem;">
-                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
-                    <div style="font-weight: 800; color: #dc2626;">👑 অ্যাডমিন (Admin)</div>
-                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">পূর্ণ ক্ষমতা: সেটিংস, বিজ্ঞাপন, অডিট লগ, ইউজার রোল ও মুছে ফেলা।</div>
-                </div>
-                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
-                    <div style="font-weight: 800; color: #0284c7;">✍️ সম্পাদক (Editor)</div>
-                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">সংবাদ তৈরি, সম্পাদন, শিডিউলিং, অনুমোদন ও জরিপ পরিচালনা।</div>
-                </div>
-                <div style="margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--nr-border-light);">
-                    <div style="font-weight: 800; color: #7c3aed;">📊 বিশ্লেষক (Analyst)</div>
-                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">এনগেজমেন্ট মেট্রিক্স, এআই মডেল ট্রেইনিং ও রিটেনশন ভিউ।</div>
-                </div>
-                <div>
-                    <div style="font-weight: 800; color: #475569;">👁️ পাঠক/ভিউয়ার (Viewer)</div>
-                    <div style="font-size: 0.78rem; color: var(--nr-text-muted);">শুধু রিড-অনলি এক্সেস।</div>
-                </div>
+            <div class="nr-telemetry-val" style="color: {{ sec_metrics.threat_color }}; font-size: 1.5rem;">
+                {{ sec_metrics.threat_level }}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                WAF ফায়ারওয়াল: <strong>সক্রিয় (Active Defense)</strong>
             </div>
         </div>
 
-        <!-- Audit Trail Card -->
+        <div class="nr-telemetry-card" style="border-left: 4px solid #ef4444;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">প্রতিহত সাইবার আক্রমণ</span>
+                <span style="font-size: 1.2rem;">⚡</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #ef4444; font-size: 1.5rem;">
+                {{ sec_metrics.total_threats }} টি
+            </div>
+            <div style="font-size: 0.76rem; color: var(--nr-text-muted);">
+                SQLi: {{ sec_metrics.sqli_count }} | XSS: {{ sec_metrics.xss_count }} | RCE: {{ sec_metrics.rce_count }}
+            </div>
+        </div>
+
+        <div class="nr-telemetry-card" style="border-left: 4px solid #f59e0b;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">ব্লকলিস্টেড IP ও কান্ট্রি</span>
+                <span style="font-size: 1.2rem;">🚫</span>
+            </div>
+            <div class="nr-telemetry-val" style="font-size: 1.5rem; color: #f59e0b;">
+                {{ sec_metrics.total_blocked_ips }} IP / {{ sec_metrics.total_blocked_countries }} দেশ
+            </div>
+            <div style="font-size: 0.76rem; color: var(--nr-text-muted);">
+                জিও ও স্ট্রাইক অটো-ব্যান সুরক্ষা
+            </div>
+        </div>
+
+        <div class="nr-telemetry-card" style="border-left: 4px solid #10b981;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">ব্লকচেইন লেজার স্ট্যাটাস</span>
+                <span style="font-size: 1.2rem;">⛓️</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #10b981; font-size: 1.5rem;">
+                #{{ blockchain_stats.latest_block_number }} ব্লক
+            </div>
+            <div style="font-size: 0.76rem; color: #059669; font-weight: 600;">
+                ✓ {{ blockchain_stats.chain_health }} (SHA-256)
+            </div>
+        </div>
+    </div>
+
+    <!-- Cryptographic Blockchain Ledger Card -->
+    <div class="nr-card" style="margin-bottom: 1.5rem; border: 1px solid #10b981; box-shadow: 0 4px 15px rgba(16,185,129,0.06);">
+        <div class="nr-card-header" style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.4rem;">⛓️</span>
+                <div>
+                    <h3 class="nr-card-title" style="color: #166534; font-size: 1.1rem; margin: 0;">
+                        প্রথম আলো ক্রিপ্টোগ্রাফিক আর্টিকেল লেজার (Blockchain Explorer)
+                    </h3>
+                    <div style="font-size: 0.78rem; color: #15803d;">
+                        প্রতিটি সংবাদের শিরোনাম ও বডি টেক্সট অপরিবর্তনীয় SHA-256 মারকেল রুটে সিলকৃত
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <form method="POST" action="{{ url_for('admin.blockchain_mint_missing') }}" style="display: inline;">
+                    <button type="submit" class="nr-btn" style="background: #0284c7; color: #fff; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="পুরনো সকল আর্টিকেলে ক্রিপ্টো ব্লক মিন্ট করুন">
+                        ⛏️ অবিন্যস্ত ব্লক মিন্ট
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.blockchain_audit_scan') }}" style="display: inline;">
+                    <button type="submit" class="nr-btn" style="background: #166534; color: #fff; font-size: 0.8rem; padding: 0.4rem 0.8rem;" title="সম্পূর্ণ ব্লকচেইন অডিট চালান">
+                        🔄 সম্পূর্ণ চেইন অডিট
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nr-card-body" style="padding: 0;">
+            {% if ledger_blocks %}
+            <div style="overflow-x: auto;">
+                <table class="nr-table">
+                    <thead>
+                        <tr>
+                            <th>ব্লক #</th>
+                            <th>আর্টিকেল আইডি</th>
+                            <th>ব্লক হ্যাশ (SHA-256 Block Digest)</th>
+                            <th>মারকেল রুট (Merkle Root)</th>
+                            <th>পূর্ববর্তী ব্লক হ্যাশ</th>
+                            <th>ডিজিটাল স্বাক্ষর</th>
+                            <th>স্ট্যাটাস</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for blk in ledger_blocks %}
+                        <tr>
+                            <td>
+                                <span style="font-family: monospace; font-weight: 800; color: #0369a1; background: #e0f2fe; padding: 2px 8px; border-radius: 4px; font-size: 0.82rem;">
+                                    #{{ blk.block_number }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if blk.article_id %}
+                                <a href="/news/verify/{{ blk.article_id }}" target="_blank" style="font-weight: 700; color: #0284c7; text-decoration: none;">
+                                    সংবাদ #{{ blk.article_id }} ↗
+                                </a>
+                                {% else %}
+                                <span style="font-size: 0.78rem; color: #64748b; font-weight: 700;">GENESIS ROOT</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-size: 0.74rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;" title="{{ blk.block_hash }}">
+                                    {{ blk.block_hash[:16] }}...{{ blk.block_hash[-8:] }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-size: 0.74rem; color: #475569;" title="{{ blk.merkle_root }}">
+                                    {{ blk.merkle_root[:14] }}...
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-size: 0.74rem; color: #64748b;" title="{{ blk.prev_block_hash }}">
+                                    {{ blk.prev_block_hash[:12] }}...
+                                </span>
+                            </td>
+                            <td>
+                                <span style="font-family: monospace; font-size: 0.72rem; color: #166534;" title="{{ blk.digital_signature }}">
+                                    {{ blk.digital_signature[:12] }}...
+                                </span>
+                            </td>
+                            <td>
+                                {% if blk.verification_status == 'VALID' %}
+                                <span class="nr-badge nr-badge-published">✓ VALID</span>
+                                {% else %}
+                                <span class="nr-badge nr-badge-breaking">✗ TAMPERED</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 2rem; text-align: center; color: var(--nr-text-muted);">
+                কোনো ব্লক মিন্ট করা হয়নি। উপরের "অবিন্যস্ত ব্লক মিন্ট" বাটনে ক্লিক করুন।
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Firewall Rule Management: IP Blacklist & Geo-Firewall Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        
+        <!-- IP Blacklist Manager -->
         <div class="nr-card">
             <div class="nr-card-header">
-                <h3 class="nr-card-title">📜 সম্পাদকীয় অ্যাকশন অডিট ট্রেইল</h3>
-                <span class="nr-badge nr-badge-category">সর্বশেষ ৪০টি অ্যাকশন</span>
+                <h3 class="nr-card-title">🚫 IP ব্লকলিস্ট ও অটো-ব্যান ম্যানেজার</h3>
+                <span class="nr-badge nr-badge-draft">{{ blocked_ips|length }} টি নিষিদ্ধ IP</span>
             </div>
-            <div class="nr-card-body" style="padding: 0;">
-                {% if audit_logs %}
-                <div style="overflow-x: auto;">
-                    <table class="nr-table">
+            <div class="nr-card-body">
+                <!-- Add Blocked IP Form -->
+                <form method="POST" action="{{ url_for('admin.admin_block_ip') }}" style="display: grid; grid-template-columns: 1.2fr 1.5fr 1fr auto; gap: 0.6rem; margin-bottom: 1.2rem; align-items: end;">
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">IP ঠিকানা *</label>
+                        <input type="text" name="ip_address" class="nr-form-control" placeholder="e.g. 198.51.100.42" required style="font-size: 0.82rem; padding: 0.4rem;">
+                    </div>
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">কারণ</label>
+                        <input type="text" name="reason" class="nr-form-control" placeholder="বটের আক্রমণ / ক্ষতিকর ট্রাফিক" style="font-size: 0.82rem; padding: 0.4rem;">
+                    </div>
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">মেয়াদ</label>
+                        <select name="duration_hours" class="nr-form-control" style="font-size: 0.82rem; padding: 0.4rem;">
+                            <option value="">স্থায়ী (Permanent)</option>
+                            <option value="1">১ ঘণ্টা</option>
+                            <option value="24" selected>২৪ ঘণ্টা</option>
+                            <option value="168">৭ দিন</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="nr-btn nr-btn-danger" style="padding: 0.45rem 0.8rem; font-size: 0.82rem; height: 36px;">
+                        + ব্লক করুন
+                    </button>
+                </form>
+
+                <!-- Blocked IPs Table -->
+                <div style="max-height: 260px; overflow-y: auto;">
+                    <table class="nr-table" style="font-size: 0.82rem;">
                         <thead>
                             <tr>
-                                <th>সময়</th>
-                                <th>ইউজার</th>
-                                <th>অ্যাকশন</th>
-                                <th>রিসোর্স</th>
                                 <th>IP ঠিকানা</th>
+                                <th>কারণ / ব্লককারী</th>
+                                <th>মেয়াদকাল</th>
+                                <th>অ্যাকশন</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for log in audit_logs %}
+                            {% for ip in blocked_ips %}
                             <tr>
-                                <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
-                                    {{ log.created_at[:19].replace('T', ' ') if log.created_at else '' }}
+                                <td style="font-family: monospace; font-weight: 700; color: #dc2626;">
+                                    {{ ip.ip_address }}
                                 </td>
                                 <td>
-                                    <strong style="color: var(--nr-text-dark);">{{ log.username }}</strong>
+                                    <div>{{ ip.reason }}</div>
+                                    <div style="font-size: 0.72rem; color: var(--nr-text-muted);">দ্বারা: {{ ip.blocked_by }}</div>
+                                </td>
+                                <td style="font-size: 0.74rem; color: var(--nr-text-muted);">
+                                    {{ ip.expires_at[:16].replace('T', ' ') if ip.expires_at else 'স্থায়ী' }}
                                 </td>
                                 <td>
-                                    {% if 'create' in log.action %}
-                                    <span class="nr-audit-pill nr-audit-create">{{ log.action }}</span>
-                                    {% elif 'edit' in log.action or 'approve' in log.action or 'toggle' in log.action %}
-                                    <span class="nr-audit-pill nr-audit-edit">{{ log.action }}</span>
-                                    {% elif 'delete' in log.action %}
-                                    <span class="nr-audit-pill nr-audit-delete">{{ log.action }}</span>
-                                    {% elif 'save' in log.action or 'settings' in log.action %}
-                                    <span class="nr-audit-pill nr-audit-settings">{{ log.action }}</span>
-                                    {% else %}
-                                    <span class="nr-audit-pill nr-audit-default">{{ log.action }}</span>
-                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin.admin_unblock_ip', ip_id=ip.id) }}" style="display:inline;" onsubmit="return confirm('এই IP এর ব্লক প্রত্যাহার করতে চান?');">
+                                        <button type="submit" class="nr-btn" style="background:#e2e8f0; color:#334155; padding:2px 8px; font-size:0.75rem;">
+                                            আনব্লক
+                                        </button>
+                                    </form>
                                 </td>
-                                <td>
-                                    <span style="font-size: 0.8rem; font-family: monospace;">{{ log.resource_type }} #{{ log.resource_id or '-' }}</span>
-                                </td>
-                                <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
-                                    {{ log.ip_address or '127.0.0.1' }}
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--nr-text-muted); padding: 1.5rem;">
+                                    কোনো IP ব্লকলিস্টে নেই।
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div style="padding: 2.5rem; text-align: center; color: var(--nr-text-muted);">
-                    এখনও কোনো অডিট লগ রেকর্ড নেই।
-                </div>
-                {% endif %}
             </div>
+        </div>
+
+        <!-- Country Geo-Firewall Manager -->
+        <div class="nr-card">
+            <div class="nr-card-header">
+                <h3 class="nr-card-title">🌍 কান্ট্রি জিও-ফায়ারওয়াল (Country Blocker)</h3>
+                <span class="nr-badge nr-badge-breaking">{{ blocked_countries|length }} দেশ নিষিদ্ধ</span>
+            </div>
+            <div class="nr-card-body">
+                <!-- Add Country Form -->
+                <form method="POST" action="{{ url_for('admin.admin_block_country') }}" style="display: grid; grid-template-columns: 80px 1.2fr 1.2fr auto; gap: 0.6rem; margin-bottom: 1.2rem; align-items: end;">
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">কোড (ISO)</label>
+                        <input type="text" name="country_code" class="nr-form-control" placeholder="RU" maxlength="2" required style="text-transform: uppercase; font-size: 0.82rem; padding: 0.4rem; text-align: center; font-weight: 700;">
+                    </div>
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">দেশের নাম</label>
+                        <input type="text" name="country_name" class="nr-form-control" placeholder="Russia" style="font-size: 0.82rem; padding: 0.4rem;">
+                    </div>
+                    <div>
+                        <label class="nr-form-label" style="font-size: 0.78rem;">কারণ</label>
+                        <input type="text" name="reason" class="nr-form-control" placeholder="বটনেট ট্রাফিক" style="font-size: 0.82rem; padding: 0.4rem;">
+                    </div>
+                    <button type="submit" class="nr-btn nr-btn-danger" style="padding: 0.45rem 0.8rem; font-size: 0.82rem; height: 36px;">
+                        + যুক্ত করুন
+                    </button>
+                </form>
+
+                <!-- Blocked Countries Table -->
+                <div style="max-height: 260px; overflow-y: auto;">
+                    <table class="nr-table" style="font-size: 0.82rem;">
+                        <thead>
+                            <tr>
+                                <th>কোড</th>
+                                <th>দেশের নাম</th>
+                                <th>স্ট্যাটাস</th>
+                                <th>অ্যাকশন</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in blocked_countries %}
+                            <tr>
+                                <td>
+                                    <span style="font-family: monospace; font-weight: 800; color: #dc2626; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">
+                                        {{ c.country_code }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ c.country_name }}</strong>
+                                    <div style="font-size: 0.72rem; color: var(--nr-text-muted);">{{ c.reason }}</div>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.admin_toggle_country', country_id=c.id) }}" style="display:inline;">
+                                        <button type="submit" class="nr-badge {% if c.is_active %}nr-badge-published{% else %}nr-badge-draft{% endif %}" style="border:none; cursor:pointer;">
+                                            {{ 'সক্রিয় (Blocked)' if c.is_active else 'নিষ্ক্রিয়' }}
+                                        </button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.admin_delete_country', country_id=c.id) }}" style="display:inline;" onsubmit="return confirm('এই দেশের ব্লক রুল মুছে ফেলতে চান?');">
+                                        <button type="submit" class="nr-btn" style="background:#fee2e2; color:#dc2626; padding:2px 8px; font-size:0.75rem; border:none;">
+                                            মুছুন
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--nr-text-muted); padding: 1.5rem;">
+                                    কোনো দেশ জিও-ফায়ারওয়ালে যুক্ত নেই।
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Live WAF Threat & Attack Logs Feed -->
+    <div class="nr-card" style="margin-bottom: 1.5rem;">
+        <div class="nr-card-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🚨</span>
+                <h3 class="nr-card-title">লাইভ সাইবার আক্রমণ ও ক্ষতিকর পে-লোড ট্র্যাকার (WAF Threat Feed)</h3>
+            </div>
+            <span class="nr-badge nr-badge-breaking">রিয়েল-টাইম ইন্টারসেপশন</span>
+        </div>
+        <div class="nr-card-body" style="padding: 0;">
+            {% if threat_logs %}
+            <div style="overflow-x: auto;">
+                <table class="nr-table">
+                    <thead>
+                        <tr>
+                            <th>সময় (UTC)</th>
+                            <th>আক্রমণের ধরন (Threat Type)</th>
+                            <th>আক্রমণকারী IP</th>
+                            <th>টার্গেট পাথ</th>
+                            <th>আক্রমণ পে-লোড নমুনা (Payload Sample)</th>
+                            <th>ডিফেন্স অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in threat_logs %}
+                        <tr>
+                            <td style="font-size: 0.78rem; color: var(--nr-text-muted); white-space: nowrap;">
+                                {{ t.created_at[:19].replace('T', ' ') if t.created_at else '' }}
+                            </td>
+                            <td>
+                                {% if t.threat_type == 'SQL_INJECTION' %}
+                                <span class="nr-badge" style="background: #fee2e2; color: #b91c1c; font-weight: 800;">SQLi Attack</span>
+                                {% elif t.threat_type == 'XSS_ATTACK' %}
+                                <span class="nr-badge" style="background: #ffedd5; color: #c2410c; font-weight: 800;">XSS Script</span>
+                                {% elif t.threat_type == 'RCE_COMMAND' %}
+                                <span class="nr-badge" style="background: #fef2f2; color: #991b1b; font-weight: 800;">RCE Command</span>
+                                {% elif t.threat_type == 'PATH_TRAVERSAL' %}
+                                <span class="nr-badge" style="background: #f3e8ff; color: #7e22ce; font-weight: 800;">LFI / Traversal</span>
+                                {% elif t.threat_type == 'GEO_BLOCKED' %}
+                                <span class="nr-badge" style="background: #fef9c3; color: #a16207; font-weight: 800;">Geo-Blocked</span>
+                                {% else %}
+                                <span class="nr-badge nr-badge-category">{{ t.threat_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: monospace; font-weight: 700; color: #0f172a;">
+                                {{ t.ip_address }}
+                                {% if t.country_code %}
+                                <span style="font-size: 0.72rem; color: var(--nr-text-muted);">({{ t.country_code }})</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: monospace; font-size: 0.8rem; color: #2563eb;">
+                                {{ t.request_method }} {{ t.request_path }}
+                            </td>
+                            <td>
+                                <code style="font-size: 0.75rem; background: #1e293b; color: #f87171; padding: 3px 8px; border-radius: 4px; display: inline-block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ t.payload_sample }}">
+                                    {{ t.payload_sample or 'N/A' }}
+                                </code>
+                            </td>
+                            <td>
+                                <span class="nr-badge" style="background: #fee2e2; color: #b91c1c;">
+                                    🛡️ {{ t.action_taken }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 2.5rem; text-align: center; color: var(--nr-text-muted);">
+                ✓ কোনো ক্ষতিকর আক্রমণ সনাক্ত হয়নি। সিস্টেম সম্পূর্ণ নিরাপদ।
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Editorial Audit Trail Card -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">📜 সম্পাদকীয় অ্যাকশন অডিট ট্রেইল</h3>
+            <span class="nr-badge nr-badge-category">সর্বশেষ ৪০টি অ্যাকশন</span>
+        </div>
+        <div class="nr-card-body" style="padding: 0;">
+            {% if audit_logs %}
+            <div style="overflow-x: auto;">
+                <table class="nr-table">
+                    <thead>
+                        <tr>
+                            <th>সময়</th>
+                            <th>ইউজার</th>
+                            <th>অ্যাকশন</th>
+                            <th>রিসোর্স</th>
+                            <th>IP ঠিকানা</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                                {{ log.created_at[:19].replace('T', ' ') if log.created_at else '' }}
+                            </td>
+                            <td>
+                                <strong style="color: var(--nr-text-dark);">{{ log.username }}</strong>
+                            </td>
+                            <td>
+                                {% if 'create' in log.action %}
+                                <span class="nr-audit-pill nr-audit-create">{{ log.action }}</span>
+                                {% elif 'edit' in log.action or 'approve' in log.action or 'toggle' in log.action %}
+                                <span class="nr-audit-pill nr-audit-edit">{{ log.action }}</span>
+                                {% elif 'delete' in log.action or 'block' in log.action %}
+                                <span class="nr-audit-pill nr-audit-delete">{{ log.action }}</span>
+                                {% elif 'save' in log.action or 'settings' in log.action %}
+                                <span class="nr-audit-pill nr-audit-settings">{{ log.action }}</span>
+                                {% else %}
+                                <span class="nr-audit-pill nr-audit-default">{{ log.action }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span style="font-size: 0.8rem; font-family: monospace;">{{ log.resource_type }} #{{ log.resource_id or '-' }}</span>
+                            </td>
+                            <td style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                                {{ log.ip_address or '127.0.0.1' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 2.5rem; text-align: center; color: var(--nr-text-muted);">
+                এখনও কোনো অডিট লগ রেকর্ড নেই।
+            </div>
+            {% endif %}
         </div>
     </div>
 

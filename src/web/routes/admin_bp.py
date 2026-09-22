@@ -27,6 +27,8 @@ from src.storage.repositories import (
     AuditLogRepository,
     SystemMonitorRepository,
     AIPilotHelper,
+    SecurityRepository,
+    BlockchainLedgerRepository,
 )
 from src.web.auth import login_required, roles_required
 
@@ -120,7 +122,7 @@ def update_user_role(user_id: int):
                 details={"target_user": user.username, "new_role": new_role},
                 ip_address=request.remote_addr,
             )
-            flash(f"Updated role for '{user.username}' to '{new_role.capitalize()}'.", "success")
+            flash(f"Role for user '{user.username}' updated to '{new_role.capitalize()}'.", "success")
         else:
             flash("User not found.", "danger")
 
@@ -157,6 +159,8 @@ def newspaper_management_view():
         ad_repo = AdvertisementRepository(session)
         audit_repo = AuditLogRepository(session)
         monitor_repo = SystemMonitorRepository(session)
+        sec_repo = SecurityRepository(session)
+        ledger_repo = BlockchainLedgerRepository(session)
 
         # 0. Process any pending scheduled article releases
         article_repo.process_scheduled_publishing()
@@ -165,6 +169,8 @@ def newspaper_management_view():
         cfg_repo.seed_default_configs()
         ad_repo.seed_default_ads()
         portal_repo.seed_default_poll()
+        sec_repo.seed_default_security_rules()
+        ledger_repo.ensure_genesis_block()
 
         # 1. Real-time Editorial KPI Metrics
         kpis = article_repo.get_editorial_kpis()
@@ -189,6 +195,15 @@ def newspaper_management_view():
         ads = ad_repo.get_all_ads()
         audit_logs = audit_repo.get_audit_logs(limit=40)
         server_telemetry = monitor_repo.get_telemetry()
+
+        # 5. Security Operations Center (SOC) & Cryptographic Ledger Data
+        sec_metrics = sec_repo.get_security_metrics()
+        blocked_ips = sec_repo.get_blocked_ips()
+        blocked_countries = sec_repo.get_blocked_countries()
+        threat_logs = sec_repo.get_threat_logs(limit=40)
+        blockchain_stats = ledger_repo.get_blockchain_stats()
+        ledger_blocks_data = ledger_repo.get_ledger_blocks(limit=25, page=1)
+        chain_audit = ledger_repo.audit_full_chain()
 
         # Available unique categories in database
         stats = article_repo.get_database_stats()
@@ -216,6 +231,13 @@ def newspaper_management_view():
             ads=[a.to_dict() for a in ads],
             audit_logs=[l.to_dict() for l in audit_logs],
             server_telemetry=server_telemetry,
+            sec_metrics=sec_metrics,
+            blocked_ips=[ip.to_dict() for ip in blocked_ips],
+            blocked_countries=[c.to_dict() for c in blocked_countries],
+            threat_logs=[t.to_dict() for t in threat_logs],
+            blockchain_stats=blockchain_stats,
+            ledger_blocks=[b.to_dict() for b in ledger_blocks_data["blocks"]],
+            chain_audit=chain_audit,
         )
 
 
@@ -881,3 +903,225 @@ def delete_subscriber(subscriber_id: int):
         else:
             flash("গ্রাহক মোছা যায়নি।", "danger")
     return redirect(url_for("admin.newspaper_management_view", tab="subscribers"))
+
+
+# =========================================================================
+# SECURITY OPERATIONS CENTER (SOC) & BLOCKCHAIN CONTROLLER ROUTES
+# =========================================================================
+
+@admin_bp.route("/newspaper/security/block-ip", methods=["POST"])
+@login_required
+@roles_required("admin")
+def admin_block_ip():
+    """Manually add an IP address to the firewall blacklist."""
+    ip_address = request.form.get("ip_address", "").strip()
+    reason = request.form.get("reason", "Manual administrator blacklist").strip()
+    duration_hours_raw = request.form.get("duration_hours", "").strip()
+    duration_hours = int(duration_hours_raw) if duration_hours_raw.isdigit() else None
+
+    if not ip_address:
+        flash("IP ঠিকানা প্রদান করা আবশ্যক।", "warning")
+        return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+    with get_db_session() as session:
+        sec_repo = SecurityRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        sec_repo.block_ip(
+            ip_address=ip_address,
+            reason=reason,
+            blocked_by=current_username,
+            threat_score=100,
+            duration_hours=duration_hours,
+        )
+        audit_repo.log_action(
+            username=current_username,
+            action="ip_blacklist_add",
+            resource_type="security",
+            resource_id=ip_address,
+            details={"ip": ip_address, "reason": reason, "duration_hours": duration_hours},
+            ip_address=request.remote_addr,
+        )
+        dur_str = f" ({duration_hours} ঘণ্টার জন্য)" if duration_hours else " (স্থায়ী)"
+        flash(f"IP ঠিকানা '{ip_address}' সফলভাবে ব্লকলিস্টে যুক্ত করা হয়েছে{dur_str}!", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/unblock-ip/<int:ip_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def admin_unblock_ip(ip_id: int):
+    """Remove an IP address from the firewall blacklist."""
+    with get_db_session() as session:
+        sec_repo = SecurityRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        if sec_repo.unblock_ip(ip_id):
+            audit_repo.log_action(
+                username=current_username,
+                action="ip_blacklist_remove",
+                resource_type="security",
+                resource_id=str(ip_id),
+                ip_address=request.remote_addr,
+            )
+            flash(f"IP ব্লকলিস্ট রেকর্ড #{ip_id} সফলভাবে প্রত্যাহার করা হয়েছে।", "success")
+        else:
+            flash("IP রেকর্ড পাওয়া যায়নি।", "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/block-country", methods=["POST"])
+@login_required
+@roles_required("admin")
+def admin_block_country():
+    """Add a country to the geographic firewall."""
+    country_code = request.form.get("country_code", "").strip().upper()
+    country_name = request.form.get("country_name", "").strip()
+    reason = request.form.get("reason", "Geographic firewall security policy").strip()
+
+    if not country_code or len(country_code) != 2:
+        flash("সঠিক ২ অক্ষরের ISO কান্ট্রি কোড (যেমন: RU, CN, KP) প্রদান করুন।", "warning")
+        return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+    with get_db_session() as session:
+        sec_repo = SecurityRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        sec_repo.block_country(country_code=country_code, country_name=country_name, reason=reason)
+        audit_repo.log_action(
+            username=current_username,
+            action="country_firewall_add",
+            resource_type="security",
+            resource_id=country_code,
+            details={"country_code": country_code, "country_name": country_name, "reason": reason},
+            ip_address=request.remote_addr,
+        )
+        flash(f"দেশ '{country_code}' ({country_name or country_code}) জিও-ফায়ারওয়ালে ব্লক করা হয়েছে।", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/toggle-country/<int:country_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def admin_toggle_country(country_id: int):
+    """Toggle country geo-blocking rule active/inactive."""
+    with get_db_session() as session:
+        sec_repo = SecurityRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        state = sec_repo.toggle_country(country_id)
+        audit_repo.log_action(
+            username=current_username,
+            action="country_firewall_toggle",
+            resource_type="security",
+            resource_id=str(country_id),
+            details={"is_active": state},
+            ip_address=request.remote_addr,
+        )
+        status_label = "সক্রিয় (Active)" if state else "নিষ্ক্রিয় (Disabled)"
+        flash(f"জিও-ফায়ারওয়াল রুল #{country_id}: {status_label} করা হয়েছে।", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/delete-country/<int:country_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def admin_delete_country(country_id: int):
+    """Delete country geo-blocking rule."""
+    with get_db_session() as session:
+        sec_repo = SecurityRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        if sec_repo.delete_country(country_id):
+            audit_repo.log_action(
+                username=current_username,
+                action="country_firewall_delete",
+                resource_type="security",
+                resource_id=str(country_id),
+                ip_address=request.remote_addr,
+            )
+            flash(f"জিও-ফায়ারওয়াল রুল #{country_id} মুছে ফেলা হয়েছে।", "success")
+        else:
+            flash("রুল মোছা যায়নি।", "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/blockchain/audit", methods=["GET", "POST"])
+@login_required
+@roles_required("admin", "editor")
+def blockchain_audit_scan():
+    """Trigger full end-to-end cryptographic blockchain ledger integrity audit."""
+    with get_db_session() as session:
+        ledger_repo = BlockchainLedgerRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        result = ledger_repo.audit_full_chain()
+        audit_repo.log_action(
+            username=current_username,
+            action="blockchain_audit_scan",
+            resource_type="blockchain",
+            details=result,
+            ip_address=request.remote_addr,
+        )
+
+        if request.is_json or request.args.get("format") == "json":
+            return jsonify(result)
+
+        if result.get("chain_valid"):
+            flash(f"✅ ব্লকচেইন অডিট সম্পন্ন: সর্বমোট {result.get('total_blocks')} টি ব্লক শতভাগ অক্ষত ও বৈধ!", "success")
+        else:
+            flash(f"⚠️ সতর্কতা: ব্লকচেইন অডিটে {len(result.get('tampered_blocks', []))} টি অমিল বা টেম্পারিং ধরা পড়েছে!", "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/blockchain/mint-missing", methods=["POST"])
+@login_required
+@roles_required("admin")
+def blockchain_mint_missing():
+    """Batch-mint cryptographic blocks for legacy articles lacking blockchain proofs."""
+    with get_db_session() as session:
+        ledger_repo = BlockchainLedgerRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        count = ledger_repo.mint_all_unmined_articles()
+        audit_repo.log_action(
+            username=current_username,
+            action="blockchain_batch_mint",
+            resource_type="blockchain",
+            details={"minted_count": count},
+            ip_address=request.remote_addr,
+        )
+        flash(f"সফলভাবে {count} টি পুরনো সংবাদের ক্রিপ্টোগ্রাফিক ব্লক মিন্ট ও ডিজিটাল সাইন করা হয়েছে!", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/blockchain/verify-article/<int:article_id>", methods=["GET", "POST"])
+@login_required
+@roles_required("admin", "editor")
+def blockchain_verify_article_endpoint(article_id: int):
+    """Verify an individual article's cryptographic hashes against the immutable ledger."""
+    with get_db_session() as session:
+        ledger_repo = BlockchainLedgerRepository(session)
+        is_valid, message, details = ledger_repo.verify_article_ledger(article_id)
+
+        return jsonify({
+            "article_id": article_id,
+            "is_valid": is_valid,
+            "message": message,
+            "details": details,
+        })
+

@@ -22,7 +22,12 @@ from src.storage.models import (
     SiteConfig,
     Advertisement,
     EditorialAuditLog,
+    BlockedIP,
+    BlockedCountry,
+    SecurityThreatLog,
+    ArticleBlockLedger,
 )
+from src.common.blockchain import BlockchainLedgerEngine
 
 logger = get_logger("webcreoling.storage.repositories")
 
@@ -427,6 +432,13 @@ class ArticleRepository:
             self.session.add(img_obj)
             self.session.flush()
 
+        # Mint immutable cryptographic block in blockchain ledger
+        try:
+            ledger_repo = BlockchainLedgerRepository(self.session)
+            ledger_repo.mint_block_for_article(article.id)
+        except Exception as e:
+            logger.warning(f"Could not auto-mint block for new article #{article.id}: {e}")
+
         return article
 
     def update_editorial_article(
@@ -494,6 +506,14 @@ class ArticleRepository:
 
         article.updated_at = datetime.utcnow()
         self.session.flush()
+
+        # Re-mint cryptographic block to seal updated content in ledger
+        try:
+            ledger_repo = BlockchainLedgerRepository(self.session)
+            ledger_repo.mint_block_for_article(article.id)
+        except Exception as e:
+            logger.warning(f"Could not re-mint block for updated article #{article.id}: {e}")
+
         return article
 
     def get_scheduled_articles(self) -> List[Article]:
@@ -1478,4 +1498,411 @@ class AIPilotHelper:
             "sentiment": sentiment,
             "seo_slug": "-".join(title.split()[:6]).lower(),
         }
+
+
+# ==============================================================================
+# Enterprise Security & Web Application Firewall Repository
+# ==============================================================================
+
+class SecurityRepository:
+    """Repository managing IP Blacklists, Country Geo-Firewalls, and Threat Logs."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_threat_logs(
+        self,
+        limit: int = 50,
+        threat_type: Optional[str] = None,
+        ip_filter: Optional[str] = None,
+    ) -> List[SecurityThreatLog]:
+        """Fetch recent security threat events."""
+        query = self.session.query(SecurityThreatLog)
+        if threat_type:
+            query = query.filter(SecurityThreatLog.threat_type == threat_type)
+        if ip_filter:
+            query = query.filter(SecurityThreatLog.ip_address.like(f"%{ip_filter.strip()}%"))
+        return query.order_by(SecurityThreatLog.id.desc()).limit(limit).all()
+
+    def log_threat(
+        self,
+        threat_type: str,
+        ip_address: str,
+        request_path: str,
+        request_method: str = "GET",
+        payload_sample: Optional[str] = None,
+        country_code: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        action_taken: str = "BLOCKED_403",
+    ) -> SecurityThreatLog:
+        """Record a detected attack or security violation."""
+        log = SecurityThreatLog(
+            threat_type=threat_type,
+            ip_address=ip_address.strip(),
+            request_path=request_path[:1000],
+            request_method=request_method,
+            payload_sample=payload_sample[:2000] if payload_sample else None,
+            country_code=(country_code or "XX").upper()[:10],
+            user_agent=user_agent[:450] if user_agent else None,
+            action_taken=action_taken,
+        )
+        self.session.add(log)
+        self.session.flush()
+        return log
+
+    def get_blocked_ips(self) -> List[BlockedIP]:
+        """Retrieve all currently registered blacklisted IPs."""
+        return self.session.query(BlockedIP).order_by(BlockedIP.id.desc()).all()
+
+    def block_ip(
+        self,
+        ip_address: str,
+        reason: str = "Manual Admin Blacklist",
+        blocked_by: str = "admin",
+        threat_score: int = 100,
+        duration_hours: Optional[int] = None,
+    ) -> BlockedIP:
+        """Add or update an IP address on the blacklist with optional expiration."""
+        ip_clean = ip_address.strip()
+        from datetime import timedelta
+        expires_at = datetime.utcnow() + timedelta(hours=duration_hours) if duration_hours else None
+
+        existing = self.session.query(BlockedIP).filter(BlockedIP.ip_address == ip_clean).first()
+        if existing:
+            existing.reason = reason
+            existing.blocked_by = blocked_by
+            existing.threat_score = threat_score
+            existing.expires_at = expires_at
+            record = existing
+        else:
+            record = BlockedIP(
+                ip_address=ip_clean,
+                reason=reason,
+                blocked_by=blocked_by,
+                threat_score=threat_score,
+                expires_at=expires_at,
+            )
+            self.session.add(record)
+        self.session.flush()
+        return record
+
+    def unblock_ip(self, ip_id: int) -> bool:
+        """Remove an IP address from the blacklist."""
+        record = self.session.query(BlockedIP).filter(BlockedIP.id == ip_id).first()
+        if record:
+            self.session.delete(record)
+            self.session.flush()
+            return True
+        return False
+
+    def is_ip_blocked(self, ip_address: str) -> bool:
+        """Check if an IP is actively blacklisted, removing expired entries."""
+        ip_clean = ip_address.strip()
+        record = self.session.query(BlockedIP).filter(BlockedIP.ip_address == ip_clean).first()
+        if not record:
+            return False
+
+        if record.expires_at and record.expires_at <= datetime.utcnow():
+            self.session.delete(record)
+            self.session.flush()
+            return False
+
+        return True
+
+    def get_blocked_countries(self) -> List[BlockedCountry]:
+        """Fetch all country geo-firewall rules."""
+        return self.session.query(BlockedCountry).order_by(BlockedCountry.id.desc()).all()
+
+    def block_country(
+        self,
+        country_code: str,
+        country_name: Optional[str] = None,
+        reason: str = "Geographic firewall policy",
+    ) -> BlockedCountry:
+        """Add a country to the geo-firewall."""
+        code_clean = country_code.strip().upper()
+        name = country_name.strip() if country_name else code_clean
+        existing = self.session.query(BlockedCountry).filter(BlockedCountry.country_code == code_clean).first()
+        if existing:
+            existing.country_name = name
+            existing.reason = reason
+            existing.is_active = True
+            self.session.flush()
+            return existing
+
+        record = BlockedCountry(
+            country_code=code_clean,
+            country_name=name,
+            reason=reason,
+            is_active=True,
+        )
+        self.session.add(record)
+        self.session.flush()
+        return record
+
+    def toggle_country(self, country_id: int) -> bool:
+        """Toggle active/inactive status of a country block rule."""
+        record = self.session.query(BlockedCountry).filter(BlockedCountry.id == country_id).first()
+        if record:
+            record.is_active = not bool(record.is_active)
+            self.session.flush()
+            return record.is_active
+        return False
+
+    def delete_country(self, country_id: int) -> bool:
+        """Delete a country from geo-firewall rules."""
+        record = self.session.query(BlockedCountry).filter(BlockedCountry.id == country_id).first()
+        if record:
+            self.session.delete(record)
+            self.session.flush()
+            return True
+        return False
+
+    def is_country_blocked(self, country_code: str) -> bool:
+        """Check if country code is currently geo-blocked."""
+        if not country_code:
+            return False
+        code_clean = country_code.strip().upper()
+        record = (
+            self.session.query(BlockedCountry)
+            .filter(BlockedCountry.country_code == code_clean, BlockedCountry.is_active == True)
+            .first()
+        )
+        return record is not None
+
+    def get_security_metrics(self) -> Dict[str, Any]:
+        """Aggregate security overview and threat level indicators."""
+        total_blocked_ips = self.session.query(func.count(BlockedIP.id)).scalar() or 0
+        total_blocked_countries = self.session.query(func.count(BlockedCountry.id)).filter(BlockedCountry.is_active == True).scalar() or 0
+        total_threats = self.session.query(func.count(SecurityThreatLog.id)).scalar() or 0
+
+        # Threats by type
+        sqli_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "SQL_INJECTION").scalar() or 0
+        xss_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "XSS_ATTACK").scalar() or 0
+        traversal_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "PATH_TRAVERSAL").scalar() or 0
+        rce_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "RCE_COMMAND").scalar() or 0
+        geo_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "GEO_BLOCKED").scalar() or 0
+        ip_count = self.session.query(func.count(SecurityThreatLog.id)).filter(SecurityThreatLog.threat_type == "IP_BLACKLIST").scalar() or 0
+
+        # Calculate threat level
+        if total_threats == 0:
+            threat_level = "NORMAL"
+            threat_color = "#10b981"
+        elif total_threats < 10:
+            threat_level = "ELEVATED"
+            threat_color = "#f59e0b"
+        else:
+            threat_level = "HIGH DEFENSE"
+            threat_color = "#ef4444"
+
+        recent_logs = self.get_threat_logs(limit=10)
+
+        return {
+            "total_blocked_ips": total_blocked_ips,
+            "total_blocked_countries": total_blocked_countries,
+            "total_threats": total_threats,
+            "sqli_count": sqli_count,
+            "xss_count": xss_count,
+            "traversal_count": traversal_count,
+            "rce_count": rce_count,
+            "geo_count": geo_count,
+            "ip_count": ip_count,
+            "threat_level": threat_level,
+            "threat_color": threat_color,
+            "recent_logs": [log.to_dict() for log in recent_logs],
+            "waf_mode": "ACTIVE_BLOCK",
+        }
+
+    def seed_default_security_rules(self) -> None:
+        """Seed initial Geo-Firewall country entries if none exist."""
+        if self.session.query(BlockedCountry).count() == 0:
+            default_countries = [
+                ("KP", "North Korea", "High cyber attack origin zone"),
+                ("RU", "Russian Federation", "Automated botnet threat policy"),
+                ("IR", "Iran", "Policy-restricted region"),
+            ]
+            for code, name, reason in default_countries:
+                self.block_country(code, name, reason)
+
+
+# ==============================================================================
+# Cryptographic Blockchain Article Ledger Repository
+# ==============================================================================
+
+class BlockchainLedgerRepository:
+    """Repository managing the immutable cryptographic article ledger and verification proofs."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def ensure_genesis_block(self) -> ArticleBlockLedger:
+        """Ensure Genesis Block (#0) exists as the cryptographic root."""
+        genesis = self.session.query(ArticleBlockLedger).filter(ArticleBlockLedger.block_number == 0).first()
+        if not genesis:
+            g_data = BlockchainLedgerEngine.create_genesis_block_data()
+            genesis = ArticleBlockLedger(**g_data)
+            self.session.add(genesis)
+            self.session.flush()
+            logger.info("Initialized Blockchain Genesis Block #0 for Prothom Alo Newsroom.")
+        return genesis
+
+    def get_latest_block(self) -> ArticleBlockLedger:
+        """Fetch the most recent cryptographic block in the chain."""
+        self.ensure_genesis_block()
+        return self.session.query(ArticleBlockLedger).order_by(ArticleBlockLedger.block_number.desc()).first()
+
+    def get_block_by_number(self, block_number: int) -> Optional[ArticleBlockLedger]:
+        """Retrieve block by index number."""
+        return self.session.query(ArticleBlockLedger).filter(ArticleBlockLedger.block_number == block_number).first()
+
+    def get_block_by_article_id(self, article_id: int) -> Optional[ArticleBlockLedger]:
+        """Retrieve cryptographic block certifying a specific article."""
+        return self.session.query(ArticleBlockLedger).filter(ArticleBlockLedger.article_id == article_id).first()
+
+    def mint_block_for_article(self, article_id: int) -> Optional[ArticleBlockLedger]:
+        """
+        Mint a new cryptographic block or update existing block for an article.
+        Calculates SHA-256 Merkle root and HMAC signature, then updates the Article record.
+        """
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if not article:
+            return None
+
+        self.ensure_genesis_block()
+        latest = self.get_latest_block()
+
+        # Check if article already has a block
+        existing_block = self.get_block_by_article_id(article_id)
+        if existing_block:
+            # Re-mint with current block number and previous hash
+            block_num = existing_block.block_number
+            prev_hash = existing_block.prev_block_hash
+        else:
+            block_num = (latest.block_number or 0) + 1
+            prev_hash = latest.block_hash
+
+        minted_data = BlockchainLedgerEngine.mint_article_block(
+            block_number=block_num,
+            article_id=article.id,
+            title=article.title,
+            content_text=article.content_text,
+            author=article.author,
+            prev_block_hash=prev_hash,
+            timestamp=datetime.utcnow(),
+        )
+
+        if existing_block:
+            for k, v in minted_data.items():
+                setattr(existing_block, k, v)
+            block_record = existing_block
+        else:
+            block_record = ArticleBlockLedger(**minted_data)
+            self.session.add(block_record)
+
+        # Update Article record with cryptographic ledger proof
+        article.block_number = block_record.block_number
+        article.block_hash = block_record.block_hash
+        article.prev_hash = block_record.prev_block_hash
+        article.digital_signature = block_record.digital_signature
+        article.is_ledger_verified = True
+
+        self.session.flush()
+        logger.info(f"Minted cryptographic block #{block_record.block_number} for Article #{article.id} ({block_record.block_hash[:16]}...)")
+        return block_record
+
+    def mint_all_unmined_articles(self) -> int:
+        """Mint cryptographic blocks for all existing articles that lack a ledger record."""
+        self.ensure_genesis_block()
+        unmined_articles = (
+            self.session.query(Article)
+            .filter((Article.block_number == None) | (Article.block_hash == None))
+            .order_by(Article.id.asc())
+            .all()
+        )
+
+        minted_count = 0
+        for art in unmined_articles:
+            self.mint_block_for_article(art.id)
+            minted_count += 1
+
+        self.session.flush()
+        return minted_count
+
+    def verify_article_ledger(self, article_id: int) -> Tuple[bool, str, Dict[str, Any]]:
+        """Verify an article's cryptographic validity against its ledger block."""
+        article = self.session.query(Article).filter(Article.id == article_id).first()
+        if not article:
+            return False, "আর্টিকেল পাওয়া যায়নি।", {}
+
+        block = self.get_block_by_article_id(article_id)
+        if not block:
+            # Try minting on the fly if unmined
+            block = self.mint_block_for_article(article_id)
+            if not block:
+                return False, "এই আর্টিকেলের জন্য কোনো ব্লকচেইন লেজার ব্লক পাওয়া যায়নি।", {}
+
+        is_valid, reason, details = BlockchainLedgerEngine.verify_article_block(
+            block=block.to_dict(),
+            title=article.title,
+            content_text=article.content_text,
+            author=article.author,
+        )
+
+        # Update verification flag
+        article.is_ledger_verified = is_valid
+        block.verification_status = "VALID" if is_valid else "TAMPERED"
+        self.session.flush()
+
+        details["article_id"] = article.id
+        details["title"] = article.title
+        details["author"] = article.author
+        details["timestamp"] = block.timestamp.isoformat() if block.timestamp else None
+        return is_valid, reason, details
+
+    def audit_full_chain(self) -> Dict[str, Any]:
+        """Perform a complete end-to-end blockchain validation scan across all minted blocks."""
+        self.ensure_genesis_block()
+        blocks = self.session.query(ArticleBlockLedger).order_by(ArticleBlockLedger.block_number.asc()).all()
+        blocks_data = [b.to_dict() for b in blocks]
+        audit_result = BlockchainLedgerEngine.audit_entire_chain(blocks_data)
+        return audit_result
+
+    def get_ledger_blocks(self, limit: int = 25, page: int = 1) -> Dict[str, Any]:
+        """Fetch paginated ledger blocks for the Blockchain Explorer UI."""
+        self.ensure_genesis_block()
+        query = self.session.query(ArticleBlockLedger)
+        total_count = query.count()
+        blocks = (
+            query.order_by(ArticleBlockLedger.block_number.desc())
+            .offset((page - 1) * limit)
+            .limit(limit)
+            .all()
+        )
+        total_pages = max(1, (total_count + limit - 1) // limit)
+        return {
+            "blocks": blocks,
+            "total_count": total_count,
+            "page": page,
+            "total_pages": total_pages,
+        }
+
+    def get_blockchain_stats(self) -> Dict[str, Any]:
+        """Get aggregate blockchain summary metrics."""
+        self.ensure_genesis_block()
+        total_blocks = self.session.query(func.count(ArticleBlockLedger.block_number)).scalar() or 0
+        verified_articles = self.session.query(func.count(Article.id)).filter(Article.is_ledger_verified == True).scalar() or 0
+        latest = self.get_latest_block()
+        tampered_count = self.session.query(func.count(ArticleBlockLedger.block_number)).filter(ArticleBlockLedger.verification_status == "TAMPERED").scalar() or 0
+
+        return {
+            "total_blocks": total_blocks,
+            "verified_articles": verified_articles,
+            "latest_block_number": latest.block_number if latest else 0,
+            "latest_block_hash": latest.block_hash if latest else None,
+            "tampered_count": tampered_count,
+            "chain_health": "100% SECURE" if tampered_count == 0 else "ANOMALY DETECTED",
+            "hash_algorithm": "SHA-256 + Merkle Tree",
+            "signature_algorithm": "HMAC-SHA256 Server Key",
+        }
+
 

@@ -6,6 +6,7 @@ lead hero banners, auto-highlighted articles, opinion polls, likes, social share
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from src.storage.database import get_db_session
+from src.storage.models import Article
 from src.storage.repositories import ArticleRepository, PortalRepository
 
 portal_bp = Blueprint("portal", __name__)
@@ -29,8 +30,9 @@ def index_view():
         exclude_id = lead_hero.id if lead_hero else None
 
         breaking_news = article_repo.get_breaking_news(limit=6)
-        highlighted = article_repo.get_highlighted_articles(limit=6, exclude_id=exclude_id)
+        highlighted = article_repo.get_highlighted_articles(limit=8, exclude_id=exclude_id)
         trending = article_repo.get_trending_articles(limit=5)
+        latest_news = session.query(Article).order_by(Article.id.desc()).limit(5).all()
         active_poll = portal_repo.get_active_poll()
 
         # Category Blocks
@@ -53,6 +55,7 @@ def index_view():
             highlighted=highlighted,
             breaking_news=breaking_news,
             trending=trending,
+            latest_news=latest_news,
             active_poll=active_poll.to_dict() if active_poll else None,
             politics_news=politics_news,
             sports_news=sports_news,

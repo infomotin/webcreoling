@@ -1,113 +1,206 @@
 {% extends "base.html" %}
 
-{% block title %}{{ article.title }} - দৈনিক ক্রিয়েলিং বার্তা{% endblock %}
+{% block title %}{{ article.title }} - প্রথম আলো | Prothom Alo Clone Edition{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/newspaper_prothomalo.css') }}">
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 1080px; margin: 0 auto;">
-    <!-- Breadcrumbs -->
-    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.4rem;">
-        <a href="{{ url_for('portal.index_view') }}" style="color: #38bdf8; text-decoration: none;">প্রচ্ছদ</a>
-        <span>&rsaquo;</span>
-        <a href="{{ url_for('portal.index_view', category=article.category) }}" style="color: var(--text-muted); text-decoration: none;">{{ article.category|capitalize }}</a>
-        <span>&rsaquo;</span>
-        <span style="color: var(--text-secondary);">প্রতিবেদন</span>
+<div class="palo-newspaper-canvas">
+
+    <!-- Top Utility Bar -->
+    <div class="palo-topbar">
+        <div class="palo-topbar-left">
+            <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩</span>
+            <span>•</span>
+            <span class="palo-edition-tag">ঢাকা সংস্করণ</span>
+        </div>
+        <div class="palo-topbar-right">
+            <a href="{{ url_for('portal.index_view') }}" class="palo-top-link">&larr; প্রচ্ছদে ফিরে যান</a>
+            <a href="{{ url_for('dashboard.index_view') }}" class="palo-top-link" style="color: var(--palo-red); font-weight: 700;">
+                ⚡ AI কন্ট্রোল প্যানেল
+            </a>
+        </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 2rem;">
-        <!-- Main Article Body Column -->
-        <div>
-            <div class="card" style="padding: 2.2rem; margin-bottom: 2rem;">
-                <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.82rem; color: var(--text-muted); flex-wrap: wrap;">
-                    <span class="badge badge-category">{{ article.category }}</span>
-                    <span>•</span>
-                    <span>সূত্র: <strong>{{ article.source }}</strong></span>
-                    <span>•</span>
-                    <span>প্রকাশ: {{ article.published_at or 'আজ' }}</span>
-                    {% if article.author %}
-                    <span>•</span>
-                    <span>প্রতিবেদক: <strong>{{ article.author }}</strong></span>
-                    {% endif %}
-                </div>
-
-                <h1 style="font-size: 2.2rem; font-weight: 800; line-height: 1.35; color: #fff; margin-bottom: 1.2rem; font-family: 'Hind Siliguri', sans-serif;">
-                    {{ article.title }}
+    <!-- Brand Masthead & Search -->
+    <div class="palo-masthead">
+        <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap">
+            <div class="palo-logo-emblem">
+                আ
+            </div>
+            <div class="palo-logo-text">
+                <h1 class="palo-brand-title">
+                    প্রথম<span>আলো</span>
                 </h1>
+                <span class="palo-brand-tagline">
+                    The Daily Prothom Alo • ক্রিয়েলিং এআই ডিজিটাল সংস্করণ
+                </span>
+            </div>
+        </a>
 
-                <!-- Reader Engagement Action Bar -->
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 0.8rem 0; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;">
-                    <!-- Like & Views -->
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <button onclick="toggleArticleLike({{ article.id }}, this)" class="btn btn-outline btn-sm" style="display: flex; align-items: center; gap: 0.4rem;">
-                            <span>❤️</span> <span class="like-count">{{ article.likes_count or 0 }}</span> লাইক
-                        </button>
-                        <span style="font-size: 0.82rem; color: var(--text-muted);">👁️ {{ article.views_count or 0 }} বার পঠিত</span>
+        <div class="palo-masthead-actions">
+            <form method="GET" action="{{ url_for('portal.index_view') }}" class="palo-search-form">
+                <input type="text" name="q" class="palo-search-input" placeholder="প্রথম আলো খুঁজুন...">
+                <button type="submit" class="palo-search-btn" title="Search">🔍</button>
+            </form>
+            <a href="{{ url_for('chat.index_view') }}" class="palo-epaper-btn">
+                <span>🤖</span> AI চ্যাট
+            </a>
+        </div>
+    </div>
+
+    <!-- Category Navigation Bar -->
+    <nav class="palo-navbar">
+        <ul class="palo-nav-list">
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view') }}" class="palo-nav-link">প্রচ্ছদ</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='general') }}" class="palo-nav-link {% if article.category == 'general' %}active{% endif %}">বিশেষ সংবাদ</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='politics') }}" class="palo-nav-link {% if article.category == 'politics' %}active{% endif %}">রাজনীতি</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='bangladesh') }}" class="palo-nav-link {% if article.category == 'bangladesh' %}active{% endif %}">বাংলাদেশ</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='business') }}" class="palo-nav-link {% if article.category == 'business' %}active{% endif %}">বাণিজ্য</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='international') }}" class="palo-nav-link {% if article.category == 'international' %}active{% endif %}">বিশ্ব</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='sports') }}" class="palo-nav-link {% if article.category == 'sports' %}active{% endif %}">খেলা</a></li>
+            <li class="palo-nav-item"><a href="{{ url_for('portal.index_view', category='technology') }}" class="palo-nav-link {% if article.category == 'technology' %}active{% endif %}">বিজ্ঞান ও প্রযুক্তি</a></li>
+        </ul>
+    </nav>
+
+    <!-- Breaking News Ticker if available -->
+    {% if breaking_news %}
+    <div class="palo-breaking-ticker">
+        <div class="palo-breaking-badge">
+            <span class="palo-pulse-dot"></span> ব্রেকিং
+        </div>
+        <div class="palo-ticker-content">
+            {% for bn in breaking_news %}
+            <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" class="palo-ticker-link">
+                ⚡ {{ bn.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===================================================================== -->
+    <!-- ARTICLE READER 2-COLUMN LAYOUT                                        -->
+    <!-- ===================================================================== -->
+    <div class="palo-reader-layout">
+
+        <!-- Left Main Content Column -->
+        <div>
+            <!-- Breadcrumbs -->
+            <div class="palo-breadcrumbs">
+                <a href="{{ url_for('portal.index_view') }}">প্রচ্ছদ</a>
+                <span>&rsaquo;</span>
+                <a href="{{ url_for('portal.index_view', category=article.category) }}">{{ article.category|capitalize }}</a>
+                <span>&rsaquo;</span>
+                <span style="color: var(--palo-text-muted);">প্রতিবেদন</span>
+            </div>
+
+            <!-- Headline -->
+            <h1 class="palo-reader-headline">
+                {{ article.title }}
+            </h1>
+
+            <!-- Author & Metadata Bar -->
+            <div class="palo-author-bar">
+                <div class="palo-author-info">
+                    <div class="palo-author-avatar">
+                        {{ (article.author or 'প্র')[0] }}
                     </div>
-
-                    <!-- Social Sharing Buttons -->
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <span style="font-size: 0.78rem; color: var(--text-muted);">শেয়ার করুন:</span>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="Facebook-এ শেয়ার">Facebook</a>
-                        <a href="https://twitter.com/intent/tweet?text={{ article.title }}&url={{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="X / Twitter-এ শেয়ার">X</a>
-                        <a href="https://api.whatsapp.com/send?text={{ article.title }} {{ article.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="WhatsApp-এ শেয়ার">WhatsApp</a>
-                        <button onclick="copyArticleLink()" class="btn btn-sm btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">📋 লিংক কপি</button>
-                    </div>
-                </div>
-
-                <!-- Lead Article Image -->
-                {% if article.images %}
-                <div style="border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.8rem; border: 1px solid var(--border-color);">
-                    <img src="/{{ article.images[0].local_path }}" alt="{{ article.title }}" style="width: 100%; max-height: 480px; object-fit: cover; display: block;">
-                    {% if article.images[0].caption %}
-                    <div style="padding: 0.6rem 1rem; background: rgba(0,0,0,0.5); font-size: 0.8rem; color: #94a3b8;">
-                        📸 {{ article.images[0].caption }}
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <!-- Full Story Paragraphs -->
-                <div style="font-size: 1.1rem; line-height: 1.85; color: #e2e8f0; white-space: pre-line; margin-bottom: 2rem; font-family: 'Hind Siliguri', sans-serif;">
-                    {{ article.content_text }}
-                </div>
-
-                <!-- Secondary Images Gallery if multiple images exist -->
-                {% if article.images and article.images|length > 1 %}
-                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 2rem;">
-                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;">📷 আরও ছবি</h4>
-                    <div class="grid-2" style="gap: 1rem;">
-                        {% for img in article.images[1:] %}
-                        <div style="border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color);">
-                            <img src="/{{ img.local_path }}" style="width: 100%; height: 180px; object-fit: cover;">
-                            {% if img.caption %}
-                            <p style="padding: 0.4rem 0.8rem; font-size: 0.75rem; color: var(--text-muted); background: rgba(0,0,0,0.4);">{{ img.caption }}</p>
-                            {% endif %}
+                    <div>
+                        <div style="font-weight: 700; color: var(--palo-heading);">
+                            {{ article.author or 'প্রথম আলো নিজস্ব প্রতিবেদক' }}
                         </div>
-                        {% endfor %}
+                        <div style="font-size: 0.76rem; color: var(--palo-text-muted);">
+                            ঢাকা • সূত্র: {{ article.source }} • প্রকাশিত: {{ article.published_at or 'আজকের খবর' }}
+                        </div>
                     </div>
+                </div>
+
+                <!-- Social Sharing & Interactive Buttons -->
+                <div class="palo-share-toolbar">
+                    <button onclick="toggleArticleLike({{ article.id }}, this)" class="palo-btn-like">
+                        <span>❤️</span> <span class="like-count">{{ article.likes_count or 0 }}</span>
+                    </button>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ article.url }}" target="_blank" class="palo-share-btn fb" title="Facebook">Facebook</a>
+                    <a href="https://twitter.com/intent/tweet?text={{ article.title }}&url={{ article.url }}" target="_blank" class="palo-share-btn tw" title="X / Twitter">X</a>
+                    <a href="https://api.whatsapp.com/send?text={{ article.title }} {{ article.url }}" target="_blank" class="palo-share-btn wa" title="WhatsApp">WhatsApp</a>
+                    <button onclick="copyArticleLink()" class="palo-share-btn" title="লিংক কপি">🔗 কপি</button>
+                </div>
+            </div>
+
+            <!-- Lead Image -->
+            {% if article.images %}
+            <div style="margin-bottom: 1.5rem;">
+                <img src="/{{ article.images[0].local_path }}" alt="{{ article.title }}" class="palo-article-lead-img">
+                {% if article.images[0].caption %}
+                <div class="palo-img-caption">
+                    📸 {{ article.images[0].caption }}
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
 
-            <!-- Related Articles Recommendations -->
-            {% if related_articles %}
-            <div style="margin-bottom: 2rem;">
-                <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
-                    <span>📰</span> সম্পর্কিত অন্যান্য সংবাদ
+            <!-- Article Body Paragraphs -->
+            <div id="articleBodyText" class="palo-article-body">
+                {{ article.content_text }}
+            </div>
+
+            <!-- Reader Interaction Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: var(--palo-bg-gray); border-radius: var(--palo-radius-sm); margin: 2rem 0; border: 1px solid var(--palo-border);">
+                <div>
+                    <span style="font-weight: 700; color: var(--palo-heading); font-size: 0.95rem;">
+                        প্রতিবেদনটি আপনার কেমন লেগেছে?
+                    </span>
+                    <p style="font-size: 0.8rem; color: var(--palo-text-muted); margin: 0.2rem 0 0 0;">
+                        আপনার মতামত আমাদের সাংবাদিকতাকে আরও সমৃদ্ধ করে।
+                    </p>
+                </div>
+                <button onclick="toggleArticleLike({{ article.id }}, this)" class="palo-btn-like" style="padding: 0.5rem 1.2rem; font-size: 0.92rem;">
+                    <span>❤️</span> <span class="like-count">{{ article.likes_count or 0 }}</span> লাইক দিন
+                </button>
+            </div>
+
+            <!-- Secondary Image Gallery -->
+            {% if article.images and article.images|length > 1 %}
+            <div style="border-top: 2px solid var(--palo-heading); padding-top: 1.5rem; margin-top: 2.5rem;">
+                <h3 class="palo-section-title" style="margin-bottom: 1.2rem;">
+                    📷 আরও ছবি ও ফটো স্টোরি
                 </h3>
-                <div class="grid-3" style="gap: 1rem;">
+                <div class="palo-grid-4" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    {% for img in article.images[1:] %}
+                    <div style="border: 1px solid var(--palo-border); border-radius: var(--palo-radius-sm); overflow: hidden;">
+                        <img src="/{{ img.local_path }}" style="width: 100%; height: 200px; object-fit: cover;">
+                        {% if img.caption %}
+                        <p style="padding: 0.4rem 0.8rem; font-size: 0.78rem; color: var(--palo-text-muted); background: #fff;">{{ img.caption }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related Articles Stream -->
+            {% if related_articles %}
+            <div style="border-top: 2px solid var(--palo-heading); padding-top: 1.5rem; margin-top: 2.5rem;">
+                <h3 class="palo-section-title" style="margin-bottom: 1.2rem;">
+                    সম্পর্কিত আরও সংবাদ
+                </h3>
+                <div class="palo-grid-4" style="grid-template-columns: repeat(3, 1fr); gap: 1.2rem;">
                     {% for rel in related_articles %}
-                    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1rem;">
+                    <div class="palo-grid-card">
                         <div>
                             {% if rel.images %}
-                            <img src="/{{ rel.images[0].local_path }}" style="width: 100%; height: 130px; object-fit: cover; border-radius: 4px; margin-bottom: 0.6rem;">
+                            <img src="/{{ rel.images[0].local_path }}" style="width: 100%; height: 130px; object-fit: cover; border-radius: var(--palo-radius-sm); margin-bottom: 0.6rem;">
                             {% endif %}
-                            <h4 style="font-size: 0.95rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.4rem;">
-                                <a href="{{ url_for('portal.article_reader_view', article_id=rel.id) }}" style="color: #fff; text-decoration: none;">
+                            <h4 class="palo-grid-title" style="font-size: 0.95rem;">
+                                <a href="{{ url_for('portal.article_reader_view', article_id=rel.id) }}">
                                     {{ rel.title }}
                                 </a>
                             </h4>
                         </div>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ rel.published_at or '' }}</span>
+                        <span style="font-size: 0.72rem; color: var(--palo-text-muted);">{{ rel.published_at or 'আজ' }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -115,58 +208,95 @@
             {% endif %}
         </div>
 
-        <!-- Sidebar Column -->
+        <!-- Right Sidebar Column -->
         <div>
             <!-- Opinion Poll Box -->
             {% if active_poll %}
-            <div class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #a855f7;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">📊 জনমত জরিপ</h4>
-                    <span class="badge badge-analyst" style="font-size: 0.65rem;">সক্রিয়</span>
+            <div class="palo-poll-card" style="margin-bottom: 1.8rem;">
+                <div class="palo-poll-header">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--palo-heading);">
+                        📊 মতামত জরিপ
+                    </span>
+                    <span class="palo-poll-badge">সক্রিয়</span>
                 </div>
-                <p style="font-size: 0.88rem; font-weight: 600; color: #e2e8f0; line-height: 1.4; margin-bottom: 0.8rem;">
-                    {{ active_poll.question }}
-                </p>
-
+                <p class="palo-poll-question">{{ active_poll.question }}</p>
                 <form id="pollForm" onsubmit="submitPollVote(event, {{ active_poll.id }})">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                    <div style="margin-bottom: 0.8rem;">
                         {% for opt in active_poll.options %}
-                        <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.82rem;">
-                            <input type="radio" name="poll_option" value="{{ opt.id }}" required style="accent-color: var(--accent-purple);">
-                            <span style="color: #fff;">{{ opt.option_text }}</span>
+                        <label class="palo-poll-option">
+                            <input type="radio" name="poll_option" value="{{ opt.id }}" required style="accent-color: var(--palo-red);">
+                            <span>{{ opt.option_text }}</span>
                         </label>
                         {% endfor %}
                     </div>
-                    <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%;">ভোট দিন</button>
+                    <button type="submit" class="palo-btn-vote">ভোট দিন</button>
                 </form>
-
                 <div id="pollResults" style="display: none; margin-top: 1rem;">
                     <div id="pollBars" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                    <p id="pollMessage" style="font-size: 0.75rem; color: var(--accent-success); margin-top: 0.5rem; text-align: center;"></p>
+                    <p id="pollMessage" style="font-size: 0.78rem; color: var(--palo-green); font-weight: 600; margin-top: 0.6rem; text-align: center;"></p>
                 </div>
             </div>
             {% endif %}
 
             <!-- Newsletter Box -->
-            <div class="card" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(88, 28, 135, 0.4) 100%); border: 1px solid rgba(96, 165, 250, 0.3);">
-                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem;">
-                    📩 দৈনিক বুলেটিন সাবস্ক্রিপশন
+            <div class="palo-newsletter-card">
+                <h4 class="palo-newsletter-title">
+                    📩 প্রথম আলো ই-বুলেটিন
                 </h4>
-                <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 0.8rem;">
-                    গুরুত্বপূর্ণ ব্রেকিং নিউজ সরাসরি আপনার ইমেইলে পেতে যুক্ত হোন।
+                <p class="palo-newsletter-desc">
+                    দিনভর গুরুত্বপূর্ণ সংবাদ সবার আগে সরাসরি আপনার ইমেইলে পড়তে সাবস্ক্রাইব করুন।
                 </p>
-
                 <form onsubmit="submitNewsletter(event)">
-                    <input type="email" id="subscriberEmail" class="form-control" placeholder="আপনার ইমেইল" required style="font-size: 0.82rem; margin-bottom: 0.6rem;">
-                    <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;">সাবস্ক্রাইব</button>
+                    <input type="email" id="subscriberEmail" class="palo-input-newsletter" placeholder="আপনার ইমেইল দিন" required>
+                    <button type="submit" class="palo-btn-newsletter">সাবস্ক্রাইব করুন</button>
                 </form>
-                <p id="newsletterStatus" style="font-size: 0.75rem; margin-top: 0.5rem; text-align: center;"></p>
+                <p id="newsletterStatus" style="font-size: 0.78rem; margin-top: 0.5rem; text-align: center;"></p>
             </div>
         </div>
+
     </div>
+
 </div>
 
+<!-- Footer -->
+<footer class="palo-footer">
+    <div class="palo-footer-inner">
+        <div class="palo-footer-grid">
+            <div class="palo-footer-brand">
+                <h3>প্রথম<span>আলো</span></h3>
+                <p style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 1rem;">
+                    সত্যের সন্ধানে নির্ভীক। ক্রিয়েলিং এআই প্ল্যাটফর্ম দ্বারা পরিচালিত রিয়েল-টাইম ডিজিটাল সংস্করণ।
+                </p>
+            </div>
+            <div class="palo-footer-col">
+                <h4>বিভাগসমূহ</h4>
+                <ul class="palo-footer-links">
+                    <li><a href="{{ url_for('portal.index_view', category='politics') }}">রাজনীতি</a></li>
+                    <li><a href="{{ url_for('portal.index_view', category='bangladesh') }}">বাংলাদেশ</a></li>
+                    <li><a href="{{ url_for('portal.index_view', category='business') }}">অর্থনীতি</a></li>
+                    <li><a href="{{ url_for('portal.index_view', category='sports') }}">খেলাধুলা</a></li>
+                </ul>
+            </div>
+            <div class="palo-footer-col">
+                <h4>সেবা</h4>
+                <ul class="palo-footer-links">
+                    <li><a href="{{ url_for('chat.index_view') }}">এআই চ্যাট ও আরএজি</a></li>
+                    <li><a href="{{ url_for('dashboard.index_view') }}">সিস্টেম ড্যাশবোর্ড</a></li>
+                </ul>
+            </div>
+            <div class="palo-footer-col">
+                <h4>মোবাইল সংস্করণ</h4>
+                <p style="font-size: 0.82rem;">যেকোনো সময় সব খবর আপনার হাতের মুঠোয়।</p>
+            </div>
+        </div>
+        <div class="palo-footer-bottom">
+            <div>স্বত্ব © ২০২৬ প্রথম আলো ক্লোন - ক্রিয়েলিং এআই। সর্বস্বত্ব সংরক্ষিত।</div>
+        </div>
+    </div>
+</footer>
+
 <script>
+// Article Like
 async function toggleArticleLike(articleId, btn) {
     try {
         const res = await fetch(`/news/api/like/${articleId}`, { method: 'POST' });
@@ -174,17 +304,26 @@ async function toggleArticleLike(articleId, btn) {
         const countSpan = btn.querySelector('.like-count');
         if (countSpan && data.likes_count !== undefined) {
             countSpan.innerText = data.likes_count;
+            if (data.liked) {
+                btn.style.background = '#ffe4e6';
+                btn.style.borderColor = 'var(--palo-red)';
+            } else {
+                btn.style.background = '#fff';
+                btn.style.borderColor = '#fecdd3';
+            }
         }
     } catch (e) {
-        console.error("Like error", e);
+        console.error(e);
     }
 }
 
+// Copy Article Link
 function copyArticleLink() {
     navigator.clipboard.writeText(window.location.href);
-    alert("খবরের লিংক সফলভাবে কপি করা হয়েছে!");
+    alert('সংবাদের লিংক কপি করা হয়েছে!');
 }
 
+// Poll
 async function submitPollVote(event, pollId) {
     event.preventDefault();
     const checked = document.querySelector('input[name="poll_option"]:checked');
@@ -198,35 +337,33 @@ async function submitPollVote(event, pollId) {
             body: JSON.stringify({ poll_id: pollId, option_id: optionId })
         });
         const data = await res.json();
-
         if (data.poll && data.poll.options) {
             document.getElementById('pollForm').style.display = 'none';
             const resultsBox = document.getElementById('pollResults');
             const barsBox = document.getElementById('pollBars');
             barsBox.innerHTML = '';
-
             data.poll.options.forEach(opt => {
                 const row = document.createElement('div');
                 row.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #fff; margin-bottom: 2px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--palo-heading); font-weight: 600; margin-bottom: 3px;">
                         <span>${opt.option_text}</span>
-                        <strong>${opt.percentage}% (${opt.votes_count} ভোট)</strong>
+                        <span>${opt.percentage}% (${opt.votes_count} ভোট)</span>
                     </div>
-                    <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden;">
-                        <div style="background: var(--accent-purple); height: 100%; width: ${opt.percentage}%;"></div>
+                    <div style="background: #e2e8f0; border-radius: 4px; height: 9px; overflow: hidden;">
+                        <div style="background: var(--palo-red); height: 100%; width: ${opt.percentage}%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);"></div>
                     </div>
                 `;
                 barsBox.appendChild(row);
             });
-
             document.getElementById('pollMessage').innerText = data.message;
             resultsBox.style.display = 'block';
         }
     } catch (e) {
-        console.error("Poll error", e);
+        console.error(e);
     }
 }
 
+// Newsletter
 async function submitNewsletter(event) {
     event.preventDefault();
     const emailInput = document.getElementById('subscriberEmail');

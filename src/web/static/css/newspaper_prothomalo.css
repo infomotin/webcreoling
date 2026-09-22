@@ -1,0 +1,1123 @@
+/* ==========================================================================
+   PROTHOM ALO CLONE DESIGN SYSTEM (প্রথম আলো ডিজিটাল সংস্করণ)
+   Crafted with pixel-perfect authentic aesthetics, crisp Bengali typography,
+   editorial layouts, and modern responsive components.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Noto+Serif+Bengali:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --palo-red: #e11d48;
+    --palo-red-dark: #be123c;
+    --palo-red-light: #ffe4e6;
+    --palo-black: #09090b;
+    --palo-heading: #18181b;
+    --palo-text: #27272a;
+    --palo-text-muted: #71717a;
+    --palo-border: #e4e4e7;
+    --palo-border-light: #f4f4f5;
+    --palo-bg: #ffffff;
+    --palo-bg-soft: #fafafa;
+    --palo-bg-gray: #f4f4f5;
+    --palo-blue: #0284c7;
+    --palo-green: #059669;
+    --palo-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --palo-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --palo-radius-sm: 4px;
+    --palo-radius-md: 8px;
+    --palo-radius-lg: 12px;
+}
+
+/* Base Newspaper Canvas Reset */
+.palo-newspaper-canvas {
+    background-color: #ffffff;
+    color: var(--palo-text);
+    font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 1280px;
+    padding: 0 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   1. TOP UTILITY BAR
+   -------------------------------------------------------------------------- */
+.palo-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--palo-border);
+    font-size: 0.82rem;
+    color: var(--palo-text-muted);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.palo-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.palo-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.palo-edition-tag {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.palo-top-link {
+    color: var(--palo-text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-weight: 500;
+}
+
+.palo-top-link:hover {
+    color: var(--palo-red);
+}
+
+/* --------------------------------------------------------------------------
+   2. BRAND MASTHEAD & LOGO
+   -------------------------------------------------------------------------- */
+.palo-masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 0 1rem 0;
+    border-bottom: 2px solid var(--palo-heading);
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.palo-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+}
+
+.palo-logo-emblem {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.35);
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.palo-logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.palo-brand-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: var(--palo-heading);
+    line-height: 1;
+    letter-spacing: -0.8px;
+    margin: 0;
+}
+
+.palo-brand-title span {
+    color: var(--palo-red);
+}
+
+.palo-brand-tagline {
+    font-size: 0.78rem;
+    color: var(--palo-text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+}
+
+.palo-masthead-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.palo-search-form {
+    position: relative;
+    width: 260px;
+}
+
+.palo-search-input {
+    width: 100%;
+    padding: 0.45rem 2.2rem 0.45rem 0.9rem;
+    border: 1px solid var(--palo-border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    outline: none;
+    background: var(--palo-bg-soft);
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.palo-search-input:focus {
+    background: #fff;
+    border-color: var(--palo-red);
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+}
+
+.palo-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--palo-text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.palo-epaper-btn {
+    background: var(--palo-bg-gray);
+    color: var(--palo-heading);
+    border: 1px solid var(--palo-border);
+    padding: 0.45rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+}
+
+.palo-epaper-btn:hover {
+    background: var(--palo-red);
+    color: #fff;
+    border-color: var(--palo-red);
+}
+
+/* --------------------------------------------------------------------------
+   3. STICKY CATEGORY NAVIGATION BAR
+   -------------------------------------------------------------------------- */
+.palo-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: 1px solid var(--palo-border);
+    box-shadow: var(--palo-shadow-sm);
+}
+
+.palo-nav-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+}
+
+.palo-nav-list::-webkit-scrollbar {
+    display: none;
+}
+
+.palo-nav-item {
+    flex-shrink: 0;
+}
+
+.palo-nav-link {
+    display: block;
+    padding: 0.65rem 0.85rem;
+    color: var(--palo-heading);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.palo-nav-link:hover,
+.palo-nav-link.active {
+    color: var(--palo-red);
+}
+
+.palo-nav-link.active::after,
+.palo-nav-link:hover::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.85rem;
+    right: 0.85rem;
+    height: 3px;
+    background: var(--palo-red);
+    border-radius: 2px 2px 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. TRENDING TOPICS SUB-RIBBON
+   -------------------------------------------------------------------------- */
+.palo-trending-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--palo-border-light);
+    font-size: 0.82rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+}
+
+.palo-trending-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.palo-trending-label {
+    font-weight: 700;
+    color: var(--palo-red);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.palo-tag-chip {
+    background: var(--palo-bg-gray);
+    color: #334155;
+    padding: 0.18rem 0.6rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.palo-tag-chip:hover {
+    background: var(--palo-red-light);
+    color: var(--palo-red-dark);
+    border-color: #fecdd3;
+}
+
+/* --------------------------------------------------------------------------
+   5. BREAKING NEWS TICKER
+   -------------------------------------------------------------------------- */
+.palo-breaking-ticker {
+    display: flex;
+    align-items: center;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-radius: var(--palo-radius-sm);
+    padding: 0.4rem 0.8rem;
+    margin: 0.8rem 0 1.5rem 0;
+    overflow: hidden;
+}
+
+.palo-breaking-badge {
+    background: var(--palo-red);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    margin-right: 0.8rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+}
+
+.palo-pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: inline-block;
+    animation: paloPulse 1.4s infinite;
+}
+
+@keyframes paloPulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(1.3); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.palo-ticker-content {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.palo-ticker-link {
+    color: #9f1239;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-right: 1.8rem;
+    transition: color 0.2s;
+}
+
+.palo-ticker-link:hover {
+    color: var(--palo-red);
+    text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   6. FRONT-PAGE 3-COLUMN ASYMMETRIC GRID
+   -------------------------------------------------------------------------- */
+.palo-home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Column 1: Left Major News Column */
+.palo-col-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    border-right: 1px solid var(--palo-border-light);
+    padding-right: 1.2rem;
+}
+
+.palo-lead-subcard {
+    border-bottom: 1px solid var(--palo-border-light);
+    padding-bottom: 1.2rem;
+}
+
+.palo-lead-subcard:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.palo-subcard-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 0 0.4rem 0;
+}
+
+.palo-subcard-title a {
+    color: var(--palo-heading);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.palo-subcard-title a:hover {
+    color: var(--palo-red);
+}
+
+.palo-subcard-snippet {
+    font-size: 0.84rem;
+    color: var(--palo-text);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.palo-card-meta {
+    font-size: 0.75rem;
+    color: var(--palo-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Column 2: Center Big Hero Lead */
+.palo-col-center {
+    display: flex;
+    flex-direction: column;
+}
+
+.palo-hero-box {
+    border-bottom: 1px solid var(--palo-border-light);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.palo-hero-img-wrap {
+    position: relative;
+    border-radius: var(--palo-radius-sm);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background: #000;
+}
+
+.palo-hero-img {
+    width: 100%;
+    max-height: 380px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.palo-hero-img-wrap:hover .palo-hero-img {
+    transform: scale(1.02);
+}
+
+.palo-hero-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--palo-heading);
+    margin: 0 0 0.8rem 0;
+    letter-spacing: -0.3px;
+}
+
+.palo-hero-title a {
+    color: var(--palo-heading);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.palo-hero-title a:hover {
+    color: var(--palo-red);
+}
+
+.palo-hero-summary {
+    font-size: 0.96rem;
+    color: #3f3f46;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+}
+
+.palo-hero-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--palo-border-light);
+    font-size: 0.85rem;
+}
+
+.palo-btn-like {
+    background: #fff;
+    border: 1px solid #fecdd3;
+    color: var(--palo-red);
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s;
+}
+
+.palo-btn-like:hover {
+    background: #fff1f2;
+}
+
+/* Secondary stories under Hero */
+.palo-center-subgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.palo-subgrid-card {
+    border-bottom: 1px solid var(--palo-border-light);
+    padding-bottom: 1rem;
+}
+
+.palo-subgrid-thumb {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    border-radius: var(--palo-radius-sm);
+    margin-bottom: 0.6rem;
+}
+
+.palo-subgrid-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 0 0.3rem 0;
+}
+
+.palo-subgrid-title a {
+    color: var(--palo-heading);
+    text-decoration: none;
+}
+
+.palo-subgrid-title a:hover {
+    color: var(--palo-red);
+}
+
+/* Column 3: Right Sidebar (Tabs, Opinion Poll, Newsletter) */
+.palo-col-right {
+    border-left: 1px solid var(--palo-border-light);
+    padding-left: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Tabbed Ranking Card (সর্বশেষ / পঠিত) */
+.palo-tab-card {
+    border: 1px solid var(--palo-border);
+    border-radius: var(--palo-radius-sm);
+    background: #fff;
+    overflow: hidden;
+}
+
+.palo-tab-header {
+    display: flex;
+    border-bottom: 2px solid var(--palo-heading);
+    background: var(--palo-bg-soft);
+}
+
+.palo-tab-btn {
+    flex: 1;
+    padding: 0.65rem 0.5rem;
+    text-align: center;
+    background: none;
+    border: none;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--palo-text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.palo-tab-btn.active {
+    background: #fff;
+    color: var(--palo-red);
+    border-bottom: 2px solid var(--palo-red);
+    margin-bottom: -2px;
+}
+
+.palo-rank-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0.8rem;
+}
+
+.palo-rank-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--palo-border-light);
+}
+
+.palo-rank-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.palo-rank-num {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--palo-red);
+    line-height: 1;
+    min-width: 22px;
+}
+
+.palo-rank-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--palo-heading);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.palo-rank-title:hover {
+    color: var(--palo-red);
+}
+
+/* Opinion Poll Box */
+.palo-poll-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-top: 3px solid var(--palo-red);
+    border-radius: var(--palo-radius-sm);
+    padding: 1.2rem;
+}
+
+.palo-poll-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+}
+
+.palo-poll-badge {
+    background: #ffe4e6;
+    color: var(--palo-red-dark);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+}
+
+.palo-poll-question {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--palo-heading);
+    line-height: 1.45;
+    margin-bottom: 0.9rem;
+}
+
+.palo-poll-option {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.65rem;
+    background: #ffffff;
+    border: 1px solid var(--palo-border);
+    border-radius: var(--palo-radius-sm);
+    cursor: pointer;
+    font-size: 0.84rem;
+    margin-bottom: 0.45rem;
+    transition: all 0.2s;
+}
+
+.palo-poll-option:hover {
+    border-color: var(--palo-red);
+}
+
+.palo-btn-vote {
+    width: 100%;
+    background: var(--palo-red);
+    color: #fff;
+    border: none;
+    padding: 0.5rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: var(--palo-radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+    margin-top: 0.4rem;
+}
+
+.palo-btn-vote:hover {
+    background: var(--palo-red-dark);
+}
+
+/* Newsletter Box */
+.palo-newsletter-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #fff;
+    border-radius: var(--palo-radius-sm);
+    padding: 1.25rem;
+}
+
+.palo-newsletter-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.4rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.palo-newsletter-desc {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin-bottom: 0.9rem;
+}
+
+.palo-input-newsletter {
+    width: 100%;
+    padding: 0.5rem 0.8rem;
+    border-radius: var(--palo-radius-sm);
+    border: 1px solid #475569;
+    background: #334155;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    margin-bottom: 0.6rem;
+    font-family: inherit;
+}
+
+.palo-input-newsletter:focus {
+    border-color: var(--palo-red);
+}
+
+.palo-btn-newsletter {
+    width: 100%;
+    background: var(--palo-red);
+    color: #fff;
+    border: none;
+    padding: 0.5rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border-radius: var(--palo-radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+}
+
+.palo-btn-newsletter:hover {
+    background: var(--palo-red-dark);
+}
+
+/* --------------------------------------------------------------------------
+   7. SECTION HEADERS & CATEGORY SECTIONS
+   -------------------------------------------------------------------------- */
+.palo-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--palo-heading);
+    padding-bottom: 0.4rem;
+    margin-bottom: 1.2rem;
+}
+
+.palo-section-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--palo-heading);
+    margin: 0;
+    border-left: 4px solid var(--palo-red);
+    padding-left: 0.6rem;
+    line-height: 1;
+}
+
+.palo-section-more {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--palo-red);
+    text-decoration: none;
+    transition: gap 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.palo-section-more:hover {
+    text-decoration: underline;
+}
+
+/* 4-Column Feature Grid */
+.palo-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+}
+
+.palo-grid-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--palo-border-light);
+    padding-bottom: 1rem;
+}
+
+.palo-grid-thumb {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--palo-radius-sm);
+    margin-bottom: 0.6rem;
+    transition: transform 0.3s;
+}
+
+.palo-grid-card:hover .palo-grid-thumb {
+    transform: scale(1.02);
+}
+
+.palo-grid-title {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 0 0.4rem 0;
+}
+
+.palo-grid-title a {
+    color: var(--palo-heading);
+    text-decoration: none;
+}
+
+.palo-grid-title a:hover {
+    color: var(--palo-red);
+}
+
+/* Category Two-Column Split (Politics vs Business / Sports) */
+.palo-split-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   8. ARTICLE READER VIEW (প্রচ্ছদ > বিস্তারিত পাঠ)
+   -------------------------------------------------------------------------- */
+.palo-reader-layout {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr;
+    gap: 2.5rem;
+    margin-top: 1rem;
+    margin-bottom: 3rem;
+}
+
+.palo-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--palo-text-muted);
+    margin-bottom: 0.9rem;
+}
+
+.palo-breadcrumbs a {
+    color: var(--palo-red);
+    text-decoration: none;
+}
+
+.palo-reader-headline {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--palo-heading);
+    line-height: 1.25;
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.5px;
+}
+
+.palo-author-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--palo-border);
+    border-bottom: 1px solid var(--palo-border);
+    margin-bottom: 1.5rem;
+    font-size: 0.84rem;
+    color: var(--palo-text-muted);
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.palo-author-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.palo-author-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: var(--palo-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+.palo-share-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.palo-share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid var(--palo-border);
+    background: #fff;
+    color: var(--palo-text);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.palo-share-btn:hover {
+    border-color: var(--palo-red);
+    color: var(--palo-red);
+    background: #fff1f2;
+}
+
+.palo-share-btn.fb:hover { background: #1877f2; color: #fff; border-color: #1877f2; }
+.palo-share-btn.tw:hover { background: #000; color: #fff; border-color: #000; }
+.palo-share-btn.wa:hover { background: #25d366; color: #fff; border-color: #25d366; }
+
+.palo-article-lead-img {
+    width: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    border-radius: var(--palo-radius-sm);
+    display: block;
+}
+
+.palo-img-caption {
+    font-size: 0.8rem;
+    color: var(--palo-text-muted);
+    padding: 0.4rem 0.2rem;
+    border-bottom: 1px solid var(--palo-border-light);
+    margin-bottom: 1.5rem;
+}
+
+.palo-article-body {
+    font-family: 'Hind Siliguri', sans-serif;
+    font-size: 1.18rem;
+    line-height: 1.9;
+    color: #1f2937;
+    white-space: pre-line;
+    margin-bottom: 2rem;
+}
+
+/* --------------------------------------------------------------------------
+   9. PROTHOM ALO FOOTER
+   -------------------------------------------------------------------------- */
+.palo-footer {
+    background: #111827;
+    color: #94a3b8;
+    padding: 3rem 0 1.5rem 0;
+    margin-top: 3rem;
+    border-top: 3px solid var(--palo-red);
+}
+
+.palo-footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.palo-footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.palo-footer-brand h3 {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.8rem;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+}
+
+.palo-footer-brand h3 span {
+    color: var(--palo-red);
+}
+
+.palo-footer-col h4 {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.8rem 0;
+}
+
+.palo-footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.palo-footer-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.palo-footer-links a:hover {
+    color: var(--palo-red);
+}
+
+.palo-footer-bottom {
+    border-top: 1px solid #1e293b;
+    padding-top: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #64748b;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   10. RESPONSIVE BREAKPOINTS
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .palo-home-grid {
+        grid-template-columns: 1fr 1.5fr;
+    }
+    .palo-col-right {
+        grid-column: span 2;
+        border-left: none;
+        border-top: 1px solid var(--palo-border-light);
+        padding-left: 0;
+        padding-top: 1.5rem;
+    }
+    .palo-reader-layout {
+        grid-template-columns: 1fr;
+    }
+    .palo-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .palo-footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .palo-home-grid {
+        grid-template-columns: 1fr;
+    }
+    .palo-col-left {
+        border-right: none;
+        border-bottom: 1px solid var(--palo-border-light);
+        padding-right: 0;
+        padding-bottom: 1.5rem;
+    }
+    .palo-col-right {
+        grid-column: span 1;
+    }
+    .palo-split-2 {
+        grid-template-columns: 1fr;
+    }
+    .palo-hero-title {
+        font-size: 1.6rem;
+    }
+    .palo-reader-headline {
+        font-size: 1.8rem;
+    }
+    .palo-footer-grid {
+        grid-template-columns: 1fr;
+    }
+}

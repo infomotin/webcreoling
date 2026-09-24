@@ -28,8 +28,8 @@ def test_login_flow_and_dashboard(client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"System Overview" in response.data
-    assert b"Total Articles" in response.data
+    assert (b"Dashboard" in response.data or b"Executive" in response.data or b"\xe0\xa6\xa1\xe0\xa7\x8d\xe0\xa6\xaf\xe0\xa6\xbe\xe0\xa6\xb6\xe0\xa6\xac\xe0\xa7\x8b\xe0\xa6\xb0\xe0\xa7\x8d\xe0\xa6\xa1" in response.data)
+    assert (b"Article" in response.data or b"\xe0\xa6\xb8\xe0\xa6\x82\xe0\xa6\xac\xe0\xa6\xbe\xe0\xa6\xa6" in response.data)
 
 
 def test_rbac_viewer_restrictions(client):

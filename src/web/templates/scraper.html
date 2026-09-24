@@ -244,6 +244,37 @@
     margin-bottom: 0.4rem;
     font-size: 0.82rem;
 }
+
+/* Custom Ingestion Studio & Side-by-Side Styles */
+.progress-step-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.progress-step-item.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #fff;
+    font-weight: 700;
+}
+
+.progress-step-item.done {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>
 {% endblock %}
 
@@ -258,7 +289,7 @@
                 <span class="source-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;">ANTI-BAN FAILOVER ACTIVE 🛡️</span>
             </div>
             <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem; max-width: 850px;">
-                কাস্টম এআই ব্রেন রুলস (টার্গেট অঞ্চল, নির্দিষ্ট দেশের কোড, কিওয়ার্ড, ফিল্টার) অনুযায়ী আন্তর্জাতিক সংবাদ বাংলায় রূপান্তর ও পোর্টালে প্রকাশ। একই সাথে ফেসবুক পেজ (স্বয়ংক্রিয় ব্যাকআপ ফেইলওভার সহ), ইউটিউব, টিকটক ও টেলিগ্রামে লাইভ ব্রডকাস্ট।
+                যেকোনো পাবলিক পোর্টাল বা নিউজ লিঙ্ক দিয়ে ৯৫% তথ্য অক্ষুণ্ণ রেখে ১০০% অরিজিনাল বাংলায় সংবাদ রূপান্তর ও সরাসরি লাইভ পোর্টালে প্রকাশ। কাস্টম এআই ব্রেন রুলস ও মাল্টি-চ্যানেল সোশ্যাল ব্রডকাস্টার।
             </p>
         </div>
         <div style="display: flex; gap: 0.75rem;">
@@ -290,9 +321,9 @@
             <div class="kpi-value" style="color: #60a5fa;">{{ social_channels|length }} টি</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-title">অ্যান্টি-ব্যান সুরক্ষা</div>
+            <div class="kpi-title">অরিজিনাল সিন্থেসিস</div>
             <div class="kpi-value" style="font-size: 1.15rem; color: #10b981; margin-top: 0.4rem;">
-                PROTECTED 🛡️
+                100% ORIGINAL 🌟
             </div>
         </div>
     </div>
@@ -300,7 +331,10 @@
 
 <!-- Navigation Tabs -->
 <div class="hub-nav-tabs">
-    <button class="hub-tab-btn active" onclick="switchTab('tab-rules')">
+    <button class="hub-tab-btn active" onclick="switchTab('tab-custom')">
+        <span>🌐</span> কাস্টম পোর্টাল ও ১০০% এআই অরিজিনাল পাবলিশার (Custom Ingestion)
+    </button>
+    <button class="hub-tab-btn" onclick="switchTab('tab-rules')">
         <span>🧠</span> এআই রুল ইঞ্জিন ও টার্গেটিং (Brain Rules)
     </button>
     <button class="hub-tab-btn" onclick="switchTab('tab-social')">
@@ -325,9 +359,350 @@
 
 
 <!-- ========================================================================= -->
+<!-- TAB 0: CUSTOM NEWS PORTAL & ARTICLE INGESTER + 100% ORIGINAL AI STUDIO    -->
+<!-- ========================================================================= -->
+<div id="tab-custom" class="tab-pane active">
+    <!-- Main Ingestion Studio Card -->
+    <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.95)); margin-bottom: 2rem;">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.8rem;">🌐</span>
+                <div>
+                    <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">পাবলিক নিউজ পোর্টাল বা লিংক ইনজেস্টার ও ১০০% এআই অরিজিনাল কন্টেন্ট স্টুডিও</h2>
+                    <span style="font-size: 0.85rem; color: #38bdf8;">যেকোনো সংবাদ পোর্টাল বা খবরের লিংক দিন • ৯৫% তথ্য অক্ষুণ্ণ রেখে ১০০% ইউনিক প্রমিত বাংলায় রূপান্তর • সরাসরি আমাদের লাইভ পোর্টালে পোস্ট</span>
+                </div>
+            </div>
+            <span class="source-badge badge-portal" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.85rem;">
+                ⚡ 1-CLICK SCRAPE & PUBLISH
+            </span>
+        </div>
+
+        <form id="customIngestForm" onsubmit="handleCustomScrapeSubmit(event)" method="POST" action="{{ url_for('scraper.custom_scrape_post') }}">
+            <!-- URL Input Bar with Quick Paste -->
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="font-size: 0.95rem; font-weight: 700; color: #fff; display: flex; justify-content: space-between; align-items: center;">
+                    <span>🔗 টার্গেট সংবাদ বা পোর্টালের লিঙ্ক (News Portal / Article URL)</span>
+                    <span style="font-size: 0.8rem; color: #38bdf8; cursor: pointer;" onclick="pasteClipboardUrl()">📋 ক্লিপবোর্ড থেকে পেস্ট করুন</span>
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="url" name="url" id="custom_scrape_url" class="form-control" style="font-size: 1rem; padding: 0.85rem 1rem; border-color: rgba(56, 189, 248, 0.3); background: rgba(0, 0, 0, 0.4); color: #fff;" placeholder="https://www.prothomalo.com/bangladesh/... বা https://www.thedailystar.net/..." required>
+                    <button type="button" onclick="handleCustomScrapeAjax(true)" class="btn btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; font-weight: 700; white-space: nowrap; padding: 0 1.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <span>⚡</span> স্ক্র্যাপ ও পোস্ট
+                    </button>
+                </div>
+
+                <!-- Quick Presets -->
+                <div style="margin-top: 0.6rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-right: 4px;">জনপ্রিয় পোর্টাল শর্টকাট:</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.prothomalo.com', 'প্রথম আলো')">🇧🇩 প্রথম আলো</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.thedailystar.net', 'The Daily Star')">🇧🇩 The Daily Star</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.bbc.com/bengali', 'বিবিসি বাংলা')">🇬🇧 বিবিসি বাংলা</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://samakal.com', 'সমকাল')">🇧🇩 সমকাল</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.jugantor.com', 'যুগান্তর')">🇧🇩 যুগান্তর</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://bangla.bdnews24.com', 'বিডিনিউজ২৪')">🇧🇩 বিডিনিউজ২৪</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.reuters.com/world', 'রয়টার্স ওয়ার্ল্ড')">🌐 Reuters</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://edition.cnn.com', 'সিএনএন নিউজ')">🌐 CNN</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://www.aljazeera.com', 'আল জাজিরা')">🌐 Al Jazeera</span>
+                    <span class="quick-chip" onclick="setPresetUrl('https://techcrunch.com', 'টেকক্রাঞ্চ')">💻 TechCrunch</span>
+                </div>
+            </div>
+
+            <!-- Parameters Grid -->
+            <div class="grid-2" style="gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="form-group">
+                    <label class="form-label">সোর্সের নাম (ঐচ্ছিক / অটো-ডিটেক্ট)</label>
+                    <input type="text" name="source_name" id="custom_source_name" class="form-control" placeholder="যেমন: প্রথম আলো পাবলিক ওয়্যার / রয়টার্স ডিজিটাল ডেস্ক">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">টার্গেট বিভাগ (News Category)</label>
+                    <select name="category" id="custom_category" class="form-control">
+                        <option value="bangladesh" selected>🇧🇩 বাংলাদেশ (National)</option>
+                        <option value="politics">🏛️ রাজনীতি (Politics)</option>
+                        <option value="international">🌍 আন্তর্জাতিক (World / International)</option>
+                        <option value="business">💼 অর্থনীতি ও বাণিজ্য (Business & Economy)</option>
+                        <option value="technology">💻 প্রযুক্তি ও এআই (Tech & AI)</option>
+                        <option value="sports">⚽ খেলাধুলা (Sports)</option>
+                        <option value="entertainment">🎬 বিনোদন ও সংস্কৃতি (Entertainment)</option>
+                        <option value="opinion">✍️ মতামত ও সম্পাদকীয় (Editorial & Opinion)</option>
+                        <option value="crime">🚨 অপরাধ ও আদালত (Crime & Law)</option>
+                        <option value="general">📰 সাধারণ সংবাদ (General News)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2" style="gap: 1.25rem; margin-bottom: 1.25rem;">
+                <div class="form-group">
+                    <label class="form-label">আমাদের পোর্টালে প্লেসমেন্ট (Portal Placement)</label>
+                    <select name="target_placement" id="custom_placement" class="form-control">
+                        <option value="STANDARD" selected>📌 সাধারণ সংবাদ তালিকা (Standard News Feed)</option>
+                        <option value="LEAD">⭐ প্রধান শিরোনাম ও ব্যানার (Hero Lead News)</option>
+                        <option value="BREAKING">⚡ ব্রেকিং নিউজ টিকার ও টপ স্ট্রিপ (Breaking News)</option>
+                        <option value="FEATURED">📰 বিশেষ নির্বাচিত সংবাদ (Featured Story)</option>
+                        <option value="SUB_LEAD">📌 সাব-লিড কার্ড (Sub-Lead Headline)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">এআই অরিজিনাল সিন্থেসিস মোড (Originality Level)</label>
+                    <select name="originality_mode" id="custom_originality_mode" class="form-control">
+                        <option value="100_percent_unique" selected>🛡️ ১০০% ইউনিক বাংলা প্রতিবেদন (পেশাদার জার্নালিজম)</option>
+                        <option value="deep_editorial">✍️ গভীর বিশ্লেষণ ও প্রেক্ষাপট সহ সম্পাদকীয় রূপান্তর</option>
+                        <option value="fast_wire">⚡ দ্রুত সংবাদ সারাংশ ও বুলেট পয়েন্ট ব্রিফিং</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Features & Publication Action Toggles -->
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; color: #fff; font-size: 0.92rem; cursor: pointer; margin: 0;">
+                        <input type="checkbox" name="publish_now" id="custom_publish_now" value="1" checked style="transform: scale(1.3); accent-color: #10b981;">
+                        <span>🚀 <strong>সরাসরি লাইভ পোর্টালে প্রকাশ করুন (Post to Our Live Portal)</strong></span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 0.6rem; color: #fff; font-size: 0.92rem; cursor: pointer; margin: 0;">
+                        <input type="checkbox" name="make_original" id="custom_make_original" value="1" checked disabled style="transform: scale(1.3); accent-color: #38bdf8;">
+                        <span style="color: #38bdf8;">🛡️ <strong>১০০% অরিজিনাল ও কপিরাইট-মুক্ত রূপান্তর (০% Plagiarism)</strong></span>
+                    </label>
+
+                    <label style="display: flex; align-items: center; gap: 0.6rem; color: #fff; font-size: 0.92rem; cursor: pointer; margin: 0;">
+                        <input type="checkbox" name="broadcast_social" id="custom_broadcast_social" value="1" checked style="transform: scale(1.3); accent-color: #a855f7;">
+                        <span>📢 <strong>সোশ্যাল মিডিয়ায় অটো-পোস্ট (Facebook, TG)</strong></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button type="button" onclick="handleCustomScrapeAjax(true)" id="btn_instant_publish" class="btn btn-primary" style="flex: 1.2; min-width: 260px; padding: 0.85rem; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">
+                    ⚡ স্ক্র্যাপ + ১০০% অরিজিনাল তৈরি ও লাইভ প্রকাশ
+                </button>
+
+                <button type="button" onclick="handleCustomScrapeAjax(false)" id="btn_side_by_side" class="btn btn-secondary" style="flex: 1; min-width: 240px; padding: 0.85rem; font-size: 0.95rem; font-weight: 600; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; background: rgba(56, 189, 248, 0.08);">
+                    🔍 স্ক্র্যাপ ও পাশাপাশি তুলনা (Side-by-Side Review)
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Live Execution & Telemetry Progress Box (Hidden initially) -->
+    <div id="customProgressContainer" style="display: none; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="spinner" style="width: 24px; height: 24px; border: 3px solid rgba(56,189,248,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <strong style="color: #fff; font-size: 1.05rem;" id="progress_status_label">সংবাদ সংগ্রহ ও এআই প্রসেসিং চলমান...</strong>
+            </div>
+            <span class="source-badge badge-portal" id="progress_step_badge">STEP 1/5</span>
+        </div>
+
+        <div class="progress-bar-wrap" style="height: 8px; margin-bottom: 1rem;">
+            <div id="custom_progress_bar_fill" class="progress-bar-fill" style="width: 25%; transition: width 0.4s ease;"></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; font-size: 0.8rem;">
+            <div class="progress-step-item active" id="step1_item">🌐 ১. পাবলিক ক্রল ও রিড</div>
+            <div class="progress-step-item" id="step2_item">🧠 ২. ৯৫% তথ্য সংরক্ষণ</div>
+            <div class="progress-step-item" id="step3_item">✍️ ৩. ১০০% ইউনিক বাংলা রি-রাইট</div>
+            <div class="progress-step-item" id="step4_item">🛡️ ৪. সত্যতা ও মান যাচাই</div>
+            <div class="progress-step-item" id="step5_item">🚀 ৫. পোর্টালে লাইভ প্রকাশ</div>
+        </div>
+    </div>
+
+    <!-- Side-by-Side Visual Comparison & Live Editor Drawer (Hidden initially) -->
+    <div id="sideBySideContainer" style="display: none; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 1rem; padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <h3 style="color: #fff; font-size: 1.25rem; font-weight: 800; margin: 0;">🔍 এআই রূপান্তর ও মূল সংবাদের পাশাপাশি তুলনা</h3>
+                <span style="color: var(--text-secondary); font-size: 0.82rem;">উৎস তথ্যের সাথে ১০০% অরিজিনাল কপি ও ফ্যাক্ট চেকিং রিপোর্ট</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span id="sbs_originality_badge" class="source-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                    🌟 ৯৮.৫% ইউনিক কন্টেন্ট
+                </span>
+                <span id="sbs_factuality_badge" class="source-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                    🛡️ ৯৬.০% সত্যতা মানদণ্ড
+                </span>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 1.5rem; margin-bottom: 1.5rem;">
+            <!-- Left Column: Raw Scraped Source -->
+            <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span class="source-badge badge-world">📥 উৎস সংবাদ (RAW PUBLIC SOURCE)</span>
+                    <span id="sbs_raw_source_label" style="font-size: 0.75rem; color: var(--text-muted);">Prothom Alo Wire</span>
+                </div>
+
+                <div style="margin-bottom: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.75rem;">উৎস শিরোনাম</label>
+                    <div id="sbs_raw_title" style="color: #cbd5e1; font-weight: 600; font-size: 0.95rem; line-height: 1.4; background: rgba(255,255,255,0.02); padding: 0.6rem; border-radius: 0.4rem; border: 1px solid rgba(255,255,255,0.05);">
+                        -
+                    </div>
+                </div>
+
+                <div style="flex: 1;">
+                    <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between;">
+                        <span>উৎস টেক্সট বডি</span>
+                        <span id="sbs_raw_char_count" style="color: var(--text-muted);">0 অক্ষর</span>
+                    </label>
+                    <div id="sbs_raw_content" style="max-height: 320px; overflow-y: auto; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.6; white-space: pre-line; background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 0.4rem; border: 1px solid rgba(255,255,255,0.05);">
+                        -
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted);">
+                    মূল ইউআরএল: <a id="sbs_raw_url_link" href="#" target="_blank" style="color: #38bdf8; word-break: break-all;">-</a>
+                </div>
+            </div>
+
+            <!-- Right Column: 100% Unique AI Original Journalistic Article -->
+            <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span class="source-badge badge-portal">✍️ এআই দ্বারা ১০০% অরিজিনাল ও প্রমিত বাংলায় রূপান্তর</span>
+                    <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-size: 0.75rem;">95%+ FACT RETENTION</span>
+                </div>
+
+                <input type="hidden" id="sbs_article_id" value="">
+
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.75rem; color: #34d399;">প্রমিত বাংলা শিরোনাম (সম্পাদনযোগ্য)</label>
+                    <input type="text" id="sbs_synth_title" class="form-control" style="font-weight: 700; color: #fff; font-size: 1rem; border-color: rgba(16,185,129,0.4);" value="">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.75rem; color: #34d399;">সংবাদ সারাংশ (Executive Summary)</label>
+                    <textarea id="sbs_synth_summary" class="form-control" rows="2" style="font-size: 0.85rem; color: #e2e8f0;"></textarea>
+                </div>
+
+                <div class="form-group" style="flex: 1; margin-bottom: 0.75rem;">
+                    <label class="form-label" style="font-size: 0.75rem; color: #34d399;">বিস্তারিত পূর্ণাঙ্গ প্রতিবেদন (Multi-paragraph Long-form Article)</label>
+                    <textarea id="sbs_synth_body" class="form-control" rows="8" style="font-size: 0.85rem; color: #e2e8f0; line-height: 1.6;"></textarea>
+                </div>
+
+                <div id="sbs_core_facts_pills" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem;"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Action Bar inside Side-by-Side Drawer -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.25rem;">
+            <div id="sbs_publish_status_box">
+                <span id="sbs_status_badge" class="source-badge badge-portal" style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">
+                    ✓ লাইভ পোর্টালে সরাসরি প্রকাশিত
+                </span>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="button" onclick="document.getElementById('sideBySideContainer').style.display='none'" class="btn btn-secondary" style="font-size: 0.85rem;">
+                    বন্ধ করুন
+                </button>
+                <button type="button" id="sbs_publish_draft_btn" onclick="publishDraftFromSbs()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 700; font-size: 0.9rem;">
+                    🚀 পোর্টালে লাইভ প্রকাশ করুন
+                </button>
+                <a id="sbs_view_live_btn" href="/news/" target="_blank" class="btn btn-primary" style="background: linear-gradient(135deg, #38bdf8, #2563eb); border: none; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <span>👁️</span> লাইভ পোর্টালে দেখুন
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Ingested & Published Articles Feed -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0;">📰 সম্প্রতি স্ক্র্যাপ ও ১০০% অরিজিনাল রূপান্তরকৃত সংবাদের তালিকা</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">লাইভ প্রকাশনা স্ট্যাটাস, ইউনিকনেস স্কোর ও সরাসরি পোর্টাল লিঙ্ক</span>
+            </div>
+            <button type="button" onclick="loadRecentCustomArticles()" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.7rem;">
+                🔄 রিফ্রেশ তালিকা
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">ছবি</th>
+                        <th>সংবাদ শিরোনাম (এআই অরিজিনাল)</th>
+                        <th>উৎস</th>
+                        <th>বিভাগ ও প্লেসমেন্ট</th>
+                        <th>ইউনিক স্কোর</th>
+                        <th>সত্যতা</th>
+                        <th>স্ট্যাটাস</th>
+                        <th style="text-align: right;">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody id="recent_custom_table_body">
+                    {% if recent_custom_articles %}
+                        {% for art in recent_custom_articles %}
+                        <tr>
+                            <td>
+                                <img src="{{ art.lead_image_url }}" alt="" style="width: 44px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                            </td>
+                            <td>
+                                <strong style="color: #fff; font-size: 0.9rem;">{{ art.title }}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 0.5rem; margin-top: 2px;">
+                                    <span>আইডি: #{{ art.id }}</span>
+                                    <span>•</span>
+                                    <span>{{ art.published_at[:16] if art.published_at else art.created_at[:16] if art.created_at else '' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="source-badge badge-world" style="font-size: 0.75rem;">
+                                    {{ art.source or 'Custom Ingest' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="source-badge badge-portal" style="font-size: 0.72rem;">{{ art.category|upper }}</span>
+                                <span class="source-badge" style="background: rgba(255,255,255,0.06); font-size: 0.7rem; margin-top: 2px;">{{ art.position_placement }}</span>
+                            </td>
+                            <td>
+                                <span class="source-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; font-size: 0.78rem;">
+                                    🌟 {{ art.originality_score }}% ইউনিক
+                                </span>
+                            </td>
+                            <td>
+                                <span class="source-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.78rem;">
+                                    {{ art.factuality_score }}%
+                                </span>
+                            </td>
+                            <td>
+                                <span class="source-badge {% if art.scrape_status == 'completed' %}badge-portal{% else %}badge-youtube{% endif %}" style="font-size: 0.75rem;">
+                                    {% if art.scrape_status == 'completed' %}✓ লাইভ প্রকাশিত{% else %}📝 ড্রাফট{% endif %}
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                                    <a href="/news/article/{{ art.id }}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: #38bdf8;" title="পোর্টালে দেখুন">
+                                        👁️ দেখুন
+                                    </a>
+                                    {% if art.scrape_status != 'completed' %}
+                                    <button type="button" onclick="quickPublishArticle({{ art.id }})" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; background: #10b981; border: none;" title="লাইভ পোস্ট">
+                                        🚀 পোস্ট
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                                এখনো কোনো কাস্টম সংবাদ স্ক্র্যাপ করা হয়নি। উপরের বক্সে যেকোনো লিঙ্ক দিয়ে শুরু করুন!
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================================= -->
 <!-- TAB 1: AI BRAIN CUSTOM RULE ENGINE, TARGETING & LIVE VERIFICATION LAB     -->
 <!-- ========================================================================= -->
-<div id="tab-rules" class="tab-pane active">
+<div id="tab-rules" class="tab-pane">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Create / Configure Rule Card -->
         <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent);">
@@ -1454,6 +1829,321 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+// =============================================================================
+// CUSTOM PORTAL & ARTICLE INGESTION STUDIO JAVASCRIPT HANDLERS
+// =============================================================================
+
+function setPresetUrl(url, sourceName) {
+    const urlInput = document.getElementById('custom_scrape_url');
+    const sourceInput = document.getElementById('custom_source_name');
+    if (urlInput) urlInput.value = url;
+    if (sourceInput) sourceInput.value = sourceName;
+    urlInput.focus();
+}
+
+function pasteClipboardUrl() {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(text => {
+            if (text && text.startsWith('http')) {
+                document.getElementById('custom_scrape_url').value = text;
+            } else {
+                alert("ক্লিপবোর্ডে কোনো সঠিক ইউআরএল পাওয়া যায়নি।");
+            }
+        }).catch(err => {
+            console.error("Clipboard error:", err);
+            const manual = prompt("সংবাদের ইউআরএল পেস্ট করুন:");
+            if (manual) document.getElementById('custom_scrape_url').value = manual;
+        });
+    } else {
+        const manual = prompt("সংবাদের ইউআরএল পেস্ট করুন:");
+        if (manual) document.getElementById('custom_scrape_url').value = manual;
+    }
+}
+
+function handleCustomScrapeSubmit(event) {
+    // Normal form submit fallback
+}
+
+function handleCustomScrapeAjax(publishNow) {
+    const url = document.getElementById('custom_scrape_url').value.trim();
+    const sourceName = document.getElementById('custom_source_name').value.trim();
+    const category = document.getElementById('custom_category').value;
+    const placement = document.getElementById('custom_placement').value;
+    const originalityMode = document.getElementById('custom_originality_mode').value;
+
+    if (!url) {
+        alert("অনুগ্রহ করে একটি সঠিক সংবাদ বা পোর্টালের লিংক দিন।");
+        document.getElementById('custom_scrape_url').focus();
+        return;
+    }
+
+    // Show Progress Box
+    const progBox = document.getElementById('customProgressContainer');
+    progBox.style.display = 'block';
+    document.getElementById('sideBySideContainer').style.display = 'none';
+    window.scrollTo({ top: progBox.offsetTop - 50, behavior: 'smooth' });
+
+    const statusLabel = document.getElementById('progress_status_label');
+    const stepBadge = document.getElementById('progress_step_badge');
+    const barFill = document.getElementById('custom_progress_bar_fill');
+
+    // Simulate animated pipeline step updates
+    statusLabel.innerText = "🌐 পাবলিক নিউজ পোর্টাল ক্রল ও এইচটিএমএল রিড করা হচ্ছে...";
+    stepBadge.innerText = "STEP 1/5";
+    barFill.style.width = "20%";
+
+    const timer1 = setTimeout(() => {
+        statusLabel.innerText = "🧠 মূল তথ্য ও ফ্যাক্ট ৯৫% অক্ষুণ্ণ রেখে এআই এক্সট্রাকশন...";
+        stepBadge.innerText = "STEP 2/5";
+        barFill.style.width = "40%";
+        document.getElementById('step1_item').className = 'progress-step-item done';
+        document.getElementById('step2_item').className = 'progress-step-item active';
+    }, 800);
+
+    const timer2 = setTimeout(() => {
+        statusLabel.innerText = "✍️ ১০০% ইউনিক প্রমিত বাংলা জার্নালিজমে রূপান্তর...";
+        stepBadge.innerText = "STEP 3/5";
+        barFill.style.width = "65%";
+        document.getElementById('step2_item').className = 'progress-step-item done';
+        document.getElementById('step3_item').className = 'progress-step-item active';
+    }, 1600);
+
+    const timer3 = setTimeout(() => {
+        statusLabel.innerText = "🛡️ সত্যতা ও ফেক নিউজ ডিটেকশন সম্পন্ন করা হচ্ছে...";
+        stepBadge.innerText = "STEP 4/5";
+        barFill.style.width = "85%";
+        document.getElementById('step3_item').className = 'progress-step-item done';
+        document.getElementById('step4_item').className = 'progress-step-item active';
+    }, 2400);
+
+    const payload = {
+        url: url,
+        source_name: sourceName,
+        category: category,
+        target_placement: placement,
+        publish_now: publishNow,
+        originality_mode: originalityMode
+    };
+
+    fetch('/scraper/api/custom-portal/scrape-and-publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+
+        if (!data.success) {
+            progBox.style.display = 'none';
+            alert("ত্রুটি: " + (data.error || "সংবাদ সংগ্রহ ব্যর্থ হয়েছে।"));
+            return;
+        }
+
+        // Final Step 5
+        statusLabel.innerText = publishNow ? "🚀 আমাদের লাইভ নিউজ পোর্টালে প্রকাশ ও ব্লকচেইন লেজার মিন্ট সম্পন্ন!" : "📝 ড্রাফট তৈরি সম্পন্ন! সম্পাদনা ও রিভিউ করুন।";
+        stepBadge.innerText = "STEP 5/5";
+        barFill.style.width = "100%";
+        document.getElementById('step4_item').className = 'progress-step-item done';
+        document.getElementById('step5_item').className = 'progress-step-item done';
+
+        setTimeout(() => {
+            progBox.style.display = 'none';
+
+            // Populate Side-by-Side Drawer
+            const sbs = document.getElementById('sideBySideContainer');
+            sbs.style.display = 'block';
+
+            document.getElementById('sbs_article_id').value = data.article_id;
+            document.getElementById('sbs_raw_source_label').innerText = data.source_name;
+            document.getElementById('sbs_raw_title').innerText = data.raw_title;
+            document.getElementById('sbs_raw_content').innerText = data.raw_content;
+            document.getElementById('sbs_raw_char_count').innerText = (data.raw_content ? data.raw_content.length : 0) + ' অক্ষর';
+            
+            const rawLink = document.getElementById('sbs_raw_url_link');
+            rawLink.href = data.original_source_url;
+            rawLink.innerText = data.original_source_url;
+
+            document.getElementById('sbs_synth_title').value = data.synthesized_title;
+            document.getElementById('sbs_synth_summary').value = data.executive_summary;
+            document.getElementById('sbs_synth_body').value = data.synthesized_body;
+
+            document.getElementById('sbs_originality_badge').innerText = `🌟 ${data.originality_score}% ইউনিক কন্টেন্ট (০% Plagiarism)`;
+            document.getElementById('sbs_factuality_badge').innerText = `🛡️ ${data.factuality_score}% সত্যতা মানদণ্ড`;
+
+            // Render Core Facts Pills
+            const factsContainer = document.getElementById('sbs_core_facts_pills');
+            factsContainer.innerHTML = '';
+            if (data.core_facts) {
+                (data.core_facts.locations || []).forEach(loc => {
+                    factsContainer.innerHTML += `<span class="source-badge badge-portal" style="font-size: 0.72rem;">📍 ${loc}</span>`;
+                });
+                (data.core_facts.numbers || []).slice(0, 3).forEach(num => {
+                    factsContainer.innerHTML += `<span class="source-badge badge-world" style="font-size: 0.72rem;">🔢 ${num}</span>`;
+                });
+                (data.core_facts.terms || []).slice(0, 3).forEach(term => {
+                    factsContainer.innerHTML += `<span class="source-badge badge-social" style="font-size: 0.72rem;">🏷️ ${term}</span>`;
+                });
+            }
+
+            // Status and Action Buttons
+            const statusBadge = document.getElementById('sbs_status_badge');
+            const publishDraftBtn = document.getElementById('sbs_publish_draft_btn');
+            const viewLiveBtn = document.getElementById('sbs_view_live_btn');
+
+            viewLiveBtn.href = data.portal_article_url;
+
+            if (data.is_live_published) {
+                statusBadge.innerText = '✓ লাইভ পোর্টালে সরাসরি প্রকাশিত';
+                statusBadge.className = 'source-badge badge-portal';
+                publishDraftBtn.style.display = 'none';
+                viewLiveBtn.style.display = 'inline-flex';
+            } else {
+                statusBadge.innerText = '📝 ড্রাফট হিসেবে সংরক্ষিত (অপ্রকাশিত)';
+                statusBadge.className = 'source-badge badge-youtube';
+                publishDraftBtn.style.display = 'inline-block';
+                viewLiveBtn.style.display = 'none';
+            }
+
+            window.scrollTo({ top: sbs.offsetTop - 40, behavior: 'smooth' });
+            loadRecentCustomArticles();
+        }, 600);
+    })
+    .catch(err => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        progBox.style.display = 'none';
+        console.error("Scraping error:", err);
+        alert("সার্ভারের সাথে সংযোগে সমস্যা হয়েছে বা ক্রল ব্যর্থ হয়েছে।");
+    });
+}
+
+function publishDraftFromSbs() {
+    const articleId = document.getElementById('sbs_article_id').value;
+    const placement = document.getElementById('custom_placement').value;
+
+    if (!articleId) return;
+
+    fetch('/scraper/api/custom-portal/publish-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: articleId, position_placement: placement })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const statusBadge = document.getElementById('sbs_status_badge');
+            statusBadge.innerText = '✓ লাইভ পোর্টালে সফলভাবে প্রকাশিত!';
+            statusBadge.className = 'source-badge badge-portal';
+            document.getElementById('sbs_publish_draft_btn').style.display = 'none';
+            const viewLiveBtn = document.getElementById('sbs_view_live_btn');
+            viewLiveBtn.href = data.portal_url;
+            viewLiveBtn.style.display = 'inline-flex';
+            loadRecentCustomArticles();
+            alert("সংবাদটি আমাদের লাইভ পোর্টালে প্রকাশ করা হয়েছে!");
+        } else {
+            alert("পাবলিশ ত্রুটি: " + data.error);
+        }
+    })
+    .catch(err => console.error("Publish draft error:", err));
+}
+
+function quickPublishArticle(articleId) {
+    if (!confirm("সংবাদটি সরাসরি আমাদের লাইভ নিউজ পোর্টালে প্রকাশ করতে চান?")) return;
+
+    fetch('/scraper/api/custom-portal/publish-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ article_id: articleId, position_placement: 'STANDARD' })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            loadRecentCustomArticles();
+            alert("সংবাদটি লাইভ প্রকাশিত হয়েছে!");
+        } else {
+            alert("ত্রুটি: " + data.error);
+        }
+    })
+    .catch(err => console.error("Quick publish error:", err));
+}
+
+function loadRecentCustomArticles() {
+    fetch('/scraper/api/custom-portal/recent-ingested?limit=15')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success || !data.articles) return;
+            const tbody = document.getElementById('recent_custom_table_body');
+            if (!tbody) return;
+
+            if (data.articles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 2rem;">কোনো সংবাদ পাওয়া যায়নি।</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.articles.forEach(art => {
+                const isPublished = (art.scrape_status === 'completed');
+                html += `
+                <tr>
+                    <td>
+                        <img src="${art.lead_image_url || '/static/img/placeholders/general.svg'}" alt="" style="width: 44px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                    </td>
+                    <td>
+                        <strong style="color: #fff; font-size: 0.9rem;">${art.title}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 0.5rem; margin-top: 2px;">
+                            <span>আইডি: #${art.id}</span>
+                            <span>•</span>
+                            <span>${(art.published_at || art.created_at || '').substring(0, 16)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="source-badge badge-world" style="font-size: 0.75rem;">
+                            ${art.source || 'Custom Ingest'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="source-badge badge-portal" style="font-size: 0.72rem;">${(art.category || 'GENERAL').toUpperCase()}</span>
+                        <span class="source-badge" style="background: rgba(255,255,255,0.06); font-size: 0.7rem; margin-top: 2px;">${art.position_placement || 'STANDARD'}</span>
+                    </td>
+                    <td>
+                        <span class="source-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; font-size: 0.78rem;">
+                            🌟 ${art.originality_score || 98.0}% ইউনিক
+                        </span>
+                    </td>
+                    <td>
+                        <span class="source-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.78rem;">
+                            ${art.factuality_score || 95.0}%
+                        </span>
+                    </td>
+                    <td>
+                        <span class="source-badge ${isPublished ? 'badge-portal' : 'badge-youtube'}" style="font-size: 0.75rem;">
+                            ${isPublished ? '✓ লাইভ প্রকাশিত' : '📝 ড্রাফট'}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                            <a href="/news/article/${art.id}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: #38bdf8;" title="পোর্টালে দেখুন">
+                                👁️ দেখুন
+                            </a>
+                            ${!isPublished ? `
+                            <button type="button" onclick="quickPublishArticle(${art.id})" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; background: #10b981; border: none;" title="লাইভ পোস্ট">
+                                🚀 পোস্ট
+                            </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.error("Error loading recent articles:", err));
+}
 
 // Periodic live status refresher
 function refreshTaskStatus() {

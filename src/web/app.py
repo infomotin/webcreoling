@@ -96,6 +96,15 @@ def create_app(test_config: dict = None) -> Flask:
     def forbidden_error(e):
         return render_template("403.html"), 403
 
+    # Start autonomous background scheduler if not in test suite
+    if not app.config.get("TESTING"):
+        try:
+            from src.automation.scheduler import get_scheduler
+            scheduler = get_scheduler()
+            scheduler.start()
+        except Exception as e:
+            app.logger.warning(f"Could not start automation scheduler: {e}")
+
     return app
 
 

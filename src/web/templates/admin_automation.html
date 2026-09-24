@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}অটোমেশন কন্ট্রোল হাব - WebCreoling News Pipeline Automation{% endblock %}
+
+{% block extra_head %}
+<style>
+.auto-header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 1.8rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.3);
+}
+
+.auto-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.auto-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.auto-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.job-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: 0.2s ease;
+}
+
+.job-card:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-container {
+    background: #e2e8f0;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    transition: width 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auto-header">
+    <div>
+        <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #a5b4fc; font-weight: 700; margin-bottom: 0.3rem;">
+            Autonomous Operations & Job Manager
+        </div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: #ffffff;">
+            ⚡ অটোমেশন কন্ট্রোল হাব (Automation Hub)
+        </h1>
+        <p style="margin: 0.4rem 0 0 0; color: #e0e7ff; font-size: 0.95rem;">
+            স্বয়ংক্রিয় সংবাদ ক্রলিং, নির্ধারিত প্রকাশনা, ব্লকচেইন সিলিং এবং ব্যাকগ্রাউন্ড টাস্ক এক্সিকিউশন
+        </p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <form method="POST" action="{{ url_for('admin.automation_toggle_scheduler') }}">
+            {% if scheduler_status.is_active %}
+            <button type="submit" class="btn" style="background: #ef4444; color: #fff; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <span>🛑</span> <span>অটোমেশন বন্ধ করুন</span>
+            </button>
+            {% else %}
+            <button type="submit" class="btn" style="background: #10b981; color: #fff; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <span>▶️</span> <span>অটোমেশন চালু করুন</span>
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="auto-stats-grid">
+    <div class="auto-stat-card">
+        <div class="auto-stat-icon" style="background: #e0e7ff; color: #4338ca;">⏱️</div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">শিডিউলার অবস্থা</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: {% if scheduler_status.is_active %}#10b981{% else %}#ef4444{% endif %};">
+                {{ "সক্রিয় (RUNNING)" if scheduler_status.is_active else "স্থগিত (STOPPED)" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="auto-stat-card">
+        <div class="auto-stat-icon" style="background: #fef3c7; color: #b45309;">⚙️</div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">স্বয়ংক্রিয় জবস</div>
+            <div style="font-size: 1.25rem; font-weight: 800;">{{ scheduler_status.jobs_count }} টি সক্রিয় টাস্ক</div>
+        </div>
+    </div>
+
+    <div class="auto-stat-card">
+        <div class="auto-stat-icon" style="background: #dcfce7; color: #15803d;">🧵</div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ব্যাকগ্রাউন্ড থ্রেড পুল</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: #15803d;">4 Workers (Async)</div>
+        </div>
+    </div>
+
+    <div class="auto-stat-card">
+        <div class="auto-stat-icon" style="background: #f3e8ff; color: #7e22ce;">📊</div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">মোট ব্যাকগ্রাউন্ড টাস্ক</div>
+            <div style="font-size: 1.25rem; font-weight: 800;">{{ recent_tasks|length }} টি এক্সিকিউশন</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main 2-Column Layout -->
+<div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.8rem; align-items: start;">
+
+    <!-- Left Column: Scheduled Recurring Jobs -->
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">
+                🔄 স্বয়ংক্রিয় পুনরাবৃত্তিমূলক জবস (Scheduled Daemon Jobs)
+            </h2>
+        </div>
+
+        {% for job in scheduler_status.jobs %}
+        <div class="job-card">
+            <div class="job-header">
+                <div>
+                    <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-main);">{{ job.name }}</span>
+                    <span class="badge {% if job.enabled %}badge-success{% else %}badge-secondary{% endif %}" style="margin-left: 8px;">
+                        {{ "ACTIVE" if job.enabled else "DISABLED" }}
+                    </span>
+                    {% if job.is_running %}
+                    <span class="badge badge-warning" style="margin-left: 4px; animation: pulse 1s infinite;">RUNNING</span>
+                    {% endif %}
+                </div>
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
+                    ব্যবধান: {{ job.interval_seconds }} সেকেন্ড
+                </div>
+            </div>
+
+            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0.3rem 0 0.8rem 0;">
+                {{ job.description }}
+            </p>
+
+            <div style="background: var(--bg-body); border-radius: 6px; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 0.8rem;">
+                <div style="display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 4px;">
+                    <span>সর্বশেষ রান: <strong>{{ job.last_run or 'কখনো নয়' }}</strong></span>
+                    <span>পরবর্তী রান: <strong>{{ job.next_run or 'নির্ধারিত নয়' }}</strong></span>
+                    <span>রান কাউন্ট: <strong>{{ job.run_count }}</strong></span>
+                </div>
+                <div style="color: {% if job.last_status == 'SUCCESS' %}#10b981{% elif job.last_status == 'FAILED' %}#ef4444{% else %}var(--text-muted){% endif %};">
+                    স্ট্যাটাস: <strong>{{ job.last_status }}</strong> - {{ job.last_message }}
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <form method="POST" action="{{ url_for('admin.automation_update_interval', job_id=job.job_id) }}" style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">ব্যবধান (সেকেন্ড):</span>
+                    <input type="number" name="interval_seconds" value="{{ job.interval_seconds }}" min="10" max="86400" style="width: 80px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem;">
+                    <button type="submit" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.78rem;">সেভ</button>
+                </form>
+
+                <div style="display: flex; gap: 6px;">
+                    <form method="POST" action="{{ url_for('admin.automation_toggle_job', job_id=job.job_id) }}">
+                        <button type="submit" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.78rem;">
+                            {{ "নিষ্ক্রিয় করুন" if job.enabled else "সক্রিয় করুন" }}
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('admin.automation_trigger_job', job_id=job.job_id) }}">
+                        <button type="submit" class="btn btn-primary" style="padding: 4px 14px; font-size: 0.78rem;">
+                            ⚡ এখনই রান করুন
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Right Column: On-Demand Async Job Launchers -->
+    <div>
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 1rem 0;">
+            🚀 ওয়ান-ক্লিক অ্যাসিনক্রোনাস টাস্ক লঞ্চার
+        </h2>
+
+        <!-- 1. Crawl Portal -->
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #4338ca;">
+                🕷️ নিউজ পোর্টাল ক্রলিং টাস্ক
+            </h3>
+            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
+                <input type="hidden" name="task_type" value="CRAWL">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">পোর্টাল নির্বাচন:</label>
+                        <select name="site_key" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                            <option value="prothom_alo">প্রথম আলো (Prothom Alo)</option>
+                            <option value="daily_star_bangla">ডেইলি স্টার বাংলা (The Daily Star)</option>
+                            <option value="bbc_bangla">বিবিসি বাংলা (BBC Bangla)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">সর্বোচ্চ পাতা:</label>
+                        <input type="number" name="max_pages" value="2" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 7px; font-size: 0.85rem;">
+                    ▶ ব্যাকগ্রাউন্ডে ক্রলিং শুরু করুন
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. Train Base Model -->
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #059669;">
+                🧠 বেস মডেল প্রি-ট্রেইনিং (CPU)
+            </h3>
+            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
+                <input type="hidden" name="task_type" value="BASE_TRAIN">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">ইপোক (Epochs):</label>
+                        <input type="number" name="epochs" value="1" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">ব্যাচ সাইজ:</label>
+                        <input type="number" name="batch_size" value="2" min="1" max="8" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="background: #059669; color: #fff; width: 100%; padding: 7px; font-size: 0.85rem; border: none; border-radius: 6px;">
+                    ▶ বেস মডেল ট্রেইনিং শুরু করুন
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. Fine-Tune 4 Skills -->
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #7c3aed;">
+                🎯 হাইব্রিড LoRA ফাইন-টিউনিং (৪ স্কিলস)
+            </h3>
+            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
+                <input type="hidden" name="task_type" value="FINETUNE">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">ইপোক (Epochs):</label>
+                        <input type="number" name="epochs" value="2" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.78rem; font-weight: 600;">ব্যাচ সাইজ:</label>
+                        <input type="number" name="batch_size" value="2" min="1" max="8" class="form-control" style="font-size: 0.85rem; padding: 6px;">
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="background: #7c3aed; color: #fff; width: 100%; padding: 7px; font-size: 0.85rem; border: none; border-radius: 6px;">
+                    ▶ LoRA ফাইন-টিউনিং শুরু করুন
+                </button>
+            </form>
+        </div>
+
+        <!-- 4. Run Full Pipeline -->
+        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #6b21a8;">
+                ✨ সম্পূর্ণ এন্ড-টু-এন্ড পাইপলাইন
+            </h3>
+            <p style="font-size: 0.8rem; color: #6b21a8; margin: 0 0 8px 0;">
+                ক্রলিং ➔ ডাটাবেস ➔ ট্রেইনিং ➔ LoRA ফাইন-টিউনিং ➔ বেঞ্চমার্ক মূল্যায়ন সম্পূর্ণ স্বয়ংক্রিয়ভাবে এক্সিকিউট হবে।
+            </p>
+            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
+                <input type="hidden" name="task_type" value="FULL_PIPELINE">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" name="use_mock" value="1" checked> মক পোর্টাল টেস্ট ডেটা ব্যবহার করুন
+                    </label>
+                </div>
+                <button type="submit" class="btn" style="background: #6b21a8; color: #fff; width: 100%; padding: 8px; font-size: 0.88rem; font-weight: 700; border: none; border-radius: 6px;">
+                    🚀 সম্পূর্ণ পাইপলাইন চালান
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Section: Live Task History & Telemetry Logs -->
+<div style="margin-top: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0;">
+            📜 লাইভ ব্যাকগ্রাউন্ড টাস্ক ও এক্সিকিউশন লগ (Task Monitor)
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">স্বয়ংক্রিয় রিফ্রেশ হচ্ছে প্রতি ৩ সেকেন্ডে</span>
+    </div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <table class="table" style="margin: 0;" id="tasksTable">
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Task ID</th>
+                    <th>টাস্কের নাম</th>
+                    <th style="width: 120px;">ধরন</th>
+                    <th style="width: 110px;">স্ট্যাটাস</th>
+                    <th style="width: 140px;">অগ্রগতি</th>
+                    <th style="width: 110px;">সময়কাল</th>
+                    <th style="width: 150px;">শুরু হওয়ার সময়</th>
+                </tr>
+            </thead>
+            <tbody id="tasksTableBody">
+                {% if recent_tasks %}
+                {% for task in recent_tasks %}
+                <tr>
+                    <td><code>#{{ task.task_id }}</code></td>
+                    <td>
+                        <strong>{{ task.title }}</strong>
+                        {% if task.error_message %}
+                        <div style="font-size: 0.78rem; color: #ef4444;">{{ task.error_message }}</div>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-secondary">{{ task.task_type }}</span></td>
+                    <td>
+                        <span class="badge {% if task.status == 'SUCCESS' %}badge-success{% elif task.status == 'RUNNING' %}badge-warning{% elif task.status == 'FAILED' %}badge-danger{% else %}badge-secondary{% endif %}">
+                            {{ task.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ task.progress_pct }}%;"></div>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ task.progress_pct }}%</span>
+                    </td>
+                    <td>{{ task.elapsed_seconds }}s</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ task.started_at or task.created_at }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        এখনো কোনো অ্যাসিনক্রোনাস ব্যাকগ্রাউন্ড টাস্ক রান করা হয়নি।
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Auto-refresh tasks list every 3 seconds
+function pollTasks() {
+    fetch('/admin/automation/api/tasks')
+        .then(response => response.json())
+        .then(data => {
+            if (!data || data.length === 0) return;
+            const tbody = document.getElementById('tasksTableBody');
+            let html = '';
+            data.forEach(task => {
+                let badgeClass = 'badge-secondary';
+                if (task.status === 'SUCCESS') badgeClass = 'badge-success';
+                else if (task.status === 'RUNNING') badgeClass = 'badge-warning';
+                else if (task.status === 'FAILED') badgeClass = 'badge-danger';
+
+                html += `
+                <tr>
+                    <td><code>#${task.task_id}</code></td>
+                    <td>
+                        <strong>${task.title}</strong>
+                        ${task.error_message ? `<div style="font-size: 0.78rem; color: #ef4444;">${task.error_message}</div>` : ''}
+                    </td>
+                    <td><span class="badge badge-secondary">${task.task_type}</span></td>
+                    <td><span class="badge ${badgeClass}">${task.status}</span></td>
+                    <td>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${task.progress_pct}%;"></div>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted);">${task.progress_pct}%</span>
+                    </td>
+                    <td>${task.elapsed_seconds}s</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">${task.started_at || task.created_at}</td>
+                </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => console.debug('Task polling error:', err));
+}
+
+setInterval(pollTasks, 3000);
+</script>
+{% endblock %}

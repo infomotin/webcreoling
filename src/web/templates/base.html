@@ -33,6 +33,7 @@
 
             {% if is_admin %}
             <li><a href="{{ url_for('training.index_view') }}" class="nav-link">LLM Training</a></li>
+            <li><a href="{{ url_for('admin.automation_view') }}" class="nav-link" style="color: #a855f7; font-weight: 600;">⚡ Automation</a></li>
             <li><a href="{{ url_for('admin.users_view') }}" class="nav-link">Users (RBAC)</a></li>
             {% endif %}
             {% endif %}

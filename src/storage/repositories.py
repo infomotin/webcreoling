@@ -56,6 +56,29 @@ class ArticleRepository:
             .first()
         )
 
+    def get_all(
+        self,
+        status: Optional[str] = None,
+        source: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
+    ) -> List[Article]:
+        """Fetch list of articles with optional filters."""
+        query = self.session.query(Article).options(joinedload(Article.images))
+        if status:
+            query = query.filter(Article.scrape_status == status)
+        if source:
+            query = query.filter(Article.source == source)
+        if category:
+            query = query.filter(Article.category == category)
+        query = query.order_by(Article.id.desc())
+        if offset:
+            query = query.offset(offset)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
     def upsert_article(
         self,
         article_data: Dict[str, Any],
@@ -921,6 +944,8 @@ class UserRepository:
         """List all users in the system."""
         return self.session.query(User).order_by(User.id.asc()).all()
 
+    get_all_users = list_all_users
+
     def update_role(self, user_id: int, new_role: str) -> Optional[User]:
         """Change a user's permission role."""
         user = self.get_by_id(user_id)
@@ -1714,6 +1739,8 @@ class SecurityRepository:
             "waf_mode": "ACTIVE_BLOCK",
         }
 
+    get_security_stats = get_security_metrics
+
     def seed_default_security_rules(self) -> None:
         """Seed initial Geo-Firewall country entries if none exist."""
         if self.session.query(BlockedCountry).count() == 0:
@@ -1871,6 +1898,8 @@ class BlockchainLedgerRepository:
         blocks_data = [b.to_dict() for b in blocks]
         audit_result = BlockchainLedgerEngine.audit_entire_chain(blocks_data)
         return audit_result
+
+    verify_chain_integrity = audit_full_chain
 
     def get_ledger_blocks(self, limit: int = 25, page: int = 1) -> Dict[str, Any]:
         """Fetch paginated ledger blocks for the Blockchain Explorer UI."""

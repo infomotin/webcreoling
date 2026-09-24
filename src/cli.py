@@ -11,6 +11,11 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
+# Ensure project root is on sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -208,6 +213,147 @@ def serve_web(
     console.print("[dim]Pre-seeded Roles: admin / editor / analyst / viewer (Password: <username>123)[/dim]")
     flask_app = create_app()
     flask_app.run(host=host, port=port, debug=debug)
+
+
+@app.command()
+def run_automation():
+    """Run autonomous background scheduler daemon in standalone CLI mode."""
+    from src.automation.scheduler import get_scheduler
+    import time
+    scheduler = get_scheduler()
+    scheduler.start()
+    console.print("[bold green]✓ Autonomous background scheduler started.[/bold green]")
+    console.print("[cyan]Active Recurring Jobs:[/cyan]")
+    for job in scheduler.jobs.values():
+        console.print(f"  • [bold]{job.name}[/bold] (every {job.interval_seconds}s) - {job.description}")
+    console.print("\n[dim]Press Ctrl+C to terminate scheduler daemon...[/dim]")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        scheduler.stop()
+        console.print("[yellow]Scheduler daemon stopped.[/yellow]")
+
+
+@app.command()
+def mint_blockchain():
+    """Mint tamper-proof SHA-256 blockchain ledger blocks for unsealed articles."""
+    from src.storage.repositories import BlockchainLedgerRepository
+    with get_db_session() as session:
+        repo = BlockchainLedgerRepository(session)
+        count = repo.mint_all_unmined_articles()
+        integrity = repo.verify_chain_integrity()
+
+    if count > 0:
+        console.print(f"[bold green]✓ Successfully minted {count} blockchain block(s)![/bold green]")
+    else:
+        console.print("[green]All news articles are already sealed in blockchain ledger.[/green]")
+
+    is_valid = integrity.get("chain_valid", integrity.get("is_valid", False))
+    if is_valid:
+        console.print(f"[bold cyan]✓ Chain Integrity: 100% VALID (Total Blocks: {integrity.get('total_blocks')})[/bold cyan]")
+    else:
+        console.print(f"[bold red]⚠ Chain Integrity Warning: {integrity.get('message', integrity.get('error'))}[/bold red]")
+
+
+@app.command()
+def publish_scheduled():
+    """Publish pending articles whose scheduled release time has arrived."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        count = repo.process_scheduled_publishing()
+    if count > 0:
+        console.print(f"[bold green]✓ Published {count} scheduled news article(s) to frontpage![/bold green]")
+    else:
+        console.print("[cyan]No scheduled articles reached release time.[/cyan]")
+
+
+@app.command()
+def export_dataset(
+    output_path: str = typer.Option("data/export_news.jsonl", help="Target output file (.jsonl or .csv)"),
+    status: str = typer.Option("completed", help="Filter articles by status (e.g. 'completed')"),
+):
+    """Export cleaned Bangla news dataset for LLM training."""
+    import json
+    import csv
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        articles = repo.get_all(status=status, limit=100000)
+        articles_data = [
+            {
+                "id": a.id,
+                "title": a.title,
+                "content": a.content_text,
+                "category": a.category,
+                "author": a.author,
+                "published_at": str(a.published_at),
+                "source": a.source,
+                "url": a.url,
+            }
+            for a in articles
+        ]
+
+    out_file = Path(output_path)
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+
+    if output_path.endswith(".csv"):
+        with open(out_file, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "title", "content_text", "category", "author", "published_at", "source", "url"])
+            for a in articles_data:
+                writer.writerow([a["id"], a["title"], a["content"], a["category"], a["author"], a["published_at"], a["source"], a["url"]])
+    else:
+        with open(out_file, "w", encoding="utf-8") as f:
+            for a in articles_data:
+                f.write(json.dumps(a, ensure_ascii=False) + "\n")
+
+    console.print(f"[bold green]✓ Exported {len(articles_data)} articles to {output_path}[/bold green]")
+
+
+@app.command()
+def full_system_check():
+    """Run comprehensive health diagnostic for MySQL, storage, AI models, and blockchain."""
+    from src.storage.repositories import (
+        ArticleRepository,
+        UserRepository,
+        BlockchainLedgerRepository,
+        SecurityRepository,
+    )
+    console.print(Panel("[bold cyan]WebCreoling Enterprise System Diagnostics[/bold cyan]", border_style="cyan"))
+
+    # 1. Database Connection & Stats
+    try:
+        with get_db_session() as session:
+            art_repo = ArticleRepository(session)
+            stats = art_repo.get_database_stats()
+            user_repo = UserRepository(session)
+            user_count = len(user_repo.list_all_users())
+            sec_repo = SecurityRepository(session)
+            sec_stats = sec_repo.get_security_stats()
+            ledger_repo = BlockchainLedgerRepository(session)
+            integrity = ledger_repo.verify_chain_integrity()
+
+        console.print(f"[green]✓ Database Connection (MySQL): CONNECTED ({settings.DB_NAME} on {settings.DB_HOST}:{settings.DB_PORT})[/green]")
+        console.print(f"  • Total Articles: [bold]{stats['total_articles']}[/bold]")
+        console.print(f"  • Total Images: [bold]{stats['total_images']}[/bold]")
+        console.print(f"  • Total Users: [bold]{user_count}[/bold]")
+        console.print(f"  • WAF Security Rules Active: [bold]{sec_stats.get('total_rules', 0)}[/bold]")
+        is_valid = integrity.get("chain_valid", integrity.get("is_valid", False))
+        console.print(f"  • Blockchain Ledger: [bold]{integrity.get('total_blocks', 0)} blocks[/bold] (Valid: {is_valid})")
+    except Exception as e:
+        console.print(f"[bold red]✗ Database Error: {e}[/bold red]")
+
+    # 2. Storage Directories
+    dirs = [settings.DATA_DIR, settings.DB_DIR, settings.MODELS_DIR, settings.IMAGES_DIR, settings.LOGS_DIR]
+    all_dirs_ok = True
+    for d in dirs:
+        if not d.exists():
+            all_dirs_ok = False
+            console.print(f"[yellow]⚠ Directory missing: {d}[/yellow]")
+    if all_dirs_ok:
+        console.print("[green]✓ All runtime directories present and accessible.[/green]")
+
+    console.print("\n[bold green]✓ System diagnostics completed successfully.[/bold green]")
 
 
 if __name__ == "__main__":

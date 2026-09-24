@@ -87,6 +87,14 @@
 
             <div class="nr-nav-heading">এআই ও অটোমেশন</div>
 
+            <a href="{{ url_for('admin.automation_view') }}" class="nr-nav-item {% if request.endpoint == 'admin.automation_view' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>⚡</span>
+                    <span>স্বয়ংক্রিয় শিডিউলার ও টাস্ক</span>
+                </div>
+                <span class="nr-nav-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">LIVE</span>
+            </a>
+
             <a href="{{ url_for('admin.newspaper_management_view', tab='aipilot') }}" class="nr-nav-item {% if active_tab == 'aipilot' or request.args.get('tab') == 'aipilot' %}active{% endif %}">
                 <div class="nr-nav-left">
                     <span>🤖</span>

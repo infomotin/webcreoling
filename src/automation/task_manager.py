@@ -248,6 +248,121 @@ class AsyncTaskManager:
             worker_func=_work,
         )
 
+    def submit_social_crawl_task(self, max_per_source: int = 3) -> AsyncTask:
+        """Submit background YouTube and Social Media news ingestion task."""
+        def _work(task: AsyncTask) -> Dict[str, Any]:
+            from src.scraper.social_world_ingestion import YouTubePublicNewsIngester, FacebookPublicNewsIngester
+            from src.storage.database import get_db_session
+            from src.storage.repositories import ArticleRepository
+
+            task.set_progress(15, "Connecting to public YouTube video news feeds (BBC, Jamuna, Somoy, Prothom Alo)...")
+            yt_items = YouTubePublicNewsIngester.fetch_all_configured_channels(max_per_channel=max_per_source)
+            task.set_progress(50, "Fetching public social news feeds and media briefs...")
+            fb_items = FacebookPublicNewsIngester.fetch_public_social_briefs(limit=max_per_source)
+            all_items = yt_items + fb_items
+
+            task.set_progress(75, f"Storing {len(all_items)} social news items in MySQL...")
+            saved = 0
+            with get_db_session() as session:
+                repo = ArticleRepository(session)
+                for item in all_items:
+                    try:
+                        img_records = [
+                            {
+                                "original_url": img["original_url"],
+                                "local_path": img["original_url"],
+                                "file_hash": f"hash_{abs(hash(img['original_url']))}",
+                                "file_size_bytes": 51200,
+                                "mime_type": "image/jpeg",
+                                "caption": img.get("caption", ""),
+                                "is_lead_image": img.get("is_lead_image", False),
+                            }
+                            for img in item.get("images", [])
+                        ]
+                        repo.upsert_article(article_data=item, image_records=img_records)
+                        saved += 1
+                    except Exception as e:
+                        logger.warning(f"Error saving social item: {e}")
+
+            task.set_progress(100, f"Social Ingestion Complete: Saved {saved} articles and media thumbnails.")
+            return {"total_fetched": len(all_items), "total_saved": saved}
+
+        return self.submit_task(
+            task_type="SOCIAL_CRAWL",
+            title="YouTube & Social News Ingestion",
+            description=f"Ingests up to {max_per_source} public items per channel without API keys.",
+            worker_func=_work,
+        )
+
+    def submit_world_crawl_task(self, max_per_source: int = 3) -> AsyncTask:
+        """Submit background Worldwide multi-lingual news ingestion task."""
+        def _work(task: AsyncTask) -> Dict[str, Any]:
+            from src.scraper.social_world_ingestion import WorldNewsMultiLingualIngester
+            from src.storage.database import get_db_session
+            from src.storage.repositories import ArticleRepository
+
+            task.set_progress(20, "Connecting to open Google News RSS feeds (Bangla, English, Hindi)...")
+            world_items = WorldNewsMultiLingualIngester.fetch_all_world_feeds(max_per_feed=max_per_source)
+
+            task.set_progress(60, f"Saving {len(world_items)} global news records into MySQL database...")
+            saved = 0
+            with get_db_session() as session:
+                repo = ArticleRepository(session)
+                for item in world_items:
+                    try:
+                        img_records = [
+                            {
+                                "original_url": img["original_url"],
+                                "local_path": img["original_url"],
+                                "file_hash": f"hash_{abs(hash(img['original_url']))}",
+                                "file_size_bytes": 51200,
+                                "mime_type": "image/jpeg",
+                                "caption": img.get("caption", ""),
+                                "is_lead_image": img.get("is_lead_image", False),
+                            }
+                            for img in item.get("images", [])
+                        ]
+                        repo.upsert_article(article_data=item, image_records=img_records)
+                        saved += 1
+                    except Exception as e:
+                        logger.warning(f"Error saving world item: {e}")
+
+            task.set_progress(100, f"Worldwide Ingestion Complete: Saved {saved} global articles.")
+            return {"total_fetched": len(world_items), "total_saved": saved}
+
+        return self.submit_task(
+            task_type="WORLD_CRAWL",
+            title="Worldwide Multi-Lingual News Ingestion",
+            description="Ingests global breaking headlines from Google News, Reuters, BBC, and Al Jazeera.",
+            worker_func=_work,
+        )
+
+    def submit_ai_pilot_task(self, auto_publish_threshold: int = 75, max_per_source: int = 3) -> AsyncTask:
+        """Submit an autonomous AI Pilot Brain evaluation and auto-publishing cycle."""
+        def _work(task: AsyncTask) -> Dict[str, Any]:
+            from src.automation.ai_pilot_brain import AIPilotBrain
+
+            task.set_progress(15, "AI Pilot Brain: Ingesting public feeds across YouTube, Social, and Global News...")
+            summary = AIPilotBrain.ingest_and_autopilot_cycle(
+                include_youtube=True,
+                include_world=True,
+                include_social=True,
+                auto_publish_threshold=auto_publish_threshold,
+                max_per_source=max_per_source,
+            )
+            task.set_progress(
+                100,
+                f"AI Pilot Brain Finished: Ingested {summary['total_raw_ingested']} | Auto-Published {summary['auto_published']} | Review Queue {summary['review_queued']}.",
+            )
+            return summary
+
+        return self.submit_task(
+            task_type="AI_PILOT_AUTONOMOUS",
+            title="AI Pilot Brain Autonomous Decision Cycle",
+            description=f"Auto-translates, scores credibility, and auto-publishes news with score >= {auto_publish_threshold}%.",
+            worker_func=_work,
+        )
+
 
 def get_task_manager() -> AsyncTaskManager:
     """Access global AsyncTaskManager singleton."""

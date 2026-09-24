@@ -1125,3 +1125,173 @@ def blockchain_verify_article_endpoint(article_id: int):
             "details": details,
         })
 
+
+# ==============================================================================
+# Autonomous Pipeline Scheduler & Async Task Manager
+# ==============================================================================
+
+@admin_bp.route("/automation")
+@login_required
+@roles_required("admin", "editor")
+def automation_view():
+    """Automation Control Hub: Monitor periodic scheduled jobs and asynchronous background tasks."""
+    from src.automation.scheduler import get_scheduler
+    from src.automation.task_manager import get_task_manager
+
+    scheduler = get_scheduler()
+    task_manager = get_task_manager()
+
+    scheduler_status = scheduler.get_status()
+    recent_tasks = task_manager.list_tasks(limit=25)
+
+    return render_template(
+        "admin_automation.html",
+        scheduler_status=scheduler_status,
+        recent_tasks=recent_tasks,
+    )
+
+
+@admin_bp.route("/automation/toggle-scheduler", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_toggle_scheduler():
+    """Start or Stop the autonomous background scheduler."""
+    from src.automation.scheduler import get_scheduler
+
+    scheduler = get_scheduler()
+    if scheduler.is_active:
+        scheduler.stop()
+        flash("Autonomous background scheduler stopped.", "warning")
+    else:
+        scheduler.start()
+        flash("Autonomous background scheduler started.", "success")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/trigger-job/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_trigger_job(job_id: str):
+    """Trigger immediate execution of a scheduled recurring job."""
+    from src.automation.scheduler import get_scheduler
+
+    scheduler = get_scheduler()
+    res = scheduler.trigger_job_now(job_id)
+    if res.get("status") == "started":
+        flash(f"Job '{job_id}' triggered immediately in background!", "success")
+    else:
+        flash(res.get("message", "Could not trigger job."), "danger")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/toggle-job/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_toggle_job(job_id: str):
+    """Enable or disable a specific recurring job."""
+    from src.automation.scheduler import get_scheduler
+
+    scheduler = get_scheduler()
+    job = scheduler.jobs.get(job_id)
+    if job:
+        new_state = not job.enabled
+        scheduler.toggle_job(job_id, new_state)
+        state_str = "enabled" if new_state else "disabled"
+        flash(f"Job '{job.name}' has been {state_str}.", "info")
+    else:
+        flash(f"Job '{job_id}' not found.", "danger")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/update-interval/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_update_interval(job_id: str):
+    """Update job recurrence frequency interval in seconds."""
+    from src.automation.scheduler import get_scheduler
+
+    interval = int(request.form.get("interval_seconds", 60))
+    scheduler = get_scheduler()
+    if scheduler.update_job_interval(job_id, interval):
+        flash(f"Updated interval for '{job_id}' to {interval} seconds.", "success")
+    else:
+        flash(f"Could not update interval for '{job_id}'.", "danger")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/submit-task", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_submit_task():
+    """Dispatch an asynchronous heavy background job (Crawl, Train, Fine-tune, Eval, Full Pipeline)."""
+    from src.automation.task_manager import get_task_manager
+
+    task_type = request.form.get("task_type", "").strip().upper()
+    task_manager = get_task_manager()
+
+    if task_type == "CRAWL":
+        site_key = request.form.get("site_key", "prothom_alo")
+        max_pages = int(request.form.get("max_pages", 2))
+        task = task_manager.submit_crawl_task(site_key=site_key, max_pages=max_pages)
+        flash(f"Asynchronous Portal Crawl task #{task.task_id} queued!", "success")
+
+    elif task_type == "BASE_TRAIN":
+        epochs = int(request.form.get("epochs", 1))
+        batch_size = int(request.form.get("batch_size", 2))
+        limit = int(request.form.get("limit", 0)) or None
+        task = task_manager.submit_base_train_task(epochs=epochs, batch_size=batch_size, limit=limit)
+        flash(f"Asynchronous Base LLM Training task #{task.task_id} queued!", "success")
+
+    elif task_type == "FINETUNE":
+        epochs = int(request.form.get("epochs", 2))
+        batch_size = int(request.form.get("batch_size", 2))
+        task = task_manager.submit_finetune_task(epochs=epochs, batch_size=batch_size)
+        flash(f"Asynchronous LoRA Fine-Tuning task #{task.task_id} queued!", "success")
+
+    elif task_type == "EVALUATION":
+        task = task_manager.submit_evaluation_task()
+        flash(f"Asynchronous Multi-Task Evaluation task #{task.task_id} queued!", "success")
+
+    elif task_type == "FULL_PIPELINE":
+        use_mock = request.form.get("use_mock") == "1"
+        base_epochs = int(request.form.get("base_epochs", 1))
+        finetune_epochs = int(request.form.get("finetune_epochs", 2))
+        task = task_manager.submit_full_pipeline_task(
+            use_mock_server=use_mock,
+            base_epochs=base_epochs,
+            finetune_epochs=finetune_epochs,
+        )
+        flash(f"Asynchronous Full Pipeline task #{task.task_id} queued!", "success")
+
+    else:
+        flash(f"Unknown task type: '{task_type}'.", "danger")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/api/tasks", methods=["GET"])
+@login_required
+def automation_api_tasks():
+    """JSON API endpoint returning recent asynchronous tasks for live polling."""
+    from src.automation.task_manager import get_task_manager
+
+    task_manager = get_task_manager()
+    return jsonify(task_manager.list_tasks(limit=30))
+
+
+@admin_bp.route("/automation/api/task/<task_id>", methods=["GET"])
+@login_required
+def automation_api_single_task(task_id: str):
+    """JSON API endpoint returning details for a single task."""
+    from src.automation.task_manager import get_task_manager
+
+    task_manager = get_task_manager()
+    task = task_manager.get_task(task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+    return jsonify(task.to_dict())
+

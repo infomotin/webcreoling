@@ -126,6 +126,33 @@ class AutomationScheduler:
             enabled=True,
         )
 
+        self.add_job(
+            job_id="social_media_crawler",
+            name="YouTube & Public Social Media Ingester",
+            description="Fetches public video news feeds, transcripts, and social briefs from YouTube (BBC, Jamuna, Somoy, Prothom Alo) and Facebook.",
+            interval_seconds=1800,  # 30 mins
+            target_func=self._task_social_media_crawl,
+            enabled=True,
+        )
+
+        self.add_job(
+            job_id="world_news_crawler",
+            name="Worldwide Multi-Lingual News Ingester",
+            description="Ingests global breaking headlines from Google News (Bangla, English, Hindi), Reuters, BBC World, and Al Jazeera.",
+            interval_seconds=1800,  # 30 mins
+            target_func=self._task_world_news_crawl,
+            enabled=True,
+        )
+
+        self.add_job(
+            job_id="ai_pilot_decision_brain",
+            name="AI Pilot Brain Autonomous Decision Cycle",
+            description="Translates foreign news to Bengali, calculates credibility scores, extracts NLP entities, and auto-publishes high-confidence news.",
+            interval_seconds=600,  # 10 mins
+            target_func=self._task_ai_pilot_cycle,
+            enabled=True,
+        )
+
     def add_job(
         self,
         job_id: str,
@@ -317,6 +344,81 @@ class AutomationScheduler:
                 logger.warning(f"Periodic crawl error for '{site_key}': {e}")
 
         return f"Autonomous crawl finished: Saved {total_articles} articles, {total_images} images."
+
+    def _task_social_media_crawl(self) -> str:
+        """Autonomous social media and YouTube public feed ingester."""
+        from src.scraper.social_world_ingestion import YouTubePublicNewsIngester, FacebookPublicNewsIngester
+        from src.storage.repositories import ArticleRepository
+        
+        yt_items = YouTubePublicNewsIngester.fetch_all_configured_channels(max_per_channel=2)
+        fb_items = FacebookPublicNewsIngester.fetch_public_social_briefs(limit=2)
+        all_items = yt_items + fb_items
+
+        saved = 0
+        with get_db_session() as session:
+            repo = ArticleRepository(session)
+            for item in all_items:
+                try:
+                    img_records = [
+                        {
+                            "original_url": img["original_url"],
+                            "local_path": img["original_url"],
+                            "file_hash": f"hash_{abs(hash(img['original_url']))}",
+                            "file_size_bytes": 51200,
+                            "mime_type": "image/jpeg",
+                            "caption": img.get("caption", ""),
+                            "is_lead_image": img.get("is_lead_image", False),
+                        }
+                        for img in item.get("images", [])
+                    ]
+                    repo.upsert_article(article_data=item, image_records=img_records)
+                    saved += 1
+                except Exception as e:
+                    logger.warning(f"Error saving social item: {e}")
+
+        return f"Social & YouTube Ingest: Processed {len(all_items)} items, saved {saved} into database."
+
+    def _task_world_news_crawl(self) -> str:
+        """Autonomous worldwide multi-language news ingester."""
+        from src.scraper.social_world_ingestion import WorldNewsMultiLingualIngester
+        from src.storage.repositories import ArticleRepository
+
+        world_items = WorldNewsMultiLingualIngester.fetch_all_world_feeds(max_per_feed=2)
+        saved = 0
+        with get_db_session() as session:
+            repo = ArticleRepository(session)
+            for item in world_items:
+                try:
+                    img_records = [
+                        {
+                            "original_url": img["original_url"],
+                            "local_path": img["original_url"],
+                            "file_hash": f"hash_{abs(hash(img['original_url']))}",
+                            "file_size_bytes": 51200,
+                            "mime_type": "image/jpeg",
+                            "caption": img.get("caption", ""),
+                            "is_lead_image": img.get("is_lead_image", False),
+                        }
+                        for img in item.get("images", [])
+                    ]
+                    repo.upsert_article(article_data=item, image_records=img_records)
+                    saved += 1
+                except Exception as e:
+                    logger.warning(f"Error saving world item: {e}")
+
+        return f"World News Ingest: Processed {len(world_items)} items, saved {saved} into database."
+
+    def _task_ai_pilot_cycle(self) -> str:
+        """Autonomous AI Brain decision and auto-publishing cycle."""
+        from src.automation.ai_pilot_brain import AIPilotBrain
+        summary = AIPilotBrain.ingest_and_autopilot_cycle(
+            include_youtube=True,
+            include_world=True,
+            include_social=True,
+            auto_publish_threshold=75,
+            max_per_source=2,
+        )
+        return f"AI Pilot Brain: Ingested {summary['total_raw_ingested']} | Auto-Published {summary['auto_published']} | Review Queue {summary['review_queued']}."
 
 
 def get_scheduler() -> AutomationScheduler:

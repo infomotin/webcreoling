@@ -242,9 +242,9 @@ class NewsNLPSkillEngine:
     """Extracts categories, generates headlines, produces summaries, and extracts named entities."""
 
     CATEGORY_KEYWORDS = {
+        "sports": ["ক্রিকেট", "ফুটবল", "ম্যাচ", "রান", "উইকেট", "গোল", "খেলোয়াড়", "টুর্নামেন্ট", "বিশ্বকাপ", "বিসিবি", "স্টেডিয়াম", "সিরিজ", "বোলিং", "ব্যাটিং", "sports", "cricket", "football", "world cup"],
         "politics": ["রাজনীতি", "সরকার", "সংসদ", "নির্বাচন", "দল", "নেতা", "উপদেষ্টা", "আন্দোলন", "প্রধানমন্ত্রী", "politics", "minister", "parliament"],
-        "sports": ["ক্রিকেট", "ফুটবল", "ম্যাচ", "রান", "উইকেট", "গোল", "খেলোয়াড়", "টুর্নামেন্ট", "sports", "cricket", "football", "world cup"],
-        "business": ["বাণিজ্য", "অর্থনীতি", "ব্যাংক", "মুদ্রা", "শেয়ার", "রপ্তানি", "আমদানি", "মূল্যস্ফীতি", "টাকা", "business", "economy", "market", "trade"],
+        "business": ["বাণিজ্য", "অর্থনীতি", "ব্যাংক", "মুদ্রা", "শেয়ার", "রপ্তানি", "আমদানি", "মূল্যস্ফীতি", "টাকা", "একনেক", "business", "economy", "market", "trade"],
         "technology": ["প্রযুক্তি", "এআই", "স্মার্টফোন", "সাইবার", "ইন্টারনেট", "সফটওয়্যার", "বিজ্ঞান", "রোবট", "technology", "ai", "tech", "cyber"],
         "international": ["আন্তর্জাতিক", "বিশ্ব", "যুক্তরাষ্ট্র", "চীন", "ভারত", "রাশিয়া", "ইউক্রেন", "যুদ্ধ", "জাতিসংঘ", "world", "international", "global", "us"],
         "entertainment": ["বিনোদন", "সিনেমা", "চলচ্চিত্র", "গান", "অভিনেতা", "অভিনেত্রী", "নাটক", "entertainment", "movie", "film"],

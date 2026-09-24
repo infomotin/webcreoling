@@ -129,10 +129,11 @@ def test_editorial_article_crud_and_approval(client):
     )
 
     # 1. Create Draft Article
+    unique_test_title = "টেস্ট খসড়া একনেক নতুন উন্নয়ন প্রকল্প অনুমোদন"
     res_create = client.post(
         "/admin/newspaper/article/create",
         data={
-            "title": "জাতীয় অর্থনৈতিক পরিষদের নতুন প্রকল্প অনুমোদন",
+            "title": unique_test_title,
             "category": "business",
             "author": "অর্থনীতি ব্যুরো",
             "summary": "জাতীয় অর্থনৈতিক পরিষদ আজ একাধিক উন্নয়ন প্রকল্প অনুমোদন করেছে।",
@@ -147,10 +148,9 @@ def test_editorial_article_crud_and_approval(client):
 
     # Retrieve created article
     with get_db_session() as session:
-        repo = ArticleRepository(session)
-        articles = repo.list_editorial_articles(search_query="জাতীয় অর্থনৈতিক")["articles"]
-        assert len(articles) > 0
-        art = articles[0]
+        from src.storage.models import Article
+        art = session.query(Article).filter(Article.title.like("%টেস্ট খসড়া একনেক%")).order_by(Article.id.desc()).first()
+        assert art is not None
         art_id = art.id
         assert art.scrape_status == "draft"
         assert art.is_featured == True

@@ -645,7 +645,7 @@ class ArticleRepository:
 
         total_count = query.count()
         articles = (
-            query.order_by(Article.published_at.desc(), Article.id.desc())
+            query.order_by(Article.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
@@ -1855,6 +1855,41 @@ class BlockchainLedgerRepository:
 
         self.session.flush()
         return minted_count
+
+    def recalculate_and_seal_chain(self) -> int:
+        """Re-links and seals the entire chain sequentially from Genesis to current tip."""
+        from src.common.blockchain import GENESIS_PREV_HASH
+        self.ensure_genesis_block()
+        blocks = self.session.query(ArticleBlockLedger).order_by(ArticleBlockLedger.block_number.asc()).all()
+        if not blocks:
+            return 0
+
+        prev_hash = GENESIS_PREV_HASH
+        for idx, blk in enumerate(blocks):
+            blk.block_number = idx
+            if idx == 0:
+                blk.prev_block_hash = GENESIS_PREV_HASH
+            else:
+                blk.prev_block_hash = prev_hash
+
+            blk.block_hash = BlockchainLedgerEngine.calculate_block_hash(
+                idx, blk.timestamp or datetime.utcnow(), blk.merkle_root or "", blk.prev_block_hash, blk.nonce or 0
+            )
+            blk.digital_signature = BlockchainLedgerEngine.generate_digital_signature(blk.block_hash)
+            blk.verification_status = "VALID"
+            prev_hash = blk.block_hash
+
+            if blk.article_id:
+                art = self.session.query(Article).filter(Article.id == blk.article_id).first()
+                if art:
+                    art.block_number = blk.block_number
+                    art.block_hash = blk.block_hash
+                    art.prev_hash = blk.prev_block_hash
+                    art.digital_signature = blk.digital_signature
+                    art.is_ledger_verified = True
+
+        self.session.flush()
+        return len(blocks)
 
     def verify_article_ledger(self, article_id: int) -> Tuple[bool, str, Dict[str, Any]]:
         """Verify an article's cryptographic validity against its ledger block."""

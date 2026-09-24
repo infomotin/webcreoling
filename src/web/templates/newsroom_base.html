@@ -147,9 +147,22 @@
 
             <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}">
                 <div class="nr-nav-left">
-                    <span>🔒</span>
-                    <span>সিকিউরিটি ও অডিট লগ</span>
+                    <span>🛡️</span>
+                    <span>এআই সিকিউরিটি ও ভল্ট</span>
                 </div>
+                {% if vault_state and vault_state.is_locked %}
+                <span class="nr-nav-badge" style="background: #ef4444; color: #fff;">LOCKED</span>
+                {% else %}
+                <span class="nr-nav-badge" style="background: #10b981; color: #fff;">VAULT</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='datahub') }}" class="nr-nav-item {% if active_tab == 'datahub' or request.args.get('tab') == 'datahub' %}active{% endif %}">
+                <div class="nr-nav-left">
+                    <span>💾</span>
+                    <span>হিউজ ডেটাহাব ও স্টোরেজ</span>
+                </div>
+                <span class="nr-nav-badge" style="background: #8b5cf6; color: #fff;">HIGH-CAP</span>
             </a>
 
             <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="nr-nav-item {% if active_tab == 'monitor' or request.args.get('tab') == 'monitor' %}active{% endif %}">

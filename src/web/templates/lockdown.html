@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 জরুরি সাইবার ডিফেন্স লকডাউন - দি ডেইলি এআই আলো (The Daily AI Alo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Noto+Serif+Bengali:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: #111827;
+            --border-glow: rgba(239, 68, 68, 0.4);
+            --red-glow: #ef4444;
+            --amber-glow: #f59e0b;
+            --cyan-glow: #06b6d4;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(239, 68, 68, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            color: var(--text-main);
+            font-family: 'Hind Siliguri', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .lockdown-container {
+            max-width: 780px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 0 50px rgba(239, 68, 68, 0.2), 0 20px 40px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lockdown-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);
+            animation: scanline 3s infinite linear;
+        }
+
+        @keyframes scanline {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 50px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem;
+        }
+
+        .shield-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.9)); }
+        }
+
+        h1 {
+            font-family: 'Noto Serif Bengali', serif;
+            font-size: 1.85rem;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.35;
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.8rem;
+        }
+
+        .telemetry-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1.8rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: left;
+        }
+
+        .telemetry-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .telemetry-item span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .unlock-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .unlock-card h3 {
+            font-size: 1.15rem;
+            color: #38bdf8;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .unlock-card p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 540px;
+            margin: 0 auto;
+        }
+
+        .code-input {
+            flex: 1;
+            background: #0f172a;
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #38bdf8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .code-input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            background: #1e293b;
+        }
+
+        .unlock-btn {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 0 24px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            font-family: 'Hind Siliguri', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-btn:hover {
+            background: linear-gradient(135deg, #0369a1, #075985);
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .email-notice {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 1rem;
+        }
+
+        .email-notice strong {
+            color: #38bdf8;
+        }
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            margin-bottom: 1.2rem;
+            text-align: center;
+        }
+
+        .footer-note {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="lockdown-container" style="text-align: center;">
+
+    <div class="header-badge">
+        <span>🛡️</span> AI BRAIN AUTONOMOUS DEFENSE ACTIVE
+    </div>
+
+    <div>
+        <div class="shield-icon">🔐</div>
+    </div>
+
+    <h1>দি ডেইলি এআই আলো — জরুরি এনক্রিপশন ও ডিফেন্স লকডাউন</h1>
+    <div class="subtitle">
+        অভ্যন্তরীণ এআই ব্রেন সিকিউরিটি মনিটর সম্ভাব্য সাইবার ঝুঁকি / এক্সপ্লয়েট সনাক্ত করেছে। সমস্ত সংবেদনশীল ডাটাবেস সামরিক-গ্রেড <strong>AES-256-GCM</strong> এনক্রিপশনের মাধ্যমে জরুরি ভল্টে সুরক্ষিত করা হয়েছে।
+    </div>
+
+    {% if error_msg %}
+    <div class="alert-box">
+        ⚠️ {{ error_msg }}
+    </div>
+    {% endif %}
+
+    <!-- Security Telemetry Summary -->
+    <div class="telemetry-box">
+        <div class="telemetry-item">
+            <label>লকডাউন কারণ / ট্রিগার</label>
+            <span style="color: #ef4444;">{{ vault_state.lockdown_trigger or 'AUTO_AI_DEFENSE' }}</span>
+        </div>
+        <div class="telemetry-item">
+            <label>এনক্রিপ্টেড ডাটা রেকর্ড</label>
+            <span style="color: #f59e0b;">{{ vault_state.encrypted_articles_count or 'ALL' }} টি আর্টিকেল</span>
+        </div>
+        <div class="telemetry-item">
+            <label>সুরক্ষা মেথড</label>
+            <span style="color: #10b981;">AES-256-GCM (PBKDF2)</span>
+        </div>
+    </div>
+
+    <!-- Master Unlock Key Form -->
+    <div class="unlock-card">
+        <h3><span>🔑</span> পোর্টাল ডিক্রিপশন ও রিকঅ্যাক্টিভেশন কনসোল</h3>
+        <p>
+            লকডাউন প্রত্যাহারের জন্য সিকিউরিটি ইমেইলে প্রেরিত মাস্টার রিকভারি কোডটি (ALO-SEC-XXXX-XXXX...) লিখুন:
+        </p>
+
+        <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}">
+            <div class="code-input-group">
+                <input 
+                    type="text" 
+                    name="unlock_code" 
+                    class="code-input" 
+                    placeholder="ALO-SEC-XXXX-XXXX-XXXX" 
+                    required 
+                    autocomplete="off"
+                    autofocus
+                >
+                <button type="submit" class="unlock-btn">
+                    <span>🔓</span> ডিক্রিপ্ট ও চালু করুন
+                </button>
+            </div>
+        </form>
+
+        <div class="email-notice">
+            <span>📩</span> মাস্টার ডিক্রিপশন কোড প্রেরিত হয়েছে: <strong>{{ vault_state.recipient_email or 'security-officer@daily-ai-alo.com' }}</strong>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        The Daily AI Alo Enterprise Security Operations Center (SOC) &bull; Automated Intrusion Prevention Active
+    </div>
+
+</div>
+
+</body>
+</html>

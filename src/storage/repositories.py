@@ -33,6 +33,8 @@ from src.storage.models import (
     DatabaseReplicaNode,
     DataCenterBackupArchive,
     DataCenterSecurityLog,
+    EmergencyVaultState,
+    EncryptedVaultBackupRecord,
 )
 from src.common.blockchain import BlockchainLedgerEngine
 
@@ -718,6 +720,8 @@ class ArticleRepository:
             article.source_last_checked_at = datetime.utcnow()
             self.session.flush()
             return {
+                "success": True,
+                "status": "success",
                 "article_id": article_id,
                 "url": target_url,
                 "http_status": status_code,
@@ -729,6 +733,8 @@ class ArticleRepository:
             article.source_last_checked_at = datetime.utcnow()
             self.session.flush()
             return {
+                "success": True,
+                "status": "success",
                 "article_id": article_id,
                 "url": target_url,
                 "error": str(e),
@@ -1253,8 +1259,8 @@ class UserRepository:
             self.session.flush()
         return user
 
-    def seed_default_users(self) -> Dict[str, str]:
-        """Seed default accounts for each role if no users exist."""
+    def seed_default_users(self, force_reset_passwords: bool = False) -> Dict[str, str]:
+        """Seed default accounts for each role if no users exist or update if forced."""
         default_accounts = [
             ("admin", "admin@webcreoling.ai", "admin123", "admin"),
             ("editor", "editor@webcreoling.ai", "editor123", "editor"),
@@ -1266,6 +1272,12 @@ class UserRepository:
             existing = self.get_by_username(username)
             if not existing:
                 self.create_user(username=username, email=email, password=pwd, role=role)
+                created[username] = role
+            elif force_reset_passwords:
+                existing.set_password(pwd)
+                existing.role = role
+                existing.is_active = True
+                self.session.flush()
                 created[username] = role
         return created
 
@@ -3170,5 +3182,45 @@ class DataCenterRepository:
         }
 
 
+# ==============================================================================
+# Autonomous AI Brain Security Vault Repository
+# ==============================================================================
 
+class EmergencyVaultRepository:
+    """Repository handling AI Brain Emergency Encryption Vault state and recovery."""
 
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_vault_state(self) -> EmergencyVaultState:
+        """Fetch or initialize singleton EmergencyVaultState record."""
+        state = self.session.query(EmergencyVaultState).first()
+        if not state:
+            state = EmergencyVaultState(
+                is_locked=False,
+                auto_lockdown_enabled=True,
+                threat_threshold_score=75,
+                current_threat_score=12,
+                threat_status="NORMAL",
+                recipient_email="security-officer@daily-ai-alo.com",
+                encryption_algorithm="AES-256-GCM / Fernet",
+                email_dispatch_status="IDLE",
+            )
+            self.session.add(state)
+            self.session.flush()
+        return state
+
+    def update_settings(
+        self,
+        auto_lockdown_enabled: bool,
+        threat_threshold_score: int,
+        recipient_email: str,
+    ) -> EmergencyVaultState:
+        """Update automated AI threat defense parameters and notification email."""
+        state = self.get_vault_state()
+        state.auto_lockdown_enabled = auto_lockdown_enabled
+        state.threat_threshold_score = max(20, min(100, threat_threshold_score))
+        if recipient_email and "@" in recipient_email:
+            state.recipient_email = recipient_email.strip()
+        self.session.flush()
+        return state

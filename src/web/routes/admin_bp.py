@@ -30,7 +30,10 @@ from src.storage.repositories import (
     AIPilotHelper,
     SecurityRepository,
     BlockchainLedgerRepository,
+    EmergencyVaultRepository,
 )
+from src.security.emergency_cipher_vault import get_emergency_vault
+from src.datacenter.heavy_data_manager import get_heavy_data_manager
 from src.web.auth import login_required, roles_required
 
 admin_bp = Blueprint("admin", __name__)
@@ -206,6 +209,15 @@ def newspaper_management_view():
         ledger_blocks_data = ledger_repo.get_ledger_blocks(limit=25, page=1)
         chain_audit = ledger_repo.audit_full_chain()
 
+        # 6. Autonomous AI Brain Security Vault & Heavy Data Capacity Metrics
+        vault_repo = EmergencyVaultRepository(session)
+        vault_engine = get_emergency_vault()
+        heavy_mgr = get_heavy_data_manager()
+
+        vault_state = vault_repo.get_vault_state()
+        threat_assessment = vault_engine.assess_threat_status(session)
+        heavy_metrics = heavy_mgr.get_heavy_data_metrics(session)
+
         # Available unique categories in database
         stats = article_repo.get_database_stats()
         categories = list(stats.get("by_category", {}).keys())
@@ -239,6 +251,9 @@ def newspaper_management_view():
             blockchain_stats=blockchain_stats,
             ledger_blocks=[b.to_dict() for b in ledger_blocks_data["blocks"]],
             chain_audit=chain_audit,
+            vault_state=vault_state.to_dict(),
+            threat_assessment=threat_assessment,
+            heavy_metrics=heavy_metrics,
         )
 
 
@@ -418,6 +433,7 @@ def update_placement_route(article_id: int):
 
         if request.is_json:
             return jsonify({
+                "success": True,
                 "status": "success",
                 "article_id": article_id,
                 "placement": updated.position_placement,
@@ -587,6 +603,83 @@ def toggle_article_breaking(article_id: int):
         )
         flash(f"সংবাদ #{article_id}: {status_str}।", "success")
     return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/article/placement/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def update_article_placement(article_id: int):
+    """Update article placement position, serial order, and pin status."""
+    if request.is_json:
+        data = request.get_json() or {}
+        placement = data.get("position_placement", "STANDARD")
+        order = int(data.get("display_order", 0))
+        is_pinned = bool(data.get("is_pinned", False))
+    else:
+        placement = request.form.get("position_placement", "STANDARD")
+        order = int(request.form.get("display_order", 0))
+        is_pinned = bool(request.form.get("is_pinned"))
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "editor")
+
+        updated = repo.update_article_placement(
+            article_id=article_id,
+            position_placement=placement,
+            display_order=order,
+            is_pinned=is_pinned,
+        )
+
+        if not updated:
+            if request.is_json:
+                return jsonify({"success": False, "message": "সংবাদ পাওয়া যায়নি।"}), 404
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            return redirect(url_for("admin.newspaper_management_view"))
+
+        audit_repo.log_action(
+            username=current_username,
+            action="update_placement",
+            resource_type="article",
+            resource_id=str(article_id),
+            details={"placement": placement, "order": order, "is_pinned": is_pinned},
+            ip_address=request.remote_addr,
+        )
+
+        if request.is_json:
+            return jsonify({
+                "success": True,
+                "placement": updated.position_placement,
+                "display_order": updated.display_order,
+                "is_pinned": updated.is_pinned,
+                "message": "লেআউট প্লেসমেন্ট ও ক্রম সফলভাবে সংরক্ষিত হয়েছে।",
+            })
+
+        flash(f"সংবাদ #{article_id}-এর পোর্টাল প্লেসমেন্ট ও ক্রম আপডেট করা হয়েছে।", "success")
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/article/check-source/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def check_article_source(article_id: int):
+    """Audit the original source URL to see if it is active or has been removed/unpublished."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        audit_res = repo.check_source_url_status(article_id)
+        article = repo.get_by_id(article_id)
+        
+        status = audit_res.get("source_status") or audit_res.get("status") or "ACTIVE"
+        notice = audit_res.get("notice") or (article.source_removed_notice if article else "")
+        
+        return jsonify({
+            "success": True,
+            "status": status,
+            "notice": notice,
+            "source_url": article.original_source_url if article else "",
+            "message": f"উৎস স্থিতি: {status}",
+        })
 
 
 # =========================================================================
@@ -1215,6 +1308,202 @@ def blockchain_verify_article_endpoint(article_id: int):
 
 
 # ==============================================================================
+# Autonomous AI Brain Emergency Encryption Vault Endpoints
+# ==============================================================================
+
+@admin_bp.route("/newspaper/security/vault/settings", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_vault_settings():
+    """Update AI Brain Auto-Lockdown thresholds and security notification email."""
+    auto_lockdown = bool(request.form.get("auto_lockdown_enabled"))
+    threshold = int(request.form.get("threat_threshold_score", 75) or 75)
+    email = request.form.get("recipient_email", "").strip()
+
+    with get_db_session() as session:
+        repo = EmergencyVaultRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        repo.update_settings(
+            auto_lockdown_enabled=auto_lockdown,
+            threat_threshold_score=threshold,
+            recipient_email=email,
+        )
+        audit_repo.log_action(
+            username=current_username,
+            action="VAULT_SETTINGS_UPDATED",
+            resource_type="EMERGENCY_VAULT",
+            details={"auto_lockdown": auto_lockdown, "threshold": threshold, "email": email},
+            ip_address=request.remote_addr,
+        )
+        flash("এআই ব্রেন অটোনোমাস ডিফেন্স ও সিকিউরিটি ইমেইল কনফিগারেশন সংরক্ষিত হয়েছে।", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/lockdown", methods=["POST"])
+@login_required
+@roles_required("admin")
+def trigger_emergency_lockdown_route():
+    """Manually activate the Emergency Self-Encryption Kill-Switch."""
+    custom_reason = request.form.get("reason", "Manual Admin Emergency Lockdown Activated").strip()
+    target_email = request.form.get("recipient_email", "").strip()
+
+    with get_db_session() as session:
+        vault_engine = get_emergency_vault()
+        current_username = flask_session.get("username", "admin")
+
+        res = vault_engine.trigger_lockdown(
+            session=session,
+            trigger_type="MANUAL_ADMIN_KILLSWITCH",
+            actor=current_username,
+            custom_reason=custom_reason,
+            recipient_email=target_email or None,
+        )
+
+        if res.get("success"):
+            flash(
+                f"🚨 জরুরি ভল্ট লকডাউন ও AES-256 এনক্রিপশন সক্রিয় হয়েছে! {res.get('encrypted_articles_count')}টি আর্টিকেল এনক্রিপ্ট করা হয়েছে। আপনার মাস্টার রিকভারি কোড [{res.get('unlock_code')}] ইমেইল ({res.get('recipient_email')}) ঠিকানায় পাঠানো হয়েছে।",
+                "danger",
+            )
+        else:
+            flash(res.get("message", "লকডাউন সক্রিয় করা যায়নি।"), "warning")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/simulate-attack", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def simulate_attack_route():
+    """Simulate a cyberattack vector to test the AI Brain's automated defense response."""
+    attack_type = request.form.get("attack_type", "SQL_INJECTION_CLUSTER").strip()
+
+    with get_db_session() as session:
+        vault_engine = get_emergency_vault()
+        res = vault_engine.simulate_ai_hack_attempt(session, attack_type=attack_type)
+        assessment = res.get("threat_assessment", {})
+
+        if assessment.get("auto_lockdown_triggered"):
+            flash(
+                f"🚨 এআই ব্রেন স্বয়ংক্রিয় প্রতিরক্ষা সক্রিয়! থ্রেট লেভেল ছিল {assessment.get('threat_score')}/100। সিস্টেম স্বয়ংক্রিয়ভাবে লকডাউন ও এনক্রিপ্ট হয়েছে এবং ইমেইলে মাস্টার কি পাঠানো হয়েছে।",
+                "danger",
+            )
+        else:
+            flash(
+                f"🛡️ সিমুলেটেড আক্রমণ প্রতিহত হয়েছে ({res.get('simulated_attack_type')})। বর্তমান থ্রেট স্কোর: {assessment.get('threat_score')}/100 ({assessment.get('threat_status')})।",
+                "warning" if assessment.get("threat_score", 0) >= 50 else "info",
+            )
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/decrypt", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def decrypt_and_restore_vault_route():
+    """Enter the secret recovery key to decrypt data and reactivate the news portal."""
+    unlock_code = request.form.get("unlock_code", "").strip()
+
+    if not unlock_code:
+        flash("অনুগ্রহ করে জরুরি রিকভারি কোড প্রদান করুন।", "warning")
+        return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+    with get_db_session() as session:
+        vault_engine = get_emergency_vault()
+        current_username = flask_session.get("username", "admin")
+        res = vault_engine.unlock_and_restore(session, unlock_code=unlock_code, actor=current_username)
+
+        if res.get("success"):
+            flash(f"✅ {res.get('message')}", "success")
+        else:
+            flash(f"❌ {res.get('message')}", "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/status", methods=["GET"])
+@login_required
+def vault_status_json():
+    """JSON endpoint for live threat gauge & emergency vault telemetry."""
+    with get_db_session() as session:
+        vault_repo = EmergencyVaultRepository(session)
+        vault_engine = get_emergency_vault()
+        state = vault_repo.get_vault_state()
+        assessment = vault_engine.assess_threat_status(session)
+
+        return jsonify({
+            "vault_state": state.to_dict(),
+            "threat_assessment": assessment,
+        })
+
+
+# ==============================================================================
+# Heavy DataHub & High Capacity Storage Management Endpoints
+# ==============================================================================
+
+@admin_bp.route("/newspaper/datahub/optimize", methods=["POST"])
+@login_required
+@roles_required("admin")
+def optimize_database_route():
+    """Execute high-capacity database defragmentation, vacuum, and memory reclaim."""
+    with get_db_session() as session:
+        heavy_mgr = get_heavy_data_manager()
+        current_username = flask_session.get("username", "admin")
+        res = heavy_mgr.optimize_database(session, actor=current_username)
+
+        if res.get("success"):
+            flash(f"✅ {res.get('message')}", "success")
+        else:
+            flash(f"❌ {res.get('message')}", "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="datahub"))
+
+
+@admin_bp.route("/newspaper/datahub/bulk-archive", methods=["POST"])
+@login_required
+@roles_required("admin")
+def bulk_archive_route():
+    """Bulk archive stale non-pinned articles older than specified days."""
+    days = int(request.form.get("days_old", 180) or 180)
+    with get_db_session() as session:
+        heavy_mgr = get_heavy_data_manager()
+        current_username = flask_session.get("username", "admin")
+        res = heavy_mgr.bulk_archive_stale_articles(session, days_old=days, actor=current_username)
+        flash(f"📦 {res.get('message')}", "info")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="datahub"))
+
+
+@admin_bp.route("/newspaper/datahub/rebuild-index", methods=["POST"])
+@login_required
+@roles_required("admin")
+def rebuild_search_index_route():
+    """Rebuild full-text search indexes for high-throughput searching."""
+    with get_db_session() as session:
+        heavy_mgr = get_heavy_data_manager()
+        current_username = flask_session.get("username", "admin")
+        res = heavy_mgr.rebuild_search_index(session, actor=current_username)
+        flash(f"🔍 {res.get('message')}", "success" if res.get("success") else "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="datahub"))
+
+
+@admin_bp.route("/newspaper/datahub/media-sync", methods=["POST"])
+@login_required
+@roles_required("admin")
+def media_cloud_sync_route():
+    """Batch synchronize media cache to Cloud Storage providers."""
+    with get_db_session() as session:
+        heavy_mgr = get_heavy_data_manager()
+        current_username = flask_session.get("username", "admin")
+        res = heavy_mgr.sync_media_to_cloud(session, actor=current_username)
+        flash(f"☁️ {res.get('message')}", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="datahub"))
+
+
 # ==============================================================================
 # Autonomous Pipeline Scheduler, Fake News Detector & Async Task Manager
 # ==============================================================================

@@ -56,6 +56,33 @@ def create_app(test_config: dict = None) -> Flask:
     def security_firewall_hook():
         return run_security_firewall()
 
+    # Autonomous AI Brain Emergency Vault & Self-Encryption Lockdown Guard
+    @app.before_request
+    def emergency_vault_lockdown_hook():
+        from flask import request
+        path = request.path
+        if path.startswith("/static/") or path.startswith("/data/images/") or path == "/favicon.ico":
+            return None
+        # Whitelisted endpoints during emergency lockdown (decryption console & auth)
+        if path in [
+            "/admin/newspaper/security/vault/decrypt",
+            "/admin/newspaper/security/vault/status",
+            "/auth/login",
+            "/auth/logout",
+        ]:
+            return None
+
+        try:
+            with get_db_session() as session:
+                from src.storage.repositories import EmergencyVaultRepository
+                vault_repo = EmergencyVaultRepository(session)
+                state = vault_repo.get_vault_state()
+                if state.is_locked:
+                    return render_template("lockdown.html", vault_state=state.to_dict()), 503
+        except Exception:
+            pass
+        return None
+
     # Context processor to make current_user available across all templates
     @app.context_processor
     def inject_user_and_roles():

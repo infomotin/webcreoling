@@ -815,5 +815,80 @@ class DataCenterSecurityLog(Base):
         }
 
 
+class EmergencyVaultState(Base):
+    """
+    State tracking for Autonomous AI Brain Self-Encryption Vault & Emergency Lockdown.
+    When a critical cyberattack or tamper risk is detected (or manually triggered by Admin),
+    the AI Brain encrypts all sensitive data with an AES-256 master key, puts the portal into
+    Lockdown mode, and dispatches the high-entropy Emergency Decryption Code to the Security Email.
+    """
+    __tablename__ = "emergency_vault_states"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    is_locked = Column(Boolean, default=False, index=True)
+    auto_lockdown_enabled = Column(Boolean, default=True, index=True)
+    threat_threshold_score = Column(Integer, default=75)
+    current_threat_score = Column(Integer, default=12)
+    threat_status = Column(String(50), default="NORMAL", index=True)  # 'NORMAL', 'ELEVATED', 'HIGH', 'CRITICAL'
+    lockdown_trigger = Column(String(100), nullable=True)             # 'AUTO_AI_BRAIN_BREACH_DETECTED', 'MANUAL_ADMIN_KILLSWITCH', 'SIMULATED_TEST'
+    threat_summary = Column(Text, nullable=True)
+
+    # Cryptographic recovery & encryption metadata
+    emergency_unlock_code_hash = Column(String(128), nullable=True)
+    emergency_unlock_code_hint = Column(String(100), nullable=True)   # 'ALO-SEC-9X4F-****-****'
+    encryption_algorithm = Column(String(50), default="AES-256-GCM")
+    encrypted_articles_count = Column(Integer, default=0)
+    encrypted_users_count = Column(Integer, default=0)
+    encrypted_configs_count = Column(Integer, default=0)
+
+    # Emergency Email Dispatch
+    recipient_email = Column(String(255), default="security-officer@daily-ai-alo.com")
+    email_dispatch_status = Column(String(50), default="IDLE")       # 'SENT', 'SIMULATED_SUCCESS', 'FAILED'
+    email_dispatch_log = Column(Text, nullable=True)
+
+    # Recovery and Audit
+    failed_unlock_attempts = Column(Integer, default=0)
+    locked_at = Column(DateTime, nullable=True)
+    unlocked_at = Column(DateTime, nullable=True)
+    unlocked_by = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "is_locked": self.is_locked,
+            "auto_lockdown_enabled": self.auto_lockdown_enabled,
+            "threat_threshold_score": self.threat_threshold_score,
+            "current_threat_score": self.current_threat_score,
+            "threat_status": self.threat_status,
+            "lockdown_trigger": self.lockdown_trigger,
+            "threat_summary": self.threat_summary,
+            "emergency_unlock_code_hint": self.emergency_unlock_code_hint,
+            "encryption_algorithm": self.encryption_algorithm,
+            "encrypted_articles_count": self.encrypted_articles_count,
+            "encrypted_users_count": self.encrypted_users_count,
+            "encrypted_configs_count": self.encrypted_configs_count,
+            "recipient_email": self.recipient_email,
+            "email_dispatch_status": self.email_dispatch_status,
+            "email_dispatch_log": self.email_dispatch_log,
+            "failed_unlock_attempts": self.failed_unlock_attempts,
+            "locked_at": self.locked_at.isoformat() if self.locked_at else None,
+            "unlocked_at": self.unlocked_at.isoformat() if self.unlocked_at else None,
+            "unlocked_by": self.unlocked_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
 
+class EncryptedVaultBackupRecord(Base):
+    """Stores encrypted table snapshots during emergency lockdown for flawless zero-loss restoration."""
+    __tablename__ = "encrypted_vault_backup_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    table_name = Column(String(100), nullable=False, index=True)
+    record_id = Column(String(100), nullable=False, index=True)
+    encrypted_payload = Column(Text, nullable=False)
+    iv_nonce = Column(String(64), nullable=False)
+    auth_tag = Column(String(64), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)

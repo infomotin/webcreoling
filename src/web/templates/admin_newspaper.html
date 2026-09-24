@@ -452,7 +452,177 @@
     <!-- ===================================================================== -->
     <!-- TAB: ENTERPRISE SECURITY OPERATIONS CENTER (SOC) & BLOCKCHAIN LEDGER  -->
     <!-- ===================================================================== -->
-    
+
+    <!-- 0. AUTONOMOUS AI BRAIN SELF-ENCRYPTION VAULT & KILL-SWITCH -->
+    {% if vault_state and vault_state.is_locked %}
+    <div style="background: linear-gradient(135deg, #7f1d1d, #991b1b); border: 2px solid #ef4444; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; color: #fff; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 2.5rem;">🚨</span>
+                <div>
+                    <h3 style="font-size: 1.3rem; font-weight: 900; margin: 0; color: #fee2e2;">
+                        জরুরি অ্যালার্ট: এআই ব্রেন সিকিউরিটি ভল্ট লকডাউন ও AES-256 এনক্রিপশনে রয়েছে!
+                    </h3>
+                    <p style="font-size: 0.88rem; color: #fecaca; margin-top: 4px;">
+                        ট্রিগার: <strong>{{ vault_state.lockdown_trigger }}</strong> &bull; এনক্রিপ্টকৃত আর্টিকেল: <strong>{{ vault_state.encrypted_articles_count }} টি</strong> &bull; মাস্টার কোড পাঠানো হয়েছে: <strong>{{ vault_state.recipient_email }}</strong>
+                    </p>
+                </div>
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}" style="display: flex; gap: 8px;">
+                <input type="text" name="unlock_code" placeholder="মাস্টার ডিক্রিপশন কোড (ALO-SEC-...)" style="background: #450a0a; border: 1px solid #fca5a5; color: #fff; padding: 8px 14px; border-radius: 6px; font-family: monospace; font-weight: 700; width: 280px;" required>
+                <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; font-weight: 800; padding: 8px 16px;">
+                    🔓 ডিক্রিপ্ট ও আনলক
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="nr-card" style="margin-bottom: 1.5rem; border: 1px solid #38bdf8; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.08);">
+        <div class="nr-card-header" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.5rem;">🧠</span>
+                <div>
+                    <h3 class="nr-card-title" style="color: #38bdf8; font-size: 1.15rem; margin: 0;">
+                        অভ্যন্তরীণ এআই ব্রেন স্বয়ংক্রিয় থ্রেট ডিফেন্স ও জরুরি সেলফ-এনক্রিপশন ভল্ট
+                    </h3>
+                    <div style="font-size: 0.78rem; color: #94a3b8;">
+                        Autonomous AI Brain Anti-Hack Threat Defense & Emergency AES-256 Self-Encryption Vault
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                {% if vault_state and vault_state.auto_lockdown_enabled %}
+                <span class="nr-badge" style="background: #0284c7; color: #fff; font-weight: 700;">⚡ অটো-ডিফেন্স সক্রিয়</span>
+                {% else %}
+                <span class="nr-badge" style="background: #64748b; color: #fff;">ম্যানুয়াল মোড</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="nr-card-body" style="background: #fafafa; padding: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem;">
+                
+                <!-- Left: AI Threat Meter & Auto Defense Config -->
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">📊 লাইভ এআই সাইবার থ্রেট রিস্ক গেজ</span>
+                        <span class="nr-badge" style="background: {{ threat_assessment.threat_color if threat_assessment else '#10b981' }}; color: #fff; font-weight: 800;">
+                            {{ threat_assessment.threat_status if threat_assessment else 'NORMAL' }} ({{ threat_assessment.threat_score if threat_assessment else 12 }}/100)
+                        </span>
+                    </div>
+
+                    <!-- Threat Gauge Bar -->
+                    <div style="background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 0.75rem;">
+                        <div style="background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); width: {{ threat_assessment.threat_score if threat_assessment else 12 }}%; height: 100%; transition: width 0.5s ease;"></div>
+                    </div>
+
+                    <div style="font-size: 0.82rem; color: #475569; margin-bottom: 1.2rem; line-height: 1.5;">
+                        {{ threat_assessment.threat_desc if threat_assessment else 'স্বাভাবিক: এআই ব্রেন ও ফায়ারওয়াল সম্পূর্ণ সুরক্ষিত।' }}
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.2rem; font-size: 0.78rem; text-align: center;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
+                            <div style="color: #ef4444; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.sqli_1h if threat_assessment else 0 }}</div>
+                            <div style="color: #64748b;">SQLi (1h)</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
+                            <div style="color: #f59e0b; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.rce_1h if threat_assessment else 0 }}</div>
+                            <div style="color: #64748b;">RCE (1h)</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
+                            <div style="color: #3b82f6; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.threats_24h if threat_assessment else 0 }}</div>
+                            <div style="color: #64748b;">মোট (24h)</div>
+                        </div>
+                    </div>
+
+                    <!-- Auto Lockdown Config Form -->
+                    <form method="POST" action="{{ url_for('admin.update_vault_settings') }}" style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 700; color: #1e293b; cursor: pointer;">
+                                <input type="checkbox" name="auto_lockdown_enabled" value="1" {% if vault_state and vault_state.auto_lockdown_enabled %}checked{% endif %}>
+                                <span>হ্যাক বা সাইবার ঝুঁকি সনাক্তে স্বয়ংক্রিয় সেলফ-এনক্রিপশন ও লকডাউন সক্রিয় রাখুন</span>
+                            </label>
+                        </div>
+
+                        <div class="nr-form-grid-2" style="margin-bottom: 10px;">
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 700; color: #64748b;">লকডাউন থ্রেশহোল্ড স্কোর (২০-১০০)</label>
+                                <input type="number" name="threat_threshold_score" value="{{ vault_state.threat_threshold_score if vault_state else 75 }}" min="20" max="100" class="nr-form-control" style="font-size: 0.85rem; padding: 6px 10px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.78rem; font-weight: 700; color: #64748b;">মাস্টার কোড প্রেরণের সিকিউরিটি ইমেইল</label>
+                                <input type="email" name="recipient_email" value="{{ vault_state.recipient_email if vault_state else 'security-officer@daily-ai-alo.com' }}" class="nr-form-control" style="font-size: 0.85rem; padding: 6px 10px;" required>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <button type="submit" class="nr-btn" style="background: #0284c7; color: #fff; font-size: 0.82rem; padding: 6px 14px;">
+                                💾 পলিসি সংরক্ষণ
+                            </button>
+                            
+                            <!-- Attack Simulation Button -->
+                            <button type="button" onclick="document.getElementById('sim-attack-form').submit();" class="nr-btn" style="background: #fff; border: 1px solid #f59e0b; color: #d97706; font-size: 0.82rem; padding: 6px 12px;" title="সিমুলেটেড আক্রমণ চালিয়ে এআই ব্রেন অটো-ডিফেন্স পরীক্ষা করুন">
+                                ⚡ সিমুলেটেড টেস্ট রান
+                            </button>
+                        </div>
+                    </form>
+
+                    <form id="sim-attack-form" method="POST" action="{{ url_for('admin.simulate_attack_route') }}" style="display: none;">
+                        <input type="hidden" name="attack_type" value="SQL_INJECTION_CLUSTER">
+                    </form>
+                </div>
+
+                <!-- Right: Emergency Kill-Switch & Decryption Console -->
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div>
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+                            <span>🚨</span> ইমার্জেন্সি কিল-সুইচ ও রিকভারি কনসোল
+                        </h4>
+                        <p style="font-size: 0.82rem; color: #64748b; line-height: 1.5; margin-bottom: 1rem;">
+                            যেকোনো তাৎক্ষণিক সাইবার জরুরি অবস্থায় সমস্ত ডাটাবেস সামরিক-গ্রেড AES-256 এ এনক্রিপ্ট করুন। ডিক্রিপশন মাস্টার কোড স্বয়ংক্রিয়ভাবে সিকিউরিটি ইমেইলে চলে যাবে।
+                        </p>
+
+                        <!-- Manual Emergency Lockdown Button -->
+                        <form method="POST" action="{{ url_for('admin.trigger_emergency_lockdown_route') }}" onsubmit="return confirm('⚠️ সতর্কতা: আপনি কি নিশ্চিত যে পুরো পোর্টাল ডাটাবেস এনক্রিপ্ট ও লকডাউন করতে চান? মাস্টার কোড আপনার ইমেইলে পাঠানো হবে।');" style="margin-bottom: 1.2rem;">
+                            <input type="hidden" name="reason" value="Manual Administrator Emergency Vault Lockdown Activated">
+                            <input type="hidden" name="recipient_email" value="{{ vault_state.recipient_email if vault_state else 'security-officer@daily-ai-alo.com' }}">
+                            <button type="submit" class="nr-btn" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; font-weight: 800; width: 100%; padding: 10px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+                                🔒 জরুরি এনক্রিপশন ও লকডাউন সক্রিয় করুন (Kill-Switch)
+                            </button>
+                        </form>
+
+                        <!-- Decrypt & Restore Input Form -->
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
+                            <label style="font-size: 0.82rem; font-weight: 800; color: #1e293b; display: block; margin-bottom: 6px;">
+                                🔑 মাস্টার কোড দিয়ে ডিক্রিপ্ট ও রিস্টোর
+                            </label>
+                            <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}">
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" name="unlock_code" class="nr-form-control" placeholder="ALO-SEC-XXXX-XXXX-XXXX" style="font-family: monospace; font-size: 0.88rem; font-weight: 700; text-transform: uppercase;" required>
+                                    <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; font-weight: 800; white-space: nowrap; font-size: 0.82rem; padding: 6px 14px;">
+                                        🔓 ডিক্রিপ্ট
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.76rem; color: #64748b; margin-top: 1rem; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+                        <span>📩 সর্বশেষ ইমেইল নোটিফিকেশন স্ট্যাটাস:</span>
+                        <strong style="color: #0284c7;">{{ vault_state.email_dispatch_status if vault_state else 'IDLE' }}</strong>
+                        {% if vault_state and vault_state.emergency_unlock_code_hint %}
+                        | <span>কোড হিন্ট: <code>{{ vault_state.emergency_unlock_code_hint }}</code></span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Threat Meter & Defense Telemetry Header -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem;">
         <div class="nr-telemetry-card" style="border-left: 4px solid {{ sec_metrics.threat_color }};">
@@ -900,6 +1070,211 @@
                 এখনও কোনো অডিট লগ রেকর্ড নেই।
             </div>
             {% endif %}
+        </div>
+    {% elif active_tab == 'datahub' %}
+    <!-- ===================================================================== -->
+    <!-- TAB: HEAVY DATAHUB & HIGH-CAPACITY STORAGE MANAGEMENT                 -->
+    <!-- ===================================================================== -->
+
+    <!-- Capacity KPI Metrics -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem;">
+        <div class="nr-telemetry-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">মোট সংরক্ষিত সংবাদ</span>
+                <span style="font-size: 1.2rem;">📰</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #8b5cf6; font-size: 1.5rem;">
+                {{ heavy_metrics.total_articles }} টি
+            </div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                ডাটাবেস সাইজ: <strong>{{ heavy_metrics.db_size_mb }} MB</strong>
+            </div>
+        </div>
+
+        <div class="nr-telemetry-card" style="border-left: 4px solid #0284c7;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">মিডিয়া ও ইমেজ স্টোরেজ</span>
+                <span style="font-size: 1.2rem;">🖼️</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #0284c7; font-size: 1.5rem;">
+                {{ heavy_metrics.total_images }} টি
+            </div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                ডিস্ক ভলিউম: <strong>{{ heavy_metrics.media_size_mb }} MB</strong>
+            </div>
+        </div>
+
+        <div class="nr-telemetry-card" style="border-left: 4px solid #10b981;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">স্টোরেজ সক্ষমতা (High-Cap)</span>
+                <span style="font-size: 1.2rem;">💾</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #10b981; font-size: 1.5rem;">
+                {{ heavy_metrics.used_gb }} / {{ heavy_metrics.capacity_gb_limit }} GB
+            </div>
+            <div class="nr-progress-bar-bg" style="margin-top: 6px; height: 6px;">
+                <div class="nr-progress-bar-fill" style="width: {{ heavy_metrics.capacity_used_pct }}%; background: #10b981;"></div>
+            </div>
+        </div>
+
+        <div class="nr-telemetry-card" style="border-left: 4px solid #f59e0b;">
+            <div class="nr-telemetry-header">
+                <span class="nr-telemetry-title">কোয়েরি গতি ও পারফরম্যান্স</span>
+                <span style="font-size: 1.2rem;">⚡</span>
+            </div>
+            <div class="nr-telemetry-val" style="color: #f59e0b; font-size: 1.5rem;">
+                {{ heavy_metrics.avg_query_latency_ms }} ms
+            </div>
+            <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                থ্রুপুট: <strong>{{ heavy_metrics.throughput_qps }} QPS</strong> | ক্যাশ হিট: <strong>{{ heavy_metrics.cache_hit_ratio_pct }}%</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Heavy Data Operations Hub -->
+    <div class="nr-card" style="margin-bottom: 1.5rem;">
+        <div class="nr-card-header">
+            <div>
+                <h3 class="nr-card-title">⚙️ হেভি ডাটা ম্যানেজমেন্ট ও অপ্টিমাইজেশন কন্ট্রোলস</h3>
+                <div style="font-size: 0.78rem; color: var(--nr-text-muted);">
+                    ১০ লক্ষ+ আর্টিকেলের জন্য হাই-থ্রুপুট ডাটাবেস অপ্টিমাইজেশন, ইন্ডেক্সিং ও ক্লাউড সিঙ্ক
+                </div>
+            </div>
+            <span class="nr-badge nr-badge-status" style="background: #e0e7ff; color: #4338ca;">
+                READY_FOR_SCALE
+            </span>
+        </div>
+
+        <div class="nr-card-body">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem;">
+                
+                <!-- 1. Database Vacuum & Optimize -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.8rem; margin-bottom: 8px;">⚡</div>
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">
+                            ডাটাবেস ভ্যাকুয়াম ও মেমোরি রিক্লেইম
+                        </h4>
+                        <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 1rem;">
+                            ডাটাবেস ডিফ্র্যাগমেন্টেশন চালায়, অব্যবহৃত স্পেস মুক্ত করে এবং কোয়েরি রেসপন্স টাইম দ্রুত করে।
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.optimize_database_route') }}">
+                        <button type="submit" class="nr-btn" style="background: #8b5cf6; color: #fff; width: 100%; font-size: 0.82rem; padding: 8px;">
+                            ⚡ অপ্টিমাইজেশন চালান
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 2. Bulk Archive Stale Articles -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.8rem; margin-bottom: 8px;">📦</div>
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">
+                            বাল্ক আর্টিকেল আর্কাইভ
+                        </h4>
+                        <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 1rem;">
+                            পুরনো নিষ্ক্রিয় সংবাদগুলোকে আর্কাইভে স্থানান্তর করে প্রধান টেবিল দ্রুত রাখে।
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.bulk_archive_route') }}">
+                        <div style="display: flex; gap: 6px;">
+                            <select name="days_old" class="nr-form-control" style="font-size: 0.8rem; padding: 4px 8px; width: 90px;">
+                                <option value="90">৯০ দিন</option>
+                                <option value="180" selected>১৮০ দিন</option>
+                                <option value="365">১ বছর</option>
+                            </select>
+                            <button type="submit" class="nr-btn" style="background: #f59e0b; color: #fff; flex: 1; font-size: 0.82rem; padding: 8px;">
+                                📦 আর্কাইভ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 3. FTS Search Index Rebuild -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">
+                            সার্চ ইনডেক্স পুনর্গঠন
+                        </h4>
+                        <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 1rem;">
+                            FTS5 ফুল-টেক্সট সার্চ ইনডেক্স রি-বিল্ড করে বাংলা সার্চের নির্ভুলতা ও গতি বজায় রাখে।
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.rebuild_search_index_route') }}">
+                        <button type="submit" class="nr-btn" style="background: #0284c7; color: #fff; width: 100%; font-size: 0.82rem; padding: 8px;">
+                            🔍 ইনডেক্স রিবিল্ড
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 4. Batch Media Cloud Sync -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.8rem; margin-bottom: 8px;">☁️</div>
+                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">
+                            ক্লাউড মিডিয়া সিঙ্ক
+                        </h4>
+                        <p style="font-size: 0.78rem; color: #64748b; line-height: 1.4; margin-bottom: 1rem;">
+                            সকল স্থানীয় ছবি ও সম্পদ Google Drive, Mega ও S3 CDN স্টোরেজে ব্যাকআপ করে।
+                        </p>
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.media_cloud_sync_route') }}">
+                        <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; width: 100%; font-size: 0.82rem; padding: 8px;">
+                            ☁️ ক্লাউডে সিঙ্ক
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Storage Partition Table -->
+    <div class="nr-card">
+        <div class="nr-card-header">
+            <h3 class="nr-card-title">📊 ক্যাটাগরি ভিত্তিক ডাটা ডিস্ট্রিবিউশন ও স্টোরেজ শেয়ার</h3>
+            <span class="nr-badge nr-badge-category">পার্টিশন রিপোর্ট</span>
+        </div>
+        <div class="nr-card-body" style="padding: 0;">
+            <div style="overflow-x: auto;">
+                <table class="nr-table">
+                    <thead>
+                        <tr>
+                            <th>ক্যাটাগরি</th>
+                            <th>সংবাদ সংখ্যা</th>
+                            <th>স্টোরেজ অনুপাত</th>
+                            <th>অগ্রাধিকার ও স্ট্যাটাস</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in heavy_metrics.category_breakdown %}
+                        <tr>
+                            <td>
+                                <span class="nr-badge nr-badge-category">{{ cat.category|capitalize }}</span>
+                            </td>
+                            <td style="font-weight: 700; color: #1e293b;">
+                                {{ cat.count }} টি আর্টিকেল
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="background: #e2e8f0; height: 8px; width: 120px; border-radius: 4px; overflow: hidden;">
+                                        <div style="background: #8b5cf6; width: {{ cat.percentage }}%; height: 100%;"></div>
+                                    </div>
+                                    <span style="font-size: 0.8rem; color: #64748b;">{{ cat.percentage }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="nr-badge" style="background: #ecfdf5; color: #047857; font-weight: 700;">
+                                    ✓ অপ্টিমাইজড
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

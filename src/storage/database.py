@@ -35,6 +35,8 @@ from src.storage.models import (
     DatabaseReplicaNode,
     DataCenterBackupArchive,
     DataCenterSecurityLog,
+    EmergencyVaultState,
+    EncryptedVaultBackupRecord,
 )
 
 logger = get_logger("webcreoling.storage.database")

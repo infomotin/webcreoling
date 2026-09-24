@@ -12,6 +12,12 @@
 
     <!-- Dedicated Newsroom CMS CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/newsroom_admin.css') }}">
+    <script>
+        // Apply persistent sidebar collapsed state before render to prevent layout jump
+        if (localStorage.getItem('app_sidebar_collapsed') === 'true') {
+            document.body.classList.add('sidebar-collapsed');
+        }
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -21,21 +27,26 @@
     <!-- ===================================================================== -->
     <!-- 1. NEWSROOM SIDEBAR NAVIGATION                                        -->
     <!-- ===================================================================== -->
-    <aside class="nr-sidebar">
-        <!-- Brand Header -->
-        <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-sidebar-brand">
-            <div class="nr-brand-badge">আলো</div>
-            <div>
-                <div class="nr-brand-title">দি ডেইলি<span>এআই আলো</span></div>
-                <span class="nr-brand-sub">The Daily AI Alo CMS</span>
-            </div>
-        </a>
+    <aside class="nr-sidebar" id="nrSidebar">
+        <!-- Brand Header with Toggle Button -->
+        <div class="nr-sidebar-brand">
+            <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-brand-left" style="text-decoration: none;">
+                <div class="nr-brand-badge">আলো</div>
+                <div>
+                    <div class="nr-brand-title">দি ডেইলি<span>এআই আলো</span></div>
+                    <span class="nr-brand-sub">The Daily AI Alo CMS</span>
+                </div>
+            </a>
+            <button type="button" class="nr-sidebar-toggle-btn" id="nrSidebarToggleBtn" onclick="toggleNrSidebar()" title="সাইডবার সংকোচন / প্রসারণ (Ctrl+B)">
+                ◀
+            </button>
+        </div>
 
         <!-- Navigation Links -->
         <nav class="nr-sidebar-nav">
             <div class="nr-nav-heading">সম্পাদকীয় নিয়ন্ত্রণ</div>
 
-            <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-nav-item {% if not status_filter and not request.args.get('tab') and request.endpoint == 'admin.newspaper_management_view' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-nav-item {% if not status_filter and not request.args.get('tab') and request.endpoint == 'admin.newspaper_management_view' %}active{% endif %}" data-tooltip="সকল সংবাদ ফিড">
                 <div class="nr-nav-left">
                     <span>📰</span>
                     <span>সকল সংবাদ ফিড</span>
@@ -45,7 +56,7 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', status='pending') }}" class="nr-nav-item {% if status_filter == 'pending' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', status='pending') }}" class="nr-nav-item {% if status_filter == 'pending' %}active{% endif %}" data-tooltip="অনুমোদন কিউ (Review)">
                 <div class="nr-nav-left">
                     <span>🛡️</span>
                     <span>অনুমোদন কিউ (Review)</span>
@@ -55,7 +66,7 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='scheduler') }}" class="nr-nav-item {% if active_tab == 'scheduler' or request.args.get('tab') == 'scheduler' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='scheduler') }}" class="nr-nav-item {% if active_tab == 'scheduler' or request.args.get('tab') == 'scheduler' %}active{% endif %}" data-tooltip="নির্ধারিত সময়সূচী">
                 <div class="nr-nav-left">
                     <span>⏱️</span>
                     <span>নির্ধারিত সময়সূচী (Scheduler)</span>
@@ -65,7 +76,7 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', status='completed') }}" class="nr-nav-item {% if status_filter == 'completed' and not active_tab %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', status='completed') }}" class="nr-nav-item {% if status_filter == 'completed' and not active_tab %}active{% endif %}" data-tooltip="প্রকাশিত সংবাদসমূহ">
                 <div class="nr-nav-left">
                     <span>✅</span>
                     <span>প্রকাশিত সংবাদসমূহ</span>
@@ -75,7 +86,7 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', status='archived') }}" class="nr-nav-item {% if status_filter == 'archived' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', status='archived') }}" class="nr-nav-item {% if status_filter == 'archived' %}active{% endif %}" data-tooltip="আর্কাইভড সংবাদ">
                 <div class="nr-nav-left">
                     <span>📦</span>
                     <span>আর্কাইভড সংবাদ</span>
@@ -87,7 +98,7 @@
 
             <div class="nr-nav-heading">এআই ও অটোমেশন</div>
 
-            <a href="{{ url_for('admin.automation_view') }}" class="nr-nav-item {% if request.endpoint == 'admin.automation_view' %}active{% endif %}">
+            <a href="{{ url_for('admin.automation_view') }}" class="nr-nav-item {% if request.endpoint == 'admin.automation_view' %}active{% endif %}" data-tooltip="স্বয়ংক্রিয় শিডিউলার">
                 <div class="nr-nav-left">
                     <span>⚡</span>
                     <span>স্বয়ংক্রিয় শিডিউলার ও টাস্ক</span>
@@ -95,7 +106,7 @@
                 <span class="nr-nav-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">LIVE</span>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='aipilot') }}" class="nr-nav-item {% if active_tab == 'aipilot' or request.args.get('tab') == 'aipilot' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='aipilot') }}" class="nr-nav-item {% if active_tab == 'aipilot' or request.args.get('tab') == 'aipilot' %}active{% endif %}" data-tooltip="এআই পাইলট মোড">
                 <div class="nr-nav-left">
                     <span>🤖</span>
                     <span>এআই পাইলট মোড</span>
@@ -103,7 +114,15 @@
                 <span class="nr-nav-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;">PRO</span>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='ads') }}" class="nr-nav-item {% if active_tab == 'ads' or request.args.get('tab') == 'ads' %}active{% endif %}">
+            <a href="{{ url_for('scraper.index_view') }}" class="nr-nav-item" data-tooltip="কাস্টম পোর্টাল স্ক্র্যাপ">
+                <div class="nr-nav-left">
+                    <span>🌐</span>
+                    <span>কাস্টম স্ক্র্যাপ ও অরিজিনাল</span>
+                </div>
+                <span class="nr-nav-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">NEW</span>
+            </a>
+
+            <a href="{{ url_for('admin.newspaper_management_view', tab='ads') }}" class="nr-nav-item {% if active_tab == 'ads' or request.args.get('tab') == 'ads' %}active{% endif %}" data-tooltip="বিজ্ঞাপন ব্যবস্থাপনা">
                 <div class="nr-nav-left">
                     <span>📢</span>
                     <span>বিজ্ঞাপন ব্যবস্থাপনা (Ads)</span>
@@ -115,14 +134,14 @@
 
             <div class="nr-nav-heading">ইন্টারঅ্যাক্টিভ সেবা</div>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="nr-nav-item {% if active_tab == 'polls' or request.args.get('tab') == 'polls' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="nr-nav-item {% if active_tab == 'polls' or request.args.get('tab') == 'polls' %}active{% endif %}" data-tooltip="মতামত জরিপ">
                 <div class="nr-nav-left">
                     <span>📊</span>
                     <span>মতামত জরিপ (Polls)</span>
                 </div>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='subscribers') }}" class="nr-nav-item {% if active_tab == 'subscribers' or request.args.get('tab') == 'subscribers' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='subscribers') }}" class="nr-nav-item {% if active_tab == 'subscribers' or request.args.get('tab') == 'subscribers' %}active{% endif %}" data-tooltip="ই-বুলেটিন গ্রাহক">
                 <div class="nr-nav-left">
                     <span>📩</span>
                     <span>ই-বুলেটিন গ্রাহকবৃন্দ</span>
@@ -131,21 +150,21 @@
 
             <div class="nr-nav-heading">সেটিংস ও সিস্টেম</div>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="nr-nav-item {% if active_tab == 'settings' or request.args.get('tab') == 'settings' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="nr-nav-item {% if active_tab == 'settings' or request.args.get('tab') == 'settings' %}active{% endif %}" data-tooltip="পোর্টাল সেটিংস">
                 <div class="nr-nav-left">
                     <span>⚙️</span>
                     <span>পোর্টাল সেটিংস ও ব্র্যান্ডিং</span>
                 </div>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='footer') }}" class="nr-nav-item {% if active_tab == 'footer' or request.args.get('tab') == 'footer' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='footer') }}" class="nr-nav-item {% if active_tab == 'footer' or request.args.get('tab') == 'footer' %}active{% endif %}" data-tooltip="ডায়নামিক ফুটার">
                 <div class="nr-nav-left">
                     <span>🦶</span>
                     <span>ডায়নামিক ফুটার কনফিগ</span>
                 </div>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}" data-tooltip="এআই সিকিউরিটি ও ভল্ট">
                 <div class="nr-nav-left">
                     <span>🛡️</span>
                     <span>এআই সিকিউরিটি ও ভল্ট</span>
@@ -157,7 +176,7 @@
                 {% endif %}
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='datahub') }}" class="nr-nav-item {% if active_tab == 'datahub' or request.args.get('tab') == 'datahub' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='datahub') }}" class="nr-nav-item {% if active_tab == 'datahub' or request.args.get('tab') == 'datahub' %}active{% endif %}" data-tooltip="হিউজ ডেটাহাব">
                 <div class="nr-nav-left">
                     <span>💾</span>
                     <span>হিউজ ডেটাহাব ও স্টোরেজ</span>
@@ -165,14 +184,14 @@
                 <span class="nr-nav-badge" style="background: #8b5cf6; color: #fff;">HIGH-CAP</span>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="nr-nav-item {% if active_tab == 'monitor' or request.args.get('tab') == 'monitor' %}active{% endif %}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="nr-nav-item {% if active_tab == 'monitor' or request.args.get('tab') == 'monitor' %}active{% endif %}" data-tooltip="সার্ভার মনিটরিং">
                 <div class="nr-nav-left">
                     <span>📈</span>
                     <span>সার্ভার মনিটরিং ও হেলথ</span>
                 </div>
             </a>
 
-            <a href="{{ url_for('datacenter.index_view') }}" class="nr-nav-item" style="color: #38bdf8;">
+            <a href="{{ url_for('datacenter.index_view') }}" class="nr-nav-item" style="color: #38bdf8;" data-tooltip="ডেটাসেন্টার ও ক্লাউড">
                 <div class="nr-nav-left">
                     <span>🌐</span>
                     <span>ডেটাসেন্টার ও ক্লাউড</span>
@@ -181,7 +200,7 @@
             </a>
 
             {% if current_user and current_user.role == 'admin' %}
-            <a href="{{ url_for('admin.users_view') }}" class="nr-nav-item">
+            <a href="{{ url_for('admin.users_view') }}" class="nr-nav-item" data-tooltip="ইউজার RBAC রোলস">
                 <div class="nr-nav-left">
                     <span>👥</span>
                     <span>ইউজার RBAC রোলস</span>
@@ -189,17 +208,17 @@
             </a>
             {% endif %}
 
-            <a href="{{ url_for('dashboard.index_view') }}" class="nr-nav-item">
+            <a href="{{ url_for('dashboard.index_view') }}" class="nr-nav-item" data-tooltip="এক্সিকিউটিভ ড্যাশবোর্ড">
                 <div class="nr-nav-left">
                     <span>⚡</span>
-                    <span>এআই মডেল ড্যাশবোর্ড</span>
+                    <span>এক্সিকিউটিভ ড্যাশবোর্ড</span>
                 </div>
             </a>
         </nav>
 
         <!-- Sidebar Footer: Jump to Live Public Portal -->
         <div class="nr-sidebar-footer">
-            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="nr-live-portal-btn">
+            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="nr-live-portal-btn" data-tooltip="লাইভ পোর্টাল দেখুন">
                 <span>🌐</span>
                 <span>লাইভ পোর্টাল দেখুন &rarr;</span>
             </a>
@@ -213,7 +232,10 @@
 
         <!-- Top Utility Header Bar -->
         <header class="nr-topbar">
-            <div class="nr-topbar-left">
+            <div class="nr-topbar-left" style="display: flex; align-items: center; gap: 0.75rem;">
+                <button type="button" class="nr-sidebar-toggle-btn" onclick="toggleNrSidebar()" title="সাইডবার সংকোচন / প্রসারণ" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
+                    ☰
+                </button>
                 <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" class="nr-topbar-search">
                     <span class="nr-search-icon">🔍</span>
                     <input type="text" name="q" value="{{ search_query or '' }}" class="nr-topbar-input" placeholder="শিরোনাম, রিপোর্টার বা বিষয় খুঁজুন...">
@@ -265,6 +287,32 @@
     </div>
 
 </div>
+
+<script>
+    function toggleNrSidebar() {
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        const toggleBtn = document.getElementById('nrSidebarToggleBtn');
+        if (toggleBtn) {
+            toggleBtn.innerText = isCollapsed ? '▶' : '◀';
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            e.preventDefault();
+            toggleNrSidebar();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const isCollapsed = localStorage.getItem('app_sidebar_collapsed') === 'true';
+        const toggleBtn = document.getElementById('nrSidebarToggleBtn');
+        if (toggleBtn && isCollapsed) {
+            toggleBtn.innerText = '▶';
+        }
+    });
+</script>
 
 {% block scripts %}{% endblock %}
 

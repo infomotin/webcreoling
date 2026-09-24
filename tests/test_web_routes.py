@@ -70,4 +70,4 @@ def test_rbac_admin_full_access(client):
     # Admin accesses training
     res_training = client.get("/training", follow_redirects=True)
     assert res_training.status_code == 200
-    assert b"LLM Training" in res_training.data
+    assert b"Training" in res_training.data

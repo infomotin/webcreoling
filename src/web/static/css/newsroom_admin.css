@@ -73,21 +73,48 @@ html, body {
     z-index: 50;
     border-right: 1px solid #1e293b;
     overflow-y: auto;
+    overflow-x: hidden;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Scrollbar */
+.nr-sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+.nr-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.nr-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+.nr-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .nr-sidebar-brand {
-    padding: 1.25rem 1.4rem;
+    padding: 1.1rem 1.2rem;
     border-bottom: 1px solid #1e293b;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    justify-content: space-between;
+    gap: 0.75rem;
     text-decoration: none;
     color: #ffffff;
+    min-height: 65px;
+}
+
+.nr-brand-left {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    overflow: hidden;
 }
 
 .nr-brand-badge {
     width: 38px;
     height: 38px;
+    min-width: 38px;
     background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
     border-radius: 8px;
     display: flex;
@@ -102,22 +129,50 @@ html, body {
 
 .nr-brand-title {
     font-family: 'Noto Serif Bengali', serif;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 800;
     line-height: 1.2;
     color: #ffffff;
+    white-space: nowrap;
+}
+
+.nr-brand-title span {
+    color: #f43f5e;
 }
 
 .nr-brand-sub {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: block;
+    white-space: nowrap;
+}
+
+.nr-sidebar-toggle-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.nr-sidebar-toggle-btn:hover {
+    background: #e11d48;
+    color: #ffffff;
+    border-color: #e11d48;
 }
 
 .nr-sidebar-nav {
-    padding: 1rem 0.8rem;
+    padding: 0.8rem 0.6rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -125,19 +180,105 @@ html, body {
 }
 
 .nr-nav-heading {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     color: #64748b;
     font-weight: 800;
     letter-spacing: 0.8px;
-    padding: 0.8rem 0.7rem 0.35rem 0.7rem;
+    padding: 0.75rem 0.6rem 0.3rem 0.6rem;
+    white-space: nowrap;
+    transition: opacity 0.2s;
 }
 
 .nr-nav-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.65rem 0.85rem;
+    padding: 0.6rem 0.75rem;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.88rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    position: relative;
+}
+
+/* Collapsed State for Newsroom Sidebar (76px width) */
+body.sidebar-collapsed .nr-sidebar {
+    width: 76px;
+}
+
+body.sidebar-collapsed .nr-brand-left > div,
+body.sidebar-collapsed .nr-brand-sub,
+body.sidebar-collapsed .nr-nav-heading,
+body.sidebar-collapsed .nr-nav-left span:nth-child(2),
+body.sidebar-collapsed .nr-nav-badge,
+body.sidebar-collapsed .nr-live-portal-btn span:nth-child(2) {
+    display: none !important;
+}
+
+body.sidebar-collapsed .nr-brand-left {
+    justify-content: center;
+    width: 100%;
+}
+
+body.sidebar-collapsed .nr-sidebar-brand {
+    padding: 0.9rem 0.5rem;
+    justify-content: center;
+}
+
+body.sidebar-collapsed .nr-sidebar-toggle-btn {
+    display: none;
+}
+
+body.sidebar-collapsed .nr-nav-item {
+    justify-content: center;
+    padding: 0.75rem 0;
+}
+
+body.sidebar-collapsed .nr-nav-left {
+    justify-content: center;
+    gap: 0;
+}
+
+body.sidebar-collapsed .nr-nav-left span:first-child {
+    font-size: 1.3rem;
+}
+
+body.sidebar-collapsed .nr-sidebar-footer {
+    padding: 0.5rem;
+}
+
+body.sidebar-collapsed .nr-live-portal-btn {
+    padding: 0.6rem 0;
+    justify-content: center;
+}
+
+body.sidebar-collapsed .nr-live-portal-btn span:first-child {
+    font-size: 1.2rem;
+}
+
+/* Tooltip Popover in Collapsed Mode */
+body.sidebar-collapsed .nr-nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.45rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+}
     color: #cbd5e1;
     text-decoration: none;
     font-weight: 600;

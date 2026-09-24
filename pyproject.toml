@@ -29,6 +29,8 @@ dependencies = [
     "rich>=13.7.0",
     "pytest>=8.0.0",
     "pillow>=10.2.0",
+    "pymysql>=1.2.3",
+    "cryptography>=50.0.1",
 ]
 
 [project.optional-dependencies]
@@ -46,3 +48,7 @@ dev = [
 
 [project.scripts]
 webcreoling = "src.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

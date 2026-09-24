@@ -1,9 +1,11 @@
-"""
-Flask Application Factory & Route Registration.
-Configures session security, Jinja2 context processors, media serving, and RBAC routes.
-"""
-
+import sys
 from pathlib import Path
+
+# Ensure project root is on sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from flask import Flask, send_from_directory, render_template
 from config.settings import settings
 from src.storage.database import init_db, get_db_session
@@ -100,7 +102,8 @@ def create_app(test_config: dict = None) -> Flask:
 if __name__ == "__main__":
     app = create_app()
     print("=" * 70)
-    print("Starting WebCreoling Flask Web App on http://127.0.0.1:8080")
+    print(f"Starting WebCreoling Flask Web App on http://{settings.SERVER_HOST}:{settings.SERVER_PORT}")
     print("Default Accounts: admin / editor / analyst / viewer (Password: <username>123)")
+    print(f"Connected Database: {settings.DB_NAME} (MySQL at {settings.DB_HOST}:{settings.DB_PORT})")
     print("=" * 70)
-    app.run(host="127.0.0.1", port=8080, debug=True)
+    app.run(host=settings.SERVER_HOST, port=settings.SERVER_PORT, debug=settings.DEBUG)

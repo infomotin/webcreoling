@@ -27,7 +27,7 @@ class Article(Base):
     __tablename__ = "articles"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    url = Column(String(1024), unique=True, nullable=False, index=True)
+    url = Column(String(500), unique=True, nullable=False, index=True)
     source = Column(String(100), nullable=False, index=True)
     title = Column(Text, nullable=False)
     author = Column(String(255), nullable=True)

@@ -4,6 +4,7 @@ Supports full-text FTS5 search, category filtering, and detailed article inspect
 """
 
 from flask import Blueprint, render_template, request, abort
+from sqlalchemy import func
 from src.storage.database import get_db_session
 from src.storage.models import Article
 from src.storage.repositories import ArticleRepository
@@ -47,7 +48,7 @@ def list_articles_view():
 
         # Get category breakdown for filter pills
         category_counts = dict(
-            session.query(Article.category, Article.id)
+            session.query(Article.category, func.count(Article.id))
             .group_by(Article.category)
             .all()
         )

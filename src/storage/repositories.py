@@ -184,58 +184,59 @@ class ArticleRepository:
 
     def search_fts(self, query_text: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
-        Search articles using SQLite FTS5 index.
-        Falls back to LIKE queries if FTS table is unavailable.
+        Search articles using SQLite FTS5 index or MySQL LIKE query.
         """
         cleaned_query = query_text.strip().replace("'", "''").replace('"', '""')
         if not cleaned_query:
             return []
 
-        try:
-            # FTS5 MATCH query with BM25 ranking
-            sql = text(
-                """
-                SELECT a.id, a.title, a.content_text, a.category, a.source, a.published_at, a.url,
-                       rank
-                FROM articles_fts fts
-                JOIN articles a ON a.id = fts.id
-                WHERE articles_fts MATCH :query
-                ORDER BY rank
-                LIMIT :limit;
-                """
-            )
-            # Create FTS5 query token string (OR terms)
-            tokens = [t for t in cleaned_query.split() if len(t) > 1]
-            fts_match_expr = " OR ".join(f'"{t}"*' for t in tokens) if tokens else f'"{cleaned_query}"'
-            
-            result = self.session.execute(sql, {"query": fts_match_expr, "limit": top_k}).fetchall()
-            
-            records = []
-            for row in result:
-                records.append({
-                    "id": row[0],
-                    "title": row[1],
-                    "content_text": row[2],
-                    "category": row[3],
-                    "source": row[4],
-                    "published_at": row[5].isoformat() if row[5] else None,
-                    "url": row[6],
-                    "score": float(row[7]) if row[7] is not None else 0.0,
-                })
-            return records
-        except Exception as e:
-            logger.debug(f"FTS5 search error (falling back to LIKE): {e}")
-            # Fallback to standard LIKE
-            like_pattern = f"%{cleaned_query}%"
-            fallback_res = (
-                self.session.query(Article)
-                .filter(
-                    (Article.title.like(like_pattern)) | (Article.content_text.like(like_pattern))
+        bind_url = str(getattr(self.session.bind, "url", "")) if self.session.bind else ""
+        if "sqlite" in bind_url:
+            try:
+                # FTS5 MATCH query with BM25 ranking on SQLite
+                sql = text(
+                    """
+                    SELECT a.id, a.title, a.content_text, a.category, a.source, a.published_at, a.url,
+                           rank
+                    FROM articles_fts fts
+                    JOIN articles a ON a.id = fts.id
+                    WHERE articles_fts MATCH :query
+                    ORDER BY rank
+                    LIMIT :limit;
+                    """
                 )
-                .limit(top_k)
-                .all()
+                tokens = [t for t in cleaned_query.split() if len(t) > 1]
+                fts_match_expr = " OR ".join(f'"{t}"*' for t in tokens) if tokens else f'"{cleaned_query}"'
+                result = self.session.execute(sql, {"query": fts_match_expr, "limit": top_k}).fetchall()
+                records = []
+                for row in result:
+                    records.append({
+                        "id": row[0],
+                        "title": row[1],
+                        "content_text": row[2],
+                        "category": row[3],
+                        "source": row[4],
+                        "published_at": row[5].isoformat() if row[5] else None,
+                        "url": row[6],
+                        "score": float(row[7]) if row[7] is not None else 0.0,
+                    })
+                return records
+            except Exception as e:
+                logger.debug(f"FTS5 search error (falling back to LIKE): {e}")
+
+        # MySQL / Generic database query
+        like_pattern = f"%{cleaned_query}%"
+        fallback_res = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(
+                (Article.title.like(like_pattern)) | (Article.content_text.like(like_pattern))
             )
-            return [a.to_dict() for a in fallback_res]
+            .order_by(Article.published_at.desc())
+            .limit(top_k)
+            .all()
+        )
+        return [a.to_dict() for a in fallback_res]
 
     def get_lead_hero_article(self) -> Optional[Article]:
         """Fetch the primary highlighted lead/hero story for the newspaper frontpage."""
@@ -621,7 +622,7 @@ class ArticleRepository:
 
         total_count = query.count()
         articles = (
-            query.order_by(Article.published_at.desc().nullslast(), Article.id.desc())
+            query.order_by(Article.published_at.desc(), Article.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
             .all()
@@ -1857,6 +1858,10 @@ class BlockchainLedgerRepository:
         details["title"] = article.title
         details["author"] = article.author
         details["timestamp"] = block.timestamp.isoformat() if block.timestamp else None
+        details["block_number"] = block.block_number
+        details["block_hash"] = block.block_hash
+        details["prev_block_hash"] = block.prev_block_hash
+        details["digital_signature"] = block.digital_signature
         return is_valid, reason, details
 
     def audit_full_chain(self) -> Dict[str, Any]:

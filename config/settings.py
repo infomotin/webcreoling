@@ -36,9 +36,18 @@ class Settings(BaseSettings):
     LOGS_DIR: Path = PROJECT_ROOT / "logs"
     CONFIG_DIR: Path = PROJECT_ROOT / "config"
 
-    # Database Configuration
-    DATABASE_URL: str = f"sqlite:///{DB_DIR / 'news_pipeline.db'}"
+    # Database Configuration (MySQL / SQLite)
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_USER: str = "root"
+    DB_PASSWORD: str = "toor"
+    DB_NAME: str = "ai_news"
+    DATABASE_URL: str = "mysql+pymysql://root:toor@localhost:3306/ai_news?charset=utf8mb4"
     SQL_ECHO: bool = False
+
+    # Web Server Configuration
+    SERVER_HOST: str = "127.0.0.1"
+    SERVER_PORT: int = 8080
 
     # Scraper Configuration
     USER_AGENT: str = (

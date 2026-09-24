@@ -14,28 +14,40 @@ from src.storage.models import Base
 
 logger = get_logger("webcreoling.storage.database")
 
-# Ensure DB directory exists
-settings.DB_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure DB directory exists if using SQLite
+if "sqlite" in settings.DATABASE_URL:
+    settings.DB_DIR.mkdir(parents=True, exist_ok=True)
+
+# Build engine configuration depending on dialect
+engine_kwargs = {"echo": settings.SQL_ECHO, "pool_pre_ping": True}
+if "sqlite" in settings.DATABASE_URL:
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+elif "mysql" in settings.DATABASE_URL:
+    engine_kwargs["pool_recycle"] = 3600
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 20
 
 # Create Engine
 engine: Engine = create_engine(
     settings.DATABASE_URL,
-    echo=settings.SQL_ECHO,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
-    pool_pre_ping=True,
+    **engine_kwargs
 )
 
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     """Enable WAL mode, foreign keys, and fast busy timeouts on SQLite connections."""
-    if "sqlite" in settings.DATABASE_URL:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.execute("PRAGMA synchronous=NORMAL;")
-        cursor.execute("PRAGMA foreign_keys=ON;")
-        cursor.execute("PRAGMA busy_timeout=10000;")  # 10s busy timeout
-        cursor.close()
+    try:
+        # Only execute SQLite pragmas if the DBAPI is sqlite3
+        if dbapi_connection.__class__.__module__.startswith("sqlite3"):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA foreign_keys=ON;")
+            cursor.execute("PRAGMA busy_timeout=10000;")  # 10s busy timeout
+            cursor.close()
+    except Exception as e:
+        logger.debug(f"SQLite pragma error ignored: {e}")
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

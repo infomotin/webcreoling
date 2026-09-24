@@ -59,10 +59,10 @@
                     <span style="font-size: 1.2rem;">🛡️</span>
                     <div>
                         <div style="font-size: 0.85rem; font-weight: 700; color: #166534;">
-                            সার্ভার ব্লকচেইন লেজারে ক্রিপ্টোগ্রাফিক স্বাক্ষরিত ও সিলকৃত (Block #{{ ledger_info.block_number if ledger_info else (article.block_number or 1) }})
+                            সার্ভার ব্লকচেইন লেজারে ক্রিপ্টোগ্রাফিক স্বাক্ষরিত ও সিলকৃত (Block #{{ ledger_info.block_number if (ledger_info and ledger_info.block_number is defined) else (article.block_number or 1) }})
                         </div>
                         <div style="font-size: 0.72rem; color: #15803d; font-family: monospace;">
-                            SHA-256 Digest: {{ (ledger_info.block_hash if ledger_info else (article.block_hash or 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'))[:32] }}...
+                            SHA-256 Digest: {{ ((ledger_info.block_hash if (ledger_info and ledger_info.block_hash is defined) else (article.block_hash or 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'))|string)[:32] }}...
                         </div>
                     </div>
                 </div>

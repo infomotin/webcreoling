@@ -108,7 +108,14 @@ class BlockchainLedgerEngine:
     ) -> Dict[str, Any]:
         """Mint a new verified cryptographic block for a published article."""
         ts = timestamp or datetime.utcnow()
-        ts_iso = ts.isoformat()
+        if isinstance(ts, datetime):
+            ts = ts.replace(microsecond=0)
+            ts_iso = ts.isoformat()
+        else:
+            ts_str = str(ts).strip().replace(" ", "T")
+            if "." in ts_str:
+                ts_str = ts_str.split(".")[0]
+            ts_iso = ts_str
 
         title_hash = cls.sha256_text(title.strip())
         content_hash = cls.sha256_text(content_text.strip())
@@ -146,7 +153,17 @@ class BlockchainLedgerEngine:
         Verify an individual block's internal integrity against article content and signature.
         Returns: (is_valid, reason, details_dict)
         """
-        ts_iso = block["timestamp"].isoformat() if isinstance(block["timestamp"], datetime) else str(block["timestamp"])
+        raw_ts = block.get("timestamp")
+        if isinstance(raw_ts, datetime):
+            ts_iso = raw_ts.replace(microsecond=0).isoformat()
+        elif raw_ts:
+            ts_str = str(raw_ts).strip().replace(" ", "T")
+            if "." in ts_str:
+                ts_str = ts_str.split(".")[0]
+            ts_iso = ts_str
+        else:
+            ts_iso = ""
+
         calc_title_hash = cls.sha256_text(title.strip())
         calc_content_hash = cls.sha256_text(content_text.strip())
         calc_author_hash = cls.sha256_text((author or "Editorial Staff").strip())

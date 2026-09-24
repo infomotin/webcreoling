@@ -452,6 +452,7 @@ class ArticleRepository:
         is_breaking: bool = False,
         status: str = "completed",
         scheduled_at: Optional[datetime] = None,
+        source: Optional[str] = None,
         original_source_url: Optional[str] = None,
         source_status: str = "ACTIVE",
         source_removed_notice: Optional[str] = None,
@@ -466,8 +467,9 @@ class ArticleRepository:
 
         normalized_title = BanglaTextNormalizer.normalize_article_text(title.strip())
         normalized_content = BanglaTextNormalizer.normalize_article_text(content_text.strip())
-        slug = uuid.uuid4().hex[:10]
-        url = original_source_url.strip() if original_source_url else f"https://daily-ai-alo.news/editorial/{slug}"
+        slug = uuid.uuid4().hex[:12]
+        url = f"https://daily-ai-alo.news/editorial/{slug}"
+        orig_url = original_source_url.strip() if original_source_url else url
 
         # Determine published_at vs scheduled_at
         pub_at = None
@@ -482,10 +484,12 @@ class ArticleRepository:
         elif position_placement == "BREAKING":
             is_breaking = True
 
+        src_name = source.strip() if source else ("The Daily AI Alo সম্পাদকীয় ডেস্ক" if creation_origin == "MANUAL" else "সংবাদ সূত্র")
+
         article = Article(
             url=url,
-            original_source_url=original_source_url.strip() if original_source_url else url,
-            source="The Daily AI Alo সম্পাদকীয় ডেস্ক" if creation_origin == "MANUAL" else "সংবাদ সূত্র",
+            original_source_url=orig_url,
+            source=src_name,
             source_status=source_status or "ACTIVE",
             source_removed_notice=source_removed_notice,
             creation_origin=creation_origin or "MANUAL",
@@ -545,6 +549,7 @@ class ArticleRepository:
         is_breaking: Optional[bool] = None,
         status: Optional[str] = None,
         scheduled_at: Optional[datetime] = None,
+        source: Optional[str] = None,
         original_source_url: Optional[str] = None,
         source_status: Optional[str] = None,
         source_removed_notice: Optional[str] = None,
@@ -565,6 +570,8 @@ class ArticleRepository:
             article.category = category.strip()
         if author is not None:
             article.author = author.strip()
+        if source is not None:
+            article.source = source.strip()
         if summary is not None:
             article.summary = summary.strip()
         if content_text is not None:

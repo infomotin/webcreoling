@@ -61,10 +61,10 @@
                         <span style="font-size: 1.3rem;">✨</span>
                         <div>
                             <div style="font-size: 0.84rem; font-weight: 700; color: #166534;">
-                                এআই সত্যতা যাচাই সূচক: {{ article.extracted_entities.get('news_synthesis', {}).get('factuality_score') or (article.extracted_entities.get('fake_news_analysis', {}).get('factuality_score') if article.extracted_entities else 95) }}%
+                                এআই সত্যতা যাচাই সূচক: {{ (article.extracted_entities and article.extracted_entities.get('news_synthesis', {}).get('factuality_score')) or (article.extracted_entities and article.extracted_entities.get('fake_news_analysis', {}).get('factuality_score')) or 95 }}%
                             </div>
                             <div style="font-size: 0.72rem; color: #15803d;">
-                                মূল ভাবধারা সংরক্ষিত: {{ article.extracted_entities.get('news_synthesis', {}).get('meaning_retention_score') or '৯৫%' }} • ৭০% সত্যতা মানদণ্ড উত্তীর্ণ
+                                মূল ভাবধারা সংরক্ষিত: {{ (article.extracted_entities and article.extracted_entities.get('news_synthesis', {}).get('meaning_retention_score')) or '৯৫%' }} • ৭০% সত্যতা মানদণ্ড উত্তীর্ণ
                             </div>
                         </div>
                     </div>

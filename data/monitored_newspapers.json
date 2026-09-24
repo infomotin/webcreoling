@@ -14,8 +14,8 @@
     "scrape_interval_mins": 15,
     "status": "ONLINE",
     "http_code": 200,
-    "latency_ms": 42,
-    "last_checked": "10:13:56 (24 Sep)",
+    "latency_ms": 28,
+    "last_checked": "10:18:29 (24 Sep)",
     "total_ingested": 184,
     "is_system": true
   },

@@ -5,8 +5,10 @@ run Worldwide multi-lingual scrapers, and control the Autonomous AI Pilot Brain.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from src.common.logger import get_logger
 from src.scraper.engine import ScraperEngine
 from src.scraper.pipeline import ScrapingPipeline
+from src.scraper.custom_portal_ingester import CustomPortalIngester
 from src.scraper.social_world_ingestion import (
     YouTubePublicNewsIngester,
     WorldNewsMultiLingualIngester,
@@ -21,13 +23,14 @@ from src.storage.repositories import ArticleRepository, AIBrainRuleRepository, S
 from src.automation.social_broadcaster import UnifiedSocialBroadcaster, FacebookPagePublisher
 from src.web.auth import login_required, roles_required
 
+logger = get_logger("webcreoling.web.scraper_bp")
 scraper_bp = Blueprint("scraper", __name__)
 
 
 @scraper_bp.route("")
 @login_required
 def index_view():
-    """Display configured portals, social media presets, AI Pilot metrics, scheduler status, and live tasks."""
+    """Display configured portals, custom ingestion studio, social media presets, AI Pilot metrics, scheduler status, and live tasks."""
     engine = ScraperEngine()
     sites = engine.sites_config.get("sites", {})
 
@@ -58,6 +61,8 @@ def index_view():
         social_channels = social_repo.list_channels()
         broadcast_logs = social_repo.get_broadcast_logs(limit=15)
 
+    recent_custom_articles = CustomPortalIngester.list_recent_custom_ingested(limit=15)
+
     return render_template(
         "scraper.html",
         sites=sites,
@@ -68,6 +73,7 @@ def index_view():
         rules=[r.to_dict() for r in rules],
         social_channels=[c.to_dict() for c in social_channels],
         broadcast_logs=[b.to_dict() for b in broadcast_logs],
+        recent_custom_articles=recent_custom_articles,
         youtube_channels=YouTubePublicNewsIngester.DEFAULT_CHANNELS,
         world_feeds=WorldNewsMultiLingualIngester.FEEDS,
         social_outlets=FacebookPublicNewsIngester.PUBLIC_OUTLETS,
@@ -549,5 +555,125 @@ def api_broadcast_logs():
         repo = SocialChannelRepository(session)
         logs = repo.get_broadcast_logs(limit=25)
     return jsonify([l.to_dict() for l in logs])
+
+
+# ==============================================================================
+# Custom News Portal & Public Article Ingestion & AI 100% Original Studio Routes
+# ==============================================================================
+
+@scraper_bp.route("/custom-scrape-post", methods=["POST"])
+@roles_required("admin", "editor")
+def custom_scrape_post():
+    """
+    Standard Web Form: Ingests any public news URL, synthesizes 100% unique Bengali copy
+    (preserving 95%+ core facts), and directly publishes to our live news portal.
+    """
+    url = request.form.get("url", "").strip()
+    source_name = request.form.get("source_name", "").strip()
+    category = request.form.get("category", "bangladesh").strip()
+    target_placement = request.form.get("target_placement", "STANDARD").strip()
+    publish_now = bool(request.form.get("publish_now", "1") in ["1", "true", "True", "on"])
+    originality_mode = request.form.get("originality_mode", "100_percent_unique").strip()
+    author_name = request.form.get("author_name", "").strip()
+    custom_headline = request.form.get("custom_headline", "").strip()
+    custom_body = request.form.get("custom_body", "").strip()
+
+    if not url:
+        flash("অনুগ্রহ করে একটি সঠিক সংবাদ বা পোর্টালের লিংক দিন।", "danger")
+        return redirect(url_for("scraper.index_view", tab="custom"))
+
+    try:
+        res = CustomPortalIngester.scrape_and_synthesize_original_news(
+            url=url,
+            source_name=source_name or None,
+            category=category,
+            target_placement=target_placement,
+            publish_now=publish_now,
+            originality_mode=originality_mode,
+            author_name=author_name or None,
+            custom_headline=custom_headline or None,
+            custom_body=custom_body or None,
+        )
+        status_txt = "আমাদের লাইভ নিউজ পোর্টালে সরাসরি প্রকাশ করা হয়েছে 🚀" if publish_now else "ড্রাফট হিসেবে সংরক্ষণ করা হয়েছে 📝"
+        flash(
+            f"সফল! সংবাদটি সংগ্রহ করে ১০০% অরিজিনাল কন্টেন্টে রূপান্তর করা হয়েছে এবং {status_txt} (ইউনিক স্কোর: {res['originality_score']}%, সত্যতা: {res['factuality_score']}%)",
+            "success",
+        )
+        return redirect(url_for("scraper.index_view", tab="custom", highlight_id=res["article_id"]))
+    except Exception as e:
+        logger.error(f"Error in custom scrape post: {e}")
+        flash(f"সংবাদ সংগ্রহ ও এআই রূপান্তরে ত্রুটি: {e}", "danger")
+        return redirect(url_for("scraper.index_view", tab="custom"))
+
+
+@scraper_bp.route("/api/custom-portal/scrape-and-publish", methods=["POST"])
+@roles_required("admin", "editor")
+def api_custom_portal_scrape_and_publish():
+    """
+    AJAX Endpoint: Ingests any public portal or news article URL, transforms into
+    100% unique journalistic Bengali copy, and returns full side-by-side comparison telemetry.
+    """
+    req_data = request.get_json(silent=True) or request.form.to_dict()
+    url = req_data.get("url", "").strip()
+    source_name = req_data.get("source_name", "").strip()
+    category = req_data.get("category", "bangladesh").strip()
+    target_placement = req_data.get("target_placement", "STANDARD").strip()
+    publish_now = bool(str(req_data.get("publish_now", "true")).lower() in ["true", "1", "yes", "on"])
+    originality_mode = req_data.get("originality_mode", "100_percent_unique").strip()
+    author_name = req_data.get("author_name", "").strip()
+    custom_headline = req_data.get("custom_headline", "").strip()
+    custom_body = req_data.get("custom_body", "").strip()
+
+    if not url:
+        return jsonify({"success": False, "error": "অনুগ্রহ করে একটি সঠিক সংবাদ বা পোর্টালের লিংক প্রদান করুন।"}), 400
+
+    try:
+        res = CustomPortalIngester.scrape_and_synthesize_original_news(
+            url=url,
+            source_name=source_name or None,
+            category=category,
+            target_placement=target_placement,
+            publish_now=publish_now,
+            originality_mode=originality_mode,
+            author_name=author_name or None,
+            custom_headline=custom_headline or None,
+            custom_body=custom_body or None,
+        )
+        return jsonify(res)
+    except Exception as e:
+        logger.error(f"API Custom Scrape error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@scraper_bp.route("/api/custom-portal/publish-draft", methods=["POST"])
+@roles_required("admin", "editor")
+def api_custom_portal_publish_draft():
+    """AJAX Endpoint: Instantly publishes an existing draft article to our live portal (/news/)."""
+    req_data = request.get_json(silent=True) or request.form.to_dict()
+    article_id = int(req_data.get("article_id", 0))
+    position_placement = req_data.get("position_placement", "STANDARD")
+    is_breaking = bool(str(req_data.get("is_breaking", "false")).lower() in ["true", "1", "yes"])
+    is_featured = bool(str(req_data.get("is_featured", "false")).lower() in ["true", "1", "yes"])
+
+    if not article_id:
+        return jsonify({"success": False, "error": "আর্টিকেল আইডি আবশ্যক।"}), 400
+
+    res = CustomPortalIngester.publish_article_to_portal(
+        article_id=article_id,
+        position_placement=position_placement,
+        is_breaking=is_breaking,
+        is_featured=is_featured,
+    )
+    return jsonify(res)
+
+
+@scraper_bp.route("/api/custom-portal/recent-ingested")
+@login_required
+def api_custom_portal_recent_ingested():
+    """JSON API returning list of recently scraped & AI-synthesized news articles."""
+    limit = int(request.args.get("limit", 15))
+    articles = CustomPortalIngester.list_recent_custom_ingested(limit=limit)
+    return jsonify({"success": True, "articles": articles})
+
 
 

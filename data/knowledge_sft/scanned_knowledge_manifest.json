@@ -1,13 +1,57 @@
 {
   "version": "2.5",
-  "last_scan_time": "2026-09-24T09:35:44.957375",
-  "total_articles_scanned": 10,
-  "total_sft_pairs_generated": 30,
-  "domain_vocabulary_count": 44,
+  "last_scan_time": "2026-09-24T09:46:30.928917",
+  "total_articles_scanned": 40,
+  "total_sft_pairs_generated": 120,
+  "domain_vocabulary_count": 132,
   "topic_breakdown": {
-    "politics": 10
+    "politics": 40
   },
   "datasets": [
+    {
+      "filename": "knowledge_multi_topic_20260924_094630.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_094630.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-09-24T09:46:30.928948",
+      "size_kb": 58.62
+    },
+    {
+      "filename": "knowledge_multi_topic_20260924_094604.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_094604.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-09-24T09:46:04.833701",
+      "size_kb": 58.62
+    },
+    {
+      "filename": "knowledge_multi_topic_20260924_093936.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_093936.jsonl",
+      "articles_count": 15,
+      "sft_pairs_count": 45,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-09-24T09:39:36.485464",
+      "size_kb": 175.91
+    },
+    {
+      "filename": "knowledge_multi_topic_20260924_093743.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_093743.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-09-24T09:37:43.423076",
+      "size_kb": 58.62
+    },
     {
       "filename": "knowledge_multi_topic_20260924_093544.jsonl",
       "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_093544.jsonl",

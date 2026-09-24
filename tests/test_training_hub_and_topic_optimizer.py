@@ -203,11 +203,11 @@ def test_local_model_manager_operations(local_manager):
 # =========================================================================
 
 def test_training_index_endpoint(client: FlaskClient):
-    """Verify GET /training returns 200 and contains cockpit elements."""
+    """Verify GET /training returns 200 and contains studio elements."""
     response = client.get("/training")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "AI Model Training, Topic Splitter & Optimizer Cockpit" in html
+    assert "AI Model Training, Topic Splitter" in html
     assert "রাজনীতি ও সুশাসন" in html
     assert "liveLossChart" in html
 
@@ -267,3 +267,18 @@ def test_optimize_and_benchmark_endpoints(client: FlaskClient):
     bench_data = bench_res.get_json()
     assert bench_data["status"] == "success"
     assert "tokens_per_second" in bench_data["benchmark"]
+
+    # Inference Playground Test
+    inf_payload = {
+        "model_id": "politics",
+        "prompt": "নির্বাচন কমিশনের নতুন সিদ্ধান্ত কী?",
+        "temperature": 0.7,
+        "max_tokens": 128,
+    }
+    inf_res = client.post("/training/api/inference-test", json=inf_payload)
+    assert inf_res.status_code == 200
+    inf_data = inf_res.get_json()
+    assert inf_data["status"] == "success"
+    assert "thought" in inf_data
+    assert "response" in inf_data
+    assert inf_data["tokens_per_second"] > 0

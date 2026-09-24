@@ -300,7 +300,7 @@
     </div>
 </div>
 
-<!-- 5 Primary Studio Tabs -->
+<!-- 6 Primary Studio Tabs -->
 <div class="studio-tabs-bar">
     <button class="studio-tab-btn active" onclick="switchStudioTab('tab-topics', this)">
         🎯 ১. টপিক স্প্লিটার ও অপ্টিমাইজেশন (Topic Splitter)
@@ -316,6 +316,9 @@
     </button>
     <button class="studio-tab-btn" onclick="switchStudioTab('tab-inference-playground', this)">
         🧪 ৫. লাইভ এআই ইনফারেন্স প্লেগ্রাউন্ড (Live Prompt Tester)
+    </button>
+    <button class="studio-tab-btn" onclick="switchStudioTab('tab-masterclass', this)">
+        📚 ৬. বাংলা থিওরি, গাইডলাইন ও নিউজরুম ব্রেন অ্যাক্টিভেশন (Masterclass Manual)
     </button>
 </div>
 
@@ -974,8 +977,322 @@
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color);">
-                <button class="btn btn-sm btn-outline" onclick="copyInferenceOutput()">📋 কপি করুন</button>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB 6: BANGLA THEORY, ARCHITECTURE & NEWSROOM BRAIN ACTIVATION MANUAL -->
+<!-- ========================================================================= -->
+<div id="tab-masterclass" class="studio-tab-pane" style="display: none;">
+    <!-- Overview Banner -->
+    <div style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(88, 28, 135, 0.4)); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 14px; padding: 1.4rem; margin-bottom: 1.8rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700; margin-bottom: 0.4rem;">
+                    📖 সম্পূর্ণ বাংলা এআই গাইডলাইন ও আর্কিটেকচার ব্লুপ্রিন্ট
+                </span>
+                <h2 style="font-size: 1.45rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">
+                    বাংলা এলএলএম ফাইন-টিউনিং মাস্টারক্লাস ও নিউজরুম ব্রেন অ্যাক্টিভেশন
+                </h2>
+                <p style="color: #cbd5e1; font-size: 0.88rem; max-width: 880px; line-height: 1.5; margin: 0.4rem 0 0 0;">
+                    কেন, কখন এবং কীভাবে এলএলএম ফাইন-টিউনিং করবেন, ম্যাথমেটিক্যাল কার্যপ্রণালী কী, কীভাবে টেস্ট ও বেঞ্চমার্ক করবেন এবং নতুন ট্রেইন্ড মডেলটিকে কীভাবে সরাসরি <strong>নিউজ পোর্টালের মূল ব্রেন (AI Pilot Brain)</strong> হিসেবে যুক্ত করবেন তার বিস্তারিত বিবরণ।
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <a href="#ch-why-llm" class="btn btn-sm btn-outline" style="font-size: 0.75rem;">১. কোন LLM ও কেন?</a>
+                <a href="#ch-lora-math" class="btn btn-sm btn-outline" style="font-size: 0.75rem;">২. LoRA গণিত</a>
+                <a href="#ch-testing" class="btn btn-sm btn-outline" style="font-size: 0.75rem;">৩. টেস্টিং ও মেট্রিক্স</a>
+                <a href="#ch-activation" class="btn btn-sm btn-primary" style="font-size: 0.75rem;">৪. ব্রেন অ্যাক্টিভেশন</a>
+                <a href="#ch-simulator" class="btn btn-sm btn-secondary" style="font-size: 0.75rem;">৫. লাইভ সিমুলেটর</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- অধ্যায় ১: কেন, কখন এবং কোন এলএলএম নির্বাচন করবেন? -->
+    <!-- ========================================================================= -->
+    <div id="ch-why-llm" class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #38bdf8;">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #38bdf8; margin: 0;">
+                    📘 অধ্যায় ১: কেন, কখন এবং কোন এলএলএম (LLM) নির্বাচন করবেন?
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    প্রম্পট ইঞ্জিনিয়ারিং বনাম RAG বনাম LoRA ফাইন-টিউনিং এবং হার্ডওয়্যার অনুযায়ী সঠিক মডেল নির্বাচন
+                </p>
+            </div>
+            <span class="badge badge-category">Architectural Decision</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.2rem;">
+            <!-- Why Fine-Tuning Comparison -->
+            <div style="background: rgba(0,0,0,0.3); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--studio-border);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.8rem;">
+                    ১.১ কেন শুধু প্রম্পট বা RAG যথেষ্ট নয়? কেন ফাইন-টিউনিং অপরিহার্য?
+                </h4>
+                <ul style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
+                    <li><strong>প্রম্পট ইঞ্জিনিয়ারিং এর সীমাবদ্ধতা:</strong> প্রতিবার বড় প্রম্পট পাঠালে হাজার হাজার টোকেন নষ্ট হয়, রেসপন্স সময় অনেক বাড়ে (৫-১০ সেকেন্ড) এবং মডেলের ভেতরকার বাংলা ব্যকরণগত স্বতঃস্ফূর্ততা তৈরি হয় না।</li>
+                    <li><strong>RAG (তথ্য পুনরুদ্ধার):</strong> RAG বাইরের ডেটাবেজ থেকে তথ্য এনে দেয় কিন্তু মডেলকে প্রমিত সাংবাদিক ভাষা ও সুনির্দিষ্ট ৭টি ক্যাটাগরিতে ক্লাসিফাই করার সূক্ষ্ম স্বভাব শেখাতে পারে না।</li>
+                    <li><strong>LoRA ফাইন-টিউনিং এর সুপারপাওয়ার:</strong> মডেলের নিউরাল ওয়েটের ভেতর সরাসরি বাংলা সাংবাদিক জ্ঞান, সত্যতা যাচাইয়ের লজিক এবং সংক্ষিপ্ত হেডলাইন লেখার শৈলী স্থায়ীভাবে গেঁথে যায়। এর ফলে <strong>০.০১ সেকেন্ডে সর্বনিম্ন খরচে নির্ভুল আউটপুট</strong> পাওয়া যায়।</li>
+                </ul>
+            </div>
+
+            <!-- Model Tier Selection Table -->
+            <div style="background: rgba(0,0,0,0.3); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--studio-border);">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.8rem;">
+                    ১.২ হার্ডওয়্যার ও প্যারামিটার অনুযায়ী কোন মডেল সেরা?
+                </h4>
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.78rem;">
+                    <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 0.5rem 0.8rem; border-radius: 4px;">
+                        <strong style="color: #38bdf8; display: block;">🔹 135M - 500M (SmolLM2-135M / Qwen2.5-0.5B)</strong>
+                        <span style="color: #cbd5e1;">সাধারণ ল্যাপটপ / ভিপিএস CPU (8-16 GB RAM)। অতি দ্রুত ইনফারেন্স, ক্যাটাগরি ম্যাপিং ও শিরোনাম তৈরির জন্য সেরা।</span>
+                    </div>
+                    <div style="background: rgba(192, 132, 252, 0.08); border-left: 3px solid #c084fc; padding: 0.5rem 0.8rem; border-radius: 4px;">
+                        <strong style="color: #c084fc; display: block;">🔹 1.5B - 3B (Qwen2.5-1.5B / BanglaLLaMA-3B)</strong>
+                        <span style="color: #cbd5e1;">সিঙ্গেল GPU (RTX 3060 / T4 12GB)। ব্যালেন্সড পারফরম্যান্স, পূর্ণাঙ্গ সংবাদ সামারি ও ফ্যাক্ট-চেকিংয়ের জন্য আদর্শ।</span>
+                    </div>
+                    <div style="background: rgba(52, 211, 153, 0.08); border-left: 3px solid #34d399; padding: 0.5rem 0.8rem; border-radius: 4px;">
+                        <strong style="color: #34d399; display: block;">🔹 7B - 8B (Llama-3-8B / Mistral-7B / Qwen-7B)</strong>
+                        <span style="color: #cbd5e1;">হাই-এন্ড এআই সার্ভার (A100 / RTX 4090 24GB)। গভীর অনুসন্ধানমূলক বিশ্লেষণ ও মাল্টি-স্টেপ জটিল রিযনিং এর জন্য উপযুক্ত (QLoRA 4-bit কোয়ান্টাইজেশন প্রয়োজন)।</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- অধ্যায় ২: কীভাবে ফাইন-টিউনিং কাজ করে এবং LoRA গণিত -->
+    <!-- ========================================================================= -->
+    <div id="ch-lora-math" class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #c084fc;">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #c084fc; margin: 0;">
+                    ⚙️ অধ্যায় ২: কীভাবে ফাইন-টিউনিং সম্পন্ন হয় এবং LoRA ম্যাথমেটিক্স
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    লো-র‍্যাঙ্ক অ্যাডাপ্টেশন (LoRA), NF4 কোয়ান্টাইজেশন এবং বাংলা SFT রিযনিং ডেটাসেট স্ট্রাকচার
+                </p>
+            </div>
+            <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #c084fc;">Mathematical Core</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.5rem; align-items: center; margin-bottom: 1.2rem;">
+            <div>
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.6rem;">
+                    ২.১ লো-র‍্যাঙ্ক ম্যাট্রিক্স ফ্যাক্টরাইজেশন ফর্মুলা
+                </h4>
+                <p style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 0.8rem;">
+                    ফুল ফাইন-টিউনিংয়ে সব প্যারামিটার আপডেট করলে মেমরি ক্র্যাশ করে ও পূর্বের জ্ঞান হারিয়ে যায় (Catastrophic Forgetting)। <strong>LoRA বেস মডেলকে সম্পূর্ণ ফ্রিজ (Freeze) রাখে</strong> এবং সেলফ-অ্যাটেনশনের $W_0$ এর সাথে দুটি ক্ষুদ্র ম্যাট্রিক্স যোগ করে:
+                </p>
+
+                <div style="padding: 1rem; background: #060911; border-radius: 8px; border: 1px solid rgba(192, 132, 252, 0.3); font-family: monospace; color: #67e8f9; font-size: 1rem; text-align: center; margin-bottom: 0.8rem;">
+                    $$h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} (B \cdot A) x$$
+                </div>
+
+                <ul style="font-size: 0.78rem; color: #94a3b8; line-height: 1.5; padding-left: 1.2rem; margin: 0;">
+                    <li><strong>$W_0 \in \mathbb{R}^{d \times k}$</strong>: ফ্রোজেন বেস মডেল ওয়েটস (অপরিবর্তিত থাকে)।</li>
+                    <li><strong>$A \in \mathbb{R}^{r \times k}$</strong>: ডাউন-প্রজেকশন ম্যাট্রিক্স (র্যান্ডম গাউসিয়ান ইনিশিয়ালাইজেশন)।</li>
+                    <li><strong>$B \in \mathbb{R}^{d \times r}$</strong>: আপ-প্রজেকশন ম্যাট্রিক্স (শুরুতে 0 থাকে, ফলে শুরুতে $\Delta W = 0$)।</li>
+                    <li><strong>$\frac{\alpha}{r}$</strong>: স্কেলিং ফ্যাক্টর যা লার্নিং স্ট্যাবিলিটি নিশ্চিত করে।</li>
+                </ul>
+            </div>
+
+            <!-- SFT ChatML Format Box -->
+            <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 10px; border: 1px solid var(--studio-border);">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: #34d399; margin-bottom: 0.6rem;">
+                    ২.২ চ্যাটএমএল (ChatML) &lt;thought&gt; রিযনিং স্ট্রাকচার
+                </h4>
+                <pre style="background: #040711; padding: 0.8rem; border-radius: 6px; color: #38bdf8; font-size: 0.72rem; overflow-x: auto; line-height: 1.4; border: 1px solid #1e293b; margin: 0;"><code>&lt;|im_start|&gt;system
+You are an expert Bangla AI Journalist.&lt;|im_end|&gt;
+&lt;|im_start|&gt;user
+সংবাদ বিশ্লেষণ: মুদ্রাস্ফীতি নিয়ন্ত্রণে প্রধান পদক্ষেপ কী?&lt;|im_end|&gt;
+&lt;|im_start|&gt;thought
+১. সামষ্টিক অর্থনৈতিক সূচক যাচাই।
+২. নীতি সুদহার ও তারল্য ব্যবস্থাপনা মূল্যায়ন।
+৩. টেকসই রাজস্ব নীতি নির্ধারণ।&lt;|im_end|&gt;
+&lt;|im_start|&gt;assistant
+মূল পদক্ষেপ হলো নীতি সুদহার বৃদ্ধি ও কঠোর তারল্য তদারকি।&lt;|im_end|&gt;</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- অধ্যায় ৩: মডেল কীভাবে টেস্ট ও ইভ্যালুয়েশন করতে হয় -->
+    <!-- ========================================================================= -->
+    <div id="ch-testing" class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #34d399;">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #34d399; margin: 0;">
+                    📊 অধ্যায় ৩: মডেল কীভাবে টেস্ট ও ইভ্যালুয়েশন (Evaluation) করতে হয়?
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    লস কার্ভ বোঝা, আন্ডারফিটিং/ওভারফিটিং সনাক্তকরণ এবং ROUGE, BLEU ও F1 স্কোর ইন্টারপ্রিটেশন
+                </p>
+            </div>
+            <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #34d399;">Benchmarking & Metrics</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.2rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border-left: 3px solid #38bdf8;">
+                <strong style="color: #38bdf8; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">১. Cross-Entropy Loss</strong>
+                <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45; margin: 0;">
+                    শুরুতে ৩.৫ থাকে। ফাইন-টিউনিং সফল হলে লস <strong>১.২ - ১.৪</strong> এ নেমে আসে। যদি ভ্যালিডেশন লস বাড়তে থাকে তবে ওভারফিটিং হচ্ছে।
+                </p>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border-left: 3px solid #c084fc;">
+                <strong style="color: #c084fc; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">২. Perplexity (PPL)</strong>
+                <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45; margin: 0;">
+                    $PPL = e^{\text{Loss}}$। মডেলের অনিশ্চয়তা প্রকাশ করে। PPL ৩৫ থেকে কমে <strong>৫-৮</strong> এর ঘরে আসলে মডেল আত্মবিশ্বাসী বাংলা জেনারেট করে।
+                </p>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border-left: 3px solid #34d399;">
+                <strong style="color: #34d399; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">৩. ROUGE-L & BLEU</strong>
+                <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45; margin: 0;">
+                    হেডলাইন ও সারসংক্ষেপের নির্ভুলতা পরিমাপ করে। স্কোর <strong>০.৩৮ থেকে ০.৫০</strong> এর উপরে থাকা মানে অত্যন্ত প্রমিত সাংবাদিক মান।
+                </p>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; border-left: 3px solid #fbbf24;">
+                <strong style="color: #fbbf24; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">৪. Micro F1 Score</strong>
+                <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45; margin: 0;">
+                    ব্যক্তি, স্থান ও প্রতিষ্ঠানের নাম (NER Entity) সনাক্তকরণের নির্ভুলতা। <strong>৮৫%-৯৫% F1 স্কোর</strong> নিউজ ফিল্টারিংয়ের জন্য আদর্শ।
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- অধ্যায় ৪: নতুন মডেল অ্যাক্টিভেশন এবং নিউজ পোর্টালের মূল ব্রেন হিসেবে ব্যবহার -->
+    <!-- ========================================================================= -->
+    <div id="ch-activation" class="card" style="margin-bottom: 1.8rem; border-top: 3px solid #fbbf24;">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fbbf24; margin: 0;">
+                    🚀 অধ্যায় ৪: নতুন মডেল অ্যাক্টিভেশন এবং নিউজ পোর্টালের মূল ব্রেন (AI Pilot) হিসেবে ব্যবহার
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    ফাইন-টিউনিং সম্পন্ন মডেলটিকে যেভাবে লাইভ নিউজরুমের মূল চালিকাশক্তি হিসেবে সক্রিয় ও সংযুক্ত করা হয়
+                </p>
+            </div>
+            <span class="badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24;">Production Deployment</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.2rem;">
+            <!-- Step-by-step activation guide -->
+            <div>
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.6rem;">
+                    ৪.১ স্টেপ-বাই-স্টেপ অ্যাক্টিভেশন প্রণালী
+                </h4>
+                <ol style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.6; padding-left: 1.2rem; margin: 0;">
+                    <li><strong>চেকপয়েন্ট সংরক্ষণ:</strong> ফাইন-টিউনিং শেষ হলে স্বয়ংক্রিয়ভাবে <code>checkpoints/final_specialized_model/</code> ডিরেক্টরিতে LoRA অ্যাডাপ্টার ও টোকেনাইজার সেভ হয়।</li>
+                    <li><strong>১-ক্লিক অ্যাক্টিভেশন:</strong> ড্যাশবোর্ডের <strong>"🚀 নিউজরুমে সক্রিয় করুন (Deploy to Newsroom)"</strong> বাটনে ক্লিক করলে <code>checkpoints/active_model/active_model_manifest.json</code> তৈরি হয়।</li>
+                    <li><strong>এআই পাইলটের সাথে অটো-কানেক্ট:</strong> ব্যাকগ্রাউন্ড অটোমেশন ইঞ্জিন (<code>src/automation/ai_pilot_brain.py</code>) এবং নিউজ সিন্থেসাইজার (<code>src/nlp/news_synthesizer.py</code>) এই চেকপয়েন্টটিকে মেমরিতে লোড করে।</li>
+                    <li><strong>স্বয়ংক্রিয় নিউজ প্রসেসিং:</strong> স্ক্র্যাপার থেকে আসা প্রতিটি কাঁচা সংবাদ এই মডেলটি পড়ে, ক্যাটাগরি ঠিক করে, সত্যতা যাচাই করে এবং হেডলাইন লিখে সরাসরি পোর্টালের হোমপেজে পাবলিশ করে।</li>
+                </ol>
+            </div>
+
+            <!-- Developer Integration Code Snippet -->
+            <div style="background: #060911; padding: 1rem; border-radius: 10px; border: 1px solid var(--studio-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <strong style="color: #38bdf8; font-size: 0.8rem;">💻 পাইথন কোডে সক্রিয় মডেল ব্যবহারের নিয়ম:</strong>
+                    <span class="badge badge-category" style="font-size: 0.65rem;">Python SDK</span>
+                </div>
+                <pre style="background: #02040a; padding: 0.8rem; border-radius: 6px; color: #34d399; font-size: 0.72rem; overflow-x: auto; line-height: 1.4; border: 1px solid #1e293b; margin: 0;"><code><span style="color: #ff7b72;">from</span> src.automation.ai_pilot_brain <span style="color: #ff7b72;">import</span> AIPilotBrain
+<span style="color: #ff7b72;">from</span> src.nlp.news_synthesizer <span style="color: #ff7b72;">import</span> AINewsSynthesizerAndParaphraser
+
+<span style="color: #8b949e;"># ১. অ্যাক্টিভ এআই পাইলট ব্রেন কল করা</span>
+brain = AIPilotBrain()
+
+<span style="color: #8b949e;"># ২. কাঁচা সংবাদের সত্যতা ও ক্যাটাগরি বিশ্লেষণ</span>
+decision = brain.process_raw_article_feed(raw_article)
+
+<span style="color: #8b949e;"># ৩. ৯৫% মূল ভাব বজায় রেখে প্রমিত সাংবাদিক প্রতিবেদন জেনারেশন</span>
+synthesizer = AINewsSynthesizerAndParaphraser()
+published_news = synthesizer.synthesize_and_publish(raw_article)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- অধ্যায় ৫: লাইভ ইন্টারেক্টিভ পোর্টাল ব্রেন সিমুলেটর -->
+    <!-- ========================================================================= -->
+    <div id="ch-simulator" class="card" style="border-top: 3px solid #10b981;">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #10b981; margin: 0;">
+                    🧪 অধ্যায় ৫: লাইভ ইন্টারেক্টিভ পোর্টাল ব্রেন সিমুলেটর (Live Pipeline Simulator)
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">
+                    দেখুন কীভাবে সক্রিয় এআই মডেলটি একটি কাঁচা স্ক্র্যাপ করা খবরকে স্বয়ংক্রিয়ভাবে প্রসেস করে পোর্টালের হোমপেজে পাবলিশ করে
+                </p>
+            </div>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">Live Simulation</span>
+        </div>
+
+        <!-- Sample News Selector Chips -->
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); align-self: center;">নমুনা কাঁচা খবর পেস্ট করুন:</span>
+            <button class="btn btn-sm btn-outline" style="font-size: 0.72rem;" onclick="setBrainSimPreset('economy')">
+                📈 ব্যাংক ও মুদ্রাস্ফীতি সংবাদ
+            </button>
+            <button class="btn btn-sm btn-outline" style="font-size: 0.72rem;" onclick="setBrainSimPreset('politics')">
+                🏛️ নির্বাচন কমিশন ও সংসদ
+            </button>
+            <button class="btn btn-sm btn-outline" style="font-size: 0.72rem;" onclick="setBrainSimPreset('sports')">
+                🏏 ক্রিকেট বিশ্বকাপ ম্যাচ প্রিভিউ
+            </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem;">
+            <!-- Left Input -->
+            <div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.82rem;">কাঁচা সংবাদ টেক্সট (Raw Scraped News Text)</label>
+                    <textarea id="simRawNewsInput" class="form-control" rows="5">বাংলাদেশ ব্যাংকের গভর্নর জানিয়েছেন মূল্যস্ফীতি নিয়ন্ত্রণে নীতি সুদহার বৃদ্ধি এবং তারল্য ব্যবস্থাপনার কঠোর তদারকি অব্যাহত থাকবে। ব্যাংক খাতে সুশাসন প্রতিষ্ঠায় বিশেষ টাস্কফোর্স গঠন করা হয়েছে।</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.82rem;">সংবাদের উৎস (Source Feed)</label>
+                    <input type="text" id="simSourceInput" class="form-control" value="Prothom Alo Live RSS Feed">
+                </div>
+
+                <button type="button" class="btn btn-primary" id="runBrainSimBtn" style="width: 100%; padding: 0.75rem; font-size: 0.95rem;" onclick="runPortalBrainSimulation()">
+                    ⚡ এআই ব্রেন দিয়ে প্রসেস ও পাবলিশ সিমুলেট করুন
+                </button>
+            </div>
+
+            <!-- Right Simulation Pipeline Animation & Result -->
+            <div style="background: rgba(0,0,0,0.4); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--studio-border); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                        <strong style="color: #38bdf8; font-size: 0.9rem;">🔄 এআই ব্রেন এক্সিকিউশন ট্র্যাকার:</strong>
+                        <span class="badge badge-category" id="simTimeBadge">Latency: -- ms</span>
+                    </div>
+
+                    <!-- Steps Timeline -->
+                    <div id="simPipelineStepsList" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.78rem;">
+                        <div style="color: #64748b;">সিমুলেশন শুরু করতে 'প্রসেস ও পাবলিশ' এ ক্লিক করুন...</div>
+                    </div>
+
+                    <!-- Published Card Preview -->
+                    <div id="simPublishedCard" style="display: none; background: #060911; border: 1px solid #10b981; border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                            <span class="badge badge-category" id="simCardCat" style="background: #10b981; color: #fff;">জাতীয়</span>
+                            <span style="font-size: 0.68rem; color: #34d399;">✓ Verified Authentic (96.5%)</span>
+                        </div>
+                        <h4 style="font-size: 0.95rem; color: #fff; font-weight: 700; margin: 0.2rem 0 0.4rem 0;" id="simCardHeadline">
+                            বাংলাদেশ ব্যাংকের গভর্নর জানিয়েছেন মূল্যস্ফীতি নিয়ন্ত্রণে নীতি সুদহার বৃদ্ধি পাবে
+                        </h4>
+                        <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.45; margin: 0;" id="simCardSummary">
+                            ব্যাংক খাতে সুশাসন ও তারল্য স্থিতিশীলতা নিশ্চিতকরণে কেন্দ্রীয় ব্যাংকের বিশেষ টাস্কফোর্স গঠন।
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem; padding-top: 0.6rem; border-top: 1px solid var(--border-color); font-size: 0.72rem; color: var(--text-muted);">
+                    🔗 সক্রিয় মডেল: <strong style="color: #34d399;">SmolLM2-135M-Bangla-Newsroom</strong> | এআই পাইলট অটো-ডিসপ্যাচ এনাবল্ড
+                </div>
             </div>
         </div>
     </div>
@@ -1523,6 +1840,95 @@ async function triggerTopicSplitModal(topicId, nameBn, rank) {
         } catch (err) {
             console.error(err);
         }
+    }
+}
+
+// 13. Live Portal Brain Simulator (Theory Tab Chapter 5)
+const brainSimPresets = {
+    economy: {
+        raw: "বাংলাদেশ ব্যাংকের গভর্নর জানিয়েছেন মূল্যস্ফীতি নিয়ন্ত্রণে নীতি সুদহার বৃদ্ধি এবং তারল্য ব্যবস্থাপনার কঠোর তদারকি অব্যাহত থাকবে। ব্যাংক খাতে সুশাসন প্রতিষ্ঠায় বিশেষ টাস্কফোর্স গঠন করা হয়েছে।",
+        source: "বাংলাদেশ ব্যাংক প্রেস রিলিজ / অনলাইন ডেস্ক"
+    },
+    politics: {
+        raw: "সুষ্ঠু ও নিরপেক্ষ নির্বাচন আয়োজনের লক্ষ্যে সকল রাজনৈতিক দলের সাথে সংলাপে বসতে যাচ্ছে নির্বাচন কমিশন। প্রধান নির্বাচন কমিশনার জানান সকলের ভোটাধিকার নিশ্চিত করাই মূল লক্ষ্য।",
+        source: "ইসি মিডিয়া উইং / বিশেষ প্রতিনিধি"
+    },
+    sports: {
+        raw: "আইসিসি টুর্নামেন্টের প্রস্তুতি ম্যাচে দুর্দান্ত জয় পেয়েছে বাংলাদেশ দল। অলরাউন্ডার মেহেদী হাসান মিরাজের ব্যাটে-বলে ম্যাচ সেরা নৈপুণ্যে ৫ উইকেটে বড় জয় নিশ্চিত হয়।",
+        source: "বিসিবি মিডিয়া সেল / ক্রীড়া ডেস্ক"
+    }
+};
+
+function setBrainSimPreset(presetKey) {
+    const p = brainSimPresets[presetKey];
+    if (p) {
+        document.getElementById("simRawNewsInput").value = p.raw;
+        document.getElementById("simSourceInput").value = p.source;
+    }
+}
+
+async function runPortalBrainSimulation() {
+    const raw_text = document.getElementById("simRawNewsInput").value.trim();
+    const source = document.getElementById("simSourceInput").value.trim();
+
+    if (!raw_text) {
+        alert("অনুগ্রহ করে কাঁচা সংবাদ টেক্সট লিখুন।");
+        return;
+    }
+
+    const btn = document.getElementById("runBrainSimBtn");
+    btn.disabled = true;
+    btn.innerText = "⏳ এআই ব্রেন বিশ্লেষণ করছে...";
+
+    const stepsList = document.getElementById("simPipelineStepsList");
+    const publishedCard = document.getElementById("simPublishedCard");
+    publishedCard.style.display = "none";
+
+    // Initial step display
+    stepsList.innerHTML = `
+        <div style="color: #38bdf8; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🔄</span> <span>ধাপ ১: কাঁচা নিউজ পার্সিং ও টোকেনাইজেশন শুরু...</span>
+        </div>
+    `;
+
+    try {
+        const res = await fetch("{{ url_for('training.index_view') }}/api/portal-brain-simulate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ raw_text, source })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerText = "⚡ এআই ব্রেন দিয়ে প্রসেস ও পাবলিশ সিমুলেট করুন";
+
+        if (data.status === "success" && data.pipeline_result) {
+            const r = data.pipeline_result;
+            document.getElementById("simTimeBadge").innerText = `Latency: ${r.latency_ms} ms`;
+
+            // Animate steps
+            stepsList.innerHTML = (r.steps || []).map(step => `
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 3px solid #34d399; font-size: 0.78rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong style="color: #38bdf8;">${step.name_bn}</strong>
+                        <span style="color: #34d399; font-size: 0.7rem;">${step.status}</span>
+                    </div>
+                    <div style="color: #94a3b8; font-size: 0.73rem; margin-top: 0.15rem;">${step.details}</div>
+                </div>
+            `).join("");
+
+            // Show published card
+            publishedCard.style.display = "block";
+            document.getElementById("simCardCat").innerText = r.published_article.category;
+            document.getElementById("simCardHeadline").innerText = r.published_article.headline;
+            document.getElementById("simCardSummary").innerText = r.published_article.summary;
+        } else {
+            stepsList.innerHTML = `<div style="color: #ef4444;">ত্রুটি: ${data.message || 'সিমুলেশন ব্যর্থ হয়েছে'}</div>`;
+        }
+    } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.innerText = "⚡ এআই ব্রেন দিয়ে প্রসেস ও পাবলিশ সিমুলেট করুন";
+        stepsList.innerHTML = `<div style="color: #ef4444;">সার্ভার সংযোগে ত্রুটি ঘটেছে।</div>`;
     }
 }
 

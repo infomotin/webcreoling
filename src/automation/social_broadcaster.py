@@ -369,3 +369,97 @@ class UnifiedSocialBroadcaster:
             "failovers": failover_switches,
             "results": results,
         }
+
+    @classmethod
+    def simulate_channel_failover(
+        cls,
+        channel_id: int,
+        sample_article: Optional[Dict[str, Any]] = None,
+        base_url: str = "http://127.0.0.1:8080",
+    ) -> Dict[str, Any]:
+        """
+        Simulate an Anti-Ban restriction on a primary channel and verify automated failover to the backup channel.
+        Returns comprehensive execution telemetry.
+        """
+        if not sample_article:
+            sample_article = {
+                "id": 999,
+                "title": "🔴 [অ্যান্টি-ব্যান ফেইলওভার টেস্ট] এআই পাইলট ব্যাকআপ পেজ সক্রিয়করণ সফল",
+                "summary": "প্রাইমারি ফেসবুক পেজ সাময়িকভাবে রেস্ট্রিক্ট হওয়ায় আমাদের অটোমেটেড সিস্টেম তাৎক্ষণিকভাবে ব্যাকআপ চ্যানেলে সংবাদটি পোস্ট করেছে।",
+                "category": "technology",
+            }
+
+        with get_db_session() as session:
+            repo = SocialChannelRepository(session)
+            primary_channel = repo.get_channel_by_id(channel_id)
+            if not primary_channel:
+                return {
+                    "success": False,
+                    "message": f"সোশ্যাল চ্যানেল #{channel_id} খুঁজে পাওয়া যায়নি।",
+                }
+
+            initial_primary_name = primary_channel.account_name
+            failover_id = primary_channel.failover_account_id
+
+            # If no failover is assigned, find another active channel in same platform or create virtual link
+            if not failover_id:
+                other = (
+                    session.query(SocialChannelConfig)
+                    .filter(SocialChannelConfig.id != channel_id, SocialChannelConfig.platform == primary_channel.platform)
+                    .first()
+                )
+                if other:
+                    primary_channel.failover_account_id = other.id
+                    failover_id = other.id
+                    session.flush()
+
+            simulated_error = "Meta Graph API Ban Simulation: Error (#368) Page restricted or token revoked."
+            failover_ch = repo.mark_channel_restricted(primary_channel.id, simulated_error)
+
+            backup_dispatched = False
+            backup_post_id = None
+            backup_msg = ""
+            backup_name = failover_ch.account_name if failover_ch else "N/A"
+
+            if failover_ch and failover_ch.id != primary_channel.id:
+                # Dispatch post to backup channel
+                post_data = FacebookPagePublisher.format_post_message(sample_article, base_url)
+                backup_dispatched, backup_msg, resp_data = FacebookPagePublisher.publish_to_page(
+                    page_id=failover_ch.page_id_or_channel_id,
+                    access_token=failover_ch.access_token or "EAAK_BACKUP_FAILOVER_TOKEN",
+                    post_data=post_data,
+                    is_simulation=True,
+                )
+                backup_post_id = resp_data.get("id")
+                repo.record_broadcast_success(failover_ch.id)
+                repo.log_broadcast(
+                    article_id=sample_article.get("id"),
+                    channel_id=failover_ch.id,
+                    platform=failover_ch.platform,
+                    target_account=failover_ch.account_name,
+                    post_payload=post_data,
+                    external_post_id=backup_post_id,
+                    dispatch_status="FALLBACK_SWITCHED",
+                    response_data={
+                        "simulated_failover": True,
+                        "primary_channel_id": primary_channel.id,
+                        "failover_channel_id": failover_ch.id,
+                        "ban_trigger": simulated_error,
+                        "backup_response": resp_data,
+                    },
+                )
+                session.commit()
+
+            return {
+                "success": True,
+                "primary_channel_id": primary_channel.id,
+                "primary_account_name": initial_primary_name,
+                "primary_new_status": "RESTRICTED",
+                "failover_channel_id": failover_id,
+                "failover_account_name": backup_name,
+                "failover_new_status": "BACKUP_ACTIVE" if failover_ch and failover_ch.id != primary_channel.id else "NO_BACKUP_CONFIGURED",
+                "backup_dispatched": backup_dispatched,
+                "backup_post_id": backup_post_id,
+                "message": f"অ্যান্টি-ব্যান ফেইলওভার সফল! প্রাইমারি পেজ '{initial_primary_name}' রেস্ট্রিক্ট হিসেবে চিহ্নিত হয়েছে এবং ব্যাকআপ চ্যানেল '{backup_name}' এ স্বয়ংক্রিয়ভাবে পোস্ট পৌঁছে গেছে (Post ID: {backup_post_id})।",
+            }
+

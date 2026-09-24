@@ -327,27 +327,51 @@ class AIPilotBrain:
     DEFAULT_AUTO_PUBLISH_THRESHOLD = 70  # Credibility score required for direct live posting
 
     REGION_KEYWORDS = {
-        "bangladesh": ["bangladesh", "বাংলাদেশ", "dhaka", "ঢাকা", "চট্টগ্রাম", "সিলেট", "রাজশাহী", "খুলনা", "বরিশাল", "রংপুর", "কুমিল্লা", "বিসিবি", "একনেক"],
-        "south_asia": ["india", "bharat", "ভারত", "pakistan", "পাকিস্তান", "sri lanka", "শ্রীলঙ্কা", "nepal", "নেপাল", "bhutan", "ভুটান", "afghanistan", "আফগানিস্তান", "maldives", "মালদ্বীপ"],
-        "middle_east": ["saudi", "সৌদি", "uae", "দুবাই", "emirates", "qatar", "কাতার", "israel", "ইসরায়েল", "gaza", "গাজা", "palestine", "ফিলিস্তিন", "iran", "ইরান", "iraq", "ইরাক", "syria", "সিরিয়া", "yemen", "ইয়েমেন"],
-        "usa": ["usa", "united states", "যুক্তরাষ্ট্র", "আমেরিকা", "biden", "trump", "washington", "ওয়াশিংটন", "white house", "হোয়াইট হাউস"],
-        "europe": ["uk", "যুক্তরাজ্য", "britain", "london", "লন্ডন", "france", "ফ্রান্স", "paris", "germany", "জার্মানি", "eu", "ইউরোপ", "russia", "রাশিয়া", "ukraine", "ইউক্রেন"],
-        "global": ["world", "global", "আন্তর্জাতিক", "un", "জাতিসংঘ", "who", "imf", "world bank", "বিশ্বব্যাংক", "nato", "ন্যাটো", "china", "চীন"],
+        "bangladesh": ["bangladesh", "বাংলাদেশ", "dhaka", "ঢাকা", "চট্টগ্রাম", "সিলেট", "রাজশাহী", "খুলনা", "বরিশাল", "রংপুর", "কুমিল্লা", "বিসিবি", "একনেক", "জাতীয়"],
+        "south_asia": ["india", "bharat", "ভারত", "pakistan", "পাকিস্তান", "sri lanka", "শ্রীলঙ্কা", "nepal", "নেপাল", "bhutan", "ভুটান", "afghanistan", "আফগানিস্তান", "maldives", "মালদ্বীপ", "দক্ষিণ এশিয়া"],
+        "middle_east": ["saudi", "সৌদি", "uae", "দুবাই", "emirates", "qatar", "কাতার", "israel", "ইসরায়েল", "gaza", "গাজা", "palestine", "ফিলিস্তিন", "iran", "ইরান", "iraq", "ইরাক", "syria", "সিরিয়া", "yemen", "ইয়েমেন", "kuwait", "কুয়েত", "oman", "ওমান", "মধ্যপ্রাচ্য"],
+        "usa": ["usa", "united states", "যুক্তরাষ্ট্র", "আমেরিকা", "biden", "trump", "washington", "ওয়াশিংটন", "white house", "হোয়াইট হাউস", "নিউইয়র্ক", "মার্কিন"],
+        "europe": ["uk", "যুক্তরাজ্য", "britain", "london", "লন্ডন", "france", "ফ্রান্স", "paris", "germany", "জার্মানি", "berlin", "eu", "ইউরোপ", "russia", "রাশিয়া", "ukraine", "ইউক্রেন", "moscow", "ইতালি", "স্পেন"],
+        "east_asia": ["china", "চীন", "japan", "জাপান", "tokyo", "south korea", "কোরিয়া", "seoul", "taiwan", "তাইওয়ান", "বেইজিং"],
+        "southeast_asia": ["singapore", "সিঙ্গাপুর", "malaysia", "মালয়েশিয়া", "indonesia", "ইন্দোনেশিয়া", "thailand", "থাইল্যান্ড", "vietnam", "ভিয়েতনাম", "philippines", "ফিলিপাইন"],
+        "africa": ["africa", "আফ্রিকা", "egypt", "মিশর", "south africa", "দক্ষিণ আফ্রিকা", "nigeria", "নাইজেরিয়া", "kenya", "কেনিয়া"],
+        "latin_america": ["brazil", "ব্রাজিল", "argentina", "আর্জেন্টিনা", "mexico", "মেক্সিকো", "chile", "কলম্বিয়া"],
+        "global": ["world", "global", "আন্তর্জাতিক", "un", "জাতিসংঘ", "who", "imf", "world bank", "বিশ্বব্যাংক", "nato", "ন্যাটো", "china", "চীন", "earth", "বিশ্ব"],
     }
 
     COUNTRY_CODES_MAP = {
-        "BD": ["bangladesh", "বাংলাদেশ", "dhaka", "ঢাকা", "বিসিবি"],
-        "IN": ["india", "ভারত", "delhi", "দিল্লি", "mumbai"],
-        "PK": ["pakistan", "পাকিস্তান", "islamabad", "lahore"],
-        "US": ["united states", "usa", "আমেরিকা", "যুক্তরাষ্ট্র", "washington", "new york"],
-        "UK": ["united kingdom", "uk", "যুক্তরাজ্য", "london", "লন্ডন"],
-        "SA": ["saudi arabia", "সৌদি", "riyadh"],
-        "AE": ["uae", "emirates", "dubai", "দুবাই", "abu dhabi"],
-        "CN": ["china", "চীন", "beijing", "বেইজিং"],
-        "DE": ["germany", "জার্মানি", "berlin"],
-        "RU": ["russia", "রাশিয়া", "moscow", "মস্কো"],
-        "IL": ["israel", "ইসরায়েল", "tel aviv", "jerusalem"],
-        "PS": ["palestine", "ফিলিস্তিন", "gaza", "গাজা"],
+        "BD": ["bangladesh", "বাংলাদেশ", "dhaka", "ঢাকা", "চট্টগ্রাম", "বিসিবি", "একনেক"],
+        "IN": ["india", "ভারত", "delhi", "দিল্লি", "mumbai", "মুম্বাই", "কলকাতা", "কলিকাতা", "bharat"],
+        "PK": ["pakistan", "পাকিস্তান", "islamabad", "lahore", "করাচি"],
+        "US": ["united states", "usa", "আমেরিকা", "যুক্তরাষ্ট্র", "washington", "new york", "মার্কিন"],
+        "UK": ["united kingdom", "uk", "যুক্তরাজ্য", "london", "লন্ডন", "britain", "ব্রিটেন"],
+        "SA": ["saudi arabia", "সৌদি আরব", "সৌদি", "riyadh", "মক্কা", "মদিনা", "saudi"],
+        "AE": ["uae", "emirates", "dubai", "দুবাই", "abu dhabi", "আবুধাবি", "আমিরাত"],
+        "QA": ["qatar", "কাতার", "doha", "দোহা"],
+        "KW": ["kuwait", "কুয়েত", "kuwait city"],
+        "OM": ["oman", "ওমান", "muscat"],
+        "CN": ["china", "চীন", "beijing", "বেইজিং", "shanghai", "চীনা"],
+        "JP": ["japan", "জাপান", "tokyo", "টোকিও", "জাপানি"],
+        "DE": ["germany", "জার্মানি", "berlin", "জার্মান"],
+        "FR": ["france", "ফ্রান্স", "paris", "প্যারিস", "ফরাসি"],
+        "IT": ["italy", "ইতালি", "rome", "রোম", "ইতালীয়"],
+        "ES": ["spain", "স্পেন", "madrid", "মাদ্রিদ"],
+        "RU": ["russia", "রাশিয়া", "moscow", "মস্কো", "রুশ", "ক্রেমলিন"],
+        "UA": ["ukraine", "ইউক্রেন", "kyiv", "কিয়েভ"],
+        "IL": ["israel", "ইসরায়েল", "tel aviv", "jerusalem", "জেরুজালেম"],
+        "PS": ["palestine", "ফিলিস্তিন", "gaza", "গাজা", "রামাল্লাহ"],
+        "IR": ["iran", "ইরান", "tehran", "তেহরান", "ইরানি"],
+        "TR": ["turkey", "তুরস্ক", "türkiye", "ankara", "istanbul", "ইস্তাম্বুল"],
+        "CA": ["canada", "কানাডা", "ottawa", "toronto", "টরন্টো"],
+        "AU": ["australia", "অস্ট্রেলিয়া", "sydney", "canberra", "মেলবোর্ন"],
+        "MY": ["malaysia", "মালয়েশিয়া", "kuala lumpur", "কুয়ালালামপুর"],
+        "SG": ["singapore", "সিঙ্গাপুর"],
+        "ID": ["indonesia", "ইন্দোনেশিয়া", "jakarta", "জাকার্তা"],
+        "EG": ["egypt", "মিশর", "cairo", "কায়রো"],
+        "ZA": ["south africa", "দক্ষিণ আফ্রিকা", "johannesburg"],
+        "BR": ["brazil", "ব্রাজিল", "brasilia"],
+        "NP": ["nepal", "নেপাল", "kathmandu", "কাঠমান্ডু"],
+        "LK": ["sri lanka", "শ্রীলঙ্কা", "colombo", "কলম্বো"],
     }
 
     @classmethod
@@ -374,39 +398,62 @@ class AIPilotBrain:
                 continue
 
             # 1. Excluded / Negative Keywords Check
-            if rule.excluded_keywords:
-                for bad_kw in rule.excluded_keywords:
-                    if bad_kw.strip() and bad_kw.strip().lower() in text_lower:
-                        return False, rule, f"Filtered out due to excluded keyword: '{bad_kw}'"
+            excl_kws = rule.excluded_keywords if isinstance(rule.excluded_keywords, list) else []
+            if isinstance(rule.excluded_keywords, str):
+                excl_kws = [k.strip() for k in rule.excluded_keywords.split(",") if k.strip()]
+
+            for bad_kw in excl_kws:
+                if bad_kw.strip() and bad_kw.strip().lower() in text_lower:
+                    return False, rule, f"Filtered out due to excluded keyword: '{bad_kw}'"
 
             # 2. Allowed Source Portals Check
-            if rule.allowed_portal_sources:
-                allowed_srcs = [s.strip().lower() for s in rule.allowed_portal_sources if s.strip()]
+            portals = rule.allowed_portal_sources if isinstance(rule.allowed_portal_sources, list) else []
+            if isinstance(rule.allowed_portal_sources, str):
+                portals = [s.strip() for s in rule.allowed_portal_sources.split(",") if s.strip()]
+
+            if portals:
+                allowed_srcs = [s.strip().lower() for s in portals if s.strip()]
                 if allowed_srcs and not any(src in source.lower() or src in text_lower for src in allowed_srcs):
                     continue
 
             # 3. Target Categories Check
-            if rule.target_categories:
-                cats = [c.strip().lower() for c in rule.target_categories if c.strip()]
-                if cats and category.lower() not in cats and not any(c in text_lower for c in cats):
+            cats = rule.target_categories if isinstance(rule.target_categories, list) else []
+            if isinstance(rule.target_categories, str):
+                cats = [c.strip() for c in rule.target_categories.split(",") if c.strip()]
+
+            if cats:
+                clean_cats = [c.strip().lower() for c in cats if c.strip()]
+                if clean_cats and category.lower() not in clean_cats and not any(c in text_lower for c in clean_cats):
                     continue
 
             # 4. Target Language Check
-            if rule.target_languages:
-                langs = [l.strip().lower() for l in rule.target_languages if l.strip()]
-                if langs and lang.lower() not in langs:
+            langs = rule.target_languages if isinstance(rule.target_languages, list) else []
+            if isinstance(rule.target_languages, str):
+                langs = [l.strip() for l in rule.target_languages.split(",") if l.strip()]
+
+            if langs:
+                clean_langs = [l.strip().lower() for l in langs if l.strip()]
+                if clean_langs and lang.lower() not in clean_langs:
                     continue
 
             # 5. Required Keywords Check
-            if rule.required_keywords:
-                reqs = [k.strip().lower() for k in rule.required_keywords if k.strip()]
+            req_kws = rule.required_keywords if isinstance(rule.required_keywords, list) else []
+            if isinstance(rule.required_keywords, str):
+                req_kws = [k.strip() for k in rule.required_keywords.split(",") if k.strip()]
+
+            if req_kws:
+                reqs = [k.strip().lower() for k in req_kws if k.strip()]
                 if reqs and not any(k in text_lower for k in reqs):
                     continue
 
             # 6. Region Targeting Check
-            if rule.target_regions:
+            regions = rule.target_regions if isinstance(rule.target_regions, list) else []
+            if isinstance(rule.target_regions, str):
+                regions = [r.strip() for r in rule.target_regions.split(",") if r.strip()]
+
+            if regions:
                 reg_matches = False
-                for r in rule.target_regions:
+                for r in regions:
                     r_clean = r.strip().lower()
                     if r_clean == "global":
                         reg_matches = True
@@ -415,25 +462,240 @@ class AIPilotBrain:
                     if any(kw in text_lower for kw in kws):
                         reg_matches = True
                         break
-                if not reg_matches and rule.target_regions:
+                if not reg_matches and regions:
                     continue
 
             # 7. Country Codes Check
-            if rule.target_countries:
+            countries = rule.target_countries if isinstance(rule.target_countries, list) else []
+            if isinstance(rule.target_countries, str):
+                countries = [c.strip() for c in rule.target_countries.split(",") if c.strip()]
+
+            if countries:
                 c_matches = False
-                for c in rule.target_countries:
+                for c in countries:
                     c_clean = c.strip().upper()
-                    kws = cls.COUNTRY_CODES_MAP.get(c_clean, [c_clean.lower()])
-                    if any(kw in text_lower for kw in kws):
+                    kws = cls.COUNTRY_CODES_MAP.get(c_clean, [c_clean.lower(), f" {c_clean.lower()} "])
+                    if any(kw in text_lower for kw in kws) or re.search(r"\b" + re.escape(c_clean.lower()) + r"\b", text_lower):
                         c_matches = True
                         break
-                if not c_matches and rule.target_countries:
+                if not c_matches and countries:
                     continue
 
             # Fully matched rule!
             return True, rule, f"Matched Rule: '{rule.name}'"
 
         return False, None, "Article did not match any active regional or thematic rule criteria."
+
+    @classmethod
+    def verify_article_against_rules(
+        cls,
+        sample_title: str,
+        sample_content: str,
+        sample_source: str = "Open News Wire",
+        sample_category: str = "bangladesh",
+        sample_country_code: Optional[str] = None,
+        sample_language: str = "bn",
+        rules: Optional[List[AIBrainCustomRule]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Comprehensive Real-time Diagnostic Simulator & Verification Engine.
+        Tests an article against all active AI Brain rules and returns detailed telemetry.
+        """
+        # Step 1: Synthesis & Translation
+        synth_report = AINewsSynthesizerAndParaphraser.process_and_synthesize_news(
+            raw_title=sample_title,
+            raw_content=sample_content or sample_title,
+            source_name=sample_source,
+            category=sample_category,
+        )
+
+        bn_title = synth_report["synthesized_title"]
+        bn_content = synth_report["synthesized_body"]
+
+        # Step 2: Credibility Scorer
+        cred_report = CredibilityAndClickbaitScorer.evaluate_article(
+            title=bn_title,
+            content=bn_content,
+            source=sample_source,
+        )
+
+        # Step 3: NLP Category Detection
+        detected_category = NewsNLPSkillEngine.classify_category(
+            title=bn_title,
+            content=bn_content,
+            default_cat=sample_category,
+        )
+
+        # Include country code in text evaluation if specified
+        eval_content = bn_content
+        if sample_country_code:
+            eval_content = f"{eval_content} [{sample_country_code.upper()}]"
+
+        # Step 4: Step-by-Step Rule Audit
+        rule_evaluations = []
+        overall_match = False
+        matched_rule_name = None
+        rejection_reason = "কোনো সক্রিয় রুলের শর্ত পূরণ হয়নি।"
+
+        active_rule_list = rules or []
+
+        for rule in active_rule_list:
+            if not rule.is_active:
+                continue
+
+            text_lower = f"{bn_title} {eval_content} {sample_source} {detected_category}".lower()
+            rule_audit = {
+                "rule_id": rule.id,
+                "rule_name": rule.name,
+                "passed": True,
+                "checks": {},
+            }
+
+            # Check 1: Excluded Keywords
+            excl_kws = rule.excluded_keywords or []
+            if isinstance(excl_kws, str):
+                excl_kws = [k.strip() for k in excl_kws.split(",") if k.strip()]
+            bad_found = [k for k in excl_kws if k.lower() in text_lower]
+            rule_audit["checks"]["excluded_keywords"] = {
+                "passed": len(bad_found) == 0,
+                "details": f"বর্জনীয় শব্দ সনাক্ত: {bad_found}" if bad_found else "বর্জনীয় শব্দ মুক্ত (পাস)",
+            }
+            if bad_found:
+                rule_audit["passed"] = False
+                rule_audit["rejection_reason"] = f"বর্জনীয় শব্দ '{bad_found[0]}' পাওয়া গেছে।"
+
+            # Check 2: Allowed Sources
+            if rule_audit["passed"] and rule.allowed_portal_sources:
+                sources = rule.allowed_portal_sources if isinstance(rule.allowed_portal_sources, list) else [rule.allowed_portal_sources]
+                src_pass = any(s.strip().lower() in sample_source.lower() or s.strip().lower() in text_lower for s in sources if s.strip())
+                rule_audit["checks"]["allowed_sources"] = {
+                    "passed": src_pass,
+                    "details": "অনুমোদিত উৎসের তালিকায় আছে" if src_pass else f"অনুমোদিত নয় (উৎস: {sample_source})",
+                }
+                if not src_pass:
+                    rule_audit["passed"] = False
+
+            # Check 3: Categories
+            if rule_audit["passed"] and rule.target_categories:
+                cats = rule.target_categories if isinstance(rule.target_categories, list) else [rule.target_categories]
+                cat_pass = detected_category.lower() in [c.lower() for c in cats] or any(c.lower() in text_lower for c in cats)
+                rule_audit["checks"]["category"] = {
+                    "passed": cat_pass,
+                    "details": f"ক্যাটাগরি '{detected_category}' মিলেছে" if cat_pass else f"ক্যাটাগরি অমিল (প্রয়োজন: {cats})",
+                }
+                if not cat_pass:
+                    rule_audit["passed"] = False
+
+            # Check 4: Languages
+            if rule_audit["passed"] and rule.target_languages:
+                langs = rule.target_languages if isinstance(rule.target_languages, list) else [rule.target_languages]
+                lang_pass = sample_language.lower() in [l.lower() for l in langs]
+                rule_audit["checks"]["language"] = {
+                    "passed": lang_pass,
+                    "details": f"ভাষা '{sample_language}' সমর্থিত" if lang_pass else f"ভাষা অমিল (প্রয়োজন: {langs})",
+                }
+                if not lang_pass:
+                    rule_audit["passed"] = False
+
+            # Check 5: Required Keywords
+            if rule_audit["passed"] and rule.required_keywords:
+                reqs = rule.required_keywords if isinstance(rule.required_keywords, list) else [rule.required_keywords]
+                req_found = [k for k in reqs if k.lower() in text_lower]
+                rule_audit["checks"]["required_keywords"] = {
+                    "passed": len(req_found) > 0,
+                    "details": f"প্রয়োজনীয় শব্দ পাওয়া গেছে: {req_found}" if req_found else f"প্রয়োজনীয় শব্দ অনুপস্থিত ({reqs})",
+                }
+                if not req_found:
+                    rule_audit["passed"] = False
+
+            # Check 6: Regions
+            if rule_audit["passed"] and rule.target_regions:
+                regs = rule.target_regions if isinstance(rule.target_regions, list) else [rule.target_regions]
+                reg_matches = False
+                matched_reg_name = None
+                for r in regs:
+                    r_clean = r.strip().lower()
+                    if r_clean == "global":
+                        reg_matches = True
+                        matched_reg_name = "গ্লোবাল/আন্তর্জাতিক"
+                        break
+                    kws = cls.REGION_KEYWORDS.get(r_clean, [r_clean])
+                    if any(kw in text_lower for kw in kws):
+                        reg_matches = True
+                        matched_reg_name = r
+                        break
+                rule_audit["checks"]["region"] = {
+                    "passed": reg_matches,
+                    "details": f"অঞ্চল মিলেছে: {matched_reg_name}" if reg_matches else f"অঞ্চল অমিল (প্রয়োজন: {regs})",
+                }
+                if not reg_matches:
+                    rule_audit["passed"] = False
+
+            # Check 7: Country Codes
+            if rule_audit["passed"] and rule.target_countries:
+                cnts = rule.target_countries if isinstance(rule.target_countries, list) else [rule.target_countries]
+                cnt_matches = False
+                matched_cnt_code = None
+                for c in cnts:
+                    c_clean = c.strip().upper()
+                    kws = cls.COUNTRY_CODES_MAP.get(c_clean, [c_clean.lower()])
+                    if any(kw in text_lower for kw in kws) or (sample_country_code and sample_country_code.upper() == c_clean):
+                        cnt_matches = True
+                        matched_cnt_code = c_clean
+                        break
+                rule_audit["checks"]["country_code"] = {
+                    "passed": cnt_matches,
+                    "details": f"দেশের কোড মিলেছে: {matched_cnt_code}" if cnt_matches else f"দেশের কোড অমিল (প্রয়োজন: {cnts})",
+                }
+                if not cnt_matches:
+                    rule_audit["passed"] = False
+
+            rule_evaluations.append(rule_audit)
+
+            if rule_audit["passed"]:
+                overall_match = True
+                matched_rule_name = rule.name
+                break
+
+        # Step 5: Decision Logic
+        cred_score = cred_report["credibility_score"]
+        fact_score = synth_report["factuality_score"]
+        fake_pct = synth_report["fact_check_report"]["fake_probability_pct"]
+
+        if not overall_match:
+            decision = "REJECTED_RULE_MISMATCH"
+            verdict_bn = "❌ রুল ম্যাচ করেনি (ফিল্টার বাতিল)"
+            badge_color = "#ef4444"
+        elif fake_pct > 50.0:
+            decision = "QUARANTINED_HIGH_FAKE_RISK"
+            verdict_bn = "⚠️ ফেক নিউজ ঝুঁকি সনাক্ত (কোয়ারেন্টিন)"
+            badge_color = "#f59e0b"
+        elif fact_score >= 70.0 and cred_score >= 70:
+            decision = "AUTO_PUBLISH"
+            verdict_bn = "✅ স্বয়ংক্রিয় প্রকাশ ও সোশ্যাল ব্রডকাস্ট প্রস্তুত"
+            badge_color = "#10b981"
+        else:
+            decision = "QUEUE_FOR_REVIEW"
+            verdict_bn = "🟡 সম্পাদকীয় অনুমোদন কিউ (Review Queue)"
+            badge_color = "#38bdf8"
+
+        return {
+            "overall_match": overall_match,
+            "matched_rule_name": matched_rule_name or "কোনো রুল ম্যাচ করেনি",
+            "decision": decision,
+            "verdict_bn": verdict_bn,
+            "badge_color": badge_color,
+            "credibility_score": cred_score,
+            "factuality_score": fact_score,
+            "fake_probability_pct": fake_pct,
+            "detected_category": detected_category,
+            "synthesized_title": bn_title,
+            "executive_summary": synth_report["executive_summary"],
+            "synthesized_body": bn_content,
+            "meaning_retention_score": synth_report["meaning_retention_score"],
+            "rule_evaluations": rule_evaluations,
+            "credibility_flags": cred_report["flags"],
+        }
 
     @classmethod
     def process_raw_article(

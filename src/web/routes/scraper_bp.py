@@ -265,12 +265,38 @@ def save_rule():
     rule_id = int(rule_id_raw) if rule_id_raw and rule_id_raw.isdigit() else None
 
     name = request.form.get("name", "Custom Rule").strip()
-    regions = request.form.getlist("target_regions")
+    
+    # Regions (multi-checkbox or comma-separated text)
+    regions_list = request.form.getlist("target_regions")
+    regions_raw = request.form.get("target_regions_text", "").strip()
+    if regions_raw:
+        regions_list.extend([r.strip().lower() for r in regions_raw.split(",") if r.strip()])
+    regions = list(dict.fromkeys(regions_list))
+
+    # Countries (comma-separated string e.g. BD, IN, US, UK, SA)
     countries_raw = request.form.get("target_countries", "").strip()
     countries = [c.strip().upper() for c in countries_raw.split(",") if c.strip()] if countries_raw else []
-    languages = request.form.getlist("target_languages")
-    categories = request.form.getlist("target_categories")
-    portals = request.form.getlist("allowed_portal_sources")
+
+    # Languages
+    languages_list = request.form.getlist("target_languages")
+    languages_raw = request.form.get("target_languages_text", "").strip()
+    if languages_raw:
+        languages_list.extend([l.strip().lower() for l in languages_raw.split(",") if l.strip()])
+    languages = list(dict.fromkeys(languages_list))
+
+    # Categories
+    categories_list = request.form.getlist("target_categories")
+    categories_raw = request.form.get("target_categories_text", "").strip()
+    if categories_raw:
+        categories_list.extend([c.strip().lower() for c in categories_raw.split(",") if c.strip()])
+    categories = list(dict.fromkeys(categories_list))
+
+    # Allowed Portal Sources
+    portals_list = request.form.getlist("allowed_portal_sources")
+    portals_raw = request.form.get("allowed_portal_sources_text", "").strip()
+    if portals_raw:
+        portals_list.extend([p.strip().lower() for p in portals_raw.split(",") if p.strip()])
+    portals = list(dict.fromkeys(portals_list))
 
     req_kw_raw = request.form.get("required_keywords", "").strip()
     required_keywords = [k.strip() for k in req_kw_raw.split(",") if k.strip()] if req_kw_raw else []
@@ -309,6 +335,18 @@ def save_rule():
     return redirect(url_for("scraper.index_view", tab="rules"))
 
 
+@scraper_bp.route("/rules/get/<int:rule_id>")
+@login_required
+def get_rule_json(rule_id: int):
+    """Return JSON details of a single rule for modal editing."""
+    with get_db_session() as session:
+        repo = AIBrainRuleRepository(session)
+        rule = repo.get_rule_by_id(rule_id)
+        if not rule:
+            return jsonify({"error": "Rule not found"}), 404
+        return jsonify(rule.to_dict())
+
+
 @scraper_bp.route("/rules/toggle/<int:rule_id>", methods=["POST"])
 @roles_required("admin", "editor")
 def toggle_rule(rule_id: int):
@@ -332,6 +370,39 @@ def delete_rule(rule_id: int):
         flash(f"AI Brain রুল #{rule_id} মুছে ফেলা হয়েছে।", "warning")
 
     return redirect(url_for("scraper.index_view", tab="rules"))
+
+
+@scraper_bp.route("/api/verify-rule", methods=["POST"])
+@login_required
+def api_verify_rule():
+    """Real-time Diagnostic Verification API testing an article against active AI Brain rules."""
+    req_json = request.get_json(silent=True) or request.form.to_dict()
+    
+    title = req_json.get("title", "").strip()
+    content = req_json.get("content", "").strip()
+    source = req_json.get("source", "Open News Wire").strip()
+    category = req_json.get("category", "bangladesh").strip()
+    country_code = req_json.get("country_code", "").strip()
+    language = req_json.get("language", "bn").strip()
+
+    if not title:
+        return jsonify({"error": "Title is required for verification"}), 400
+
+    with get_db_session() as session:
+        repo = AIBrainRuleRepository(session)
+        active_rules = repo.get_active_rules()
+        
+        result = AIPilotBrain.verify_article_against_rules(
+            sample_title=title,
+            sample_content=content,
+            sample_source=source,
+            sample_category=category,
+            sample_country_code=country_code if country_code else None,
+            sample_language=language,
+            rules=active_rules,
+        )
+
+    return jsonify(result)
 
 
 # ==============================================================================
@@ -380,6 +451,18 @@ def save_social_channel():
     return redirect(url_for("scraper.index_view", tab="social"))
 
 
+@scraper_bp.route("/social-channels/get/<int:channel_id>")
+@login_required
+def get_social_channel_json(channel_id: int):
+    """Return JSON configuration of a single social channel for modal editing."""
+    with get_db_session() as session:
+        repo = SocialChannelRepository(session)
+        channel = repo.get_channel_by_id(channel_id)
+        if not channel:
+            return jsonify({"error": "Channel not found"}), 404
+        return jsonify(channel.to_dict())
+
+
 @scraper_bp.route("/social-channels/toggle/<int:channel_id>", methods=["POST"])
 @roles_required("admin", "editor")
 def toggle_social_channel(channel_id: int):
@@ -389,6 +472,21 @@ def toggle_social_channel(channel_id: int):
         state = repo.toggle_channel(channel_id)
         state_txt = "সক্রিয় (Active)" if state else "স্থগিত (Disabled)"
         flash(f"সোশ্যাল চ্যানেল #{channel_id} এখন {state_txt}!", "info")
+
+    return redirect(url_for("scraper.index_view", tab="social"))
+
+
+@scraper_bp.route("/social-channels/reset-status/<int:channel_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def reset_social_channel_status(channel_id: int):
+    """Reset a restricted or backup channel back to HEALTHY."""
+    with get_db_session() as session:
+        repo = SocialChannelRepository(session)
+        ch = repo.reset_channel_status(channel_id)
+        if ch:
+            flash(f"সোশ্যাল চ্যানেল '{ch.account_name}' এর স্ট্যাটাস রিসেট করে HEALTHY করা হয়েছে!", "success")
+        else:
+            flash("চ্যানেল পাওয়া যায়নি।", "danger")
 
     return redirect(url_for("scraper.index_view", tab="social"))
 
@@ -418,6 +516,19 @@ def test_broadcast_channel(channel_id: int):
     return redirect(url_for("scraper.index_view", tab="social"))
 
 
+@scraper_bp.route("/social-channels/test-failover/<int:channel_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def test_channel_failover(channel_id: int):
+    """Simulate Facebook/Platform API ban and execute Anti-Ban Failover to backup account."""
+    res = UnifiedSocialBroadcaster.simulate_channel_failover(channel_id=channel_id)
+    if res.get("success"):
+        flash(f"🛡️ {res.get('message')}", "warning")
+    else:
+        flash(f"ফেইলওভার টেস্ট ব্যর্থ: {res.get('message')}", "danger")
+
+    return redirect(url_for("scraper.index_view", tab="social"))
+
+
 @scraper_bp.route("/social-channels/delete/<int:channel_id>", methods=["POST"])
 @roles_required("admin", "editor")
 def delete_social_channel(channel_id: int):
@@ -438,4 +549,5 @@ def api_broadcast_logs():
         repo = SocialChannelRepository(session)
         logs = repo.get_broadcast_logs(limit=25)
     return jsonify([l.to_dict() for l in logs])
+
 

@@ -2577,6 +2577,18 @@ class SocialChannelRepository:
                 return failover
         return channel
 
+    def reset_channel_status(self, channel_id: int) -> Optional[SocialChannelConfig]:
+        """Reset a restricted or failover channel back to HEALTHY state."""
+        channel = self.get_channel_by_id(channel_id)
+        if channel:
+            channel.status = "HEALTHY"
+            channel.last_error_message = None
+            channel.is_active = True
+            channel.updated_at = datetime.utcnow()
+            self.session.flush()
+            return channel
+        return None
+
     def record_broadcast_success(self, channel_id: int) -> None:
         """Increment success counter and update timestamp."""
         channel = self.get_channel_by_id(channel_id)

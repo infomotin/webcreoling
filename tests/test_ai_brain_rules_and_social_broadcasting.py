@@ -319,3 +319,175 @@ def test_web_routes_for_rules_and_social_channels(client):
     assert res_logs.status_code == 200
     data = res_logs.get_json()
     assert isinstance(data, list)
+
+
+def test_ai_brain_rule_verification_diagnostics():
+    """Test AI Brain diagnostic simulator verification engine with country codes, regions, keywords, and credibility."""
+    init_db()
+    with get_db_session() as session:
+        repo = AIBrainRuleRepository(session)
+        # Create dedicated test rule
+        test_rule = repo.create_or_update_rule(
+            name="ইউএস ও ইউরোপ টেকনোলজি পলিসি রুল",
+            target_regions=["usa", "europe"],
+            target_countries=["US", "UK", "DE"],
+            target_languages=["en", "bn"],
+            target_categories=["technology", "business"],
+            required_keywords=["chip", "semiconductor"],
+            excluded_keywords=["phishing", "scam"],
+            min_credibility_score=70.0,
+            auto_translate_to_bangla=True,
+            auto_publish=True,
+            auto_broadcast_social=True,
+        )
+
+        # 1. Test Positive Diagnostic Verification
+        diag_pass = AIPilotBrain.verify_article_against_rules(
+            sample_title="US and UK Semiconductor Alliance announces next-gen quantum chip",
+            sample_content="Government officials in Washington and London confirmed major investments into quantum computing and chip fabrication.",
+            sample_source="Tech Wire Direct",
+            sample_category="technology",
+            sample_country_code="US",
+            sample_language="en",
+            rules=[test_rule],
+        )
+        assert diag_pass["overall_match"] is True
+        assert diag_pass["matched_rule_name"] == test_rule.name
+        assert diag_pass["decision"] in ["AUTO_PUBLISH", "QUEUE_FOR_REVIEW"]
+        assert len(diag_pass["synthesized_title"]) > 5
+        assert len(diag_pass["synthesized_body"]) > 20
+
+        # 2. Test Negative Verification due to Excluded Keyword
+        diag_fail_excl = AIPilotBrain.verify_article_against_rules(
+            sample_title="Semiconductor scam and phishing alert in technology sector",
+            sample_content="Authorities warned of a phishing scam involving fake chip manufacturing stocks in the US.",
+            sample_source="Tech Wire Direct",
+            sample_category="technology",
+            sample_country_code="US",
+            sample_language="en",
+            rules=[test_rule],
+        )
+        assert diag_fail_excl["overall_match"] is False
+        assert diag_fail_excl["decision"] == "REJECTED_RULE_MISMATCH"
+
+        # 3. Test Negative Verification due to Unmatched Country Code / Region
+        diag_fail_region = AIPilotBrain.verify_article_against_rules(
+            sample_title="Local agricultural production in South America",
+            sample_content="Farming yields improved across the countryside.",
+            sample_source="Farming News",
+            sample_category="agriculture",
+            sample_country_code="BR",
+            sample_language="en",
+            rules=[test_rule],
+        )
+        assert diag_fail_region["overall_match"] is False
+
+
+def test_social_channel_failover_simulation_endpoint(client):
+    """Test HTTP endpoint for Anti-Ban Failover Simulation and verify backup dispatch & logs."""
+    init_db()
+    with get_db_session() as session:
+        repo = SocialChannelRepository(session)
+        # Create backup and primary channel
+        backup = repo.create_or_update_channel(
+            platform="facebook",
+            account_name="অটোমেটেড ব্যাকআপ পেজ (পরীক্ষামূলক)",
+            page_id_or_channel_id="bk_page_999111",
+            access_token="EAAK_BACKUP_TOKEN_123",
+            is_active=True,
+            is_primary=False,
+        )
+        primary = repo.create_or_update_channel(
+            platform="facebook",
+            account_name="প্রধান ফেসবুক পেজ (পরীক্ষামূলক)",
+            page_id_or_channel_id="prim_page_111999",
+            access_token="EAAK_PRIMARY_TOKEN_123",
+            is_active=True,
+            is_primary=True,
+            failover_account_id=backup.id,
+        )
+        primary_id = primary.id
+        backup_id = backup.id
+
+    # Login as Admin
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    # Trigger Failover Simulation
+    res_failover = client.post(
+        f"/scraper/social-channels/test-failover/{primary_id}",
+        follow_redirects=True,
+    )
+    assert res_failover.status_code == 200
+
+    # Verify status in database
+    with get_db_session() as session:
+        repo = SocialChannelRepository(session)
+        prim_updated = repo.get_channel_by_id(primary_id)
+        bk_updated = repo.get_channel_by_id(backup_id)
+        assert prim_updated.status == "RESTRICTED"
+        assert bk_updated.status == "BACKUP_ACTIVE"
+
+        # Verify broadcast log entry
+        logs = repo.get_broadcast_logs(limit=5)
+        fallback_log = next((l for l in logs if l.dispatch_status == "FALLBACK_SWITCHED"), None)
+        assert fallback_log is not None
+        assert fallback_log.channel_id == backup_id
+
+    # Test Reset Status Endpoint
+    res_reset = client.post(
+        f"/scraper/social-channels/reset-status/{primary_id}",
+        follow_redirects=True,
+    )
+    assert res_reset.status_code == 200
+
+    with get_db_session() as session:
+        repo = SocialChannelRepository(session)
+        prim_reset = repo.get_channel_by_id(primary_id)
+        assert prim_reset.status == "HEALTHY"
+
+
+def test_rule_json_retrieval_and_api_verify(client):
+    """Test AJAX JSON routes for fetching rule configs and live diagnostic verification."""
+    # Login as Admin
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+
+    # 1. Fetch first rule JSON
+    with get_db_session() as session:
+        repo = AIBrainRuleRepository(session)
+        rules = repo.get_all_rules()
+        rule_id = rules[0].id if rules else None
+
+    if rule_id:
+        res_get = client.get(f"/scraper/rules/get/{rule_id}")
+        assert res_get.status_code == 200
+        rule_data = res_get.get_json()
+        assert "name" in rule_data
+        assert "target_regions" in rule_data
+
+    # 2. Post to Live Rule Verification API
+    res_verify = client.post(
+        "/scraper/api/verify-rule",
+        json={
+            "title": "Bangladesh economy surges with $10 billion export milestone",
+            "content": "Official reports from Dhaka confirm rapid growth in technological and manufacturing exports across global markets.",
+            "source": "Financial Express",
+            "category": "business",
+            "country_code": "BD",
+            "language": "en",
+        },
+    )
+    assert res_verify.status_code == 200
+    diag = res_verify.get_json()
+    assert "overall_match" in diag
+    assert "factuality_score" in diag
+    assert "synthesized_title" in diag
+    assert "decision" in diag
+

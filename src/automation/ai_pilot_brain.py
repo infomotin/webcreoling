@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from config.settings import settings
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
+from src.storage.database import get_db_session
 from src.storage.models import Article, ArticleImage, AIBrainCustomRule
 from src.storage.repositories import (
     ArticleRepository,

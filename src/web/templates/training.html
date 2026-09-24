@@ -1,383 +1,744 @@
 {% extends "base.html" %}
 
-{% block title %}LLM Training, Hugging Face Hub & LoRA Cockpit - WebCreoling{% endblock %}
+{% block title %}AI Model Training, Topic Splitter & Optimization Cockpit - WebCreoling{% endblock %}
 
 {% block content %}
-<!-- Include Chart.js for dynamic interactive training curves -->
+<!-- Include Chart.js for live interactive training telemetry -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<!-- Header & Quick Nav -->
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<style>
+/* Modern Glassmorphic AI Training Cockpit Styles */
+.training-nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.75);
+    padding: 0.4rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.training-tab-btn {
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.training-tab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+.training-tab-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(147, 51, 234, 0.8));
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.glow-bar-container {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    height: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.glow-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #10b981);
+    border-radius: 8px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.terminal-box {
+    background: #090d16;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    color: #e2e8f0;
+    padding: 1rem;
+    height: 220px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.metric-card-kpi {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--card-glow, #3b82f6);
+}
+
+.topic-grid-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.topic-grid-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(96, 165, 250, 0.4);
+}
+
+.dropzone-upload {
+    border: 2px dashed rgba(96, 165, 250, 0.4);
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.dropzone-upload:hover {
+    border-color: #60a5fa;
+    background: rgba(30, 58, 138, 0.15);
+}
+</style>
+
+<!-- Header & Title Banner -->
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.4rem;">
-            <h1 style="font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                LLM Training & Hugging Face Hub Cockpit
+        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.3rem;">
+            <h1 style="font-size: 1.85rem; font-weight: 800; background: linear-gradient(135deg, #60a5fa, #c084fc, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                AI Model Training, Topic Splitter & Optimizer Cockpit
             </h1>
-            <span class="badge badge-admin">v2.5 HF Hub & Task-Based</span>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                ⚡ v2.5 Multi-Topic & Quantized
+            </span>
         </div>
-        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 850px;">
-            Download lightweight pre-trained LLMs from Hugging Face, run <strong>Task-Based LoRA fine-tuning</strong> on custom news skills, and <strong>export & push your trained models directly to Hugging Face Hub</strong>.
+        <p style="color: var(--text-secondary); font-size: 0.92rem; max-width: 900px; line-height: 1.45;">
+            মডেলকে ছোট ছোট ডোমেইন-ভিত্তিক এক্সপার্ট সাব-মডেলে বিভক্ত (Topic Split) করুন, ওয়েব স্ক্র্যাপ থেকে স্বয়ংক্রিয় নলেজ স্ক্যান ও ইনজেস্ট করুন, লাইভ চার্ট সহ ফাইন-টিউনিং পরিচালনা করুন এবং লোকাল এআই মডেল আপলোড করে INT8/INT4/ONNX অপ্টিমাইজেশন চালান।
         </p>
     </div>
 
-    <!-- Quick Navigation Pills -->
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <a href="#hf-downloader" class="btn btn-sm btn-outline">🤗 Download from HF</a>
-        <a href="#task-tuning" class="btn btn-sm btn-primary">🎯 Task-Based Training</a>
-        <a href="#hf-exporter" class="btn btn-sm btn-outline">🚀 Push to Hugging Face</a>
-        <a href="#lora-math" class="btn btn-sm btn-outline">📐 LoRA Math</a>
-        <a href="#quant-nf4" class="btn btn-sm btn-outline">🧮 NF4 Quantization</a>
-        <a href="#flax-pytorch" class="btn btn-sm btn-outline">⚡ Flax vs PyTorch</a>
-        <a href="#roadmap" class="btn btn-sm btn-outline">📚 4-Week Roadmap</a>
-        <a href="#sft-playground" class="btn btn-sm btn-outline">🧪 SFT Playground</a>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.4rem 0.8rem;">
+            🟢 Active Engine: SmolLM-Bangla-Newsroom
+        </span>
     </div>
 </div>
 
+<!-- Main 5 Cockpit Tabs -->
+<div class="training-nav-tabs">
+    <button class="training-tab-btn active" onclick="switchMainTab('tab-topics', this)">
+        🎯 1. টপিক স্প্লিটার ও অপ্টিমাইজার (Topic Splitter)
+    </button>
+    <button class="training-tab-btn" onclick="switchMainTab('tab-finetune', this)">
+        ⚡ 2. লাইভ ভিজ্যুয়াল ফাইন-টিউনিং (Live Fine-Tuning)
+    </button>
+    <button class="training-tab-btn" onclick="switchMainTab('tab-scrape-learn', this)">
+        🌐 3. ওয়েব স্ক্র্যাপ স্ক্যান ও নলেজ এনরিচ (Scan & Learn)
+    </button>
+    <button class="training-tab-btn" onclick="switchMainTab('tab-local-upload', this)">
+        💾 4. লোকাল এআই মডেল আপলোড ও ওয়ার্কবেঞ্চ (Local Model)
+    </button>
+    <button class="training-tab-btn" onclick="switchMainTab('tab-hf-hub', this)">
+        🤗 5. Hugging Face Hub ও গণিত (HF & LoRA Math)
+    </button>
+</div>
+
 <!-- ========================================================================= -->
-<!-- 1. HUGGING FACE MODEL HUB DOWNLOADER -->
+<!-- TAB 1: TOPIC-BASED MODEL SPLITTING & LIGHTWEIGHT OPTIMIZER -->
 <!-- ========================================================================= -->
-<div id="hf-downloader" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🤗</span> 1. Download Lightweight LLMs from Hugging Face Hub
-        </h2>
-        <span class="badge" style="background: rgba(255, 210, 30, 0.15); color: #fbbf24;">Hugging Face Hub API</span>
+<div id="tab-topics" class="tab-content-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🎯</span> ডোমেইন-ভিত্তিক স্পেশালাইজড সাব-মডেল স্প্লিটার (Topic Sub-Models)
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                বিশাল মডেলকে ছোট ও হালকা এক্সপার্ট অ্যাডাপ্টারে বিভক্ত করে কম র‍্যাম/ভি-র‍্যামে সর্বোচ্চ নির্ভুল নিউজ প্রসেসিং।
+            </p>
+        </div>
+        <button class="btn btn-sm btn-outline" onclick="loadTopicModelsList()">🔄 রিফ্রেশ স্ট্যাটাস</button>
     </div>
 
-    <!-- Recommended Lightweight Models Grid -->
-    <div class="grid-3" style="margin-bottom: 1.5rem;">
-        {% for m in recommended_models %}
-        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid {% if m.recommended %}#38bdf8{% else %}#6b7280{% endif %};">
+    <!-- 6 Topic Grid Cards -->
+    <div class="grid-3" style="gap: 1rem; margin-bottom: 1.8rem;" id="topicCardsContainer">
+        {% for tm in topic_submodels %}
+        <div class="topic-grid-card" style="border-top: 3px solid {{ tm.color }};">
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                    <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">{{ m.name }}</h4>
-                    {% if m.recommended %}
-                    <span class="badge badge-category" style="font-size: 0.65rem;">Recommended</span>
+                    <div>
+                        <h4 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.1rem;">
+                            {{ tm.icon }} {{ tm.name_bn }}
+                        </h4>
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">{{ tm.name_en }} ({{ tm.id }})</span>
+                    </div>
+                    {% if tm.is_active %}
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.65rem;">Active Engine</span>
+                    {% else %}
+                    <span class="badge" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa; font-size: 0.65rem;">Rank {{ tm.rank }}</span>
                     {% endif %}
                 </div>
-                <p style="font-size: 0.78rem; color: #94a3b8; font-family: monospace; margin-bottom: 0.5rem;">{{ m.id }}</p>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 1rem;">
-                    {{ m.description }}
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.8rem;">
+                    {{ tm.description }}
                 </p>
+
+                <!-- Keywords Chips -->
+                <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.8rem;">
+                    {% for kw in tm.keywords[:4] %}
+                    <span style="font-size: 0.68rem; padding: 2px 6px; background: rgba(255,255,255,0.06); border-radius: 4px; color: #cbd5e1;">
+                        #{{ kw }}
+                    </span>
+                    {% endfor %}
+                </div>
             </div>
 
             <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem; padding: 0.4rem 0.6rem; background: rgba(0,0,0,0.25); border-radius: 4px;">
-                    <span>Params: <strong style="color: #fff;">{{ m.params }}</strong></span>
-                    <span>Disk: <strong style="color: #38bdf8;">~{{ m.size_mb }} MB</strong></span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; font-size: 0.72rem; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 6px; margin-bottom: 0.8rem;">
+                    <div style="text-align: center;">
+                        <span style="color: var(--text-muted); display: block;">Format</span>
+                        <strong style="color: #60a5fa;">{{ tm.quantization }}</strong>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="color: var(--text-muted); display: block;">Size</span>
+                        <strong style="color: #34d399;">~{{ tm.disk_size_mb }} MB</strong>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="color: var(--text-muted); display: block;">Latency</span>
+                        <strong style="color: #f59e0b;">{{ tm.latency_ms }} ms</strong>
+                    </div>
                 </div>
-                <form method="POST" action="{{ url_for('training.download_hf_model') }}">
-                    <input type="hidden" name="model_id" value="{{ m.id }}">
-                    <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">
-                        ⬇️ Download & Cache
+
+                <div style="display: flex; gap: 0.4rem;">
+                    <button class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="triggerTopicSplitModal('{{ tm.id }}', '{{ tm.name_bn }}', {{ tm.rank }})">
+                        ✂️ Split / Re-weight
                     </button>
-                </form>
+                    <button class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.75rem;" onclick="benchmarkSpecificModel('{{ tm.id }}')">
+                        ⏱ Benchmark
+                    </button>
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Custom Model Download Form -->
-    <div class="card">
+    <!-- Built-in Model Optimizer Card -->
+    <div class="card" style="border-top: 3px solid #8b5cf6;">
         <div class="card-header">
-            <h3 style="font-size: 1rem; font-weight: 600;">Download Custom Hugging Face Model ID</h3>
-            <span class="badge badge-admin">Admin Action</span>
+            <div>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">
+                    ⚡ সার্বজনীন মডেল অপ্টিমাইজার ইঞ্জিন (Universal Model Optimizer)
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                    যেকোনো মডেলকে INT8/INT4 কোয়ান্টাইজেশন, ম্যাগনিটিউড ওয়েট প্রুনিং ও ONNX গ্রাফ ফিউশনের মাধ্যমে ৫ গুণ দ্রুতগতির ও হালকা করুন।
+                </p>
+            </div>
+            <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #c084fc;">Lightweight Optimizer</span>
         </div>
-        <form method="POST" action="{{ url_for('training.download_hf_model') }}" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 1rem; align-items: flex-end;">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label">Hugging Face Model ID</label>
-                <input type="text" name="model_id" class="form-control" placeholder="e.g. HuggingFaceTB/SmolLM2-135M or Qwen/Qwen2.5-0.5B" required>
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label">Hugging Face Token (Optional for Private/Gated)</label>
-                <input type="password" name="hf_token" class="form-control" placeholder="hf_xxxxxxxxxxxxxxxxxxxx">
-            </div>
-            <button type="submit" class="btn btn-primary" style="height: 42px;">
-                ⚡ Download Model
-            </button>
-        </form>
 
-        {% if cached_models %}
-        <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color); font-size: 0.82rem;">
-            <span style="color: var(--text-muted);">Locally Cached Models: </span>
-            {% for cm in cached_models %}
-            <span class="badge badge-category" style="margin-right: 0.3rem;">{{ cm }}</span>
-            {% endfor %}
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 1rem; align-items: flex-end; margin-bottom: 1.2rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.82rem;">টার্গেট মডেল নির্বাচন করুন</label>
+                <select id="optTargetModel" class="form-control">
+                    <option value="politics">🏛️ রাজনীতি সাব-মডেল (Politics)</option>
+                    <option value="economy">📈 অর্থনীতি সাব-মডেল (Economy)</option>
+                    <option value="technology">⚡ প্রযুক্তি সাব-মডেল (Tech)</option>
+                    <option value="international">🌍 আন্তর্জাতিক সাব-মডেল (International)</option>
+                    <option value="sports">🏏 খেলাধুলা সাব-মডেল (Sports)</option>
+                    <option value="factcheck">🔍 তথ্য যাচাই সাব-মডেল (FactCheck)</option>
+                    <option value="default_base" selected>🧠 ডিফল্ট বেস মডেল (SmolLM-135M)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.82rem;">অপ্টিমাইজেশন পদ্ধতি</label>
+                <select id="optMethod" class="form-control">
+                    <option value="int8" selected>INT8 Dynamic Quantization (৫০% সাইজ হ্রাস, ২ গুণ দ্রুত)</option>
+                    <option value="int4">NF4 / INT4 Non-linear (৭২% সাইজ হ্রাস, অতি-হালকা)</option>
+                    <option value="prune">L1-Norm Weight Pruning (৩০% অপ্রয়োজনীয় ওয়েট ছাঁটাই)</option>
+                    <option value="onnx">ONNX Runtime Graph Fusion (২.৬ গুণ ফাস্টার CPU)</option>
+                    <option value="fp16">FP16 Half-Precision (উচ্চ নির্ভুলতা)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.82rem;">প্রুনিং রেশিও (Prune Ratio)</label>
+                <select id="optPruneRatio" class="form-control">
+                    <option value="0.20">২০% Sparsity (সর্বনিম্ন নির্ভুলতা ক্ষতি)</option>
+                    <option value="0.30" selected>৩০% Sparsity (ভারসাম্যপূর্ণ)</option>
+                    <option value="0.50">৫০% Sparsity (সর্বোচ্চ কম্প্রেশন)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="height: 42px;" onclick="runUniversalOptimization()">
+                ⚡ অপ্টিমাইজ করুন (Optimize)
+            </button>
         </div>
-        {% endif %}
-    </div>
-</div>
 
-<!-- ========================================================================= -->
-<!-- 2. TASK-BASED FINE-TUNING COCKPIT -->
-<!-- ========================================================================= -->
-<div id="task-tuning" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🎯</span> 2. Task-Based LoRA Fine-Tuning Cockpit
-        </h2>
-        <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">Selectable Skill Adapters</span>
-    </div>
-
-    <div class="card" style="border-top: 3px solid var(--accent-purple);">
-        <form method="POST" action="{{ url_for('training.finetune_task_based') }}">
-            <!-- Task Selection Checkboxes -->
-            <div style="margin-bottom: 1.5rem;">
-                <label class="form-label" style="font-size: 0.95rem; font-weight: 600; color: #fff; margin-bottom: 0.6rem;">
-                    Select Specialized Tasks to Train:
-                </label>
-                <div class="grid-4" style="gap: 1rem;">
-                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
-                        <input type="checkbox" name="tasks" value="categorize" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
-                        <div>
-                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📂 Categorization</strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Topic classification across 7 news genres.</span>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
-                        <input type="checkbox" name="tasks" value="headline" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
-                        <div>
-                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📰 Headline Gen</strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Generate punchy headlines from article body text.</span>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
-                        <input type="checkbox" name="tasks" value="summarize" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
-                        <div>
-                            <strong style="color: #fff; font-size: 0.85rem; display: block;">📝 Summarization</strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Abstractive/extractive article summarization.</span>
-                        </div>
-                    </label>
-
-                    <label style="display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer;">
-                        <input type="checkbox" name="tasks" value="ner" checked style="margin-top: 0.2rem; accent-color: var(--accent-primary);">
-                        <div>
-                            <strong style="color: #fff; font-size: 0.85rem; display: block;">🏷️ Entity (NER)</strong>
-                            <span style="font-size: 0.75rem; color: var(--text-muted);">Extract Person, Location, and Org entities.</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Hyperparameters Grid -->
-            <div class="grid-4" style="gap: 1rem; margin-bottom: 1.5rem;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Base Model Architecture</label>
-                    <select name="base_model_choice" class="form-control">
-                        <option value="default" selected>Default ({{ settings.BASE_MODEL_NAME }})</option>
-                        {% for cm in cached_models %}
-                        <option value="{{ cm }}">Cached: {{ cm }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Training Epochs</label>
-                    <input type="number" name="epochs" class="form-control" value="2" min="1" max="10">
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">LoRA Rank ($r$)</label>
-                    <select name="lora_r" class="form-control">
-                        <option value="4">r=4 (Ultra-Lightweight)</option>
-                        <option value="8" selected>r=8 (Standard Balanced)</option>
-                        <option value="16">r=16 (High Capacity)</option>
-                        <option value="32">r=32 (Complex Reasoning)</option>
-                    </select>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Learning Rate ($\eta$)</label>
-                    <input type="text" name="learning_rate" class="form-control" value="0.0003">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.8rem;">
-                ⚡ Launch Task-Based LoRA Fine-Tuning
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 3. EXPORT & PUSH TO HUGGING FACE HUB -->
-<!-- ========================================================================= -->
-<div id="hf-exporter" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🚀</span> 3. Export & Push Fine-Tuned Model to Hugging Face Hub
-        </h2>
-        <span class="badge badge-analyst">One-Click Model Publisher</span>
-    </div>
-
-    <div class="card" style="border-top: 3px solid #10b981;">
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
-            Directly upload your trained LoRA adapter weights, tokenizer, and an automatically generated <strong>Model Card (README.md)</strong> with evaluation metrics and Python inference code to your Hugging Face account.
-        </p>
-
-        <form method="POST" action="{{ url_for('training.export_to_hf_hub') }}">
-            <div style="display: grid; grid-template-columns: 1.5fr 1.5fr 1fr; gap: 1rem; margin-bottom: 1.2rem;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Target Repository ID</label>
-                    <input type="text" name="repo_id" class="form-control" placeholder="e.g. your-username/bangla-news-lora-smollm" required>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Hugging Face Write Access Token</label>
-                    <input type="password" name="hf_token" class="form-control" placeholder="hf_xxxxxxxxxxxxxxxxxxxx" required>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Repository Visibility</label>
-                    <select name="is_private" class="form-control">
-                        <option value="0" selected>Public</option>
-                        <option value="1">Private</option>
-                    </select>
-                </div>
-            </div>
-
+        <!-- Optimization Result Alert Box -->
+        <div id="optimizationResultBox" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Status: {% if specialized_exists %}<strong style="color: var(--accent-success);">✓ Trained LoRA Adapter Ready to Push</strong>{% else %}<strong style="color: var(--accent-warning);">LoRA Adapter Not Found (Train first)</strong>{% endif %}
-                </span>
-                <button type="submit" class="btn btn-secondary" style="padding: 0.6rem 1.8rem;">
-                    🚀 Publish Model to Hugging Face Hub
+                <div>
+                    <h4 style="color: #34d399; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.3rem;" id="optResultTitle">
+                        ✓ অপ্টিমাইজেশন সফল হয়েছে!
+                    </h4>
+                    <p style="font-size: 0.82rem; color: #e2e8f0; margin: 0;" id="optResultDesc"></p>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="optDeployBtn" onclick="deployOptimizedModel()">
+                    🚀 নিউজরুমে সক্রিয় করুন (Deploy to Newsroom)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB 2: LIVE VISUAL FINE-TUNING COCKPIT -->
+<!-- ========================================================================= -->
+<div id="tab-finetune" class="tab-content-panel" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <span>⚡</span> লাইভ ভিজ্যুয়াল ফাইন-টিউনিং ককপিট (Live Visual Training)
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                রিয়েল-টাইম কনভার্জেন্স লস কার্ভ, ব্যাকগ্রাউন্ড ট্রেইনিং প্রগ্রেস বার, থ্রুপুট এবং লাইভ টার্মিনাল লগ স্ট্রিমিং।
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;" id="trainingActionButtons">
+            <button class="btn btn-sm btn-outline" id="cancelTrainBtn" style="display: none; border-color: #ef4444; color: #ef4444;" onclick="cancelRunningJob()">
+                🛑 ট্রেইনিং বাতিল করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- Training Controls Form -->
+    <div class="card" style="margin-bottom: 1.5rem; border-top: 3px solid var(--accent-primary);">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.2rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">টার্গেট টপিক (Target Topic)</label>
+                <select id="trainTopic" class="form-control">
+                    <option value="politics" selected>🏛️ রাজনীতি ও সুশাসন (Politics)</option>
+                    <option value="economy">📈 অর্থনীতি ও পুঁজিবাজার (Economy)</option>
+                    <option value="technology">⚡ বিজ্ঞান ও এআই প্রযুক্তি (Tech)</option>
+                    <option value="international">🌍 আন্তর্জাতিক কূটনীতি (International)</option>
+                    <option value="sports">🏏 খেলাধুলা ও ক্রিকেট (Sports)</option>
+                    <option value="factcheck">🔍 তথ্য যাচাই ও ফ্যাক্ট-চেক (FactCheck)</option>
+                    <option value="all_topics">🌐 সার্বজনীন সকল টপিক (All News)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">এপক সংখ্যা (Epochs)</label>
+                <input type="number" id="trainEpochs" class="form-control" value="2" min="1" max="10">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">LoRA Rank ($r$)</label>
+                <select id="trainLoraR" class="form-control">
+                    <option value="4">r=4 (Ultra-Lightweight)</option>
+                    <option value="8" selected>r=8 (Standard Balanced)</option>
+                    <option value="16">r=16 (High Capacity)</option>
+                    <option value="32">r=32 (Complex Multi-step)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">লার্নিং রেট ($\eta$)</label>
+                <input type="text" id="trainLR" class="form-control" value="0.0003">
+            </div>
+        </div>
+
+        <!-- Task Checkboxes & Scraped Data Toggle -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color);">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" id="taskCat" checked style="accent-color: var(--accent-primary);"> 📂 ক্যাটাগোরাইজেশন
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" id="taskHead" checked style="accent-color: var(--accent-primary);"> 📰 হেডলাইন তৈরি
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" id="taskSumm" checked style="accent-color: var(--accent-primary);"> 📝 সামারাইজেশন
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #cbd5e1; cursor: pointer;">
+                    <input type="checkbox" id="taskNER" checked style="accent-color: var(--accent-primary);"> 🏷️ এন্টিটি রিকগনিশন (NER)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #34d399; font-weight: 600; cursor: pointer;">
+                    <input type="checkbox" id="useScrapedKnowledge" checked style="accent-color: #10b981;"> 🌐 ওয়েব স্ক্র্যাপ নলেজ যুক্ত করুন
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="startTrainBtn" style="padding: 0.6rem 2rem; font-size: 0.95rem;" onclick="startRealtimeTraining()">
+                ⚡ ফাইন-টিউনিং শুরু করুন (Start Live Fine-Tuning)
+            </button>
+        </div>
+    </div>
+
+    <!-- Live Telemetry Monitor (Progress, KPIs, Dynamic Chart & Logs) -->
+    <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem;">
+        <!-- Left: Live Loss & Accuracy Convergence Chart -->
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="card-header" style="margin-bottom: 0.5rem;">
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">
+                        📉 রিয়েল-টাইম কনভার্জেন্স ও লস কার্ভ (Live Loss Curve)
+                    </h3>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;" id="chartSubtitle">
+                        Step-by-step cross-entropy loss and task accuracy monitoring
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.4rem;">
+                    <span class="badge" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa;">Train Loss</span>
+                    <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #c084fc;">Val Loss</span>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">Accuracy %</span>
+                </div>
+            </div>
+
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="liveLossChart"></canvas>
+            </div>
+
+            <!-- Animated Progress Bar -->
+            <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.4rem;">
+                    <span style="color: var(--text-muted);" id="progressStatusText">স্ট্যাটাস: অপেক্ষমাণ (Idle)</span>
+                    <strong style="color: #60a5fa;" id="progressPercentText">0.0%</strong>
+                </div>
+                <div class="glow-bar-container">
+                    <div class="glow-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: 4 KPI Cards & Terminal Console Stream -->
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- KPI 4 Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                <div class="metric-card-kpi" style="--card-glow: #60a5fa;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">ট্রেনিং লস (Train Loss)</span>
+                    <h3 style="font-size: 1.4rem; color: #60a5fa; margin: 0.2rem 0;" id="kpiTrainLoss">3.4800</h3>
+                    <span style="font-size: 0.7rem; color: #34d399;" id="kpiLossDelta">Initial Base</span>
+                </div>
+
+                <div class="metric-card-kpi" style="--card-glow: #34d399;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">টাস্ক নির্ভুলতা (Accuracy)</span>
+                    <h3 style="font-size: 1.4rem; color: #34d399; margin: 0.2rem 0;" id="kpiAccuracy">0.0%</h3>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);" id="kpiStepCount">Step: 0/0</span>
+                </div>
+
+                <div class="metric-card-kpi" style="--card-glow: #f59e0b;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">গতি (Throughput)</span>
+                    <h3 style="font-size: 1.4rem; color: #f59e0b; margin: 0.2rem 0;" id="kpiSpeed">0 tok/s</h3>
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">CPU Multi-thread</span>
+                </div>
+
+                <div class="metric-card-kpi" style="--card-glow: #ec4899;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">অবশিষ্ট সময় (ETA)</span>
+                    <h3 style="font-size: 1.4rem; color: #ec4899; margin: 0.2rem 0;" id="kpiETA">--:--</h3>
+                    <span style="font-size: 0.7rem; color: #a78bfa;" id="kpiMemory">RAM: 185 MB</span>
+                </div>
+            </div>
+
+            <!-- Terminal Stream Console -->
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.8rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">💻 লাইভ টার্মিনাল লগ স্ট্রীম (Live Logs)</span>
+                    <button class="btn btn-sm btn-outline" style="padding: 1px 6px; font-size: 0.68rem;" onclick="clearTerminalLogs()">মুছুন</button>
+                </div>
+                <div class="terminal-box" id="trainingTerminalBox">
+                    <div style="color: #64748b;">[Ready] Fine-tuning worker standby. Click 'Start Live Fine-Tuning' to execute.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB 3: AUTONOMOUS WEB SCRAPE "SCAN & LEARN" -->
+<!-- ========================================================================= -->
+<div id="tab-scrape-learn" class="tab-content-panel" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🌐</span> ওয়েব স্ক্র্যাপিং ডেটা স্ক্যান ও নলেজ এনরিচমেন্ট (Scan & Learn)
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                স্ক্র্যাপ করা সাম্প্রতিক খবরের তথ্য বিশ্লেষণ করে স্বয়ংক্রিয়ভাবে সুপারভাইজড ফাইন-টিউনিং (SFT) রিযনিং পেয়ার তৈরি করুন এবং মডেলের জ্ঞান সমৃদ্ধ করুন।
+            </p>
+        </div>
+        <button class="btn btn-sm btn-outline" onclick="loadScannedKnowledgeStats()">🔄 রিফ্রেশ নলেজ</button>
+    </div>
+
+    <!-- Scrape Ingestion KPI Stats -->
+    <div class="grid-4" style="gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="metric-card-kpi" style="--card-glow: #60a5fa;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">মোট স্ক্যানকৃত সংবাদ</span>
+            <h3 style="font-size: 1.6rem; color: #60a5fa; margin: 0.2rem 0;" id="statScannedArticles">{{ scanned_stats.total_articles_scanned }}</h3>
+            <span style="font-size: 0.72rem; color: var(--accent-success);">DB Scraped Articles</span>
+        </div>
+
+        <div class="metric-card-kpi" style="--card-glow: #34d399;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">তৈরিকৃত SFT রিযনিং পেয়ার</span>
+            <h3 style="font-size: 1.6rem; color: #34d399; margin: 0.2rem 0;" id="statSFTPairs">{{ scanned_stats.total_sft_pairs_generated }}</h3>
+            <span style="font-size: 0.72rem; color: #60a5fa;">&lt;thought&gt; Reasoning Pairs</span>
+        </div>
+
+        <div class="metric-card-kpi" style="--card-glow: #f59e0b;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">নতুন ডোমেইন শব্দভাণ্ডার</span>
+            <h3 style="font-size: 1.6rem; color: #f59e0b; margin: 0.2rem 0;" id="statVocab">{{ scanned_stats.domain_vocabulary_count }}</h3>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Unique Bangla Entities</span>
+        </div>
+
+        <div class="metric-card-kpi" style="--card-glow: #a855f7;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">নলেজ ডেটাসেট ফাইল</span>
+            <h3 style="font-size: 1.6rem; color: #c084fc; margin: 0.2rem 0;" id="statDatasetsCount">{{ scanned_stats.datasets|length }}</h3>
+            <span style="font-size: 0.72rem; color: #34d399;">Ready for Fine-Tuning</span>
+        </div>
+    </div>
+
+    <!-- Scan & Ingest Action Form -->
+    <div class="card" style="margin-bottom: 1.5rem; border-top: 3px solid #10b981;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.8rem;">
+            ⚡ ওয়ান-ক্লিক নলেজ এক্সট্র্যাক্টর ও ডেটাসেট জেনারেটর (One-Click Knowledge Harvester)
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: flex-end; margin-bottom: 1.2rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.82rem;">টার্গেট সংবাদ বিভাগসমূহ (Categories to Scan)</label>
+                <input type="text" id="scanCategoriesInput" class="form-control" value="politics, business, technology, international, sports, national" placeholder="কমা দিয়ে লিখুন: politics, business, tech">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 0.82rem;">আর্টিকেল সংখ্যা (Limit)</label>
+                <input type="number" id="scanLimitInput" class="form-control" value="100" min="10" max="500">
+            </div>
+
+            <button class="btn btn-secondary" style="height: 42px;" onclick="triggerScanAndLearn()">
+                🌐 স্ক্র্যাপ স্ক্যান ও নলেজ ইনজেস্ট
+            </button>
+        </div>
+
+        <!-- Real-time Extracted Sample Preview Container -->
+        <div id="scanResultsContainer" style="display: none; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h4 style="font-size: 0.9rem; color: #34d399; font-weight: 600;">
+                    ✓ নলেজ এক্সট্র্যাকশন সম্পন্ন! নমুনা SFT রিযনিং পেয়ার প্রিভিউ:
+                </h4>
+                <button class="btn btn-sm btn-primary" onclick="trainDirectlyOnScannedKnowledge()">
+                    🎯 এই নলেজে সরাসরি মডেল ট্রেইন করুন (Train on This Knowledge)
+                </button>
+            </div>
+            <div id="sampleTripletsView" style="display: flex; flex-direction: column; gap: 0.8rem;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB 4: LOCAL AI MODEL UPLOAD & WORKBENCH -->
+<!-- ========================================================================= -->
+<div id="tab-local-upload" class="tab-content-panel" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                <span>💾</span> লোকাল এআই মডেল আপলোড ও ওয়ার্কবেঞ্চ (Local AI Model Workbench)
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem;">
+                আপনার নিজস্ব ফাইন-টিউন করা বা লোকাল মডেল (.safetensors, .bin, .gguf, .onnx, .pt, .zip) আপলোড করে সাইজ অপ্টিমাইজেশন চালান এবং নিউজরুমে সক্রিয় করুন।
+            </p>
+        </div>
+    </div>
+
+    <!-- Drag & Drop File Uploader -->
+    <div class="card" style="margin-bottom: 1.5rem; border-top: 3px solid #3b82f6;">
+        <form id="localModelUploadForm" enctype="multipart/form-data">
+            <div class="dropzone-upload" onclick="document.getElementById('localModelFileInput').click()">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📤</div>
+                <h3 style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-bottom: 0.3rem;">
+                    লোকাল এআই মডেল ফাইল এখানে ড্রপ করুন অথবা ক্লিক করে নির্বাচন করুন
+                </h3>
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    সমর্থিত ফরম্যাট: <code>.safetensors</code>, <code>.bin</code>, <code>.gguf</code>, <code>.onnx</code>, <code>.pt</code>, <code>.zip</code> (LoRA প্যাকেজ)
+                </p>
+                <input type="file" id="localModelFileInput" name="model_file" style="display: none;" onchange="handleFileSelected(this)">
+                <span id="selectedFileNameBadge" class="badge badge-category" style="display: none; font-size: 0.85rem; padding: 0.4rem 0.8rem;"></span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: flex-end; margin-top: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-size: 0.82rem;">মডেলের কাস্টম নাম (Optional Display Name)</label>
+                    <input type="text" id="customModelNameInput" name="custom_name" class="form-control" placeholder="যেমন: Bangla-Custom-News-v2">
+                </div>
+                <button type="button" class="btn btn-primary" style="height: 42px;" onclick="uploadLocalModelFile()">
+                    ⚡ আপলোড সম্পন্ন করুন (Upload Model)
                 </button>
             </div>
         </form>
     </div>
-</div>
 
-<!-- ========================================================================= -->
-<!-- 4. LIVE LOSS & BENCHMARK ANALYTICS -->
-<!-- ========================================================================= -->
-<div class="card" style="margin-bottom: 2.5rem;">
-    <div class="card-header">
-        <div>
-            <h3 style="font-size: 1.05rem; font-weight: 600;">Training Dynamics & Multi-Task Benchmark Metrics</h3>
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Cross-Entropy Loss Curve & Evaluated Task Accuracies</p>
-        </div>
-        <div style="display: flex; gap: 0.5rem;">
-            <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">Train Loss</span>
-            <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">Validation Loss</span>
-        </div>
-    </div>
-    <div style="position: relative; height: 240px; width: 100%; margin-bottom: 1.5rem;">
-        <canvas id="lossChart"></canvas>
-    </div>
-
-    <!-- Evaluation Benchmark Metrics -->
-    {% if eval_report and eval_report.tasks %}
-    <div class="grid-4" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.2rem;">
-        {% set cat = eval_report.tasks.article_categorization %}
-        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Categorization</p>
-            <h3 style="font-size: 1.5rem; color: #60a5fa; margin: 0.2rem 0;">{{ (cat.accuracy * 100)|round(1) }}%</h3>
-            <span style="font-size: 0.72rem; color: var(--accent-success);">Top-1 Accuracy</span>
-        </div>
-
-        {% set head = eval_report.tasks.headline_generation %}
-        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Headline Gen</p>
-            <h3 style="font-size: 1.5rem; color: #a78bfa; margin: 0.2rem 0;">{{ head.rougeL }}</h3>
-            <span style="font-size: 0.72rem; color: var(--accent-primary);">ROUGE-L Score</span>
-        </div>
-
-        {% set summ = eval_report.tasks.content_summarization %}
-        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Summarization</p>
-            <h3 style="font-size: 1.5rem; color: #34d399; margin: 0.2rem 0;">{{ summ.rouge1 }}</h3>
-            <span style="font-size: 0.72rem; color: var(--accent-success);">ROUGE-1 Score</span>
-        </div>
-
-        {% set ner = eval_report.tasks.named_entity_recognition %}
-        <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
-            <p style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Named Entity (NER)</p>
-            <h3 style="font-size: 1.5rem; color: #f59e0b; margin: 0.2rem 0;">{{ ner.f1 }}</h3>
-            <span style="font-size: 0.72rem; color: var(--accent-warning);">Micro F1 Score</span>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
-<!-- ========================================================================= -->
-<!-- 5. MATHEMATICAL DEEP DIVE: LoRA DECOMPOSITION -->
-<!-- ========================================================================= -->
-<div id="lora-math" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>📐</span> 5. The Mathematics of LoRA Decomposition
-        </h2>
-        <span class="badge" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa;">Matrix Algebra</span>
-    </div>
-
+    <!-- Uploaded Local Models Table -->
     <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1rem; font-weight: 700; color: #fff;">
+                📁 সংরক্ষিত লোকাল মডেল তালিকা ও অপ্টিমাইজেশন হিস্টোরি
+            </h3>
+            <span class="badge badge-admin">{{ uploaded_models|length }} টি মডেল নিবন্ধিত</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; font-size: 0.85rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); color: #94a3b8; text-align: left;">
+                        <th style="padding: 0.6rem;">মডেল নাম</th>
+                        <th style="padding: 0.6rem;">ফরম্যাট</th>
+                        <th style="padding: 0.6rem;">সাইজ</th>
+                        <th style="padding: 0.6rem;">কোয়ান্টাইজেশন</th>
+                        <th style="padding: 0.6rem;">ল্যাটেন্সি</th>
+                        <th style="padding: 0.6rem;">স্ট্যাটাস</th>
+                        <th style="padding: 0.6rem; text-align: right;">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody id="uploadedModelsTableBody">
+                    {% for m in uploaded_models %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.7rem 0.6rem;">
+                            <strong style="color: #fff; display: block;">{{ m.display_name }}</strong>
+                            <span style="font-size: 0.72rem; color: #94a3b8; font-family: monospace;">{{ m.model_id }}</span>
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem;">
+                            <span class="badge badge-category" style="font-size: 0.7rem;">{{ m.format }}</span>
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem; color: #34d399;">
+                            {{ m.file_size_mb }} MB
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem;">
+                            <span style="color: #60a5fa;">{{ m.quantization }}</span>
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem; color: #f59e0b;">
+                            {{ m.latency_ms }} ms
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem;">
+                            {% if m.is_active %}
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">🟢 Live Active</span>
+                            {% else %}
+                            <span class="badge" style="background: rgba(255,255,255,0.06); color: #94a3b8;">Ready</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.7rem 0.6rem; text-align: right;">
+                            <div style="display: flex; gap: 0.3rem; justify-content: flex-end;">
+                                <button class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 2px 8px;" onclick="optimizeUploadedModel('{{ m.model_id }}')">
+                                    ⚙️ অপ্টিমাইজ
+                                </button>
+                                <button class="btn btn-sm btn-primary" style="font-size: 0.72rem; padding: 2px 8px;" onclick="deployUploadedModel('{{ m.model_id }}')">
+                                    🚀 ডেপ্লয়
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- TAB 5: HUGGING FACE HUB, MATH & SFT PLAYGROUND -->
+<!-- ========================================================================= -->
+<div id="tab-hf-hub" class="tab-content-panel" style="display: none;">
+    <!-- Recommended Models Grid -->
+    <div style="margin-bottom: 2rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <span>🤗</span> Hugging Face Hub থেকে প্রি-ট্রেইন্ড লাইটওয়েট LLM ডাউনলোড
+        </h2>
+        <div class="grid-3" style="gap: 1rem; margin-bottom: 1.5rem;">
+            {% for m in recommended_models %}
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid {% if m.recommended %}#38bdf8{% else %}#6b7280{% endif %};">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <h4 style="font-size: 1rem; font-weight: 700; color: #fff;">{{ m.name }}</h4>
+                        {% if m.recommended %}
+                        <span class="badge badge-category" style="font-size: 0.65rem;">Recommended</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 0.78rem; color: #94a3b8; font-family: monospace; margin-bottom: 0.5rem;">{{ m.id }}</p>
+                    <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 1rem;">
+                        {{ m.description }}
+                    </p>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.8rem; padding: 0.4rem 0.6rem; background: rgba(0,0,0,0.25); border-radius: 4px;">
+                        <span>Params: <strong style="color: #fff;">{{ m.params }}</strong></span>
+                        <span>Disk: <strong style="color: #38bdf8;">~{{ m.size_mb }} MB</strong></span>
+                    </div>
+                    <form method="POST" action="{{ url_for('training.download_hf_model') }}">
+                        <input type="hidden" name="model_id" value="{{ m.id }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">
+                            ⬇️ Download & Cache
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- LoRA Math & Interactive Parameter Calculator -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: #93c5fd; margin-bottom: 0.8rem;">
+            📐 LoRA Intrinsic Dimension & Parameter Reduction Calculator
+        </h3>
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; align-items: center;">
             <div>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #93c5fd; margin-bottom: 0.8rem;">
-                    Low-Rank Intrinsic Dimension Factorization
-                </h3>
-                <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.8rem;">
-                    During fine-tuning, dense weight updates $\Delta W \in \mathbb{R}^{d \times k}$ reside on a low intrinsic manifold. LoRA factorizes this into two small rank-$r$ matrices:
+                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.8rem;">
+                    ফাইন-টিউনিংয়ের সময় dense weight update $\Delta W \in \mathbb{R}^{d \times k}$ কে দুটি ছোট rank-$r$ ম্যাট্রিক্সে ফ্যাক্টরাইজ করা হয়:
                 </p>
-                <div style="padding: 1rem; background: rgba(0,0,0,0.5); border-radius: var(--radius-sm); border: 1px solid rgba(96, 165, 250, 0.3); font-family: 'Fira Code', monospace; color: #67e8f9; font-size: 1rem; text-align: center; margin-bottom: 0.8rem;">
+                <div style="padding: 1rem; background: rgba(0,0,0,0.5); border-radius: 8px; border: 1px solid rgba(96, 165, 250, 0.3); font-family: monospace; color: #67e8f9; font-size: 1rem; text-align: center; margin-bottom: 0.8rem;">
                     $$h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} (B \cdot A) x$$
                 </div>
-                <ul style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; padding-left: 1.2rem;">
-                    <li><strong>$W_0 \in \mathbb{R}^{d \times k}$</strong>: Frozen base model weights.</li>
-                    <li><strong>$A \in \mathbb{R}^{r \times k}$</strong>: Down-projection matrix initialized with random Gaussian $\mathcal{N}(0, \sigma^2)$.</li>
-                    <li><strong>$B \in \mathbb{R}^{d \times r}$</strong>: Up-projection matrix initialized to <strong>0</strong> ($\Delta W = 0$ at start).</li>
-                    <li><strong>$\frac{\alpha}{r}$</strong>: Scaling constant balancing base knowledge and adapter adjustments.</li>
-                </ul>
             </div>
 
-            <!-- Live Parameter Reduction Calculator -->
-            <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                <h4 style="font-size: 0.95rem; font-weight: 600; color: #f3f4f6; margin-bottom: 1rem;">
-                    🧮 Live Parameter Reduction Calculator
-                </h4>
-
-                <div class="form-group" style="margin-bottom: 0.8rem;">
+            <!-- Slider Box -->
+            <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div class="form-group" style="margin-bottom: 0.6rem;">
                     <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between;">
                         <span>Hidden Dimension ($d = k$)</span>
                         <span id="dimVal" style="color: #60a5fa; font-weight: 600;">768</span>
                     </label>
-                    <input type="range" id="dimRange" min="256" max="4096" step="256" value="768" style="width: 100%; accent-color: var(--accent-primary);" oninput="recalcLoRA()">
+                    <input type="range" id="dimRange" min="256" max="4096" step="256" value="768" style="width: 100%;" oninput="recalcLoRA()">
                 </div>
-
-                <div class="form-group" style="margin-bottom: 0.8rem;">
+                <div class="form-group" style="margin-bottom: 0.6rem;">
                     <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between;">
                         <span>LoRA Rank ($r$)</span>
                         <span id="rankVal" style="color: #a78bfa; font-weight: 600;">8</span>
                     </label>
-                    <input type="range" id="rankRange" min="2" max="64" step="2" value="8" style="width: 100%; accent-color: var(--accent-purple);" oninput="recalcLoRA()">
+                    <input type="range" id="rankRange" min="2" max="64" step="2" value="8" style="width: 100%;" oninput="recalcLoRA()">
                 </div>
-
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label class="form-label" style="font-size: 0.75rem; display: flex; justify-content: space-between;">
-                        <span>LoRA Alpha ($\alpha$)</span>
-                        <span id="alphaVal" style="color: #34d399; font-weight: 600;">16</span>
-                    </label>
-                    <input type="range" id="alphaRange" min="4" max="128" step="4" value="16" style="width: 100%; accent-color: var(--accent-success);" oninput="recalcLoRA()">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; font-size: 0.8rem;">
-                    <div style="background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Base Layer Weights</span>
-                        <strong id="baseParams" style="color: #fff; font-size: 0.95rem;">589,824</strong>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.75rem; margin-top: 0.8rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block;">Memory Savings</span>
+                        <strong id="paramSavings" style="color: #34d399; font-size: 0.95rem;">97.9%</strong>
                     </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">LoRA Parameters</span>
-                        <strong id="loraParams" style="color: #34d399; font-size: 0.95rem;">12,288</strong>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Memory Reduction</span>
-                        <strong id="paramSavings" style="color: #60a5fa; font-size: 0.95rem;">97.9%</strong>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 4px;">
-                        <span style="color: var(--text-muted); display: block; font-size: 0.7rem;">Effective Scaling ($\frac{\alpha}{r}$)</span>
+                    <div style="background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 4px;">
+                        <span style="color: var(--text-muted); display: block;">Effective Scale ($\frac{\alpha}{r}$)</span>
                         <strong id="scaleFactor" style="color: #f59e0b; font-size: 0.95rem;">2.0x</strong>
                     </div>
                 </div>
@@ -387,370 +748,457 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- 6. QUANTIZATION THEORY & NF4 BINS -->
-<!-- ========================================================================= -->
-<div id="quant-nf4" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧮</span> 6. NF4 (NormalFloat4) Quantization Mechanics
-        </h2>
-        <span class="badge" style="background: rgba(52, 211, 153, 0.2); color: #34d399;">Information Theory</span>
-    </div>
-
-    <div class="card">
-        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.2rem;">
-            Pre-trained neural weights follow a Gaussian distribution $\mathcal{N}(0, \sigma^2)$. Uniform 4-bit integer quantization causes significant errors near zero. <strong>NF4 constructs 16 information-theoretically optimal quantiles</strong> with equal expected information density.
-        </p>
-
-        <!-- 16 NF4 Quantile Bins Visualization -->
-        <h4 style="font-size: 0.85rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 0.6rem;">
-            NF4 16 Discrete Bins in Normalized $\mathcal{N}(0, 1)$ Space:
-        </h4>
-        <div style="display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; margin-bottom: 1.2rem; text-align: center; font-size: 0.65rem; font-family: monospace;">
-            <div style="background: #1e3a8a; padding: 6px 2px; border-radius: 3px; color: #93c5fd;" title="q0 = -1.0">-1.00</div>
-            <div style="background: #1e40af; padding: 6px 2px; border-radius: 3px; color: #93c5fd;" title="q1 = -0.69">-0.69</div>
-            <div style="background: #2563eb; padding: 6px 2px; border-radius: 3px; color: #bfdbfe;" title="q2 = -0.51">-0.51</div>
-            <div style="background: #3b82f6; padding: 6px 2px; border-radius: 3px; color: #dbeafe;" title="q3 = -0.39">-0.39</div>
-            <div style="background: #60a5fa; padding: 6px 2px; border-radius: 3px; color: #1e293b;" title="q4 = -0.28">-0.28</div>
-            <div style="background: #93c5fd; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q5 = -0.18">-0.18</div>
-            <div style="background: #bfdbfe; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q6 = -0.09">-0.09</div>
-            <div style="background: #e2e8f0; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q7 = 0.00">0.00</div>
-            <div style="background: #e2e8f0; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q8 = 0.08">+0.08</div>
-            <div style="background: #bfdbfe; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q9 = 0.17">+0.17</div>
-            <div style="background: #93c5fd; padding: 6px 2px; border-radius: 3px; color: #0f172a;" title="q10 = 0.27">+0.27</div>
-            <div style="background: #60a5fa; padding: 6px 2px; border-radius: 3px; color: #1e293b;" title="q11 = 0.38">+0.38</div>
-            <div style="background: #3b82f6; padding: 6px 2px; border-radius: 3px; color: #dbeafe;" title="q12 = 0.50">+0.50</div>
-            <div style="background: #2563eb; padding: 6px 2px; border-radius: 3px; color: #bfdbfe;" title="q13 = 0.66">+0.66</div>
-            <div style="background: #1e40af; padding: 6px 2px; border-radius: 3px; color: #93c5fd;" title="q14 = 0.83">+0.83</div>
-            <div style="background: #1e3a8a; padding: 6px 2px; border-radius: 3px; color: #93c5fd;" title="q15 = 1.00">+1.00</div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; font-size: 0.85rem;">
-            <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #60a5fa;">
-                <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">1. Block Quantization</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Weights chunked into blocks of $B=64$ with shared 32-bit float scale factors.</span>
-            </div>
-            <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #c084fc;">
-                <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">2. Double Quantization (DQ)</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Quantizes the 32-bit float scale factors into 8-bit integers, saving 0.37 bits/param.</span>
-            </div>
-            <div style="background: rgba(0,0,0,0.3); padding: 0.9rem; border-radius: var(--radius-sm); border-left: 3px solid #34d399;">
-                <strong style="color: #fff; display: block; margin-bottom: 0.3rem;">3. Paged Optimizers</strong>
-                <span style="color: var(--text-muted); font-size: 0.8rem;">Pages Adam states to CPU RAM during peak activation spikes, preventing GPU OOM.</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 7. HIGH-PERFORMANCE BLUEPRINT: JAX/FLAX vs. PYTORCH -->
-<!-- ========================================================================= -->
-<div id="flax-pytorch" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>⚡</span> 7. Dual Framework Architecture: PyTorch vs. JAX / Flax
-        </h2>
-        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b;">Engineering Comparison</span>
-    </div>
-
-    <!-- Framework Switcher Tabs -->
-    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-        <button id="tabFlaxBtn" class="btn btn-sm btn-primary" onclick="switchFramework('flax')">
-            ⚡ JAX / Flax NNX (TPU / High-Performance Functional)
-        </button>
-        <button id="tabTorchBtn" class="btn btn-sm btn-outline" onclick="switchFramework('torch')">
-            🔥 PyTorch + Hugging Face PEFT (CPU / Single GPU)
-        </button>
-    </div>
-
-    <!-- JAX/Flax Content -->
-    <div id="flaxContent" class="card" style="margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-            <div>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #f59e0b;">Functional State Management with JAX & Flax NNX</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                    Pure functions, XLA JIT Compilation, and Immutable <code>TrainState</code> for TPU Pod scaling.
-                </p>
-            </div>
-            <span class="badge badge-analyst">Google JAX / TPU Native</span>
-        </div>
-
-        <pre style="background: #0d1117; padding: 1.2rem; border-radius: var(--radius-sm); color: #e6edf3; font-size: 0.85rem; overflow-x: auto; line-height: 1.4; border: 1px solid #30363d;"><code><span style="color: #ff7b72;">import</span> jax
-<span style="color: #ff7b72;">import</span> jax.numpy <span style="color: #ff7b72;">as</span> jnp
-<span style="color: #ff7b72;">from</span> flax <span style="color: #ff7b72;">import</span> nnx
-<span style="color: #ff7b72;">from</span> flax.training.train_state <span style="color: #ff7b72;">import</span> TrainState
-<span style="color: #ff7b72;">import</span> optax
-
-<span style="color: #8b949e;"># Functional LoRA Linear Layer in Flax NNX</span>
-<span style="color: #ff7b72;">class</span> <span style="color: #f0883e;">LoRALinearFlax</span>(nnx.Module):
-    <span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">__init__</span>(self, in_features: <span style="color: #79c0ff;">int</span>, out_features: <span style="color: #79c0ff;">int</span>, rank: <span style="color: #79c0ff;">int</span> = <span style="color: #79c0ff;">8</span>, alpha: <span style="color: #79c0ff;">float</span> = <span style="color: #79c0ff;">16.0</span>, rngs: nnx.Rngs = <span style="color: #79c0ff;">None</span>):
-        self.base_w = nnx.Param(jax.random.normal(rngs.params(), (in_features, out_features)))
-        self.lora_a = nnx.Param(jax.random.normal(rngs.params(), (in_features, rank)) * <span style="color: #79c0ff;">0.01</span>)
-        self.lora_b = nnx.Param(jnp.zeros((rank, out_features)))
-        self.scaling = alpha / rank
-
-    <span style="color: #ff7b72;">def</span> <span style="color: #d2a8ff;">__call__</span>(self, x: jax.Array) -&gt; jax.Array:
-        base_out = jnp.dot(x, self.base_w.value)
-        lora_out = jnp.dot(jnp.dot(x, self.lora_a.value), self.lora_b.value) * self.scaling
-        <span style="color: #ff7b72;">return</span> base_out + lora_out</code></pre>
-    </div>
-
-    <!-- PyTorch Content -->
-    <div id="torchContent" class="card" style="margin-bottom: 1.5rem; display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-            <div>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #ef4444;">Imperative Execution with PyTorch & Hugging Face PEFT</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
-                    Standard dynamic execution graph with multi-threaded CPU SIMD and PEFT adapters.
-                </p>
-            </div>
-            <span class="badge badge-admin">PyTorch / CPU Default</span>
-        </div>
-
-        <pre style="background: #0d1117; padding: 1.2rem; border-radius: var(--radius-sm); color: #e6edf3; font-size: 0.85rem; overflow-x: auto; line-height: 1.4; border: 1px solid #30363d;"><code><span style="color: #ff7b72;">from</span> peft <span style="color: #ff7b72;">import</span> LoraConfig, get_peft_model, TaskType
-<span style="color: #ff7b72;">from</span> transformers <span style="color: #ff7b72;">import</span> AutoModelForCausalLM
-
-lora_config = LoraConfig(
-    r=<span style="color: #79c0ff;">8</span>,
-    lora_alpha=<span style="color: #79c0ff;">16</span>,
-    target_modules=[<span style="color: #a5d6ff;">"q_proj"</span>, <span style="color: #a5d6ff;">"v_proj"</span>, <span style="color: #a5d6ff;">"c_attn"</span>],
-    task_type=TaskType.CAUSAL_LM
-)
-model = get_peft_model(base_model, lora_config)</code></pre>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 8. 4-WEEK LEARNING FRAMEWORK & ROADMAP -->
-<!-- ========================================================================= -->
-<div id="roadmap" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>📚</span> 8. 4-Week Fine-Tuning Learning Framework & Project Manual
-        </h2>
-        <span class="badge" style="background: rgba(192, 132, 252, 0.2); color: #c084fc;">Curriculum</span>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-        <div class="card" style="border-top: 3px solid #60a5fa; padding: 1.2rem;">
-            <span style="font-size: 0.75rem; color: #60a5fa; font-weight: 700; text-transform: uppercase;">Week 1</span>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Theory & Quantization</h3>
-            <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>LoRA Low-Rank factorization.</li>
-                <li>NF4 quantile derivation.</li>
-                <li>FlashAttention matrix tiling.</li>
-            </ul>
-        </div>
-
-        <div class="card" style="border-top: 3px solid #34d399; padding: 1.2rem;">
-            <span style="font-size: 0.75rem; color: #34d399; font-weight: 700; text-transform: uppercase;">Week 2</span>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Hardware & Setup</h3>
-            <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Unsloth Triton kernels on T4.</li>
-                <li>Flax TPU VM environment.</li>
-                <li>CPU SIMD thread scheduling.</li>
-            </ul>
-        </div>
-
-        <div class="card" style="border-top: 3px solid #f59e0b; padding: 1.2rem;">
-            <span style="font-size: 0.75rem; color: #f59e0b; font-weight: 700; text-transform: uppercase;">Week 3</span>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">SFT Reasoning Data</h3>
-            <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Bangla Unicode NFC hygiene.</li>
-                <li>ChatML <code>&lt;thought&gt;</code> tags.</li>
-                <li>Prompt token loss masking.</li>
-            </ul>
-        </div>
-
-        <div class="card" style="border-top: 3px solid #ec4899; padding: 1.2rem;">
-            <span style="font-size: 0.75rem; color: #ec4899; font-weight: 700; text-transform: uppercase;">Week 4</span>
-            <h3 style="font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0.4rem 0;">Training & Logic Eval</h3>
-            <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45; padding-left: 1rem;">
-                <li>Cosine annealing LR schedule.</li>
-                <li>ROUGE, BLEU & NER F1 scores.</li>
-                <li>Logic puzzle reasoning test.</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 9. INTERACTIVE SFT JSONL DATASET PLAYGROUND -->
-<!-- ========================================================================= -->
-<div id="sft-playground" style="margin-bottom: 2.5rem;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
-            <span>🧪</span> 9. Interactive SFT Reasoning Dataset Playground
-        </h2>
-        <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">ChatML Schema</span>
-    </div>
-
-    <div class="card">
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.2rem;">
-            Test how Supervised Fine-Tuning (SFT) reasoning chains are formatted into ChatML tokens with structured <code>&lt;|im_start|&gt;thought</code> reasoning tags for deep multi-step problem solving.
-        </p>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-            <!-- Inputs -->
-            <div>
-                <div class="form-group">
-                    <label class="form-label">System Directive</label>
-                    <input type="text" id="sftSystem" class="form-control" value="You are an expert Bangla AI language model.">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">User Instruction / Task</label>
-                    <textarea id="sftInstruction" class="form-control" rows="2">বাংলাদেশের জাতীয় সংসদে ২০২৬-২৭ অর্থবছরের বাজেট নিয়ে প্রধান তিনটি সিদ্ধান্ত কী?</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Reasoning Chain (&lt;thought&gt;)</label>
-                    <textarea id="sftReasoning" class="form-control" rows="3">প্রথমে সংবাদ প্রতিবেদন থেকে বাজেট বরাদ্দের প্রধান তিনটি খাত চিহ্নিত করতে হবে: ১. শিক্ষা ও প্রযুক্তি, ২. স্বাস্থ্য খাত, ৩. অবকাঠামো উন্নয়ন। এরপর সংক্ষিপ্ত আকারে বিশ্লেষণ করতে হবে।</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Final Assistant Response</label>
-                    <textarea id="sftResponse" class="form-control" rows="2">জাতীয় সংসদে ঘোষিত বাজেটের প্রধান তিনটি সিদ্ধান্ত হলো: ১. প্রযুক্তি খাতে ১৫% বরাদ্দ বৃদ্ধি, ২. স্বাস্থ্য বীমা সম্প্রসারণ, ৩. আধুনিক রেল নেটওয়ার্ক প্রকল্প।</textarea>
-                </div>
-
-                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="previewSFT()">
-                    ⚡ Format & Validate SFT Tokens
-                </button>
-            </div>
-
-            <!-- Tokenized Output Preview -->
-            <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <label class="form-label" style="margin-bottom: 0;">Tokenized Training String & Mask Preview</label>
-                    <span id="tokenCountBadge" class="badge badge-category">Est: ~110 tokens</span>
-                </div>
-                <pre id="sftOutput" style="background: #090d16; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); color: #34d399; font-size: 0.8rem; height: 280px; overflow-y: auto; white-space: pre-wrap; font-family: 'Fira Code', monospace;"><|im_start|>system
-You are an expert Bangla AI language model.<|im_end|>
-<|im_start|>user
-বাংলাদেশের জাতীয় সংসদে ২০২৬-২৭ অর্থবছরের বাজেট নিয়ে প্রধান তিনটি সিদ্ধান্ত কী?<|im_end|>
-<|im_start|>thought
-প্রথমে সংবাদ প্রতিবেদন থেকে বাজেট বরাদ্দের প্রধান তিনটি খাত চিহ্নিত করতে হবে: ১. শিক্ষা ও প্রযুক্তি, ২. স্বাস্থ্য খাত, ৩. অবকাঠামো উন্নয়ন। এরপর সংক্ষিপ্ত আকারে বিশ্লেষণ করতে হবে。<|im_end|>
-<|im_start|>assistant
-জাতীয় সংসদে ঘোষিত বাজেটের প্রধান তিনটি সিদ্ধান্ত হলো: ১. প্রযুক্তি খাতে ১৫% বরাদ্দ বৃদ্ধি, ২. স্বাস্থ্য বীমা সম্প্রসারণ, ৩. আধুনিক রেল নেটওয়ার্ক প্রকল্প。<|im_end|></pre>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- JAVASCRIPT: DYNAMIC CALCULATORS & CHART.JS -->
+<!-- JAVASCRIPT LOGIC & ASYNCHRONOUS POLLING CONTROLLERS -->
 <!-- ========================================================================= -->
 <script>
-// 1. Interactive LoRA Reduction Recalculator
+let currentActiveJobId = null;
+let pollIntervalTimer = null;
+let liveChartInstance = null;
+
+// 1. Tab Navigation
+function switchMainTab(tabId, btnElement) {
+    document.querySelectorAll('.tab-content-panel').forEach(panel => panel.style.display = 'none');
+    document.querySelectorAll('.training-tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    const target = document.getElementById(tabId);
+    if (target) target.style.display = 'block';
+    if (btnElement) btnElement.classList.add('active');
+
+    if (tabId === 'tab-finetune' && !liveChartInstance) {
+        initLiveChart();
+    }
+}
+
+// 2. Initialize Real-Time Convergence Chart
+function initLiveChart() {
+    const ctx = document.getElementById('liveLossChart');
+    if (!ctx) return;
+
+    liveChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['0%'],
+            datasets: [
+                {
+                    label: 'Train Loss',
+                    data: [3.48],
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 3,
+                },
+                {
+                    label: 'Val Loss',
+                    data: [3.62],
+                    borderColor: '#c084fc',
+                    backgroundColor: 'rgba(192, 132, 252, 0.1)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 3,
+                },
+                {
+                    label: 'Accuracy %',
+                    data: [52.0],
+                    borderColor: '#34d399',
+                    borderDash: [4, 4],
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    fill: false,
+                    pointRadius: 2,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { labels: { color: '#9ca3af', font: { size: 11 } } }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#9ca3af', font: { size: 10 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#9ca3af', font: { size: 10 } },
+                    title: { display: true, text: 'Loss', color: '#9ca3af' }
+                },
+                y1: {
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#34d399', font: { size: 10 } },
+                    min: 0,
+                    max: 100,
+                    title: { display: true, text: 'Accuracy %', color: '#34d399' }
+                }
+            }
+        }
+    });
+}
+
+// 3. Start Real-time Background Training Job
+async function startRealtimeTraining() {
+    const topic = document.getElementById("trainTopic").value;
+    const epochs = parseInt(document.getElementById("trainEpochs").value);
+    const lora_r = parseInt(document.getElementById("trainLoraR").value);
+    const learning_rate = parseFloat(document.getElementById("trainLR").value);
+    const use_scraped_knowledge = document.getElementById("useScrapedKnowledge").checked;
+
+    const tasks = [];
+    if (document.getElementById("taskCat").checked) tasks.push("categorize");
+    if (document.getElementById("taskHead").checked) tasks.push("headline");
+    if (document.getElementById("taskSumm").checked) tasks.push("summarize");
+    if (document.getElementById("taskNER").checked) tasks.push("ner");
+
+    const startBtn = document.getElementById("startTrainBtn");
+    startBtn.disabled = true;
+    startBtn.innerText = "⏳ লঞ্চ হচ্ছে...";
+
+    try {
+        const res = await fetch("{{ url_for('training.start_finetune_api') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic,
+                epochs,
+                lora_r,
+                learning_rate,
+                tasks,
+                use_scraped_knowledge
+            })
+        });
+        const data = await res.json();
+        if (data.status === "success" && data.job_id) {
+            currentActiveJobId = data.job_id;
+            document.getElementById("cancelTrainBtn").style.display = "inline-block";
+            startBtn.innerText = "⚡ ট্রেইনিং চলছে...";
+            startProgressPolling(data.job_id);
+        } else {
+            alert("Error: " + (data.message || "Failed to start training"));
+            startBtn.disabled = false;
+            startBtn.innerText = "⚡ ফাইন-টিউনিং শুরু করুন";
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server error while launching training job.");
+        startBtn.disabled = false;
+        startBtn.innerText = "⚡ ফাইন-টিউনিং শুরু করুন";
+    }
+}
+
+// 4. Poll Live Job Telemetry
+function startProgressPolling(jobId) {
+    if (pollIntervalTimer) clearInterval(pollIntervalTimer);
+
+    pollIntervalTimer = setInterval(async () => {
+        try {
+            const res = await fetch(`{{ url_for('training.index_view') }}/api/progress/${jobId}`);
+            const data = await res.json();
+            if (data.status === "success" && data.job) {
+                updateLiveUI(data.job);
+
+                if (data.job.status === "completed" || data.job.status === "cancelled" || data.job.status === "failed") {
+                    clearInterval(pollIntervalTimer);
+                    document.getElementById("startTrainBtn").disabled = false;
+                    document.getElementById("startTrainBtn").innerText = "⚡ ফাইন-টিউনিং শুরু করুন (Start Live Fine-Tuning)";
+                    document.getElementById("cancelTrainBtn").style.display = "none";
+                }
+            }
+        } catch (err) {
+            console.error("Polling error", err);
+        }
+    }, 800);
+}
+
+// 5. Update UI with Telemetry Metrics
+function updateLiveUI(job) {
+    document.getElementById("progressBarFill").style.width = `${job.percent}%`;
+    document.getElementById("progressPercentText").innerText = `${job.percent}%`;
+    document.getElementById("progressStatusText").innerText = `স্ট্যাটাস: ${job.status.toUpperCase()} (${job.topic_name_bn}) | Epoch ${job.current_epoch}/${job.epochs}`;
+
+    document.getElementById("kpiTrainLoss").innerText = job.train_loss.toFixed(4);
+    document.getElementById("kpiAccuracy").innerText = `${job.accuracy}%`;
+    document.getElementById("kpiStepCount").innerText = `Step: ${job.current_step}/${job.total_steps}`;
+    document.getElementById("kpiSpeed").innerText = `${job.tokens_per_sec} tok/s`;
+    document.getElementById("kpiETA").innerText = `${job.eta_seconds}s`;
+    document.getElementById("kpiMemory").innerText = `RAM: ${job.vram_mb} MB`;
+
+    // Update Chart
+    if (liveChartInstance && job.step_history && job.step_history.length > 0) {
+        liveChartInstance.data.labels = job.step_history.map(s => `S${s.step}`);
+        liveChartInstance.data.datasets[0].data = job.step_history.map(s => s.train_loss);
+        liveChartInstance.data.datasets[1].data = job.step_history.map(s => s.val_loss);
+        liveChartInstance.data.datasets[2].data = job.step_history.map(s => s.accuracy);
+        liveChartInstance.update('none');
+    }
+
+    // Update Terminal Logs
+    if (job.logs && job.logs.length > 0) {
+        const term = document.getElementById("trainingTerminalBox");
+        term.innerHTML = job.logs.map(l => {
+            let color = "#e2e8f0";
+            if (l.includes("📊")) color = "#60a5fa";
+            if (l.includes("✅")) color = "#34d399";
+            if (l.includes("🚀") || l.includes("⚡")) color = "#c084fc";
+            if (l.includes("❌") || l.includes("🛑")) color = "#ef4444";
+            return `<div style="color: ${color};">${l}</div>`;
+        }).join("");
+        term.scrollTop = term.scrollHeight;
+    }
+}
+
+// 6. Cancel Running Training Job
+async function cancelRunningJob() {
+    if (!currentActiveJobId) return;
+    try {
+        await fetch(`{{ url_for('training.index_view') }}/api/cancel/${currentActiveJobId}`, { method: "POST" });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 7. Clear Terminal Logs
+function clearTerminalLogs() {
+    document.getElementById("trainingTerminalBox").innerHTML = "<div style='color: #64748b;'>Terminal logs cleared.</div>";
+}
+
+// 8. Trigger Autonomous Web Scrape Scan & Learn
+async function triggerScanAndLearn() {
+    const categories = document.getElementById("scanCategoriesInput").value;
+    const limit = parseInt(document.getElementById("scanLimitInput").value);
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerText = "⏳ স্ক্যানিং ও নলেজ এক্সট্র্যাক্ট হচ্ছে...";
+
+    try {
+        const res = await fetch("{{ url_for('training.scan_and_learn_api') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ categories, limit })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerText = "🌐 স্ক্র্যাপ স্ক্যান ও নলেজ ইনজেস্ট";
+
+        if (data.status === "success") {
+            document.getElementById("statScannedArticles").innerText = data.articles_scanned;
+            document.getElementById("statSFTPairs").innerText = data.sft_pairs_created;
+            document.getElementById("statVocab").innerText = data.vocabulary_learned;
+
+            // Render Preview Triplets
+            const container = document.getElementById("scanResultsContainer");
+            const view = document.getElementById("sampleTripletsView");
+            container.style.display = "block";
+
+            view.innerHTML = (data.samples || []).map((s, idx) => `
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.8rem; border-radius: 6px; border-left: 3px solid #34d399; font-size: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                        <strong style="color: #60a5fa;">#${idx+1} [${s.type}] ${s.instruction}</strong>
+                        <span class="badge badge-category" style="font-size: 0.65rem;">${s.category}</span>
+                    </div>
+                    <div style="color: #a78bfa; margin-bottom: 0.3rem; font-family: monospace;">💭 &lt;thought&gt; ${s.thought.substring(0, 140)}...</div>
+                    <div style="color: #34d399;">🤖 &lt;assistant&gt; ${s.response.substring(0, 160)}...</div>
+                </div>
+            `).join("");
+        } else {
+            alert("Error scanning articles: " + (data.message || "Unknown"));
+        }
+    } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.innerText = "🌐 স্ক্র্যাপ স্ক্যান ও নলেজ ইনজেস্ট";
+        alert("Failed to connect to Knowledge Extraction API.");
+    }
+}
+
+// 9. Train Directly on Scanned Knowledge
+function trainDirectlyOnScannedKnowledge() {
+    switchMainTab('tab-finetune', document.querySelectorAll('.training-tab-btn')[1]);
+    document.getElementById("useScrapedKnowledge").checked = true;
+    startRealtimeTraining();
+}
+
+// 10. Universal Model Optimization Trigger
+let lastOptimizedModelId = null;
+async function runUniversalOptimization() {
+    const model_id = document.getElementById("optTargetModel").value;
+    const optimization_type = document.getElementById("optMethod").value;
+    const prune_ratio = parseFloat(document.getElementById("optPruneRatio").value);
+
+    try {
+        const res = await fetch("{{ url_for('training.optimize_model_api') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model_id, optimization_type, prune_ratio })
+        });
+        const data = await res.json();
+        if (data.status === "success" && data.report) {
+            const r = data.report;
+            lastOptimizedModelId = model_id;
+            const resBox = document.getElementById("optimizationResultBox");
+            resBox.style.display = "block";
+            document.getElementById("optResultTitle").innerText = `✓ ${r.quant_label} অপ্টিমাইজেশন সম্পন্ন! (${r.speedup_factor} Speedup)`;
+            document.getElementById("optResultDesc").innerHTML = `
+                মূল সাইজ: <strong>${r.original_size_mb} MB</strong> ➔ অপ্টিমাইজড: <strong style="color: #34d399;">${r.optimized_size_mb} MB</strong> (${r.size_reduction_percent}% হ্রাস) |
+                ল্যাটেন্সি: <strong>${r.optimized_latency_ms} ms</strong> (আগে ${r.original_latency_ms} ms) |
+                Bangla BLEU: <strong>${r.bangla_bleu_score}</strong>
+            `;
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Optimization request failed.");
+    }
+}
+
+// 11. Deploy Model to Live Newsroom
+async function deployOptimizedModel() {
+    if (!lastOptimizedModelId) return;
+    try {
+        const res = await fetch("{{ url_for('training.deploy_model_api') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model_id: lastOptimizedModelId })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+            alert(`✓ সফলভাবে '${lastOptimizedModelId}' মডেলটি লাইভ নিউজরুম এআই ইঞ্জিনে সক্রিয় করা হয়েছে!`);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 12. Local Model File Drop / Select Handler
+function handleFileSelected(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const badge = document.getElementById("selectedFileNameBadge");
+        badge.style.display = "inline-block";
+        badge.innerText = `নির্বাচিত ফাইল: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
+    }
+}
+
+// 13. Upload Local Model File
+async function uploadLocalModelFile() {
+    const fileInput = document.getElementById("localModelFileInput");
+    if (!fileInput.files || !fileInput.files[0]) {
+        alert("অনুগ্রহ করে একটি লোকাল মডেল ফাইল (.safetensors, .bin, .gguf, .onnx, .pt, .zip) নির্বাচন করুন।");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("model_file", fileInput.files[0]);
+    const customName = document.getElementById("customModelNameInput").value;
+    if (customName) formData.append("custom_name", customName);
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerText = "⏳ আপলোড ও বিশ্লেষণ হচ্ছে...";
+
+    try {
+        const res = await fetch("{{ url_for('training.upload_local_model_api') }}", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerText = "⚡ আপলোড সম্পন্ন করুন";
+
+        if (data.status === "success" && data.model) {
+            alert(`✓ মডেল '${data.model.display_name}' সফলভাবে আপলোড হয়েছে!`);
+            location.reload();
+        } else {
+            alert("Upload failed: " + (data.message || "Unknown error"));
+        }
+    } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.innerText = "⚡ আপলোড সম্পন্ন করুন";
+        alert("Server error uploading model.");
+    }
+}
+
+// 14. Optimize and Deploy Uploaded Models from Table
+async function optimizeUploadedModel(modelId) {
+    document.getElementById("optTargetModel").value = "default_base";
+    switchMainTab('tab-topics', document.querySelectorAll('.training-tab-btn')[0]);
+    runUniversalOptimization();
+}
+
+async function deployUploadedModel(modelId) {
+    try {
+        const res = await fetch("{{ url_for('training.deploy_model_api') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model_id: modelId })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+            alert(`✓ সফলভাবে '${modelId}' লাইভ নিউজরুম এআই ইঞ্জিনে সক্রিয় করা হয়েছে!`);
+            location.reload();
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 15. Benchmark Specific Model
+async function benchmarkSpecificModel(modelId) {
+    try {
+        const res = await fetch(`{{ url_for('training.index_view') }}/api/model/benchmark/${modelId}`);
+        const data = await res.json();
+        if (data.status === "success" && data.benchmark) {
+            const b = data.benchmark;
+            alert(`⏱ [${modelId}] বেঞ্চমার্ক ফলাফল:\n\n• স্পিড: ${b.tokens_per_second} tokens/sec\n• প্রতি টোকেন ল্যাটেন্সি: ${b.ms_per_token} ms\n• মেমরি ব্যবহার: ${b.vram_usage_mb} MB\n• বাংলা BLEU স্কোর: ${b.bangla_bleu}\n• পারপ্লেক্সিটি: ${b.bangla_perplexity}`);
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// 16. Trigger Topic Split Modal / Action
+async function triggerTopicSplitModal(topicId, nameBn, rank) {
+    if (confirm(`আপনি কি '${nameBn}' টপিকের জন্য LoRA Rank=${rank} বিশিষ্ট নতুন হালকা সাব-মডেল অ্যাডাপ্টার স্প্লিট করতে চান?`)) {
+        try {
+            const res = await fetch("{{ url_for('training.create_topic_split_api') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic_id: topicId, lora_r: rank })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                alert(`✓ '${nameBn}' সাব-মডেল সফলভাবে স্প্লিট ও তৈরি করা হয়েছে!`);
+                location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+}
+
+// 17. LoRA Parameter Calculator
 function recalcLoRA() {
     const d = parseInt(document.getElementById("dimRange").value);
     const r = parseInt(document.getElementById("rankRange").value);
-    const alpha = parseInt(document.getElementById("alphaRange").value);
-
     document.getElementById("dimVal").innerText = d;
     document.getElementById("rankVal").innerText = r;
-    document.getElementById("alphaVal").innerText = alpha;
 
     const baseWeights = d * d;
     const loraWeights = 2 * (d * r);
     const savings = ((1 - (loraWeights / baseWeights)) * 100).toFixed(1);
-    const scale = (alpha / r).toFixed(1);
+    const scale = (16 / r).toFixed(1);
 
-    document.getElementById("baseParams").innerText = baseWeights.toLocaleString();
-    document.getElementById("loraParams").innerText = loraWeights.toLocaleString();
     document.getElementById("paramSavings").innerText = savings + "%";
     document.getElementById("scaleFactor").innerText = scale + "x";
 }
 
-// 2. Framework Tab Switcher
-function switchFramework(type) {
-    if (type === 'flax') {
-        document.getElementById("flaxContent").style.display = "block";
-        document.getElementById("torchContent").style.display = "none";
-        document.getElementById("tabFlaxBtn").className = "btn btn-sm btn-primary";
-        document.getElementById("tabTorchBtn").className = "btn btn-sm btn-outline";
-    } else {
-        document.getElementById("flaxContent").style.display = "none";
-        document.getElementById("torchContent").style.display = "block";
-        document.getElementById("tabFlaxBtn").className = "btn btn-sm btn-outline";
-        document.getElementById("tabTorchBtn").className = "btn btn-sm btn-primary";
-    }
-}
-
-// 3. SFT Preview Generator
-async function previewSFT() {
-    const instruction = document.getElementById("sftInstruction").value;
-    const reasoning = document.getElementById("sftReasoning").value;
-    const response = document.getElementById("sftResponse").value;
-    const system_prompt = document.getElementById("sftSystem").value;
-
-    try {
-        const res = await fetch("{{ url_for('training.format_sft_sample') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ instruction, reasoning, response, system_prompt })
-        });
-        const data = await res.json();
-        if (data.formatted_text) {
-            document.getElementById("sftOutput").innerText = data.formatted_text;
-            document.getElementById("tokenCountBadge").innerText = `Est: ~${data.token_estimate} tokens`;
-        }
-    } catch (err) {
-        console.error("Failed to format SFT sample", err);
-    }
-}
-
-// 4. Initialize Chart.js Convergence Curves
 document.addEventListener("DOMContentLoaded", () => {
     recalcLoRA();
-
-    const ctx = document.getElementById('lossChart');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Epoch 0.5', 'Epoch 1.0', 'Epoch 1.5', 'Epoch 2.0', 'Epoch 2.5', 'Epoch 3.0'],
-                datasets: [
-                    {
-                        label: 'Training Loss',
-                        data: [3.42, 2.51, 1.94, 1.76, 1.62, 1.51],
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                        tension: 0.35,
-                        fill: true,
-                        pointRadius: 4,
-                    },
-                    {
-                        label: 'Validation Loss',
-                        data: [3.55, 2.68, 2.05, 1.82, 1.69, 1.61],
-                        borderColor: '#c084fc',
-                        backgroundColor: 'rgba(192, 132, 252, 0.1)',
-                        tension: 0.35,
-                        fill: true,
-                        pointRadius: 4,
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { labels: { color: '#9ca3af' } }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    y: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af' },
-                        title: { display: true, text: 'Cross-Entropy Loss', color: '#9ca3af' }
-                    }
-                }
-            }
-        });
-    }
+    initLiveChart();
 });
 </script>
 {% endblock %}

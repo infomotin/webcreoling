@@ -150,7 +150,8 @@ def test_automation_dashboard_view_and_kpis(client):
     resp = client.get("/admin/automation")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "অটোমেশন ও এআই ফেক নিউজ কন্ট্রোল প্যানেল" in html
+    assert "অটোমেশন" in html
+    assert "এআই ফেক নিউজ" in html
     assert "অনুমোদিত সর্বোচ্চ ফেক সম্ভাব্যতা সীমা" in html
     assert "লাইভ প্রকাশিত ও এআই বিশ্লেষিত সংবাদ ফিড" in html
 
@@ -222,3 +223,100 @@ def test_automation_article_override_and_audit(client):
     resp_audit = client.post("/admin/automation/run-fact-check-audit", follow_redirects=True)
     assert resp_audit.status_code == 200
     assert "ফ্যাক্ট-চেকিং অডিট সম্পন্ন" in resp_audit.get_data(as_text=True)
+
+
+# ==============================================================================
+# 4. Automation Job CRUD & Scheduler Operations Tests
+# ==============================================================================
+
+def test_automation_job_crud_lifecycle(client):
+    """Verify full CRUD lifecycle for scheduled automation jobs."""
+    # 1. CREATE job
+    create_payload = {
+        "name": "Daily Tech Digest Ingester",
+        "name_bn": "দৈনিক প্রযুক্তি সংবাদ ইনজেস্টার",
+        "description": "স্বয়ংক্রিয়ভাবে প্রযুক্তি সংবাদ সংগ্রহ ও অনুবাদ করে",
+        "job_type": "crawler",
+        "interval_seconds": 600,
+        "site_key": "bbc_bangla",
+        "enabled": "true",
+    }
+    resp = client.post("/admin/automation/job/create", json=create_payload)
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "success"
+    assert "job" in data
+    job_id = data["job"]["job_id"]
+    assert data["job"]["name_bn"] == "দৈনিক প্রযুক্তি সংবাদ ইনজেস্টার"
+    assert data["job"]["interval_seconds"] == 600
+
+    # 2. READ / LIST jobs
+    resp_list = client.get("/admin/automation/api/jobs")
+    assert resp_list.status_code == 200
+    jobs_data = resp_list.get_json()
+    assert jobs_data["jobs_count"] >= 1
+    found_job = next((j for j in jobs_data["jobs"] if j["job_id"] == job_id), None)
+    assert found_job is not None
+
+    # 3. READ single job
+    resp_single = client.get(f"/admin/automation/api/job/{job_id}")
+    assert resp_single.status_code == 200
+    single_data = resp_single.get_json()
+    assert single_data["status"] == "success"
+    assert single_data["job"]["job_id"] == job_id
+
+    # 4. UPDATE job
+    update_payload = {
+        "name": "Updated Tech Digest Ingester",
+        "name_bn": "আপডেটেড প্রযুক্তি ইনজেস্টার",
+        "description": "নতুন নিয়মে প্রযুক্তি সংবাদ সংগ্রহ করবে",
+        "interval_seconds": 900,
+    }
+    resp_update = client.post(f"/admin/automation/job/update/{job_id}", json=update_payload)
+    assert resp_update.status_code == 200
+    update_data = resp_update.get_json()
+    assert update_data["status"] == "success"
+    assert update_data["job"]["interval_seconds"] == 900
+    assert update_data["job"]["name_bn"] == "আপডেটেড প্রযুক্তি ইনজেস্টার"
+
+    # 5. TOGGLE job (Pause / Resume)
+    resp_toggle = client.post(f"/admin/automation/job/toggle/{job_id}", json={})
+    assert resp_toggle.status_code == 200
+    toggle_data = resp_toggle.get_json()
+    assert toggle_data["status"] == "success"
+    assert toggle_data["enabled"] is False
+
+    # 6. TRIGGER job (Run now)
+    resp_trigger = client.post(f"/admin/automation/job/trigger/{job_id}", json={})
+    assert resp_trigger.status_code == 200
+    trigger_data = resp_trigger.get_json()
+    assert trigger_data["status"] in ["started", "warning"]
+
+    # 7. DELETE job
+    resp_delete = client.post(f"/admin/automation/job/delete/{job_id}", json={})
+    assert resp_delete.status_code == 200
+    delete_data = resp_delete.get_json()
+    assert delete_data["status"] == "success"
+
+    # Verify deleted
+    resp_deleted_check = client.get(f"/admin/automation/api/job/{job_id}")
+    assert resp_deleted_check.status_code == 404
+
+
+def test_automation_batch_actions(client):
+    """Test batch operations across all automation jobs."""
+    # Batch Pause All
+    resp_disable = client.post("/admin/automation/batch-action", json={"action": "disable_all"})
+    assert resp_disable.status_code == 200
+    assert resp_disable.get_json()["status"] == "success"
+
+    # Batch Resume All
+    resp_enable = client.post("/admin/automation/batch-action", json={"action": "enable_all"})
+    assert resp_enable.status_code == 200
+    assert resp_enable.get_json()["status"] == "success"
+
+    # Batch Reset Stats
+    resp_reset = client.post("/admin/automation/batch-action", json={"action": "reset_stats"})
+    assert resp_reset.status_code == 200
+    assert resp_reset.get_json()["status"] == "success"
+

@@ -1,13 +1,24 @@
 {
   "version": "2.5",
-  "last_scan_time": "2026-09-24T10:00:28.038182",
-  "total_articles_scanned": 45,
-  "total_sft_pairs_generated": 135,
-  "domain_vocabulary_count": 154,
+  "last_scan_time": "2026-09-24T10:11:23.969227",
+  "total_articles_scanned": 50,
+  "total_sft_pairs_generated": 150,
+  "domain_vocabulary_count": 176,
   "topic_breakdown": {
-    "politics": 45
+    "politics": 50
   },
   "datasets": [
+    {
+      "filename": "knowledge_multi_topic_20260924_101123.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_101123.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-09-24T10:11:23.969258",
+      "size_kb": 58.62
+    },
     {
       "filename": "knowledge_multi_topic_20260924_100028.jsonl",
       "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260924_100028.jsonl",

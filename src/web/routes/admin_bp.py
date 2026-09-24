@@ -1756,40 +1756,185 @@ def automation_toggle_scheduler():
     return redirect(url_for("admin.automation_view"))
 
 
-@admin_bp.route("/automation/trigger-job/<job_id>", methods=["POST"])
+# ------------------------------------------------------------------------------
+# Automation Jobs CRUD Endpoints
+# ------------------------------------------------------------------------------
+
+@admin_bp.route("/automation/job/create", methods=["POST"])
 @login_required
 @roles_required("admin", "editor")
-def automation_trigger_job(job_id: str):
-    """Trigger immediate execution of a scheduled recurring job."""
+def automation_create_job():
+    """[CREATE] Create a new scheduled recurring automation job."""
     from src.automation.scheduler import get_scheduler
-
     scheduler = get_scheduler()
-    res = scheduler.trigger_job_now(job_id)
-    if res.get("status") == "started":
-        flash(f"Job '{job_id}' triggered immediately in background!", "success")
+
+    data = request.get_json(silent=True) or request.form
+    name = (data.get("name") or "নতুন স্বয়ংক্রিয় জব").strip()
+    name_bn = (data.get("name_bn") or name).strip()
+    description = (data.get("description") or "স্বয়ংক্রিয় শিডিউলার জব").strip()
+    job_type = (data.get("job_type") or "crawler").strip()
+    interval_seconds = int(data.get("interval_seconds", 300))
+    enabled = str(data.get("enabled", "true")).lower() in ["1", "true", "on", "yes"]
+
+    params = {}
+    if isinstance(data.get("params"), dict):
+        params = data.get("params")
     else:
-        flash(res.get("message", "Could not trigger job."), "danger")
+        # Extract form field params
+        if "site_key" in data:
+            params["site_key"] = data.get("site_key")
+        if "max_pages" in data:
+            params["max_pages"] = int(data.get("max_pages", 1))
+        if "auto_publish_threshold" in data:
+            params["auto_publish_threshold"] = float(data.get("auto_publish_threshold", 75.0))
+        if "channel" in data:
+            params["channel"] = data.get("channel")
+
+    job = scheduler.create_custom_job(
+        name=name,
+        name_bn=name_bn,
+        description=description,
+        job_type=job_type,
+        interval_seconds=interval_seconds,
+        params=params,
+        enabled=enabled,
+    )
+
+    if request.is_json:
+        return jsonify({"status": "success", "message": f"Job '{name}' created successfully!", "job": job.to_dict()})
+
+    flash(f"✅ নতুন অটোমেশন জব '{name}' সফলভাবে তৈরি করা হয়েছে! (ব্যবধান: {interval_seconds}s)", "success")
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/job/update/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_update_job(job_id: str):
+    """[UPDATE] Modify existing job parameters, name, interval, or state."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+
+    data = request.get_json(silent=True) or request.form
+    name = data.get("name")
+    name_bn = data.get("name_bn")
+    description = data.get("description")
+    interval_raw = data.get("interval_seconds")
+    interval_seconds = int(interval_raw) if interval_raw is not None else None
+    enabled = str(data.get("enabled", "")).lower() in ["1", "true", "on", "yes"] if "enabled" in data else None
+
+    params = None
+    if "params" in data and isinstance(data["params"], dict):
+        params = data["params"]
+
+    updated = scheduler.update_job(
+        job_id=job_id,
+        name=name,
+        name_bn=name_bn,
+        description=description,
+        interval_seconds=interval_seconds,
+        enabled=enabled,
+        params=params,
+    )
+
+    if not updated:
+        if request.is_json:
+            return jsonify({"status": "error", "message": f"Job '{job_id}' not found."}), 404
+        flash(f"ত্রুটি: জব '{job_id}' পাওয়া যায়নি।", "danger")
+        return redirect(url_for("admin.automation_view"))
+
+    if request.is_json:
+        return jsonify({"status": "success", "message": f"Job '{updated.name}' updated!", "job": updated.to_dict()})
+
+    flash(f"✅ জব '{updated.name}' সফলভাবে আপডেট করা হয়েছে!", "success")
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/job/delete/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_delete_job(job_id: str):
+    """[DELETE] Remove a custom scheduled job."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+
+    success = scheduler.delete_custom_job(job_id)
+    if success:
+        if request.is_json:
+            return jsonify({"status": "success", "message": f"Job '{job_id}' deleted."})
+        flash(f"🗑️ জব '{job_id}' মুছে ফেলা হয়েছে।", "success")
+    else:
+        if request.is_json:
+            return jsonify({"status": "error", "message": f"Could not delete job '{job_id}'."}), 400
+        flash(f"ত্রুটি: জব '{job_id}' মুছে ফেলা যায়নি।", "danger")
 
     return redirect(url_for("admin.automation_view"))
 
 
+@admin_bp.route("/automation/job/toggle/<job_id>", methods=["POST"])
 @admin_bp.route("/automation/toggle-job/<job_id>", methods=["POST"])
 @login_required
 @roles_required("admin")
 def automation_toggle_job(job_id: str):
     """Enable or disable a specific recurring job."""
     from src.automation.scheduler import get_scheduler
-
     scheduler = get_scheduler()
-    job = scheduler.jobs.get(job_id)
-    if job:
-        new_state = not job.enabled
-        scheduler.toggle_job(job_id, new_state)
-        state_str = "enabled" if new_state else "disabled"
-        flash(f"Job '{job.name}' has been {state_str}.", "info")
-    else:
-        flash(f"Job '{job_id}' not found.", "danger")
 
+    job = scheduler.jobs.get(job_id)
+    if not job:
+        if request.is_json:
+            return jsonify({"status": "error", "message": f"Job '{job_id}' not found."}), 404
+        flash(f"Job '{job_id}' not found.", "danger")
+        return redirect(url_for("admin.automation_view"))
+
+    new_state = not job.enabled
+    scheduler.toggle_job(job_id, new_state)
+    state_str = "সক্রিয় (Active)" if new_state else "স্থগিত (Paused)"
+
+    if request.is_json:
+        return jsonify({"status": "success", "enabled": new_state, "message": f"Job '{job.name}' is now {state_str}."})
+
+    flash(f"জব '{job.name}' সফলভাবে {state_str} করা হয়েছে।", "info")
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/job/trigger/<job_id>", methods=["POST"])
+@admin_bp.route("/automation/trigger-job/<job_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_trigger_job(job_id: str):
+    """Trigger immediate execution of a scheduled recurring job."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+
+    res = scheduler.trigger_job_now(job_id)
+    if request.is_json:
+        return jsonify(res)
+
+    if res.get("status") == "started":
+        flash(f"⚡ জব '{job_id}' অবিলম্বে ব্যাকগ্রাউন্ডে রান করা হয়েছে!", "success")
+    else:
+        flash(res.get("message", "Could not trigger job."), "warning")
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/batch-action", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_batch_action():
+    """Perform batch operations on all scheduler jobs."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+
+    data = request.get_json(silent=True) or request.form
+    action = data.get("action", "enable_all")
+    res = scheduler.batch_action(action)
+
+    if request.is_json:
+        return jsonify(res)
+
+    flash(f"⚡ ব্যাচ অ্যাকশন: {res.get('message')}", "success")
     return redirect(url_for("admin.automation_view"))
 
 
@@ -1799,15 +1944,36 @@ def automation_toggle_job(job_id: str):
 def automation_update_interval(job_id: str):
     """Update job recurrence frequency interval in seconds."""
     from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
 
     interval = int(request.form.get("interval_seconds", 60))
-    scheduler = get_scheduler()
     if scheduler.update_job_interval(job_id, interval):
         flash(f"Updated interval for '{job_id}' to {interval} seconds.", "success")
     else:
         flash(f"Could not update interval for '{job_id}'.", "danger")
 
     return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/api/jobs", methods=["GET"])
+@login_required
+def automation_api_jobs():
+    """JSON API endpoint returning full list of jobs with execution stats."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+    return jsonify(scheduler.get_status())
+
+
+@admin_bp.route("/automation/api/job/<job_id>", methods=["GET"])
+@login_required
+def automation_api_single_job(job_id: str):
+    """JSON API endpoint returning single job details and execution history."""
+    from src.automation.scheduler import get_scheduler
+    scheduler = get_scheduler()
+    job = scheduler.jobs.get(job_id)
+    if not job:
+        return jsonify({"status": "error", "message": f"Job '{job_id}' not found."}), 404
+    return jsonify({"status": "success", "job": job.to_dict()})
 
 
 @admin_bp.route("/automation/submit-task", methods=["POST"])

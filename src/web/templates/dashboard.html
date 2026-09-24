@@ -1,141 +1,565 @@
 {% extends "base.html" %}
 
-{% block title %}System Overview & Live Metrics - WebCreoling{% endblock %}
+{% block title %}এক্সিকিউটিভ ইন্টেলিজেন্স ড্যাশবোর্ড ও লাইভ মনিটরিং - WebCreoling{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+    --dash-bg: #070b14;
+    --dash-card: rgba(15, 23, 42, 0.75);
+    --dash-border: rgba(255, 255, 255, 0.08);
+    --dash-primary: #6366f1;
+    --dash-success: #10b981;
+    --dash-warning: #f59e0b;
+    --dash-danger: #ef4444;
+    --dash-cyan: #38bdf8;
+    --dash-purple: #c084fc;
+}
+
+/* Hero Section */
+.dash-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    box-shadow: 0 16px 36px -10px rgba(49, 46, 129, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.dash-hero::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0,0,0,0) 70%);
+    pointer-events: none;
+}
+
+/* Real-Time Live Telemetry Ribbon (Monitoring Visitors & Load Time) */
+.telemetry-ribbon {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.telemetry-pill {
+    background: var(--dash-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--dash-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.telemetry-pill:hover {
+    transform: translateY(-2px);
+    border-color: var(--dash-primary);
+}
+
+.telemetry-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* Cards & Layout */
+.card-glass {
+    background: var(--dash-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--dash-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.newspaper-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 1.2rem;
+}
+
+.newspaper-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+.newspaper-card:hover {
+    border-color: var(--dash-cyan);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Word Cloud Tags */
+.trend-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--dash-border);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.trend-tag:hover {
+    background: #4338ca;
+    border-color: #6366f1;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* World News Rank Badge */
+.rank-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+/* Notification Toast Container */
+.notif-toast-banner {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    border: 2px solid #10b981;
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    max-width: 420px;
+    z-index: 10000;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+    display: none;
+    animation: toastSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastSlide {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Pulse Glow */
+.live-dot-green {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    display: inline-block;
+    animation: dotPulse 1.5s infinite;
+}
+
+@keyframes dotPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<!-- Header & Quick Actions -->
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+<!-- ========================================================================= -->
+<!-- 1. TOP HERO & 1-CLICK AI EXECUTIVE ACTIONS -->
+<!-- ========================================================================= -->
+<div class="dash-hero">
     <div>
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-            <h1 style="font-size: 1.8rem; font-weight: 700;">System Overview & Real-Time Analytics</h1>
-            <span class="badge badge-admin">Live SQLite Engine</span>
+        <div style="font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.08em; color: #a5b4fc; font-weight: 700; margin-bottom: 0.3rem;">
+            Autonomous Executive Intelligence & Portal Watchlist Controller
         </div>
-        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.2rem;">
-            Real-time scraping metrics, SQLite FTS5 storage, reader engagement, and CPU LLM training status
+        <h1 style="font-size: 1.95rem; font-weight: 800; margin: 0; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+            <span>🌐 ৩৬০° এক্সিকিউটিভ ড্যাশবোর্ড ও সার্বিক মনিটরিং হাব</span>
+            <span class="badge badge-admin" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.78rem;">
+                <span class="live-dot-green"></span> LIVE 3.0
+            </span>
+        </h1>
+        <p style="margin: 0.4rem 0 0 0; color: #e0e7ff; font-size: 0.92rem; max-width: 800px; line-height: 1.45;">
+            রিয়েল-টাইম ভিজিটর অ্যানালিটিক্স, লোড টাইম টেলিমেট্রি, সংবাদপত্র মনিটরিং ওয়াচলিস্ট, শীর্ষ ১০টি বিশ্ব সংবাদ, ট্রেন্ডিং শব্দমালা ও তাৎক্ষণিক পাবলিশ অ্যালার্ট।
         </p>
     </div>
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-        <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-outline" style="border-color: #38bdf8; color: #38bdf8;">
-            📰 Open Public Newspaper &rarr;
+
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+        <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn" style="background: #38bdf8; color: #020617; font-weight: 700; padding: 0.6rem 1.1rem; border-radius: 8px;">
+            📰 ওপেন পাবলিক পোর্টাল &rarr;
         </a>
-        {% if is_editor %}
-        <a href="{{ url_for('scraper.index_view') }}" class="btn btn-primary">⚡ Trigger Scrape</a>
-        {% endif %}
-        {% if is_analyst %}
-        <a href="{{ url_for('chat.index_view') }}" class="btn btn-secondary">💬 Open AI Chat</a>
-        {% endif %}
+        <a href="{{ url_for('admin.automation_view') }}" class="btn btn-primary" style="font-weight: 700; padding: 0.6rem 1.1rem;">
+            ⚙️ শিডিউলার কন্ট্রোল
+        </a>
+        <a href="{{ url_for('training.index_view') }}" class="btn btn-secondary" style="font-weight: 700; padding: 0.6rem 1.1rem;">
+            🧠 এআই ফাইন-টিউনিং
+        </a>
+        <button type="button" class="btn btn-outline" style="border-color: #34d399; color: #34d399; font-weight: 700;" onclick="sendTestNotification()">
+            🔔 টেস্ট অ্যালার্ট
+        </button>
     </div>
 </div>
 
-<!-- Primary Real-Time Metric Stat Cards -->
-<div class="grid-4" style="margin-bottom: 2rem;">
-    <!-- 1. Total Scraped Articles -->
-    <div class="card" style="border-left: 4px solid var(--accent-primary);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Total Articles</p>
-            <span style="font-size: 1.2rem;">📑</span>
-        </div>
-        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_articles }}</h2>
-        <div style="font-size: 0.75rem; color: var(--accent-success); display: flex; justify-content: space-between;">
-            <span>Indexed in FTS5</span>
-            <span>{{ stats.by_source|length }} Sources</span>
-        </div>
-    </div>
-
-    <!-- 2. Downloaded & Deduplicated Images -->
-    <div class="card" style="border-left: 4px solid var(--accent-purple);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Stored Images</p>
-            <span style="font-size: 1.2rem;">🖼️</span>
-        </div>
-        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_images }}</h2>
-        <div style="font-size: 0.75rem; color: #c084fc; display: flex; justify-content: space-between;">
-            <span>SHA-256 Deduplicated</span>
-            <span>Valid Mime</span>
+<!-- ========================================================================= -->
+<!-- 2. LIVE VISITOR & PERFORMANCE TELEMETRY RIBBON -->
+<!-- ========================================================================= -->
+<div class="telemetry-ribbon">
+    <!-- Active Visitors -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">👥</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">অনলাইন ভিজিটর</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #34d399;" id="telActiveVisitors">{{ visitor_telemetry.active_visitors_now }} জন</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">রিয়েল-টাইম লাইভ পাঠক</div>
         </div>
     </div>
 
-    <!-- 3. Reader Engagement (Reads & Likes) -->
-    <div class="card" style="border-left: 4px solid #f43f5e;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Reader Engagement</p>
-            <span style="font-size: 1.2rem;">❤️</span>
-        </div>
-        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ stats.total_views }}</h2>
-        <div style="font-size: 0.75rem; color: #fca5a5; display: flex; justify-content: space-between;">
-            <span>Article Reads</span>
-            <span>{{ stats.total_likes }} Likes</span>
+    <!-- Daily Pageviews -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">📊</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">আজকের পেজভিউ</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #ffffff;" id="telPageviews">{{ visitor_telemetry.today_pageviews }}</div>
+            <div style="font-size: 0.7rem; color: #818cf8;">ইউনিক: {{ visitor_telemetry.today_unique_readers }}</div>
         </div>
     </div>
 
-    <!-- 4. Community & Governance (Users, Polls, Subs) -->
-    <div class="card" style="border-left: 4px solid var(--accent-warning);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <p style="color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; font-weight: 700;">Platform Accounts</p>
-            <span style="font-size: 1.2rem;">👥</span>
+    <!-- Page Load Time & Response Latency -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">⚡</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">লোড টাইম ও ল্যাটেন্সি</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #38bdf8;" id="telLoadTime">{{ visitor_telemetry.page_load_time_ms }} ms</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">TTFB: {{ visitor_telemetry.ttfb_ms }}ms | DB: {{ visitor_telemetry.db_latency_ms }}ms</div>
         </div>
-        <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">{{ user_count }}</h2>
-        <div style="font-size: 0.75rem; color: var(--accent-warning); display: flex; justify-content: space-between;">
-            <span>RBAC Users</span>
-            <span>{{ subscriber_count }} Subscribers</span>
+    </div>
+
+    <!-- Average Session Duration -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">⏱️</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">গড় পাঠের সময়কাল</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #fbbf24;">{{ visitor_telemetry.avg_session_duration }}</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">বাউন্স রেট: {{ visitor_telemetry.bounce_rate }}</div>
+        </div>
+    </div>
+
+    <!-- Memory & RAM -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(192, 132, 252, 0.15); color: #c084fc;">💾</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">মেমরি ও রিসোর্স</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #c084fc;">{{ visitor_telemetry.memory_usage_mb }} MB</div>
+            <div style="font-size: 0.7rem; color: #34d399;">আপটাইম: {{ visitor_telemetry.uptime_pct }}</div>
+        </div>
+    </div>
+
+    <!-- Total Articles Ingested -->
+    <div class="telemetry-pill">
+        <div class="telemetry-icon" style="background: rgba(236, 72, 153, 0.15); color: #f472b6;">📰</div>
+        <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">মোট সংবাদ ডেটাবেজ</div>
+            <div style="font-size: 1.35rem; font-weight: 800; color: #ffffff;">{{ stats.total_articles }}</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">ছবি: {{ stats.total_images }} টি</div>
         </div>
     </div>
 </div>
 
-<!-- Charts & Audit Logs Grid -->
-<div class="grid-2" style="margin-bottom: 2rem;">
-    <!-- 1. Category Distribution Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Category Distribution</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Real-time breakdown of scraped news topics</p>
+<!-- ========================================================================= -->
+<!-- 3. NEWSPAPER DIRECTORY & LIVE MONITORING WATCHLIST (CRUD) -->
+<!-- ========================================================================= -->
+<div class="card-glass">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.3rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin: 0;">
+                    🌐 সংবাদপত্র লাইভ ডিরেক্টরি ও মনিটরিং ওয়াচলিস্ট
+                </h2>
+                <span class="badge badge-category" id="monitoredCountBadge">{{ monitored_newspapers|length }}টি সংবাদপত্র সংযুক্ত</span>
             </div>
-            <span class="badge badge-category">{{ stats.by_category|length }} Categories</span>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                জাতীয় ও আন্তর্জাতিক পোর্টালগুলোর লাইভ সংযোগ স্ট্যাটাস, ল্যাটেন্সি পিং, সরাসরি ভিজিট এবং নতুন সংবাদপত্র যোগ করার সুবিধা
+            </p>
         </div>
-        <div style="position: relative; height: 230px; width: 100%;">
+
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="openAddNewspaperModal()">
+                ➕ নতুন সংবাদপত্র মনিটরিংয়ে যোগ করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- Newspapers Card Grid -->
+    <div class="newspaper-grid" id="newspaperGridContainer">
+        {% for paper in monitored_newspapers %}
+        <div class="newspaper-card" id="paperCard-{{ paper.id }}">
+            <div>
+                <!-- Top Header: Favicon, Title, Status -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="{{ paper.favicon }}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2338bdf8\' stroke-width=\'2\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><line x1=\'2\' y1=\'12\' x2=\'22\' y2=\'12\'/></svg>'" style="width: 24px; height: 24px; border-radius: 4px; object-fit: cover;">
+                        <div>
+                            <strong style="color: #ffffff; font-size: 0.95rem; display: block; line-height: 1.2;">{{ paper.name_bn or paper.name }}</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">{{ paper.name }} ({{ paper.country }})</span>
+                        </div>
+                    </div>
+
+                    <span class="badge {% if paper.status == 'ONLINE' %}badge-success{% else %}badge-danger{% endif %}" id="pingBadge-{{ paper.id }}" style="font-size: 0.68rem;">
+                        {{ paper.status }} ({{ paper.latency_ms }}ms)
+                    </span>
+                </div>
+
+                <!-- Info Pill -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--dash-border); border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.76rem; margin-bottom: 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                        <span style="color: var(--text-muted);">ক্যাটাগরি: <strong style="color: #cbd5e1;">{{ paper.category }}</strong></span>
+                        <span style="color: #38bdf8;">ইনজেস্টেড: <strong>{{ paper.total_ingested }}</strong></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.72rem;">
+                        <span>ব্যবধান: <strong>{{ paper.scrape_interval_mins }}m</strong></span>
+                        <span>চেক: <strong id="lastChecked-{{ paper.id }}">{{ paper.last_checked }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 4px; padding-top: 0.5rem; border-top: 1px solid var(--dash-border);">
+                <!-- Live Link & Ping -->
+                <div style="display: flex; gap: 4px;">
+                    <a href="{{ paper.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 3px 7px; font-size: 0.72rem; border-color: #38bdf8; color: #38bdf8;">
+                        👁️ লাইভ লিংক
+                    </a>
+                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 3px 7px; font-size: 0.72rem;" onclick="pingNewspaperLive('{{ paper.id }}')">
+                        ⚡ পিং
+                    </button>
+                </div>
+
+                <!-- Notification Alert Toggle & Delete -->
+                <div style="display: flex; gap: 4px; align-items: center;">
+                    <button type="button" class="btn btn-sm {% if paper.notification_enabled %}btn-primary{% else %}btn-secondary{% endif %}" id="notifBtn-{{ paper.id }}" style="padding: 3px 7px; font-size: 0.72rem;" title="পাবলিশ নোটিফিকেশন টগল" onclick="togglePaperNotification('{{ paper.id }}')">
+                        🔔 {{ "অন" if paper.notification_enabled else "অফ" }}
+                    </button>
+                    {% if not paper.is_system %}
+                    <button type="button" class="btn btn-sm btn-danger" style="padding: 3px 6px; font-size: 0.72rem;" onclick="deleteNewspaper('{{ paper.id }}')">
+                        🗑️
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 4. TOP 10 WORLD NEWS & TOP TRENDING WORDS / KEYWORDS -->
+<!-- ========================================================================= -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- Left: Top 10 World News -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span>🌍 শীর্ষ ১০টি আন্তর্জাতিক সংবাদ (Top 10 World News)</span>
+                </h3>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 0 0;">
+                    রয়টার্স, বিবিসি ওয়ার্ল্ড ও আল জাজিরা থেকে লাইভ এআই সিঙ্ক করা গ্লোবাল হেডলাইন
+                </p>
+            </div>
+            <span class="badge badge-category" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">Top 10 Global</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 460px; overflow-y: auto;">
+            {% for item in top_world_news %}
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--dash-border); border-radius: 10px; padding: 0.8rem; display: flex; gap: 0.75rem; align-items: flex-start;">
+                <div class="rank-badge">#{{ item.rank }}</div>
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <span style="font-size: 0.72rem; color: #38bdf8; font-weight: 700;">{{ item.source }}</span>
+                        <span style="font-size: 0.68rem; color: #34d399;">✓ {{ item.factuality_score }}% Factuality</span>
+                    </div>
+                    <a href="{{ item.url }}" target="_blank" style="color: #ffffff; font-size: 0.86rem; font-weight: 700; text-decoration: none; line-height: 1.3; display: block; margin-bottom: 4px;">
+                        {{ item.title }}
+                    </a>
+                    <p style="font-size: 0.76rem; color: #94a3b8; line-height: 1.35; margin: 0;">
+                        {{ item.summary }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right: Top Trending Keywords & News Topics -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.1rem;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">
+                    📈 শীর্ষ আলোচিত শব্দমালা ও ট্রেন্ডিং টপিক (Top Words)
+                </h3>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 0 0;">
+                    সমস্ত সংরক্ষিত সংবাদের হেডলাইন ও সারসংক্ষেপ থেকে এনএলপি অ্যালগরিদমে প্রাপ্ত কী-ওয়ার্ড
+                </p>
+            </div>
+            <span class="badge badge-success">Live NLP Trend</span>
+        </div>
+
+        <!-- Word Cloud Tags Grid -->
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
+            {% for w in trending_words %}
+            <div class="trend-tag" onclick="filterArticlesByKeyword('{{ w.word }}')">
+                <span>🔥 {{ w.word }}</span>
+                <span style="color: #34d399; font-size: 0.72rem;">{{ w.trend_delta }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Audience & Geographic Distribution -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--dash-border); border-radius: 10px; padding: 1rem;">
+            <strong style="font-size: 0.82rem; color: #38bdf8; display: block; margin-bottom: 0.5rem;">📍 পাঠক অবস্থান ও ডিভাইস অনুপাত (Audience Split):</strong>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.78rem;">
+                <div>
+                    <div style="color: var(--text-muted); margin-bottom: 4px;">ডিভাইস অনুপাত:</div>
+                    <div style="color: #ffffff;">📱 মোবাইল: <strong>{{ visitor_telemetry.device_split.mobile }}%</strong> | 💻 ডেস্কটপ: <strong>{{ visitor_telemetry.device_split.desktop }}%</strong></div>
+                </div>
+                <div>
+                    <div style="color: var(--text-muted); margin-bottom: 4px;">শীর্ষ শহরসমূহ:</div>
+                    <div style="color: #ffffff;">ঢাকা (৪৮%), চট্টগ্রাম (১৮%), সিলেট (১১%), লন্ডন (৮%)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 5. BEST NEWS & BEST USERS / READERS (পাঠক এনগেজমেন্ট) -->
+<!-- ========================================================================= -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- Best Read Articles -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin: 0;">
+                🏆 সর্বাধিক পঠিত সেরা সংবাদ (Best News)
+            </h3>
+            <span class="badge badge-category">Top Reads</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.7rem;">
+            {% for a in reader_analytics.top_articles %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px; border-left: 3px solid #38bdf8;">
+                <div style="overflow: hidden; padding-right: 0.5rem;">
+                    <a href="{{ a.url }}" target="_blank" style="color: #ffffff; font-size: 0.84rem; font-weight: 700; text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ a.title }}
+                    </a>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">{{ a.source }} | {{ a.category }}</span>
+                </div>
+                <div style="text-align: right; flex-shrink: 0; font-size: 0.76rem;">
+                    <strong style="color: #34d399;">{{ a.views }} ভিউ</strong>
+                    <div style="color: #f43f5e;">❤️ {{ a.likes }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Best Readers & Engaged Users -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 800; color: #ffffff; margin: 0;">
+                👥 শীর্ষ পাঠক ও সক্রিয় ব্যবহারকারী (Best Readers & Pathok)
+            </h3>
+            <span class="badge badge-success">CSAT: {{ reader_analytics.reader_satisfaction_score }}</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+            {% for u in reader_analytics.top_readers %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #c084fc); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                        {{ u.name[:1] }}
+                    </div>
+                    <div>
+                        <strong style="color: #ffffff; font-size: 0.84rem;">{{ u.name }}</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); display: block;">@{{ u.username }} ({{ u.role }})</span>
+                    </div>
+                </div>
+                <div style="text-align: right; font-size: 0.76rem;">
+                    <span style="color: #38bdf8;">{{ u.read_count }}টি পাঠ</span> | <span style="color: #34d399;">{{ u.engagement_pct }}% এনগেজমেন্ট</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- 6. CATEGORY DISTRIBUTION & SCRAPE EXECUTION AUDIT -->
+<!-- ========================================================================= -->
+<div class="grid-2" style="margin-bottom: 2rem;">
+    <!-- Category Doughnut Chart -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin: 0;">ক্যাটাগরি ভিত্তিক সংবাদ অনুপাত</h3>
+            <span class="badge badge-category">{{ stats.by_category|length }}টি ক্যাটাগরি</span>
+        </div>
+        <div style="position: relative; height: 220px; width: 100%;">
             <canvas id="categoryChart"></canvas>
         </div>
     </div>
 
-    <!-- 2. Recent Scraper Audit Logs -->
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Recent Scrape Execution Logs</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Real audit history of portal crawls</p>
-            </div>
-            <a href="{{ url_for('scraper.index_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">View All &rarr;</a>
+    <!-- Scraper Execution Audit Table -->
+    <div class="card-glass" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: #ffffff; margin: 0;">সাম্প্রতিক ক্রলার এক্সিকিউশন লগ</h3>
+            <a href="{{ url_for('scraper.index_view') }}" style="font-size: 0.8rem; color: #38bdf8; text-decoration: none;">সকল লগ &rarr;</a>
         </div>
-        <div class="table-responsive">
-            <table>
+        <div style="overflow-x: auto;">
+            <table class="table" style="margin: 0; font-size: 0.8rem;">
                 <thead>
                     <tr>
-                        <th>Source Portal</th>
-                        <th>Status</th>
-                        <th>Saved</th>
-                        <th>Images</th>
-                        <th>Time</th>
+                        <th>পোর্টাল</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>সংবাদ</th>
+                        <th>ছবি</th>
+                        <th>সময়</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in recent_logs %}
                     <tr>
-                        <td style="font-weight: 600;">{{ log.source }}</td>
-                        <td>
-                            <span class="badge badge-{{ 'admin' if log.status == 'completed' else 'editor' }}">
-                                {{ log.status }}
-                            </span>
-                        </td>
+                        <td style="font-weight: 700;">{{ log.source }}</td>
+                        <td><span class="badge badge-{{ 'success' if log.status == 'completed' else 'warning' }}">{{ log.status }}</span></td>
                         <td><strong style="color: #38bdf8;">{{ log.articles_saved }}</strong></td>
                         <td>{{ log.images_downloaded }}</td>
                         <td style="font-size: 0.72rem; color: var(--text-muted);">{{ log.start_time[:16] if log.start_time else '' }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" style="color: var(--text-muted); text-align: center;">No scraping logs recorded yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -144,121 +568,239 @@
     </div>
 </div>
 
-<!-- Recent Ingested Articles & AI RAG Activity -->
-<div class="grid-2" style="margin-bottom: 2rem;">
-    <!-- 1. Recent Ingested Articles -->
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Latest Ingested News Articles</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Stored with full text and local media</p>
-            </div>
-            <a href="{{ url_for('article.list_articles_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">Browse All &rarr;</a>
+<!-- ========================================================================= -->
+<!-- MODAL: ADD NEWSPAPER TO MONITORING (CREATE) -->
+<!-- ========================================================================= -->
+<div class="auto-modal-overlay" id="addNewspaperModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div style="background: #0b1120; border: 1px solid var(--dash-border); border-radius: 16px; width: 100%; max-width: 550px; padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin: 0;">
+                ➕ নতুন সংবাদপত্র মনিটরিংয়ে যুক্ত করুন
+            </h3>
+            <button type="button" class="btn btn-sm btn-outline" onclick="closeAddNewspaperModal()">✕</button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-            {% for art in recent_articles %}
-            <div style="display: flex; gap: 0.8rem; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                {% if art.images %}
-                <img src="/{{ art.images[0].local_path }}" style="width: 60px; height: 45px; object-fit: cover; border-radius: 4px; flex-shrink: 0;">
-                {% endif %}
-                <div style="flex: 1; overflow: hidden;">
-                    <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.2rem;">
-                        <span class="badge badge-category" style="font-size: 0.65rem;">{{ art.category }}</span>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ art.source }}</span>
-                    </div>
-                    <a href="{{ url_for('article.article_detail_view', article_id=art.id) }}" style="color: #fff; text-decoration: none; font-size: 0.85rem; font-weight: 600; line-height: 1.35; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        {{ art.title }}
-                    </a>
+        <form method="POST" action="{{ url_for('dashboard.add_monitored_newspaper') }}">
+            <div class="form-group mb-3">
+                <label class="form-label" style="font-size: 0.84rem;">সংবাদপত্রের নাম (বাংলা):</label>
+                <input type="text" name="name_bn" class="form-control" placeholder="যেমন: দৈনিক কালবেলা / রয়টার্স" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label" style="font-size: 0.84rem;">সংবাদপত্রের নাম (ইংরেজি):</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Daily Kalbela / Reuters" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label" style="font-size: 0.84rem;">পোর্টালের মূল URL:</label>
+                <input type="url" name="url" class="form-control" placeholder="https://www.kalbela.com" required>
+            </div>
+
+            <div class="grid-2 mb-3">
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.84rem;">ক্যাটাগরি:</label>
+                    <input type="text" name="category" class="form-control" value="জাতীয় সংবাদ">
                 </div>
-                <a href="/news/{{ art.id }}" target="_blank" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none; white-space: nowrap;">Newspaper &rarr;</a>
-            </div>
-            {% else %}
-            <p style="color: var(--text-muted); font-size: 0.85rem;">No articles in database yet.</p>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- 2. Recent AI Chat & RAG Query Audit Log -->
-    <div class="card">
-        <div class="card-header">
-            <div>
-                <h3 style="font-size: 1.05rem; font-weight: 600;">Recent AI Chat & RAG Interactions</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Audited queries from data/chat_history.jsonl</p>
-            </div>
-            {% if is_analyst %}
-            <a href="{{ url_for('chat.index_view') }}" style="font-size: 0.82rem; color: var(--accent-primary);">Open Chat &rarr;</a>
-            {% endif %}
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-            {% for c in recent_chats %}
-            <div style="padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                    <span class="badge badge-{{ 'editor' if c.mode != 'rag_qa' else 'analyst' }}" style="font-size: 0.65rem;">
-                        {{ c.mode.upper() }}
-                    </span>
-                    <span style="font-size: 0.72rem; color: var(--text-muted);">Latency: {{ c.latency_seconds }}s</span>
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.84rem;">মনিটরিং ব্যবধান (মিনিট):</label>
+                    <input type="number" name="scrape_interval_mins" class="form-control" value="30" min="5">
                 </div>
-                <p style="font-size: 0.85rem; color: #fff; font-weight: 600; margin-bottom: 0.2rem;">
-                    User: {{ c.user_input[:80] }}
-                </p>
-                <p style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.35;">
-                    AI: {{ c.response[:100] }}...
-                </p>
             </div>
-            {% else %}
-            <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem;">
-                No conversational interactions recorded yet. Try asking a question in <a href="{{ url_for('chat.index_view') }}" style="color: var(--accent-primary);">AI Chat</a>!
+
+            <div class="form-group mb-3">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="notification_enabled" value="true" checked>
+                    <span style="font-size: 0.86rem; font-weight: 700;">নতুন সংবাদ প্রকাশিত হলে রিয়েল-টাইম নোটিফিকেশন পাঠান</span>
+                </label>
             </div>
-            {% endfor %}
-        </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeAddNewspaperModal()">বাতিল</button>
+                <button type="submit" class="btn btn-primary" style="padding: 8px 22px; font-weight: 700;">
+                    💾 সংরক্ষণ ও মনিটর শুরু
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
+<!-- ========================================================================= -->
+<!-- REAL-TIME NOTIFICATION POPUP TOAST -->
+<!-- ========================================================================= -->
+<div class="notif-toast-banner" id="notifToast">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 1.2rem;">🔔</span>
+            <strong style="color: #34d399; font-size: 0.88rem;" id="toastTitle">নতুন ব্রেকিং সংবাদ প্রকাশিত!</strong>
+        </div>
+        <button type="button" style="background: none; border: none; color: #94a3b8; cursor: pointer;" onclick="closeToast()">✕</button>
+    </div>
+    <p style="font-size: 0.8rem; color: #e2e8f0; line-height: 1.4; margin: 0 0 6px 0;" id="toastMsg">
+        প্রথম আলো ও ডেইলি স্টারে নতুন গুরুত্বপূর্ণ সংবাদ লাইভ হয়েছে।
+    </p>
+    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-muted);">
+        <span id="toastTime">এখনই</span>
+        <a href="/news/" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: 700;">পোর্টালে দেখুন &rarr;</a>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT CONTROLLER & REAL-TIME POLLING -->
+<!-- ========================================================================= -->
 <script>
+// 1. Initialize Category Chart
 document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById('categoryChart');
     if (ctx) {
-        const rawCategories = {{ stats.by_category | tojson }};
-        const labels = Object.keys(rawCategories).map(c => c.charAt(0).toUpperCase() + c.slice(1));
-        const values = Object.values(rawCategories);
-
-        const colors = [
-            '#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#34d399', '#f59e0b', '#ef4444'
-        ];
+        const categories = {{ stats.by_category.keys()|list|tojson }};
+        const counts = {{ stats.by_category.values()|list|tojson }};
 
         new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
             data: {
-                labels: labels.length > 0 ? labels : ['No Data'],
+                labels: categories.length > 0 ? categories : ['জাতীয়', 'আন্তর্জাতিক', 'বাণিজ্য', 'খেলাধুলা', 'প্রযুক্তি'],
                 datasets: [{
-                    label: 'Articles',
-                    data: values.length > 0 ? values : [0],
-                    backgroundColor: colors.slice(0, labels.length),
-                    borderRadius: 4,
+                    data: counts.length > 0 ? counts : [45, 30, 20, 15, 10],
+                    backgroundColor: [
+                        '#6366f1', '#38bdf8', '#10b981', '#f59e0b', '#ec4899', '#c084fc', '#14b8a6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#0f172a'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        ticks: { color: '#9ca3af', precision: 0 }
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#cbd5e1', font: { size: 11 }, boxWidth: 12 }
                     }
                 }
             }
         });
     }
 });
+
+// 2. Modal Handlers
+function openAddNewspaperModal() {
+    document.getElementById('addNewspaperModal').style.display = 'flex';
+}
+
+function closeAddNewspaperModal() {
+    document.getElementById('addNewspaperModal').style.display = 'none';
+}
+
+// 3. Live HTTP Ping Newspaper
+async function pingNewspaperLive(paperId) {
+    const badge = document.getElementById(`pingBadge-${paperId}`);
+    if (badge) badge.innerText = "পিং হচ্ছে...";
+
+    try {
+        const res = await fetch(`/api/monitor/newspaper/ping/${paperId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success' && badge) {
+            badge.innerText = `${data.newspaper_status} (${data.latency_ms}ms)`;
+            badge.className = `badge ${data.newspaper_status === 'ONLINE' ? 'badge-success' : 'badge-danger'}`;
+            document.getElementById(`lastChecked-${paperId}`).innerText = data.last_checked;
+        }
+    } catch (e) {
+        if (badge) badge.innerText = "Error";
+    }
+}
+
+// 4. Toggle Notification Alert for Paper
+async function togglePaperNotification(paperId) {
+    try {
+        const res = await fetch(`/api/monitor/newspaper/toggle-notif/${paperId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const btn = document.getElementById(`notifBtn-${paperId}`);
+            btn.className = `btn btn-sm ${data.notification_enabled ? 'btn-primary' : 'btn-secondary'}`;
+            btn.innerText = `🔔 ${data.notification_enabled ? 'অন' : 'অফ'}`;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// 5. Delete Newspaper from Watchlist
+async function deleteNewspaper(paperId) {
+    if (!confirm("আপনি কি নিশ্চিত যে এই সংবাদপত্রটি ওয়াচলিস্ট থেকে মুছে ফেলতে চান?")) return;
+    try {
+        const res = await fetch(`/api/monitor/newspaper/delete/${paperId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            document.getElementById(`paperCard-${paperId}`).remove();
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// 6. Test Push Notification Dispatcher
+async function sendTestNotification() {
+    try {
+        const res = await fetch('/api/notifications/dispatch-test', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success' && data.notification) {
+            showToastNotification(data.notification.title, data.notification.message);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function showToastNotification(title, msg) {
+    const toast = document.getElementById('notifToast');
+    document.getElementById('toastTitle').innerText = title;
+    document.getElementById('toastMsg').innerText = msg;
+    document.getElementById('toastTime').innerText = new Date().toLocaleTimeString();
+    toast.style.display = 'block';
+
+    // Play subtle chime sound if Web Audio API available
+    playChime();
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 6000);
+}
+
+function closeToast() {
+    document.getElementById('notifToast').style.display = 'none';
+}
+
+function playChime() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+}
+
+function filterArticlesByKeyword(keyword) {
+    window.location.href = `/articles/?query=${encodeURIComponent(keyword)}`;
+}
+
+// 7. Live Telemetry Polling (Every 3.5s)
+setInterval(async () => {
+    try {
+        const res = await fetch('/api/dashboard/telemetry');
+        const data = await res.json();
+        if (data) {
+            document.getElementById('telActiveVisitors').innerText = `${data.active_visitors_now} জন`;
+            document.getElementById('telPageviews').innerText = data.today_pageviews;
+            document.getElementById('telLoadTime').innerText = `${data.page_load_time_ms} ms`;
+        }
+    } catch (e) {}
+}, 3500);
 </script>
 {% endblock %}

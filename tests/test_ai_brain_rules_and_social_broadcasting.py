@@ -57,8 +57,6 @@ def test_ai_brain_rule_crud_and_matching():
         assert rule.min_credibility_score == 72.0
 
         # 2. Rule Matching Evaluation
-        active_rules = repo.get_active_rules()
-        
         # Positive Match
         match_pass, matched_r, msg = AIPilotBrain.match_custom_rules(
             title="Saudi Arabia Announces Major Green Energy Investment",
@@ -66,7 +64,7 @@ def test_ai_brain_rule_crud_and_matching():
             source="Reuters Global",
             category="business",
             lang="en",
-            rules=active_rules,
+            rules=[rule],
         )
         assert match_pass is True
         assert matched_r is not None
@@ -78,7 +76,7 @@ def test_ai_brain_rule_crud_and_matching():
             source="Random Wire",
             category="business",
             lang="en",
-            rules=active_rules,
+            rules=[rule],
         )
         assert match_fail_excl is False
 

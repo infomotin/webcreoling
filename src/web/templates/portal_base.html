@@ -68,9 +68,20 @@
 
                 <!-- Header Top Ad (728x90 Banner) if active -->
                 {% if active_ads and active_ads.header_top %}
-                <div class="palo-header-ad-wrap" style="display: flex; align-items: center; justify-content: center;">
-                    <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.header_top.id) }}" target="_blank" style="display: inline-block; max-width: 600px; max-height: 75px; overflow: hidden; border-radius: 4px; border: 1px solid #e2e8f0;">
-                        <img src="{{ active_ads.header_top.image_url }}" alt="{{ active_ads.header_top.title }}" style="width: 100%; height: 75px; object-fit: cover;">
+                <div class="palo-header-ad-wrap" style="display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 620px; width: 100%;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; align-self: flex-start;">বিজ্ঞাপন • SPONSORED</div>
+                    <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.header_top.id) }}" target="_blank" style="display: block; width: 100%; height: 75px; overflow: hidden; border-radius: 4px; border: 1px solid #e2e8f0; text-decoration: none;">
+                        <img src="{{ active_ads.header_top.image_url }}" alt="{{ active_ads.header_top.title }}" style="width: 100%; height: 75px; object-fit: cover;" onerror="this.style.display='none'; document.getElementById('headerFallbackBanner').style.display='flex';">
+                        <div id="headerFallbackBanner" class="palo-ad-fallback-banner" style="display: none; height: 100%; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                <div class="palo-ad-brand-icon">💳</div>
+                                <div>
+                                    <div style="font-weight: 800; font-size: 0.95rem;">{{ active_ads.header_top.title }}</div>
+                                    <div style="font-size: 0.75rem; color: #94a3b8;">এখনই অফার উপভোগ করতে ক্লিক করুন</div>
+                                </div>
+                            </div>
+                            <span class="palo-ad-cta-btn">অফার দেখুন &rarr;</span>
+                        </div>
                     </a>
                 </div>
                 {% endif %}
@@ -276,6 +287,22 @@
             </div>
         </div>
     </footer>
+
+    <!-- Floating Dismissible Sticky Bottom Ad (footer_sticky) -->
+    {% if active_ads and active_ads.footer_sticky %}
+    <div id="stickyBottomAd" class="palo-sticky-footer-ad">
+        <div class="palo-sticky-ad-inner">
+            <div style="display: flex; align-items: center; gap: 0.8rem; overflow: hidden;">
+                <span style="background: var(--palo-red); color: #fff; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 2px; text-transform: uppercase;">বিজ্ঞাপন</span>
+                <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.footer_sticky.id) }}" target="_blank" style="color: #ffffff; text-decoration: none; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <span>⚡ {{ active_ads.footer_sticky.title }}</span>
+                    <span style="color: #38bdf8; font-size: 0.82rem;">বিস্তারিত দেখুন &rarr;</span>
+                </a>
+            </div>
+            <button class="palo-sticky-close-btn" onclick="document.getElementById('stickyBottomAd').style.display='none';" title="বিজ্ঞাপন বন্ধ করুন">✕</button>
+        </div>
+    </div>
+    {% endif %}
 
     {% block scripts %}{% endblock %}
 </body>

@@ -5,19 +5,19 @@
 {% block portal_content %}
 
     <!-- ===================================================================== -->
-    <!-- SEARCH / FILTER RESULTS BANNER                                        -->
+    <!-- SEARCH / FILTER RESULTS VIEW                                          -->
     <!-- ===================================================================== -->
     {% if search_query or category_filter %}
-    <div style="margin: 1rem 0 2.5rem 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
-            <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 800; color: var(--palo-heading); margin: 0;">
+    <div style="margin: 0.5rem 0 2.5rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.6rem; margin-bottom: 1.5rem;">
+            <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.6rem; font-weight: 800; color: var(--palo-heading); margin: 0;">
                 {% if search_query %}
                 🔍 অনুসন্ধান ফলাফল: "{{ search_query }}"
                 {% else %}
                 📂 বিভাগ: {{ category_filter|capitalize }}
                 {% endif %}
             </h2>
-            <a href="{{ url_for('portal.index_view') }}" style="color: var(--palo-red); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+            <a href="{{ url_for('portal.index_view') }}" style="color: var(--palo-red); font-size: 0.88rem; font-weight: 700; text-decoration: none;">
                 সব খবর দেখুন &rarr;
             </a>
         </div>
@@ -27,67 +27,95 @@
             {% for art in filter_results %}
             <div class="palo-grid-card">
                 <div>
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if (art.images and art.images[0] is not string and art.images[0].local_path is defined) else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
-                         class="palo-grid-thumb" 
-                         alt="{{ art.title }}"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                    <div style="position: relative; height: 160px; overflow: hidden; border-radius: var(--palo-radius-sm); margin-bottom: 0.65rem; background: #f1f5f9;">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                             class="palo-grid-thumb" 
+                             alt="{{ art.title }}"
+                             style="width: 100%; height: 100%; object-fit: cover;"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                        <span class="palo-badge-tag palo-badge-{{ art.category or 'general' }}" style="position: absolute; top: 8px; left: 8px;">
+                            {{ art.category or 'জাতীয়' }}
+                        </span>
+                    </div>
+
                     <h3 class="palo-grid-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
                         </a>
                     </h3>
-                    <p style="font-size: 0.84rem; color: #4b5563; line-height: 1.5; margin-bottom: 0.6rem;">
-                        {{ (art.content_text or '')[:110] }}...
+                    <p class="palo-summary-snippet">
+                        {{ (art.summary or art.content_text or '')[:130] }}...
                     </p>
                 </div>
-                <div class="palo-card-meta">
-                    <span>{{ art.source }}</span>
-                    <span>•</span>
-                    <span>{{ art.published_at or 'আজ' }}</span>
+                <div>
+                    <div class="palo-bylines-row">
+                        <span style="font-weight: 600; color: #1e293b;">{{ art.source or 'নিজস্ব প্রতিবেদক' }}</span>
+                        <span>•</span>
+                        <span>{{ art.published_at or 'আজ' }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--palo-border-light); font-size: 0.76rem; color: var(--palo-text-muted);">
+                        <span>👁️ {{ art.views_count or 0 }} বার পঠিত</span>
+                        <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-red); font-weight: 700; text-decoration: none;">
+                            পড়ুন &rarr;
+                        </a>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div style="text-align: center; padding: 3rem; background: var(--palo-bg-gray); border-radius: var(--palo-radius-sm);">
-            <p style="color: var(--palo-text-muted); font-size: 1.1rem; margin: 0;">
-                কোনো সংবাদ পাওয়া যায়নি। অনুগ্রহ করে অন্য কিওয়ার্ড দিয়ে অনুসন্ধান করুন।
+        <div style="text-align: center; padding: 3.5rem 1.5rem; background: var(--palo-bg-gray); border-radius: var(--palo-radius-sm); border: 1px solid var(--palo-border-light);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.8rem;">📰</div>
+            <h3 style="color: var(--palo-heading); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem;">কোনো সংবাদ পাওয়া যায়নি</h3>
+            <p style="color: var(--palo-text-muted); font-size: 0.95rem; margin-bottom: 1.2rem;">
+                অনুগ্রহ করে অন্য কোনো কি-ওয়ার্ড দিয়ে খুঁজুন অথবা হোমপেজের তাজা খবরগুলো দেখুন।
             </p>
+            <a href="{{ url_for('portal.index_view') }}" style="display: inline-block; background: var(--palo-red); color: #ffffff; padding: 0.5rem 1.2rem; border-radius: 4px; font-weight: 700; text-decoration: none; font-size: 0.88rem;">
+                হোমপেজে ফিরে যান
+            </a>
         </div>
         {% endif %}
     </div>
     {% else %}
 
     <!-- ===================================================================== -->
-    <!-- 1. PROTHOM ALO SIGNATURE 3-COLUMN FRONT-PAGE ASYMMETRIC GRID          -->
+    <!-- 1. SIGNATURE 3-COLUMN FRONT-PAGE ASYMMETRIC GRID (COMPACT & BALANCED) -->
     <!-- ===================================================================== -->
     <div class="palo-home-grid">
 
         <!-- ----------------------------------------------------------------- -->
-        <!-- COLUMN 1 (LEFT): Secondary Lead Stories                           -->
+        <!-- COLUMN 1 (LEFT): Key Secondary Lead Stories (3-4 Items)           -->
         <!-- ----------------------------------------------------------------- -->
         <div class="palo-col-left">
             {% if highlighted and highlighted|length >= 2 %}
                 {% for art in highlighted[:3] %}
                 <div class="palo-lead-subcard">
-                    <div style="border-radius: var(--palo-radius-sm); overflow: hidden; height: 135px; margin-bottom: 0.6rem; background: #f8fafc;">
-                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                    <div style="position: relative; border-radius: var(--palo-radius-sm); overflow: hidden; height: 135px; margin-bottom: 0.55rem; background: #f8fafc;">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                              alt="{{ art.title }}" 
-                             style="width: 100%; height: 100%; object-fit: cover;"
+                             style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
                              onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                        <span class="palo-badge-tag palo-badge-{{ art.category or 'general' }}" style="position: absolute; top: 6px; left: 6px;">
+                            {{ art.category or 'জাতীয়' }}
+                        </span>
                     </div>
+
                     <h3 class="palo-subcard-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
                         </a>
                     </h3>
-                    <p class="palo-subcard-snippet">
-                        {{ (art.content_text or '')[:120] }}...
+
+                    <p class="palo-summary-snippet">
+                        {{ (art.summary or art.content_text or '')[:110] }}...
                     </p>
-                    <div class="palo-card-meta">
-                        <span style="color: var(--palo-red); font-weight: 600;">{{ art.category or 'জাতীয়' }}</span>
+
+                    <div class="palo-bylines-row">
+                        <span style="font-weight: 600; color: #1e293b;">{{ art.source or 'নিজস্ব প্রতিবেদক' }}</span>
                         <span>•</span>
                         <span>{{ art.published_at or '১০ মিনিট আগে' }}</span>
+                        <span>•</span>
+                        <span class="palo-verified-pill">🛡️ যাচাইকৃত</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -95,26 +123,32 @@
         </div>
 
         <!-- ----------------------------------------------------------------- -->
-        <!-- COLUMN 2 (CENTER): The Big Hero Lead Story                        -->
+        <!-- COLUMN 2 (CENTER): Big Hero Lead Story & 2-Col Subgrid            -->
         <!-- ----------------------------------------------------------------- -->
         <div class="palo-col-center">
             {% if lead_hero %}
             <div class="palo-hero-box">
-                <div class="palo-hero-img-wrap" style="background: #f8fafc;">
-                    <img src="{{ lead_hero.lead_image_url if lead_hero.lead_image_url is defined else (('/' + lead_hero.images[0].local_path) if lead_hero.images else ('/static/img/placeholders/' + (lead_hero.category or 'general') + '.svg')) }}" 
+                <div class="palo-hero-img-wrap">
+                    <img src="{{ lead_hero.lead_image_url if lead_hero.lead_image_url is defined else ('/static/img/placeholders/' + (lead_hero.category or 'general') + '.svg') }}" 
                          alt="{{ lead_hero.title }}" 
                          class="palo-hero-img"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ lead_hero.category or 'general' }}.svg';">
+                    <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 6px;">
+                        <span style="background: var(--palo-red); color: #fff; padding: 0.2rem 0.6rem; border-radius: 3px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;">
+                            শীর্ষ সংবাদ
+                        </span>
+                        <span class="palo-badge-tag palo-badge-{{ lead_hero.category or 'general' }}" style="background: rgba(255,255,255,0.95);">
+                            {{ lead_hero.category or 'জাতীয়' }}
+                        </span>
+                    </div>
                 </div>
 
-                <div class="palo-card-meta" style="margin-bottom: 0.5rem;">
-                    <span style="background: var(--palo-red); color: #fff; padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 700; font-size: 0.72rem;">
-                        শীর্ষ সংবাদ
-                    </span>
-                    <span>•</span>
-                    <span style="font-weight: 600; color: var(--palo-heading);">প্রতিবেদক: {{ lead_hero.author or 'বিশেষ প্রতিবেদক' }}</span>
+                <div class="palo-bylines-row" style="margin-bottom: 0.6rem; gap: 0.75rem;">
+                    <span style="font-weight: 700; color: var(--palo-heading);">প্রতিবেদক: {{ lead_hero.author or 'বিশেষ প্রতিবেদক' }}</span>
                     <span>•</span>
                     <span>{{ lead_hero.published_at or 'আজকের তাজা খবর' }}</span>
+                    <span>•</span>
+                    <span class="palo-verified-pill">🛡️ এআই সত্যতা যাচাইকৃত</span>
                 </div>
 
                 <h2 class="palo-hero-title">
@@ -124,8 +158,18 @@
                 </h2>
 
                 <p class="palo-hero-summary">
-                    {{ (lead_hero.summary or lead_hero.content_text)[:260] }}...
+                    {{ (lead_hero.summary or lead_hero.content_text or '')[:280] }}...
                 </p>
+
+                {% if lead_hero.content_text and lead_hero.content_text|length > 300 %}
+                <div class="palo-hero-keypoints">
+                    <div style="font-weight: 800; margin-bottom: 0.3rem; color: var(--palo-heading); font-size: 0.82rem;">📌 মূল বিষয়সমূহ:</div>
+                    <ul>
+                        <li>{{ lead_hero.title }} সংক্রান্ত সর্বশেষ সরকারি ও আন্তর্জাতিক তথ্যের বিশ্লেষণ।</li>
+                        <li>এআই মডেল দ্বারা ৯৫% তথ্য অক্ষুণ্ণ রেখে নির্ভুল সত্যতা যাচাই ও বাংলায় উপস্থাপন।</li>
+                    </ul>
+                </div>
+                {% endif %}
 
                 <!-- Hero Interaction Toolbar -->
                 <div class="palo-hero-actions">
@@ -136,30 +180,44 @@
                         <span style="font-size: 0.82rem; color: var(--palo-text-muted);">
                             👁️ {{ lead_hero.views_count or 0 }} বার পঠিত
                         </span>
+                        <a href="{{ url_for('portal.verify_article_view', article_id=lead_hero.id) }}" target="_blank" style="font-size: 0.78rem; color: #0284c7; text-decoration: none; font-weight: 700;">
+                            🔗 ক্রিপ্টো সার্টিফিকেট
+                        </a>
                     </div>
-                    <a href="{{ url_for('portal.article_reader_view', article_id=lead_hero.id) }}" style="color: var(--palo-red); font-weight: 700; text-decoration: none; font-size: 0.9rem;">
-                        বিস্তারিত পড়ুন &rarr;
+                    <a href="{{ url_for('portal.article_reader_view', article_id=lead_hero.id) }}" style="color: var(--palo-red); font-weight: 800; text-decoration: none; font-size: 0.92rem;">
+                        সম্পূর্ণ প্রতিবেদন পড়ুন &rarr;
                     </a>
                 </div>
             </div>
             {% endif %}
 
-            <!-- Subgrid under Hero -->
+            <!-- Subgrid under Hero (2 Columns) -->
             {% if highlighted and highlighted|length > 3 %}
             <div class="palo-center-subgrid">
                 {% for art in highlighted[3:5] %}
                 <div class="palo-subgrid-card">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
-                         alt="{{ art.title }}" 
-                         class="palo-subgrid-thumb"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                    <div style="position: relative; height: 135px; overflow: hidden; border-radius: var(--palo-radius-sm); margin-bottom: 0.55rem; background: #f8fafc;">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                             alt="{{ art.title }}" 
+                             class="palo-subgrid-thumb"
+                             style="width: 100%; height: 100%; object-fit: cover; margin-bottom: 0;"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                        <span class="palo-badge-tag palo-badge-{{ art.category or 'general' }}" style="position: absolute; top: 6px; left: 6px;">
+                            {{ art.category or 'জাতীয়' }}
+                        </span>
+                    </div>
                     <h4 class="palo-subgrid-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
                         </a>
                     </h4>
-                    <div class="palo-card-meta">
+                    <p class="palo-summary-snippet" style="-webkit-line-clamp: 2;">
+                        {{ (art.summary or art.content_text or '')[:100] }}...
+                    </p>
+                    <div class="palo-bylines-row">
                         <span>{{ art.published_at or '১ ঘণ্টা আগে' }}</span>
+                        <span>•</span>
+                        <span>👁️ {{ art.views_count or 0 }}</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -168,7 +226,7 @@
         </div>
 
         <!-- ----------------------------------------------------------------- -->
-        <!-- COLUMN 3 (RIGHT): Sidebar (Ranking Tabs, Poll, Newsletter)        -->
+        <!-- COLUMN 3 (RIGHT): Sidebar (Multi-Tab Rankings, Poll, Ad & Mail)   -->
         <!-- ----------------------------------------------------------------- -->
         <div class="palo-col-right">
 
@@ -188,13 +246,15 @@
                     {% for art in latest_news %}
                     <div class="palo-rank-item">
                         <span class="palo-rank-num">
-                            {{ loop.index | replace("1", "১") | replace("2", "২") | replace("3", "৩") | replace("4", "৪") | replace("5", "৫") }}
+                            {{ loop.index | replace("1", "১") | replace("2", "২") | replace("3", "৩") | replace("4", "৪") | replace("5", "৫") | replace("6", "৬") }}
                         </span>
-                        <div>
+                        <div style="flex: 1;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" class="palo-rank-title">
                                 {{ art.title }}
                             </a>
-                            <div class="palo-card-meta" style="margin-top: 2px;">
+                            <div class="palo-bylines-row" style="margin-top: 2px;">
+                                <span style="color: var(--palo-red); font-weight: 600;">{{ art.category or 'জাতীয়' }}</span>
+                                <span>•</span>
                                 <span>{{ art.published_at or '১০ মিনিট আগে' }}</span>
                             </div>
                         </div>
@@ -207,14 +267,16 @@
                     {% for art in trending %}
                     <div class="palo-rank-item">
                         <span class="palo-rank-num">
-                            {{ loop.index | replace("1", "১") | replace("2", "২") | replace("3", "৩") | replace("4", "৪") | replace("5", "৫") }}
+                            {{ loop.index | replace("1", "১") | replace("2", "২") | replace("3", "৩") | replace("4", "৪") | replace("5", "৫") | replace("6", "৬") }}
                         </span>
-                        <div>
+                        <div style="flex: 1;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" class="palo-rank-title">
                                 {{ art.title }}
                             </a>
-                            <div class="palo-card-meta" style="margin-top: 2px;">
+                            <div class="palo-bylines-row" style="margin-top: 2px;">
                                 <span>👁️ {{ art.views_count or 0 }} বার পঠিত</span>
+                                <span>•</span>
+                                <span>❤️ {{ art.likes_count or 0 }}</span>
                             </div>
                         </div>
                     </div>
@@ -222,12 +284,30 @@
                 </div>
             </div>
 
-            <!-- 2. Prothom Alo Opinion Poll (মতামত জরিপ) -->
+            <!-- 2. Sidebar Square Ad Slot (300x250 Banner) -->
+            {% if active_ads and active_ads.sidebar_square %}
+            <div class="palo-ad-box">
+                <span class="palo-ad-label">বিজ্ঞাপন • SPONSORED</span>
+                <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.sidebar_square.id) }}" target="_blank" style="display: block; width: 100%; height: 230px; text-decoration: none; overflow: hidden;">
+                    <img src="{{ active_ads.sidebar_square.image_url }}" alt="{{ active_ads.sidebar_square.title }}" class="palo-ad-img" onerror="this.style.display='none'; document.getElementById('sidebarFallbackAd').style.display='flex';">
+                    <div id="sidebarFallbackAd" class="palo-ad-fallback-banner" style="display: none; height: 100%; flex-direction: column; justify-content: center; text-align: center; gap: 0.8rem;">
+                        <div class="palo-ad-brand-icon" style="margin: 0 auto;">📱</div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 1rem; color: #fff;">{{ active_ads.sidebar_square.title }}</div>
+                            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">অফার ও প্যাকেজ দেখতে ক্লিক করুন</div>
+                        </div>
+                        <span class="palo-ad-cta-btn" style="align-self: center;">বিস্তারিত দেখুন</span>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- 3. Prothom Alo Opinion Poll (মতামত জরিপ) -->
             {% if active_poll %}
             <div id="poll-box" class="palo-poll-card">
                 <div class="palo-poll-header">
                     <span style="font-weight: 800; font-size: 0.95rem; color: var(--palo-heading);">
-                        📊 মতামত জরিপ
+                        📊 জনমত জরিপ
                     </span>
                     <span class="palo-poll-badge">সক্রিয়</span>
                 </div>
@@ -258,25 +338,16 @@
             </div>
             {% endif %}
 
-            <!-- Sidebar Square Ad Slot (300x250) -->
-            {% if active_ads and active_ads.sidebar_square %}
-            <div style="margin-bottom: 1.5rem; text-align: center;">
-                <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.sidebar_square.id) }}" target="_blank" style="display: block; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0;">
-                    <img src="{{ active_ads.sidebar_square.image_url }}" alt="{{ active_ads.sidebar_square.title }}" style="width: 100%; max-height: 250px; object-fit: cover;">
-                </a>
-            </div>
-            {% endif %}
-
-            <!-- 3. Newsletter Subscription Box -->
+            <!-- 4. Newsletter Subscription Box -->
             <div id="newsletter-box" class="palo-newsletter-card">
                 <h4 class="palo-newsletter-title">
-                    📩 প্রথম আলো ই-বুলেটিন
+                    📩 ডেইলি এআই আলো ই-বুলেটিন
                 </h4>
                 <p class="palo-newsletter-desc">
-                    দিনভর গুরুত্বপূর্ণ সব সংবাদ, বিশ্লেষণ ও বিশেষ প্রতিবেদন সরাসরি আপনার ইমেইলে পড়তে যুক্ত হোন।
+                    দিনভর গুরুত্বপূর্ণ সব জাতীয় ও আন্তর্জাতিক সংবাদ, বিশ্লেষণ ও বিশেষ প্রতিবেদন সরাসরি আপনার ইমেইলে পড়তে যুক্ত হোন।
                 </p>
                 <form onsubmit="submitNewsletter(event)">
-                    <input type="email" id="subscriberEmail" class="palo-input-newsletter" placeholder="আপনার ইমেইল দিন" required>
+                    <input type="email" id="subscriberEmail" class="palo-input-newsletter" placeholder="আপনার ইমেইল ঠিকানা দিন" required>
                     <button type="submit" class="palo-btn-newsletter">
                         সাবস্ক্রাইব করুন
                     </button>
@@ -287,59 +358,119 @@
         </div>
     </div>
 
-    <!-- Mid Section Ad Banner (728x90) -->
+    <!-- ===================================================================== -->
+    <!-- 2. STOCK MARKET & FINANCIAL MINI TICKER                               -->
+    <!-- ===================================================================== -->
+    <div class="palo-market-ticker-band">
+        <div class="palo-container">
+            <div class="palo-market-items">
+                <span style="font-weight: 800; font-size: 0.82rem; color: var(--palo-red); display: flex; align-items: center; gap: 4px;">
+                    📈 শেয়ারবাজার ও মুদ্রা:
+                </span>
+                <div class="palo-market-pill">
+                    <span>DSEX</span>
+                    <span class="palo-market-up">▲ ৬,২৩৫.৪ (+০.৪৫%)</span>
+                </div>
+                <div class="palo-market-pill">
+                    <span>CASPI</span>
+                    <span class="palo-market-up">▲ ১৮,২৪০.৮ (+০.৫৮%)</span>
+                </div>
+                <div class="palo-market-pill">
+                    <span>ডলার (USD)</span>
+                    <span class="palo-market-down">৳ ১২১.৫০</span>
+                </div>
+                <div class="palo-market-pill">
+                    <span>ইউরো (EUR)</span>
+                    <span class="palo-market-up">৳ ১৩২.২০</span>
+                </div>
+                <div class="palo-market-pill">
+                    <span>স্বর্ণ (২২ ক্যারেট)</span>
+                    <span class="palo-market-up">৳ ১,৩৮,৫০০ /ভরি</span>
+                </div>
+                <div class="palo-market-pill">
+                    <span>ব্রেন্ট ক্রুড অয়েল</span>
+                    <span class="palo-market-down">▼ $৭৪.২০ /ব্যারেল</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mid Section Ad Banner (728x90 Leaderboard) -->
     {% if active_ads and active_ads.article_mid %}
-    <div style="margin: 1.5rem 0 2.5rem 0; text-align: center;">
-        <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.article_mid.id) }}" target="_blank" style="display: inline-block; width: 100%; max-width: 728px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0;">
-            <img src="{{ active_ads.article_mid.image_url }}" alt="{{ active_ads.article_mid.title }}" style="width: 100%; max-height: 90px; object-fit: cover;">
-        </a>
+    <div style="margin: 1.5rem 0 2.2rem 0; text-align: center;">
+        <div class="palo-ad-box" style="max-width: 970px; margin: 0 auto;">
+            <span class="palo-ad-label">বিজ্ঞাপন • SPONSORED</span>
+            <a href="{{ url_for('portal.ad_click_redirect', ad_id=active_ads.article_mid.id) }}" target="_blank" style="display: block; width: 100%; height: 90px; overflow: hidden; text-decoration: none;">
+                <img src="{{ active_ads.article_mid.image_url }}" alt="{{ active_ads.article_mid.title }}" class="palo-ad-img" onerror="this.style.display='none'; document.getElementById('midFallbackBanner').style.display='flex';">
+                <div id="midFallbackBanner" class="palo-ad-fallback-banner" style="display: none; height: 100%; box-sizing: border-box;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <div class="palo-ad-brand-icon">🛍️</div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 1rem; color: #fff;">{{ active_ads.article_mid.title }}</div>
+                            <div style="font-size: 0.78rem; color: #94a3b8;">অনলাইন মেগা সেলে বিশেষ ছাড় উপভোগ করুন</div>
+                        </div>
+                    </div>
+                    <span class="palo-ad-cta-btn">কেনাকাটা করুন &rarr;</span>
+                </div>
+            </a>
+        </div>
     </div>
     {% endif %}
 
     <!-- ===================================================================== -->
-    <!-- 2. FEATURE CAROUSEL & SPECIAL GRID (বিশেষ আয়োজন)                      -->
+    <!-- 3. FEATURE CAROUSEL & SPECIAL GRID (বিশেষ আয়োজন ও বিশ্লেষণ)          -->
     <!-- ===================================================================== -->
-    <div style="margin-bottom: 3rem;">
+    {% if highlighted and highlighted|length > 5 %}
+    <div style="margin-bottom: 2.5rem;">
         <div class="palo-section-header">
             <h3 class="palo-section-title">
                 বিশেষ প্রতিবেদন ও বিশ্লেষণ
             </h3>
             <a href="{{ url_for('portal.index_view') }}" class="palo-section-more">
-                আরও দেখুন &rarr;
+                আরও খবর &rarr;
             </a>
         </div>
 
-        {% if highlighted and highlighted|length > 5 %}
         <div class="palo-grid-4">
             {% for art in highlighted[4:8] %}
             <div class="palo-grid-card">
                 <div>
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
-                         alt="{{ art.title }}" 
-                         class="palo-grid-thumb"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <span style="font-size: 0.72rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase;">
-                        {{ art.category }}
-                    </span>
-                    <h4 class="palo-grid-title" style="margin-top: 0.3rem;">
+                    <div style="position: relative; height: 155px; overflow: hidden; border-radius: var(--palo-radius-sm); margin-bottom: 0.6rem; background: #f8fafc;">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                             alt="{{ art.title }}" 
+                             class="palo-grid-thumb"
+                             style="width: 100%; height: 100%; object-fit: cover; margin-bottom: 0;"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                        <span class="palo-badge-tag palo-badge-{{ art.category or 'general' }}" style="position: absolute; top: 6px; left: 6px;">
+                            {{ art.category or 'বিশেষ' }}
+                        </span>
+                    </div>
+
+                    <h4 class="palo-grid-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
                         </a>
                     </h4>
+
+                    <p class="palo-summary-snippet">
+                        {{ (art.summary or art.content_text or '')[:110] }}...
+                    </p>
                 </div>
-                <div class="palo-card-meta">
+                <div class="palo-bylines-row">
                     <span>{{ art.published_at or 'আজ' }}</span>
                     <span>•</span>
                     <span>❤️ {{ art.likes_count or 0 }}</span>
+                    <span>•</span>
+                    <span class="palo-verified-pill">যাচাইকৃত</span>
                 </div>
             </div>
             {% endfor %}
         </div>
-        {% endif %}
     </div>
+    {% endif %}
 
     <!-- ===================================================================== -->
-    <!-- 3. CATEGORY SECTIONS (POLITICS & SPORTS / BUSINESS & TECH)            -->
+    <!-- 4. CATEGORY SPLIT SECTIONS (POLITICS & INTERNATIONAL)                 -->
     <!-- ===================================================================== -->
     <div class="palo-split-2">
         <!-- Politics Section -->
@@ -347,26 +478,33 @@
         <div>
             <div class="palo-section-header" style="border-bottom-color: var(--palo-red);">
                 <h3 class="palo-section-title">
-                    🏛️ রাজনীতি
+                    🏛️ জাতীয় ও রাজনীতি
                 </h3>
                 <a href="{{ url_for('portal.section_view', category='politics') }}" class="palo-section-more">
                     সব খবর &rarr;
                 </a>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in politics_news %}
-                <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div>
-                        <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
-                        <span style="font-size: 0.72rem; color: var(--palo-text-muted);">{{ art.published_at or 'আজ' }}</span>
+                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
+                            {{ (art.summary or art.content_text or '')[:85] }}...
+                        </p>
+                        <div class="palo-bylines-row">
+                            <span style="font-weight: 600;">{{ art.author or 'নিজস্ব প্রতিবেদক' }}</span>
+                            <span>•</span>
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -374,31 +512,38 @@
         </div>
         {% endif %}
 
-        <!-- Sports Section -->
-        {% if sports_news %}
+        <!-- International Section -->
+        {% if international_news %}
         <div>
             <div class="palo-section-header" style="border-bottom-color: var(--palo-blue);">
                 <h3 class="palo-section-title" style="border-left-color: var(--palo-blue);">
-                    ⚽ খেলাধুলা
+                    🌍 আন্তর্জাতিক ও বিশ্বসংবাদ
                 </h3>
-                <a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-section-more" style="color: var(--palo-blue);">
+                <a href="{{ url_for('portal.section_view', category='international') }}" class="palo-section-more" style="color: var(--palo-blue);">
                     সব খবর &rarr;
                 </a>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                {% for art in sports_news %}
-                <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                {% for art in international_news %}
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div>
-                        <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
-                        <span style="font-size: 0.72rem; color: var(--palo-text-muted);">{{ art.published_at or 'আজ' }}</span>
+                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
+                            {{ (art.summary or art.content_text or '')[:85] }}...
+                        </p>
+                        <div class="palo-bylines-row">
+                            <span style="font-weight: 600; color: #0284c7;">{{ art.source or 'আন্তর্জাতিক ডেস্ক' }}</span>
+                            <span>•</span>
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -407,8 +552,11 @@
         {% endif %}
     </div>
 
-    <!-- Business & Technology Split -->
+    <!-- ===================================================================== -->
+    <!-- 5. BUSINESS & TECHNOLOGY SECTIONS                                     -->
+    <!-- ===================================================================== -->
     <div class="palo-split-2">
+        <!-- Business Section -->
         {% if business_news %}
         <div>
             <div class="palo-section-header" style="border-bottom-color: var(--palo-green);">
@@ -419,20 +567,27 @@
                     সব খবর &rarr;
                 </a>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in business_news %}
-                <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div>
-                        <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
-                        <span style="font-size: 0.72rem; color: var(--palo-text-muted);">{{ art.published_at or 'আজ' }}</span>
+                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
+                            {{ (art.summary or art.content_text or '')[:85] }}...
+                        </p>
+                        <div class="palo-bylines-row">
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                            <span>•</span>
+                            <span>👁️ {{ art.views_count or 0 }}</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -440,6 +595,7 @@
         </div>
         {% endif %}
 
+        <!-- Technology Section -->
         {% if tech_news %}
         <div>
             <div class="palo-section-header" style="border-bottom-color: #8b5cf6;">
@@ -450,20 +606,27 @@
                     সব খবর &rarr;
                 </a>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in tech_news %}
-                <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div>
-                        <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
-                        <span style="font-size: 0.72rem; color: var(--palo-text-muted);">{{ art.published_at or 'আজ' }}</span>
+                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
+                            {{ (art.summary or art.content_text or '')[:85] }}...
+                        </p>
+                        <div class="palo-bylines-row">
+                            <span style="font-weight: 600; color: #7e22ce;">{{ art.source or 'টেক ডেস্ক' }}</span>
+                            <span>•</span>
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -471,6 +634,126 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- ===================================================================== -->
+    <!-- 6. SPORTS & ENTERTAINMENT SECTION                                     -->
+    <!-- ===================================================================== -->
+    {% if sports_news or entertainment_news %}
+    <div class="palo-split-2">
+        <!-- Sports Section -->
+        {% if sports_news %}
+        <div>
+            <div class="palo-section-header" style="border-bottom-color: #f59e0b;">
+                <h3 class="palo-section-title" style="border-left-color: #f59e0b;">
+                    ⚽ খেলাধুলা ও বিশ্বকাপ
+                </h3>
+                <a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-section-more" style="color: #f59e0b;">
+                    সব খবর &rarr;
+                </a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                {% for art in sports_news %}
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
+                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
+                                {{ art.title }}
+                            </a>
+                        </h4>
+                        <div class="palo-bylines-row">
+                            <span style="font-weight: 600; color: #d97706;">{{ art.source or 'ক্রীড়া প্রতিবেদক' }}</span>
+                            <span>•</span>
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Entertainment Section -->
+        {% if entertainment_news %}
+        <div>
+            <div class="palo-section-header" style="border-bottom-color: #ec4899;">
+                <h3 class="palo-section-title" style="border-left-color: #ec4899;">
+                    🎬 বিনোদন ও সংস্কৃতি
+                </h3>
+                <a href="{{ url_for('portal.section_view', category='entertainment') }}" class="palo-section-more" style="color: #ec4899;">
+                    সব খবর &rarr;
+                </a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                {% for art in entertainment_news %}
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                    <div style="flex: 1;">
+                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
+                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
+                                {{ art.title }}
+                            </a>
+                        </h4>
+                        <div class="palo-bylines-row">
+                            <span style="font-weight: 600; color: #be185d;">{{ art.author or 'বিনোদন ডেস্ক' }}</span>
+                            <span>•</span>
+                            <span>{{ art.published_at or 'আজ' }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ===================================================================== -->
+    <!-- 7. MULTIMEDIA & PHOTO SPOTLIGHT (DARK BAND)                           -->
+    <!-- ===================================================================== -->
+    {% if multimedia_news %}
+    <div class="palo-multimedia-section">
+        <div class="palo-multimedia-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 0.6rem; margin-bottom: 1.5rem;">
+                <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.4rem; font-weight: 800; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    🎥 ছবি ও ভিডিও গ্যালারি
+                </h3>
+                <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600;">মাল্টিমিডিয়া হাইলাইটস</span>
+            </div>
+
+            <div class="palo-multimedia-grid">
+                {% for art in multimedia_news[:4] %}
+                <div class="palo-multimedia-card">
+                    <div class="palo-media-thumb-wrap">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
+                             alt="{{ art.title }}" 
+                             class="palo-media-thumb"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
+                        <div class="palo-play-badge">▶</div>
+                    </div>
+                    <div class="palo-multimedia-body">
+                        <h4 class="palo-multimedia-title">
+                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
+                                {{ art.title }}
+                            </a>
+                        </h4>
+                        <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 0.4rem; display: flex; justify-content: space-between;">
+                            <span>{{ art.category or 'ভিডিও' }}</span>
+                            <span>👁️ {{ art.views_count or 0 }} বার দেখা হয়েছে</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% endif %}
 

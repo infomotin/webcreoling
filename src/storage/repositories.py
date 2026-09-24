@@ -381,21 +381,53 @@ class ArticleRepository:
         )
 
     def get_articles_by_category(self, category: str, limit: int = 4, exclude_id: Optional[int] = None) -> List[Article]:
-        """Fetch articles belonging to a specific news category."""
+        """Fetch articles belonging to a specific news category with synonym support and fallback."""
+        cat_lower = (category or "").lower().strip()
+        synonym_map = {
+            "politics": ["politics", "রাজনীতি", "national"],
+            "bangladesh": ["bangladesh", "national", "বাংলাদেশ", "জাতীয়"],
+            "national": ["national", "bangladesh", "বাংলাদেশ", "জাতীয়"],
+            "international": ["international", "world", "আন্তর্জাতিক", "বিশ্ব"],
+            "world": ["world", "international", "আন্তর্জাতিক", "বিশ্ব"],
+            "business": ["business", "economy", "বাণিজ্য", "অর্থনীতি", "শেয়ারবাজার"],
+            "technology": ["technology", "tech", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি", "বিজ্ঞান"],
+            "tech": ["tech", "technology", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি"],
+            "sports": ["sports", "খেলাধুলা", "খেলা", "ক্রিকেট", "ফুটবল"],
+            "entertainment": ["entertainment", "বিনোদন", "সংস্কৃতি", "তারকা"],
+        }
+        cats_to_match = synonym_map.get(cat_lower, [cat_lower])
         query = (
             self.session.query(Article)
             .options(joinedload(Article.images))
-            .filter(Article.category == category)
+            .filter(Article.category.in_(cats_to_match))
             .filter(Article.scrape_status == "completed")
         )
         if exclude_id:
             query = query.filter(Article.id != exclude_id)
-        return query.order_by(
+        results = query.order_by(
             Article.is_pinned.desc(),
             Article.display_order.asc(),
             Article.published_at.desc(),
             Article.id.desc()
         ).limit(limit).all()
+
+        # If not enough articles for this specific category, backfill with completed articles to avoid empty gaps
+        if len(results) < limit:
+            existing_ids = [r.id for r in results]
+            if exclude_id:
+                existing_ids.append(exclude_id)
+            filler_query = (
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
+                .filter(~Article.id.in_(existing_ids))
+                .order_by(Article.id.desc())
+                .limit(limit - len(results))
+            )
+            filler = filler_query.all()
+            results.extend(filler)
+
+        return results
 
     def get_related_articles(self, article_id: int, category: Optional[str] = None, limit: int = 3) -> List[Article]:
         """Fetch related articles based on category and recency."""
@@ -1610,29 +1642,39 @@ class AdvertisementRepository:
         return None
 
     def seed_default_ads(self) -> None:
-        if self.session.query(Advertisement).count() == 0:
-            default_ads = [
-                (
-                    "বিকাশ ডিজিটাল পেমেন্ট অফার",
-                    "header_top",
-                    "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=80",
-                    "https://bkash.com",
-                ),
-                (
-                    "গ্রামীণফোন ৫জি সুপার স্পিড নেটওয়ার্ক",
-                    "sidebar_square",
-                    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&auto=format&fit=crop&q=80",
-                    "https://grameenphone.com",
-                ),
-                (
-                    "দারাজ বৈশাখী সুপার সেল ২০২৬",
-                    "article_mid",
-                    "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&auto=format&fit=crop&q=80",
-                    "https://daraz.com.bd",
-                ),
-            ]
-            for title, slot, img, url in default_ads:
+        default_ads = [
+            (
+                "বিকাশ ক্যাশব্যাক ও ডিজিটাল পেমেন্ট অফার",
+                "header_top",
+                "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=80",
+                "https://bkash.com",
+            ),
+            (
+                "গ্রামীণফোন ৫জি সুপার স্পিড নেটওয়ার্ক",
+                "sidebar_square",
+                "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&auto=format&fit=crop&q=80",
+                "https://grameenphone.com",
+            ),
+            (
+                "দারাজ মেগা বৈশাখী সুপার সেল ২০২৬",
+                "article_mid",
+                "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&auto=format&fit=crop&q=80",
+                "https://daraz.com.bd",
+            ),
+            (
+                "নগদ ইসলামিক ডিজিটাল ব্যাংকিং - লেনদেন এখন শূন্য খরচে",
+                "footer_sticky",
+                "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=900&auto=format&fit=crop&q=80",
+                "https://nagad.com.bd",
+            ),
+        ]
+        for title, slot, img, url in default_ads:
+            existing = self.session.query(Advertisement).filter(Advertisement.slot == slot).first()
+            if not existing:
                 self.create_ad(title=title, slot=slot, image_url=img, target_url=url, is_active=True)
+            elif not existing.is_active:
+                existing.is_active = True
+                self.session.flush()
 
 
 class AuditLogRepository:
@@ -2595,7 +2637,8 @@ class SocialChannelRepository:
         if channel:
             channel.total_posts_dispatched = (channel.total_posts_dispatched or 0) + 1
             channel.last_post_at = datetime.utcnow()
-            channel.status = "HEALTHY"
+            if channel.status != "BACKUP_ACTIVE":
+                channel.status = "HEALTHY"
             self.session.flush()
 
     def log_broadcast(

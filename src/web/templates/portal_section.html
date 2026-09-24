@@ -50,7 +50,7 @@
             {% if section_hero and page == 1 %}
             <div class="palo-hero-box" style="background: #ffffff; border: 1px solid var(--palo-border); border-radius: var(--palo-radius-sm); padding: 1.5rem; margin-bottom: 2rem;">
                 <div class="palo-hero-img-wrap" style="max-height: 380px; background: #f8fafc;">
-                    <img src="{{ section_hero.lead_image_url if section_hero.lead_image_url is defined else (('/' + section_hero.images[0].local_path) if section_hero.images else ('/static/img/placeholders/' + (section_hero.category or 'general') + '.svg')) }}" 
+                    <img src="{{ section_hero.lead_image_url if section_hero.lead_image_url is defined else ('/static/img/placeholders/' + (section_hero.category or 'general') + '.svg') }}" 
                          alt="{{ section_hero.title }}" 
                          class="palo-hero-img"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ section_hero.category or 'general' }}.svg';">
@@ -93,7 +93,7 @@
                 {% for art in articles %}
                 <div class="palo-grid-card">
                     <div>
-                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                              alt="{{ art.title }}" 
                              class="palo-grid-thumb"
                              onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">

@@ -5,6 +5,7 @@ lead hero banners, auto-highlighted articles, opinion polls, likes, social share
 """
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from sqlalchemy.orm import joinedload
 from src.storage.database import get_db_session
 from src.storage.models import Article
 from src.storage.repositories import (
@@ -78,11 +79,22 @@ def index_view():
         active_poll = portal_repo.get_active_poll()
 
         # Category Blocks
+        national_news = article_repo.get_articles_by_category("bangladesh", limit=4, exclude_id=exclude_id)
         politics_news = article_repo.get_articles_by_category("politics", limit=4, exclude_id=exclude_id)
-        sports_news = article_repo.get_articles_by_category("sports", limit=4, exclude_id=exclude_id)
+        international_news = article_repo.get_articles_by_category("international", limit=4, exclude_id=exclude_id)
         business_news = article_repo.get_articles_by_category("business", limit=4, exclude_id=exclude_id)
         tech_news = article_repo.get_articles_by_category("technology", limit=4, exclude_id=exclude_id)
-        international_news = article_repo.get_articles_by_category("international", limit=4, exclude_id=exclude_id)
+        sports_news = article_repo.get_articles_by_category("sports", limit=4, exclude_id=exclude_id)
+        entertainment_news = article_repo.get_articles_by_category("entertainment", limit=4, exclude_id=exclude_id)
+        multimedia_news = article_repo.get_highlighted_articles(limit=4, exclude_id=exclude_id)
+        latest_news = (
+            session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.scrape_status == "completed")
+            .order_by(Article.id.desc())
+            .limit(6)
+            .all()
+        )
 
         # If search or category filter active
         filter_results = None
@@ -99,11 +111,14 @@ def index_view():
             trending=trending,
             latest_news=latest_news,
             active_poll=active_poll.to_dict() if active_poll else None,
+            national_news=national_news,
             politics_news=politics_news,
-            sports_news=sports_news,
+            international_news=international_news,
             business_news=business_news,
             tech_news=tech_news,
-            international_news=international_news,
+            sports_news=sports_news,
+            entertainment_news=entertainment_news,
+            multimedia_news=multimedia_news,
             category_filter=category_filter,
             search_query=search_query,
             filter_results=filter_results,

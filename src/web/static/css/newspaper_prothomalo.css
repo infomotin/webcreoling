@@ -479,21 +479,22 @@ body.palo-body-canvas {
 .palo-alert-danger  { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
 /* --------------------------------------------------------------------------
-   6. FRONT-PAGE 3-COLUMN ASYMMETRIC GRID
+   6. FRONT-PAGE 3-COLUMN ASYMMETRIC GRID (COMPACT & BALANCED)
    -------------------------------------------------------------------------- */
 .palo-home-grid {
     display: grid;
     grid-template-columns: 1fr 1.8fr 1.1fr;
-    gap: 1.8rem;
-    margin-bottom: 2.8rem;
+    gap: 1.25rem;
+    margin-bottom: 2.2rem;
+    align-items: stretch;
 }
 
 /* Left Column */
 .palo-col-left {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    border-right: 1px solid var(--palo-border-light);
+    gap: 1rem;
+    border-right: 1px solid var(--palo-border);
     padding-right: 1.25rem;
 }
 
@@ -1308,3 +1309,355 @@ body.palo-body-canvas {
         line-height: 1.8;
     }
 }
+
+/* ==========================================================================
+   11. PROFESSIONAL NEWSPAPER ADVERTISEMENT SLOTS & SPONSOR FORMATTING
+   ========================================================================== */
+.palo-ad-box {
+    position: relative;
+    border-radius: var(--palo-radius-sm);
+    overflow: hidden;
+    background: #f8fafc;
+    border: 1px solid var(--palo-border);
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.palo-ad-box:hover {
+    border-color: #cbd5e1;
+    box-shadow: var(--palo-shadow-sm);
+}
+
+.palo-ad-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    background: #f1f5f9;
+    border-bottom: 1px solid var(--palo-border-light);
+    text-align: center;
+}
+
+.palo-ad-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    transition: opacity 0.2s ease;
+}
+
+/* Fallback High-Contrast Banner when no image */
+.palo-ad-fallback-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.4rem;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 4px;
+    text-decoration: none;
+    gap: 1rem;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+}
+
+.palo-ad-fallback-banner:hover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+}
+
+.palo-ad-brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.palo-ad-cta-btn {
+    background: var(--palo-red);
+    color: #ffffff;
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+    border: none;
+    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.4);
+}
+
+/* Floating Sticky Footer Ad */
+.palo-sticky-footer-ad {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    border-top: 2px solid var(--palo-red);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.palo-sticky-ad-inner {
+    max-width: 970px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    gap: 1rem;
+}
+
+.palo-sticky-close-btn {
+    position: absolute;
+    right: -28px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #334155;
+    color: #ffffff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    line-height: 1;
+    transition: background 0.2s;
+}
+
+.palo-sticky-close-btn:hover {
+    background: var(--palo-red);
+}
+
+/* ==========================================================================
+   12. RICH NEWS DETAIL BADGES & EDITORIAL BYLINES
+   ========================================================================== */
+.palo-badge-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.18rem 0.55rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+.palo-badge-politics { background: #fee2e2; color: #b91c1c; }
+.palo-badge-bangladesh { background: #dcfce7; color: #15803d; }
+.palo-badge-international { background: #e0f2fe; color: #0369a1; }
+.palo-badge-business { background: #fef3c7; color: #b45309; }
+.palo-badge-sports { background: #ede9fe; color: #6d28d9; }
+.palo-badge-technology { background: #f3e8ff; color: #7e22ce; }
+.palo-badge-entertainment { background: #fce7f3; color: #be185d; }
+.palo-badge-general { background: #f1f5f9; color: #475569; }
+
+.palo-verified-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+}
+
+.palo-bylines-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    color: var(--palo-text-muted);
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.palo-summary-snippet {
+    font-size: 0.86rem;
+    color: #374151;
+    line-height: 1.56;
+    margin: 0.4rem 0 0.5rem 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.palo-hero-keypoints {
+    background: #f8fafc;
+    border-left: 3px solid var(--palo-red);
+    padding: 0.65rem 0.9rem;
+    border-radius: 0 4px 4px 0;
+    margin: 0.75rem 0 1rem 0;
+    font-size: 0.84rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.palo-hero-keypoints ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.palo-hero-keypoints li {
+    margin-bottom: 0.25rem;
+}
+
+.palo-hero-keypoints li:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   13. STOCK MARKET & FINANCIAL MINI TICKER
+   ========================================================================== */
+.palo-market-ticker-band {
+    background: #ffffff;
+    border-top: 1px solid var(--palo-border);
+    border-bottom: 1px solid var(--palo-border);
+    padding: 0.55rem 0;
+    margin-bottom: 1.8rem;
+}
+
+.palo-market-items {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+}
+
+.palo-market-items::-webkit-scrollbar {
+    display: none;
+}
+
+.palo-market-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    padding: 0.25rem 0.65rem;
+    background: #f8fafc;
+    border: 1px solid var(--palo-border-light);
+    border-radius: 4px;
+}
+
+.palo-market-up {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.palo-market-down {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   14. MULTIMEDIA & PHOTO SPOTLIGHT (DARK BAND)
+   ========================================================================== */
+.palo-multimedia-section {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 2.2rem 0;
+    margin: 2.5rem -1.5rem;
+    border-radius: 0;
+}
+
+.palo-multimedia-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.palo-multimedia-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+}
+
+.palo-multimedia-card {
+    background: #1e293b;
+    border-radius: var(--palo-radius-sm);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.25s ease;
+}
+
+.palo-multimedia-card:hover {
+    transform: translateY(-3px);
+}
+
+.palo-media-thumb-wrap {
+    position: relative;
+    height: 170px;
+    overflow: hidden;
+}
+
+.palo-media-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.palo-multimedia-card:hover .palo-media-thumb {
+    transform: scale(1.04);
+}
+
+.palo-play-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(225, 29, 72, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.palo-multimedia-body {
+    padding: 0.85rem;
+}
+
+.palo-multimedia-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.palo-multimedia-title a {
+    color: #f1f5f9;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.palo-multimedia-title a:hover {
+    color: #38bdf8;
+}
+

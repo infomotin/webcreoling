@@ -432,8 +432,17 @@ class UnifiedSocialBroadcaster:
                 )
                 backup_post_id = resp_data.get("id")
                 repo.record_broadcast_success(failover_ch.id)
+
+                # Check foreign key validity for article_id
+                from src.storage.models import Article
+                valid_art_id = None
+                if sample_article and sample_article.get("id"):
+                    art_row = session.query(Article.id).filter(Article.id == sample_article.get("id")).first()
+                    if art_row:
+                        valid_art_id = art_row[0]
+
                 repo.log_broadcast(
-                    article_id=sample_article.get("id"),
+                    article_id=valid_art_id,
                     channel_id=failover_ch.id,
                     platform=failover_ch.platform,
                     target_account=failover_ch.account_name,

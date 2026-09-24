@@ -84,10 +84,17 @@ class Article(Base):
         """Return lead image URL or category-based default fallback SVG."""
         if self.images:
             for img in self.images:
-                if img.is_lead_image and img.local_path:
-                    return f"/{img.local_path.lstrip('/')}"
-            if self.images[0].local_path:
-                return f"/{self.images[0].local_path.lstrip('/')}"
+                path = img.local_path or img.original_url
+                if img.is_lead_image and path:
+                    if path.startswith(("http://", "https://")):
+                        return path
+                    return f"/{path.lstrip('/')}"
+            if self.images[0]:
+                path = self.images[0].local_path or self.images[0].original_url
+                if path:
+                    if path.startswith(("http://", "https://")):
+                        return path
+                    return f"/{path.lstrip('/')}"
         cat = (self.category or "general").lower()
         valid_cats = ["politics", "bangladesh", "international", "business", "sports", "technology", "news", "entertainment", "general"]
         chosen_cat = cat if cat in valid_cats else "general"
@@ -153,6 +160,17 @@ class ArticleImage(Base):
     # Relationships
     article = relationship("Article", back_populates="images")
 
+    @property
+    def url(self) -> str:
+        """Return safe web URL for the image."""
+        if self.local_path:
+            if self.local_path.startswith(("http://", "https://")):
+                return self.local_path
+            return f"/{self.local_path.lstrip('/')}"
+        if self.original_url and self.original_url.startswith(("http://", "https://")):
+            return self.original_url
+        return "/static/img/placeholders/general.svg"
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize image record to Python dictionary."""
         return {
@@ -160,6 +178,7 @@ class ArticleImage(Base):
             "article_id": self.article_id,
             "original_url": self.original_url,
             "local_path": self.local_path,
+            "url": self.url,
             "file_hash": self.file_hash,
             "file_size_bytes": self.file_size_bytes,
             "mime_type": self.mime_type,

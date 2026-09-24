@@ -543,7 +543,7 @@ class AIPilotBrain:
             if not rule.is_active:
                 continue
 
-            text_lower = f"{bn_title} {eval_content} {sample_source} {detected_category}".lower()
+            text_lower = f"{sample_title} {sample_content} {bn_title} {eval_content} {sample_source} {detected_category}".lower()
             rule_audit = {
                 "rule_id": rule.id,
                 "rule_name": rule.name,
@@ -578,10 +578,15 @@ class AIPilotBrain:
             # Check 3: Categories
             if rule_audit["passed"] and rule.target_categories:
                 cats = rule.target_categories if isinstance(rule.target_categories, list) else [rule.target_categories]
-                cat_pass = detected_category.lower() in [c.lower() for c in cats] or any(c.lower() in text_lower for c in cats)
+                clean_cats = [c.strip().lower() for c in cats if c.strip()]
+                cat_pass = (
+                    detected_category.lower() in clean_cats
+                    or sample_category.lower() in clean_cats
+                    or any(c in text_lower for c in clean_cats)
+                )
                 rule_audit["checks"]["category"] = {
                     "passed": cat_pass,
-                    "details": f"ক্যাটাগরি '{detected_category}' মিলেছে" if cat_pass else f"ক্যাটাগরি অমিল (প্রয়োজন: {cats})",
+                    "details": f"ক্যাটাগরি মিলেছে ('{detected_category}' / '{sample_category}')" if cat_pass else f"ক্যাটাগরি অমিল (প্রয়োজন: {cats})",
                 }
                 if not cat_pass:
                     rule_audit["passed"] = False
@@ -749,8 +754,8 @@ class AIPilotBrain:
         # Step 4: Custom Rule Matching
         source_lang = raw_article.get("extracted_entities", {}).get("original_lang", "bn")
         passes_rules, matched_rule, rule_msg = cls.match_custom_rules(
-            title=bn_title,
-            content=bn_content,
+            title=f"{raw_title} {bn_title}",
+            content=f"{raw_content} {bn_content}",
             source=raw_source,
             category=assigned_category,
             lang=source_lang,

@@ -294,22 +294,54 @@ class AsyncTaskManager:
             worker_func=_work,
         )
 
-    def submit_world_crawl_task(self, max_per_source: int = 3) -> AsyncTask:
-        """Submit background Worldwide multi-lingual news ingestion task."""
+    def submit_world_crawl_task(
+        self,
+        max_per_source: int = 3,
+        feed_keys: Optional[List[str]] = None,
+    ) -> AsyncTask:
+        """Submit background Worldwide multi-lingual newspaper ingestion task."""
         def _work(task: AsyncTask) -> Dict[str, Any]:
             from src.scraper.social_world_ingestion import WorldNewsMultiLingualIngester
+            from src.nlp.news_synthesizer import AINewsSynthesizerAndParaphraser
             from src.storage.database import get_db_session
             from src.storage.repositories import ArticleRepository
 
-            task.set_progress(20, "Connecting to open Google News RSS feeds (Bangla, English, Hindi)...")
-            world_items = WorldNewsMultiLingualIngester.fetch_all_world_feeds(max_per_feed=max_per_source)
+            task.set_progress(20, "Connecting to top worldwide newspapers & global news feeds...")
+            world_items = WorldNewsMultiLingualIngester.fetch_all_world_feeds(
+                max_per_feed=max_per_source,
+                feed_keys=feed_keys,
+            )
 
-            task.set_progress(60, f"Saving {len(world_items)} global news records into MySQL database...")
+            task.set_progress(50, f"Synthesizing 95% meaning-preserved Bengali journalism articles for {len(world_items)} news items...")
             saved = 0
             with get_db_session() as session:
                 repo = ArticleRepository(session)
-                for item in world_items:
+                for idx, item in enumerate(world_items):
                     try:
+                        # Synthesize rich journalism report & 70% truth gate
+                        synth = AINewsSynthesizerAndParaphraser.process_and_synthesize_news(
+                            raw_title=item.get("title", ""),
+                            raw_content=item.get("content_text", ""),
+                            source_name=item.get("source", "World Newspaper"),
+                            author=item.get("author"),
+                            category=item.get("category", "international"),
+                        )
+
+                        item["title"] = synth["synthesized_title"]
+                        item["content_text"] = synth["synthesized_body"]
+                        item["summary"] = synth["executive_summary"]
+                        item["scrape_status"] = synth["status"]
+                        
+                        entities = item.get("extracted_entities", {})
+                        entities["news_synthesis"] = {
+                            "meaning_retention_score": synth["meaning_retention_score"],
+                            "is_truth_verified": synth["is_truth_verified"],
+                            "key_takeaways": synth["key_takeaways"],
+                            "factuality_score": synth["factuality_score"],
+                        }
+                        entities["fake_news_analysis"] = synth["fact_check_report"]
+                        item["extracted_entities"] = entities
+
                         img_records = [
                             {
                                 "original_url": img["original_url"],
@@ -324,20 +356,28 @@ class AsyncTaskManager:
                         ]
                         repo.upsert_article(article_data=item, image_records=img_records)
                         saved += 1
+                        pct = 50 + int((idx + 1) / len(world_items) * 45) if world_items else 95
+                        task.set_progress(pct, f"Processed & saved: {item['title'][:40]}...")
                     except Exception as e:
                         logger.warning(f"Error saving world item: {e}")
 
-            task.set_progress(100, f"Worldwide Ingestion Complete: Saved {saved} global articles.")
+            task.set_progress(100, f"Worldwide Ingestion Complete: Synthesized and saved {saved} global articles.")
             return {"total_fetched": len(world_items), "total_saved": saved}
 
+        target_name = f"{len(feed_keys)} selected newspapers" if feed_keys else "all top global newspapers"
         return self.submit_task(
             task_type="WORLD_CRAWL",
-            title="Worldwide Multi-Lingual News Ingestion",
-            description="Ingests global breaking headlines from Google News, Reuters, BBC, and Al Jazeera.",
+            title=f"Worldwide Newspaper Ingestion & Synthesis ({target_name})",
+            description="Ingests global headlines from NYT, Washington Post, BBC, Reuters, Guardian, Bloomberg, Al Jazeera, etc., synthesizes 95% meaning-preserved Bengali reports.",
             worker_func=_work,
         )
 
-    def submit_ai_pilot_task(self, auto_publish_threshold: int = 75, max_per_source: int = 3) -> AsyncTask:
+    def submit_ai_pilot_task(
+        self,
+        auto_publish_threshold: int = 70,
+        max_per_source: int = 3,
+        selected_world_feeds: Optional[List[str]] = None,
+    ) -> AsyncTask:
         """Submit an autonomous AI Pilot Brain evaluation and auto-publishing cycle."""
         def _work(task: AsyncTask) -> Dict[str, Any]:
             from src.automation.ai_pilot_brain import AIPilotBrain
@@ -349,6 +389,7 @@ class AsyncTaskManager:
                 include_social=True,
                 auto_publish_threshold=auto_publish_threshold,
                 max_per_source=max_per_source,
+                selected_world_feeds=selected_world_feeds,
             )
             task.set_progress(
                 100,
@@ -358,8 +399,8 @@ class AsyncTaskManager:
 
         return self.submit_task(
             task_type="AI_PILOT_AUTONOMOUS",
-            title="AI Pilot Brain Autonomous Decision Cycle",
-            description=f"Auto-translates, scores credibility, and auto-publishes news with score >= {auto_publish_threshold}%.",
+            title="AI Pilot Brain Autonomous Decision & Synthesis Cycle",
+            description=f"Auto-synthesizes news with 95% meaning retention and auto-publishes if factuality >= 70% and score >= {auto_publish_threshold}%.",
             worker_func=_work,
         )
 

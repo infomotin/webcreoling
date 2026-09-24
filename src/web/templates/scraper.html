@@ -663,43 +663,56 @@
 <div id="tab-autopilot" class="tab-pane">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Auto-Pilot Run Card -->
-        <div class="card" style="border: 1px solid rgba(99, 102, 241, 0.4); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.1), transparent);">
+        <div class="card" style="border: 1px solid rgba(99, 102, 241, 0.4); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent);">
             <div class="card-header">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.5rem;">🤖</span>
+                    <span style="font-size: 1.6rem;">🤖</span>
                     <div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">এআই পাইলট স্বয়ংক্রিয় ডিসিশন ইঞ্জিন</h3>
-                        <span style="font-size: 0.8rem; color: #818cf8;">Rules Matching • Auto-Translation • Auto-Publish • Social Sync</span>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">এআই পাইলট স্বয়ংক্রিয় সিন্থেসাইজার ও ডিসিশন ইঞ্জিন</h3>
+                        <span style="font-size: 0.8rem; color: #818cf8;">৯৫% মূল ভাবধারা সংরক্ষণ • ৭০% সত্যতা মানদণ্ড গেট • মাল্টি-প্যারাগ্রাফ প্রতিবেদন</span>
                     </div>
                 </div>
-                <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1;">AUTONOMOUS</span>
+                <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1;">AUTONOMOUS AI</span>
             </div>
 
-            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
-                একটি ক্লিকেই সক্রিয় রুলস অনুযায়ী সকল ওপেন সোর্স থেকে ডেটা সংগ্রহ করে, বাংলায় রূপান্তর করে, ক্রিপ্টোগ্রাফিক ব্লকচেইনে সিল করে এবং সরাসরি ফেসবুক ও সোশ্যাল চ্যানেলে পোস্ট করে।
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                বিশ্বের শীর্ষ সংবাদপত্রগুলো থেকে সরাসরি সংবাদ এনে ৯৫% তথ্য ও ভাবধারা ঠিক রেখে সৃজনশীল পেশাদার প্রমিত বাংলায় <strong>শিরোনাম</strong>, <strong>সংবাদ সারাংশ</strong> এবং <strong>বিস্তারিত পূর্ণাঙ্গ প্রতিবেদন</strong> তৈরি করে। সত্যতা সূচক $\ge$ ৭০% হলে স্বয়ংক্রিয়ভাবে পোর্টাল ও সোশ্যাল মিডিয়ায় লাইভ পোস্ট হয়।
             </p>
 
             <form method="POST" action="{{ url_for('scraper.trigger_ai_pilot') }}" style="margin-top: 1.25rem;">
                 <div class="form-group">
                     <label class="form-label" style="display: flex; justify-content: space-between;">
-                        <span>স্বয়ংক্রিয় পাবলিশ থ্রেশহোল্ড (Auto-Publish Threshold)</span>
-                        <span id="thresh-val" style="color: #38bdf8; font-weight: 700;">70%</span>
+                        <span>ন্যূনতম সত্যতা মানদণ্ড ও অটো-পাবলিশ গেট (Truth Gate)</span>
+                        <span id="thresh-val" style="color: #38bdf8; font-weight: 700;">70% (যাচাইকৃত সত্য)</span>
                     </label>
-                    <input type="range" name="threshold" class="form-control" min="50" max="95" value="70" oninput="document.getElementById('thresh-val').innerText = this.value + '%'">
-                    <small style="color: var(--text-muted); font-size: 0.75rem;">স্কোর ৭০% বা বেশি হলে সরাসরি ফ্রন্টপেজে এবং সোশ্যাল চ্যানেলে পোস্ট হবে।</small>
+                    <input type="range" name="threshold" class="form-control" min="50" max="95" value="70" oninput="document.getElementById('thresh-val').innerText = this.value + '% ' + (this.value >= 70 ? '(যাচাইকৃত সত্য)' : '(শিথিল)')">
+                    <small style="color: var(--text-muted); font-size: 0.75rem;">স্কোর ৭০% বা বেশি হলে সরাসরি সংবাদপত্রে এবং ফেসবুক পেজে পোস্ট হবে।</small>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">উৎস প্রতি আইটেম সংখ্যা</label>
                     <select name="max_items" class="form-control">
-                        <option value="2">প্রতি উৎস থেকে ২টি করে সংবাদ</option>
-                        <option value="3" selected>প্রতি উৎস থেকে ৩টি করে সংবাদ (Standard)</option>
-                        <option value="5">প্রতি উৎস থেকে ৫টি করে সংবাদ (Deep Crawl)</option>
+                        <option value="2">প্রতি সংবাদপত্র থেকে ২টি করে সংবাদ</option>
+                        <option value="3" selected>প্রতি সংবাদপত্র থেকে ৩টি করে সংবাদ (Standard)</option>
+                        <option value="5">প্রতি সংবাদপত্র থেকে ৫টি করে সংবাদ (Deep Crawl)</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 700; padding: 0.85rem;">
-                    🚀 এআই পাইলট ফুল সাইকেল চালান (Run Auto-Pilot Cycle)
+                <!-- Global Media Sources Selection in AI Pilot -->
+                <div class="form-group">
+                    <label class="form-label">টার্গেট বিশ্ব মিডিয়া নির্বাচন (ঐচ্ছিক - খালি রাখলে সবগুলো ক্রল হবে)</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                        {% for fkey, fval in world_feeds.items() %}
+                        <label class="checkbox-badge" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                            <input type="checkbox" name="selected_feeds" value="{{ fkey }}" checked>
+                            <span>{{ fval.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 700; padding: 0.85rem; font-size: 0.95rem;">
+                    🚀 এআই পাইলট ফুল সিন্থেসিস ও পাবলিশিং সাইকেল চালান
                 </button>
             </form>
         </div>
@@ -707,40 +720,40 @@
         <!-- AI Brain Architecture Information -->
         <div class="card">
             <div class="card-header">
-                <h3 style="font-size: 1.1rem; font-weight: 600;">🧠 এআই পাইলটের সম্পূর্ণ কার্যপ্রণালী</h3>
-                <span style="font-size: 0.8rem; color: #10b981;">100% Autonomous Pipeline</span>
+                <h3 style="font-size: 1.1rem; font-weight: 600;">🧠 এআই নিউজ ইঞ্জিন ও ভাষাগত রূপান্তর ব্যবস্থা</h3>
+                <span style="font-size: 0.8rem; color: #10b981;">95% Meaning Retention • 70% Truth Gate</span>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem;">
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">১</div>
                     <div>
-                        <strong style="color: #fff;">রুল ম্যাচিং ও ওপেন ডেটা সংগ্রহ:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">সক্রিয় দেশ, ভাষা ও ক্যাটাগরি অনুযায়ী পাবলিক ইউটিউব, সোশ্যাল ও গ্লোবাল ফিড সংগ্রহ করে।</p>
+                        <strong style="color: #fff;">বিশ্বের শীর্ষ সংবাদপত্র ডেটা মাইনিং:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">NYT, Washington Post, BBC, Reuters, Bloomberg, Al Jazeera ও Guardian থেকে তথ্য সংগ্রহ।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">২</div>
                     <div>
-                        <strong style="color: #fff;">বহুভাষিক অনুবাদ (Bangla Localization):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">বিদেশি ও আঞ্চলিক ভাষার সংবাদ সরাসরি প্রমিত সাংবাদিকতার বাংলায় রূপান্তর করে।</p>
+                        <strong style="color: #fff;">৯৫% মূল ভাবধারা সংরক্ষণ ও ভাষাগত রূপান্তর:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">মূল ঘটনা, সংখ্যাতত্ত্ব, উক্তি ও সময়কাল ৯৫% অপরিবর্তিত রেখে প্রমিত সাংবাদিকতার ধারায় নতুন বাংলা বাক্যশৈলী তৈরি।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৩</div>
                     <div>
-                        <strong style="color: #fff;">স্বয়ংক্রিয় প্রকাশনা ও ব্লকচেইন সিলিং:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">স্কোর $\ge$ ৭০% হলে সাথে সাথে ডিজিটাল সংবাদপত্রে পাবলিশ এবং SHA-256 ব্লকচেইনে সিল হয়।</p>
+                        <strong style="color: #fff;">৭০% সত্যতা মানদণ্ড ও ফেক নিউজ প্রতিরোধ:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">ফ্যাক্ট-চেকিং ইঞ্জিন সত্যতা স্কোর নিরূপণ করে। সত্যতা $\ge$ ৭০% নিশ্চিত হলেই কেবল স্বয়ংক্রিয় প্রকাশনা কার্যকর হয়।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৪</div>
                     <div>
-                        <strong style="color: #fff;">সোশ্যাল মিডিয়া অটো-পোস্টিং (Social Sync):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">প্রকাশিত সংবাদের আকর্ষণীয় শিরোনাম, সারসংক্ষেপ ও লিংক সরাসরি ফেসবুক পেজ ও অন্যান্য চ্যানেলে চলে যায়।</p>
+                        <strong style="color: #fff;">মাল্টি-প্যারাগ্রাফ ও নির্বাহী সারাংশ:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">প্রতিটি সংবাদের জন্য সংক্ষিপ্ত সারাংশ বক্স এবং ৪টি স্তরের পূর্ণাঙ্গ বিশ্লেষণমূলক প্যারাগ্রাফ জেনারেট হয়।</p>
                     </div>
                 </div>
             </div>
@@ -795,47 +808,74 @@
 
 
 <!-- ========================================================================= -->
-<!-- TAB 5: WORLDWIDE MULTI-LINGUAL NEWS                                       -->
+<!-- TAB 5: WORLDWIDE POPULAR NEWSPAPERS & GLOBAL NEWS WIRE CATALOG            -->
 <!-- ========================================================================= -->
 <div id="tab-world" class="tab-pane">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-        <div>
-            <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">🌍 আন্তর্জাতিক ও বহুভাষিক সংবাদ ওয়্যার (World News Wire)</h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0 0;">রয়টার্স, বিবিসি, আল জাজিরা এবং গুগল নিউজের উন্মুক্ত গ্লোবাল ফিড।</p>
-        </div>
-        <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
-            <input type="hidden" name="max_items" value="3">
-            <button type="submit" class="btn btn-primary" style="background: #3b82f6; border: none;">
-                🌐 সকল বিশ্বসংবাদ ক্রল করুন
-            </button>
-        </form>
-    </div>
-
-    <div class="source-grid">
-        {% for key, feed in world_feeds.items() %}
-        <div class="source-card">
+    <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
             <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <span class="source-badge badge-world">GLOBAL RSS</span>
-                    <span style="font-size: 0.75rem; color: #10b981;">● Multi-Lingual</span>
-                </div>
-                <h4 style="color: #fff; font-size: 1.1rem; margin: 0 0 0.4rem 0;">{{ feed.name }}</h4>
-                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.75rem;">
-                    উৎস ভাষা: <strong>{{ feed.language|upper }}</strong> | ক্যাটাগরি: <strong>{{ feed.category }}</strong>
+                <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <span>🌍 বিশ্বের সর্বাধিক জনপ্রিয় সংবাদপত্র ও গ্লোবাল নিউজ এজেন্সি</span>
+                    <span class="source-badge badge-world">{{ world_feeds|length }} টি শীর্ষ মিডিয়া</span>
+                </h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">
+                    NYT, Washington Post, BBC, Reuters, AP, Bloomberg, Al Jazeera, CNN, Forbes, Guardian সহ শীর্ষ আন্তর্জাতিক সংবাদপত্রের উন্মুক্ত ডেটা সংগ্রহ ও ৯৫% মূল ভাবধারা সহকারে এআই সিন্থেসিস।
                 </p>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
-                <span style="font-size: 0.75rem; color: #818cf8;">স্বয়ংক্রিয় বাংলা অনুবাদ</span>
-                <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
-                    <input type="hidden" name="max_items" value="3">
-                    <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
-                        ক্রল চালান ⚡
-                    </button>
-                </form>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="button" onclick="toggleSelectAllFeeds(true)" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                    সবগুলো নির্বাচন
+                </button>
+                <button type="button" onclick="toggleSelectAllFeeds(false)" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                    নির্বাচন বাতিল
+                </button>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb, #3b82f6); border: none; font-weight: 700; padding: 0.5rem 1.2rem;">
+                    🌐 নির্বাচিত সংবাদপত্র ক্রল ও এআই রূপান্তর করুন ⚡
+                </button>
             </div>
         </div>
-        {% endfor %}
-    </div>
+
+        <!-- Quick Filter Pills -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 4px;">
+            <button type="button" class="btn btn-secondary active-filter" onclick="filterNewspapers('all', this)" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">সকল পত্রিকা (All)</button>
+            <button type="button" class="btn btn-secondary" onclick="filterNewspapers('usa', this)" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">🇺🇸 যুক্তরাষ্ট্র ও গ্লোবাল</button>
+            <button type="button" class="btn btn-secondary" onclick="filterNewspapers('uk', this)" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">🇬🇧 যুক্তরাজ্য ও ইউরোপ</button>
+            <button type="button" class="btn btn-secondary" onclick="filterNewspapers('business', this)" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">📈 অর্থনীতি ও টেকনোলজি</button>
+            <button type="button" class="btn btn-secondary" onclick="filterNewspapers('asia', this)" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">🌏 এশিয়া ও মধ্যপ্রাচ্য</button>
+        </div>
+
+        <div class="source-grid" id="newspaperCardsContainer">
+            {% for key, feed in world_feeds.items() %}
+            <div class="source-card newspaper-card" data-region="{{ feed.region|lower }}" data-cat="{{ feed.category|lower }}" style="position: relative;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span class="source-badge badge-world">
+                            {{ feed.tier or 'Global Daily' }}
+                        </span>
+                        <span style="font-size: 0.75rem; color: #38bdf8;">📍 {{ feed.region or 'International' }}</span>
+                    </div>
+
+                    <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 0.5rem;">
+                        <input type="checkbox" name="selected_feeds" value="{{ key }}" checked class="newspaper-checkbox" style="width: 18px; height: 18px; accent-color: #38bdf8; margin-top: 3px;">
+                        <h4 style="color: #fff; font-size: 1.1rem; margin: 0; line-height: 1.3;">{{ feed.name }}</h4>
+                    </div>
+
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.5;">
+                        <div>মূল ভাষা: <strong style="color: #fff;">{{ feed.lang|upper }}</strong> | ক্যাটাগরি: <strong style="color: #38bdf8;">{{ feed.category }}</strong></div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 2px;">সংবাদ বিশ্লেষণ: ৯৫% মূল ভাবধারা সহকারে পূর্ণাঙ্গ বাংলা রূপান্তর</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                    <span style="font-size: 0.75rem; color: #10b981; font-weight: 600;">✓ ৭০% সত্যতা ফিল্টার</span>
+                    <button type="submit" name="selected_feeds" value="{{ key }}" class="btn btn-secondary" style="font-size: 0.78rem; padding: 0.3rem 0.7rem;">
+                        শুধু এটি ক্রল করুন ⚡
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
 </div>
 
 
@@ -972,6 +1012,36 @@
 </div>
 
 <script>
+// Toggle Select All Newspapers
+function toggleSelectAllFeeds(checked) {
+    document.querySelectorAll('.newspaper-checkbox').forEach(cb => {
+        cb.checked = checked;
+    });
+}
+
+// Filter Newspapers by Region/Category
+function filterNewspapers(filterType, btn) {
+    document.querySelectorAll('.active-filter').forEach(b => b.classList.remove('active-filter'));
+    if (btn) btn.classList.add('active-filter');
+
+    const cards = document.querySelectorAll('.newspaper-card');
+    cards.forEach(card => {
+        const reg = card.getAttribute('data-region') || '';
+        const cat = card.getAttribute('data-cat') || '';
+        if (filterType === 'all') {
+            card.style.display = 'flex';
+        } else if (filterType === 'usa') {
+            card.style.display = (reg.includes('usa') || reg.includes('global')) ? 'flex' : 'none';
+        } else if (filterType === 'uk') {
+            card.style.display = (reg.includes('uk') || reg.includes('europe') || reg.includes('germany') || reg.includes('france')) ? 'flex' : 'none';
+        } else if (filterType === 'business') {
+            card.style.display = (cat.includes('business') || cat.includes('tech') || reg.includes('financial')) ? 'flex' : 'none';
+        } else if (filterType === 'asia') {
+            card.style.display = (reg.includes('asia') || reg.includes('bangladesh') || reg.includes('india') || reg.includes('middle east')) ? 'flex' : 'none';
+        }
+    });
+}
+
 // Tab Switching Helper
 function switchTab(tabId) {
     document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
@@ -982,7 +1052,9 @@ function switchTab(tabId) {
         targetTab.classList.add('active');
     }
 
-    event.currentTarget.classList.add('active');
+    if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
+    }
     history.replaceState(null, null, '?tab=' + tabId.replace('tab-', ''));
 }
 
@@ -991,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
     if (tabParam) {
-        const targetBtn = Array.from(document.querySelectorAll('.hub-tab-btn')).find(b => b.getAttribute('onclick').includes(tabParam));
+        const targetBtn = Array.from(document.querySelectorAll('.hub-tab-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabParam));
         if (targetBtn) {
             targetBtn.click();
         }

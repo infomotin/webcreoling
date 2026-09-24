@@ -22,6 +22,7 @@ from src.storage.repositories import (
 )
 from src.automation.social_broadcaster import UnifiedSocialBroadcaster
 from src.nlp.fake_news_detector import FakeNewsDetectorEngine
+from src.nlp.news_synthesizer import AINewsSynthesizerAndParaphraser
 
 logger = get_logger("webcreoling.automation.ai_pilot_brain")
 
@@ -457,36 +458,34 @@ class AIPilotBrain:
         raw_cat = raw_article.get("category", "bangladesh")
         raw_author = raw_article.get("author") or raw_source
 
-        # Step 1: Multi-Lingual Translation & Localization
-        source_lang = raw_article.get("extracted_entities", {}).get("original_lang", "bn")
-        bn_title, bn_content = MultiLingualNewsTranslator.translate_and_localize_to_bangla(
-            title=raw_title,
-            content=raw_content,
-            source_lang=source_lang,
-        )
-
-        # Step 2: AI Fake News & Fact-Checking Evaluation
-        fake_news_report = FakeNewsDetectorEngine.evaluate(
-            title=bn_title,
-            content=bn_content,
-            source=raw_source,
+        # Step 1: Run AI News Synthesizer & 95% Core Meaning Paraphrasing Engine
+        synth_report = AINewsSynthesizerAndParaphraser.process_and_synthesize_news(
+            raw_title=raw_title,
+            raw_content=raw_content,
+            source_name=raw_source,
             author=raw_author,
+            category=raw_cat,
             max_allowed_fake_pct=max_allowed_fake_pct,
         )
 
-        # Step 3: Credibility & Quality Evaluation
+        bn_title = synth_report["synthesized_title"]
+        bn_content = synth_report["synthesized_body"]
+        generated_summary = synth_report["executive_summary"]
+        fact_check_report = synth_report["fact_check_report"]
+
+        # Step 2: Credibility & Quality Evaluation
         eval_result = CredibilityAndClickbaitScorer.evaluate_article(
             title=bn_title,
             content=bn_content,
             source=raw_source,
         )
 
-        # Step 4: NLP Enrichment
+        # Step 3: NLP Category & Named Entity Enrichment
         assigned_category = NewsNLPSkillEngine.classify_category(title=bn_title, content=bn_content, default_cat=raw_cat)
-        generated_summary = NewsNLPSkillEngine.generate_summary(title=bn_title, content=bn_content)
         entities = NewsNLPSkillEngine.extract_entities(content=bn_content)
 
-        # Step 5: Custom Rule Matching
+        # Step 4: Custom Rule Matching
+        source_lang = raw_article.get("extracted_entities", {}).get("original_lang", "bn")
         passes_rules, matched_rule, rule_msg = cls.match_custom_rules(
             title=bn_title,
             content=bn_content,
@@ -503,7 +502,13 @@ class AIPilotBrain:
         # Merge extracted entities & fact-checking metadata
         all_entities = raw_article.get("extracted_entities", {})
         all_entities.update(entities)
-        all_entities["fake_news_analysis"] = fake_news_report
+        all_entities["fake_news_analysis"] = fact_check_report
+        all_entities["news_synthesis"] = {
+            "meaning_retention_score": synth_report["meaning_retention_score"],
+            "is_truth_verified": synth_report["is_truth_verified"],
+            "key_takeaways": synth_report["key_takeaways"],
+            "core_facts": synth_report["core_facts"],
+        }
         all_entities["ai_brain_evaluation"] = {
             "credibility_score": eval_result["credibility_score"],
             "rating": eval_result["rating"],
@@ -511,17 +516,20 @@ class AIPilotBrain:
             "flags": eval_result["flags"],
             "rule_matched": matched_rule.name if matched_rule else "Standard Criteria",
             "rule_status": rule_msg,
-            "fake_probability_pct": fake_news_report["fake_probability_pct"],
-            "factuality_score": fake_news_report["factuality_score"],
-            "fake_verdict": fake_news_report["verdict"],
-            "is_publishable": fake_news_report["is_publishable"],
+            "fake_probability_pct": fact_check_report["fake_probability_pct"],
+            "factuality_score": fact_check_report["factuality_score"],
+            "fake_verdict": fact_check_report["verdict"],
+            "is_publishable": fact_check_report["is_publishable"],
+            "meaning_retention_score": synth_report["meaning_retention_score"],
             "processed_at": datetime.utcnow().isoformat(),
         }
 
-        # Step 6: Autonomous Decision Gate (with Fake News Tolerance Check)
+        # Step 5: Autonomous Decision Gate (with 70% Truth Threshold Gate & Fake Tolerance)
         cred_score = eval_result["credibility_score"]
-        fake_prob = fake_news_report["fake_probability_pct"]
+        fake_prob = fact_check_report["fake_probability_pct"]
+        factuality_score = fact_check_report["factuality_score"]
         is_fake_pass = fake_prob <= max_allowed_fake_pct
+        is_truth_gate_pass = factuality_score >= 70.0
 
         if not passes_rules:
             decision = "REJECTED_RULE_MISMATCH"
@@ -529,25 +537,24 @@ class AIPilotBrain:
             is_breaking = False
             is_featured = False
         elif not is_fake_pass:
-            # Failed fake news tolerance gate (> max_allowed_fake_pct, e.g. > 50%)
             decision = "QUARANTINED_HIGH_FAKE_RISK"
             final_status = "archived"
             is_breaking = False
             is_featured = False
-        elif cred_score >= effective_threshold and auto_pub_allowed:
-            # Passed all rules, credibility threshold AND fake news tolerance!
+        elif is_truth_gate_pass and cred_score >= effective_threshold and auto_pub_allowed:
+            # Passed 70% Truth Gate, Credibility, and Rules -> Published Live!
             decision = "AUTO_PUBLISH"
             final_status = "completed"  # Published live on /news/
             is_breaking = cred_score >= 88 or "ব্রেকিং" in bn_title or "জরুরি" in bn_title
             is_featured = cred_score >= 90
-        elif cred_score >= 50 or is_fake_pass:
+        elif is_truth_gate_pass or cred_score >= 50 or is_fake_pass:
             decision = "QUEUE_FOR_REVIEW"
             final_status = "pending"  # Editorial review queue
             is_breaking = False
             is_featured = False
         else:
             decision = "REJECTED_LOW_QUALITY"
-            final_status = "archived"  # Suppressed / archived
+            final_status = "archived"
             is_breaking = False
             is_featured = False
 
@@ -568,8 +575,9 @@ class AIPilotBrain:
             "ai_decision": decision,
             "credibility_score": cred_score,
             "fake_probability_pct": fake_prob,
-            "factuality_score": fake_news_report["factuality_score"],
-            "fake_news_report": fake_news_report,
+            "factuality_score": factuality_score,
+            "meaning_retention_score": synth_report["meaning_retention_score"],
+            "fake_news_report": fact_check_report,
             "matched_rule_name": matched_rule.name if matched_rule else None,
             "auto_broadcast_social": auto_social_allowed and final_status == "completed",
             "eval_result": eval_result,
@@ -587,6 +595,7 @@ class AIPilotBrain:
         max_allowed_fake_pct: float = 50.0,
         max_per_source: int = 3,
         trigger_social_broadcast: bool = True,
+        selected_world_feeds: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Executes a complete autonomous cycle:
@@ -604,6 +613,7 @@ class AIPilotBrain:
             include_world_rss=include_world,
             include_social_fb=include_social,
             max_items_per_source=max_per_source,
+            selected_world_feeds=selected_world_feeds,
         )
 
         saved_count = 0

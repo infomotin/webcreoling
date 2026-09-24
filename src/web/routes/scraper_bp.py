@@ -107,30 +107,86 @@ def trigger_social_crawl():
 @scraper_bp.route("/trigger-world", methods=["POST"])
 @roles_required("admin", "editor")
 def trigger_world_crawl():
-    """Trigger background Worldwide multi-lingual news ingestion."""
+    """Trigger background Worldwide multi-lingual newspaper ingestion & AI synthesis."""
     max_items = int(request.form.get("max_items", 3))
+    selected_feeds = request.form.getlist("selected_feeds")
+    feeds = [f for f in selected_feeds if f] if selected_feeds else None
+
     task_mgr = get_task_manager()
-    task = task_mgr.submit_world_crawl_task(max_per_source=max_items)
-    flash(f"Worldwide Multi-Lingual News Ingestion started (Task ID: {task.task_id})!", "success")
-    return redirect(url_for("scraper.index_view"))
+    task = task_mgr.submit_world_crawl_task(max_per_source=max_items, feed_keys=feeds)
+    flash(f"বিশ্বের শীর্ষ সংবাদপত্রের সংবাদ সংগ্রহ ও এআই বিশ্লেষণ শুরু হয়েছে (Task ID: {task.task_id})!", "success")
+    return redirect(url_for("scraper.index_view", tab="world"))
 
 
 @scraper_bp.route("/trigger-ai-pilot", methods=["POST"])
 @roles_required("admin", "editor")
 def trigger_ai_pilot():
-    """Trigger Autonomous AI Pilot Brain decision and auto-publishing cycle."""
-    threshold = int(request.form.get("threshold", 75))
+    """Trigger Autonomous AI Pilot Brain decision, 95% meaning synthesis, and auto-publishing cycle."""
+    threshold = int(request.form.get("threshold", 70))
     max_items = int(request.form.get("max_items", 3))
+    selected_feeds = request.form.getlist("selected_feeds")
+    feeds = [f for f in selected_feeds if f] if selected_feeds else None
+
     task_mgr = get_task_manager()
-    task = task_mgr.submit_ai_pilot_task(auto_publish_threshold=threshold, max_per_source=max_items)
-    flash(f"AI Pilot Brain Autonomous Decision Cycle launched (Task ID: {task.task_id})!", "success")
-    return redirect(url_for("scraper.index_view"))
+    task = task_mgr.submit_ai_pilot_task(
+        auto_publish_threshold=threshold,
+        max_per_source=max_items,
+        selected_world_feeds=feeds,
+    )
+    flash(f"AI Pilot Brain স্বয়ংক্রিয় সংবাদ বিশ্লেষণ ও ৭০% সত্যতা যাচাই চক্র চালু হয়েছে (Task ID: {task.task_id})!", "success")
+    return redirect(url_for("scraper.index_view", tab="pilot"))
+
+
+@scraper_bp.route("/synthesize/<int:article_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def synthesize_existing_article(article_id: int):
+    """Synthesize 95% meaning-preserved multi-paragraph report and evaluate 70% truth gate for any article."""
+    from src.nlp.news_synthesizer import AINewsSynthesizerAndParaphraser
+    from src.common.blockchain import BlockchainEngine
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        article = repo.get_by_id(article_id)
+        if not article:
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            return redirect(url_for("scraper.index_view"))
+
+        synth = AINewsSynthesizerAndParaphraser.process_and_synthesize_news(
+            raw_title=article.title,
+            raw_content=article.content_text or article.summary or article.title,
+            source_name=article.source or "ডিজিটাল সংবাদ ডেস্ক",
+            author=article.author,
+            category=article.category or "international",
+        )
+
+        article.title = synth["synthesized_title"]
+        article.content_text = synth["synthesized_body"]
+        article.summary = synth["executive_summary"]
+        
+        entities = dict(article.extracted_entities or {})
+        entities["news_synthesis"] = {
+            "meaning_retention_score": synth["meaning_retention_score"],
+            "is_truth_verified": synth["is_truth_verified"],
+            "key_takeaways": synth["key_takeaways"],
+            "factuality_score": synth["factuality_score"],
+            "core_facts": synth["core_facts"],
+        }
+        entities["fake_news_analysis"] = synth["fact_check_report"]
+        article.extracted_entities = entities
+        
+        if synth["is_truth_verified"]:
+            article.scrape_status = "completed"
+
+        session.commit()
+        flash(f"সংবাদ #{article_id} সফলভাবে এআই দ্বারা বিশ্লেষণ ও ৯৫% মূল ভাবধারা সহকারে পূর্ণাঙ্গ প্রতিবেদনে রূপান্তর করা হয়েছে! সত্যতা সূচক: {synth['factuality_score']}%", "success")
+
+    return redirect(url_for("portal.article_reader_view", article_id=article_id))
 
 
 @scraper_bp.route("/scrape-url", methods=["POST"])
 @roles_required("admin", "editor")
 def scrape_single_url():
-    """Scrape and ingest an individual article URL with AI Brain evaluation."""
+    """Scrape and ingest an individual article URL with AI Brain evaluation and synthesis."""
     url = request.form.get("url", "").strip()
     site_key = request.form.get("site_key") or None
     category = request.form.get("category") or None
@@ -150,7 +206,7 @@ def scrape_single_url():
                 download_images=True,
             )
             if article:
-                # Run AI Brain evaluation
+                # Run AI Brain evaluation and synthesis
                 eval_res = AIPilotBrain.process_raw_article({
                     "url": article.url,
                     "title": article.title,
@@ -158,8 +214,16 @@ def scrape_single_url():
                     "source": article.source,
                     "category": article.category,
                 })
+                # Update article with synthesized content
+                article.title = eval_res["title"]
+                article.content_text = eval_res["content_text"]
+                article.summary = eval_res["summary"]
+                article.extracted_entities = eval_res["extracted_entities"]
+                article.scrape_status = eval_res["scrape_status"]
+                session.commit()
+
                 flash(
-                    f"Article '{article.title[:40]}...' saved! AI Credibility Score: {eval_res['credibility_score']}% ({eval_res['ai_decision']})",
+                    f"Article '{article.title[:40]}...' saved & synthesized! Factuality: {eval_res['factuality_score']}% (Status: {eval_res['scrape_status']})",
                     "success",
                 )
             else:

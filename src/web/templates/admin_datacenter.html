@@ -1,0 +1,824 @@
+{% extends "base.html" %}
+
+{% block title %}ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি হাব — {{ branding.site_title or 'দি ডেইলি এআই আলো' }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.dc-hero {
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 2.2rem 2.6rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.dc-hero::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.dc-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.2rem;
+}
+
+.dc-kpi-card {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    padding: 1.35rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: all 0.25s ease;
+}
+
+.dc-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+.dc-kpi-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.dc-card {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 16px;
+    padding: 1.8rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.dc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.dc-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .dc-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.provider-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.provider-card:hover {
+    border-color: #38bdf8;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(56, 189, 248, 0.08);
+}
+
+.replica-node-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.replica-node-row.is-primary {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.dc-badge {
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-primary { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-standby { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.badge-dr { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+.badge-encrypted { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+.dc-btn {
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+}
+
+.dc-btn-primary { background: #0284c7; color: #fff; }
+.dc-btn-primary:hover { background: #0369a1; }
+.dc-btn-success { background: #10b981; color: #fff; }
+.dc-btn-success:hover { background: #059669; }
+.dc-btn-danger { background: #ef4444; color: #fff; }
+.dc-btn-danger:hover { background: #dc2626; }
+.dc-btn-warning { background: #f59e0b; color: #fff; }
+.dc-btn-warning:hover { background: #d97706; }
+.dc-btn-outline { background: transparent; border: 1px solid var(--border-color, #cbd5e1); color: var(--text-main, #334155); }
+.dc-btn-outline:hover { background: #f1f5f9; }
+
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 620px;
+    width: 92%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="max-width: 1440px; margin: 0 auto; padding: 1.5rem 1rem;">
+
+    <!-- ===================================================================== -->
+    <!-- 1. HERO BANNER: BRANDING & HIGH AVAILABILITY STATUS                   -->
+    <!-- ===================================================================== -->
+    <div class="dc-hero">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.4rem;">
+                <span style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 0.3rem 0.8rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(56, 189, 248, 0.4);">
+                    🌐 ENTERPRISE DATA CENTER v2.6
+                </span>
+                <span class="dc-badge badge-online">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; animation: pulse 2s infinite;"></span>
+                    HA AUTO-FAILOVER ACTIVE
+                </span>
+            </div>
+            <h1 style="font-size: 2.1rem; font-weight: 800; margin: 0.3rem 0; color: #ffffff;">
+                {{ branding.site_title or 'দি ডেইলি এআই আলো' }} — ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি
+            </h1>
+            <p style="color: #94a3b8; font-size: 1rem; margin: 0; max-width: 780px;">
+                <strong>{{ branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }}</strong> • 
+                {{ branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }} | 
+                মাল্টি-ক্লাউড প্যারালাল স্টোরেজ (Google Drive, Mega, S3, FTP) এবং রিমোট ডাটাবেস হাই-অ্যাভেইলেবিলিটি (HA) ক্লাস্টার।
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button onclick="openModal('backupModal')" class="dc-btn dc-btn-success">
+                💾 নতুন ব্যাকআপ নিন
+            </button>
+            <button onclick="openModal('uploadMediaModal')" class="dc-btn dc-btn-primary">
+                ☁️ ক্লাউড মিডিয়া আপলোড
+            </button>
+            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="dc-btn dc-btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.3);">
+                🌐 পোর্টাল দেখুন
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 2. HIGH LEVEL TELEMETRY RIBBON                                       -->
+    <!-- ===================================================================== -->
+    <div class="dc-kpi-grid">
+        <div class="dc-kpi-card">
+            <div class="dc-kpi-icon" style="background: #e0f2fe; color: #0284c7;">☁️</div>
+            <div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">ক্লাউড স্টোরেজ ক্যাপাসিটি</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">
+                    {{ summary.total_storage_used_gb }} GB <span style="font-size: 0.9rem; color: #64748b; font-weight: 500;">/ {{ summary.total_storage_cap_gb }} GB</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #0284c7; font-weight: 600; margin-top: 0.2rem;">
+                    {{ summary.active_providers_count }} টি সক্রিয় প্রোভাইডার ({{ summary.storage_percent }}% ব্যবহৃত)
+                </div>
+            </div>
+        </div>
+
+        <div class="dc-kpi-card">
+            <div class="dc-kpi-icon" style="background: #dcfce7; color: #16a34a;">🗄️</div>
+            <div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">প্রাইমারি ডাটাবেস (MySQL)</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">
+                    {{ summary.primary_latency_ms }} ms
+                </div>
+                <div style="font-size: 0.8rem; color: #16a34a; font-weight: 600; margin-top: 0.2rem;">
+                    {{ summary.primary_node_host }} (অনলাইন)
+                </div>
+            </div>
+        </div>
+
+        <div class="dc-kpi-card">
+            <div class="dc-kpi-icon" style="background: #fef3c7; color: #d97706;">🔄</div>
+            <div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">স্ট্যান্ডবাই রেপ্লিকা ও DR</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">
+                    {{ summary.standby_nodes_count }} টি রেপ্লিকা
+                </div>
+                <div style="font-size: 0.8rem; color: #d97706; font-weight: 600; margin-top: 0.2rem;">
+                    অটো-ফেইলওভার প্রস্তুত (Zero Downtime)
+                </div>
+            </div>
+        </div>
+
+        <div class="dc-kpi-card">
+            <div class="dc-kpi-icon" style="background: #f3e8ff; color: #9333ea;">🔒</div>
+            <div>
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">এনক্রিপ্টেড ব্যাকআপ</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">
+                    {{ summary.total_backups_count }} টি আর্কাইভ
+                </div>
+                <div style="font-size: 0.8rem; color: #9333ea; font-weight: 600; margin-top: 0.2rem;">
+                    AES-256 & SHA-256 ভেরিফাইড
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 3. MAIN DATA CENTER SECTIONS: CLOUD STORAGE & DATABASE HA MATRIX      -->
+    <!-- ===================================================================== -->
+    <div class="dc-grid-2">
+
+        <!-- SECTION 1: MULTI-CLOUD MEDIA STORAGE -->
+        <div class="dc-card">
+            <div class="dc-card-header">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">
+                        ☁️ মাল্টি-ক্লাউড প্যারালাল মিডিয়া স্টোরেজ
+                    </h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">
+                        পোর্টালের ছবি ও ভিডিও Google Drive, Mega, S3 ও SFTP-তে স্বয়ংক্রিয় সিঙ্ক ও সিডিএন ডেলিভারি।
+                    </p>
+                </div>
+                <button onclick="openModal('addStorageModal')" class="dc-btn dc-btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                    ➕ প্রোভাইডার যোগ করুন
+                </button>
+            </div>
+
+            <div class="provider-list">
+                {% for prov in storage_providers %}
+                <div class="provider-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="font-size: 1.6rem;">
+                                {% if prov.provider_type == 'google_drive' %}📁
+                                {% elif prov.provider_type == 'mega' %}🔴
+                                {% elif prov.provider_type == 's3' %}🪣
+                                {% elif prov.provider_type == 'ftp' %}🖥️
+                                {% else %}☁️{% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1rem; color: #0f172a;">
+                                    {{ prov.name }}
+                                </div>
+                                <div style="font-size: 0.78rem; color: #64748b;">
+                                    টাইপ: <strong>{{ prov.provider_type | upper }}</strong> | মোড: <strong>{{ prov.sync_mode }}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            {% if prov.is_primary %}
+                            <span class="dc-badge badge-primary">🌟 PRIMARY CDN</span>
+                            {% endif %}
+                            <span class="dc-badge {% if prov.status == 'ONLINE' %}badge-online{% else %}badge-standby{% endif %}" id="prov-status-{{ prov.id }}">
+                                {{ prov.status }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Usage Meter -->
+                    <div style="margin: 0.8rem 0;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b; margin-bottom: 0.3rem;">
+                            <span>ব্যবহৃত কোটা: <strong>{{ (prov.capacity_used_bytes / (1024**3)) | round(2) }} GB</strong></span>
+                            <span>মোট: <strong>{{ (prov.capacity_total_bytes / (1024**3)) | round(1) }} GB</strong></span>
+                        </div>
+                        <div style="height: 6px; background: #e2e8f0; border-radius: 9999px; overflow: hidden;">
+                            <div style="height: 100%; width: {{ ((prov.capacity_used_bytes / prov.capacity_total_bytes) * 100) | round(1) }}%; background: #0284c7; border-radius: 9999px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- CDN Endpoint & Action Toolbar -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px dashed #e2e8f0;">
+                        <div style="font-size: 0.75rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; max-width: 260px; white-space: nowrap;">
+                            🔗 <code>{{ prov.cdn_base_url or 'ডিফল্ট লোকাল সিডিএন' }}</code>
+                        </div>
+
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button onclick="testStorageConnection({{ prov.id }})" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;" title="কানেকশন টেস্ট করুন">
+                                ⚡ টেস্ট
+                            </button>
+                            {% if not prov.is_primary %}
+                            <form action="{{ url_for('datacenter.set_primary_storage', provider_id=prov.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;" title="প্রাইমারি সিডিএন করুন">
+                                    🌟 প্রাইমারি
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('datacenter.delete_storage', provider_id=prov.id) }}" method="POST" onsubmit="return confirm('এই ক্লাউড স্টোরেজ প্রোভাইডার মুছে ফেলতে চান?');" style="display: inline;">
+                                <button type="submit" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; color: #ef4444;" title="মুছে ফেলুন">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- SECTION 2: PARALLEL DATABASE HA & AUTO-FAILOVER -->
+        <div class="dc-card">
+            <div class="dc-card-header">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">
+                        🗄️ প্যারালাল ডাটাবেস ও অটো-ফেইলওভার ক্লাস্টার
+                    </h3>
+                    <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">
+                        একটি সার্ভার অফলাইনে গেলে স্বয়ংক্রিয়ভাবে স্ট্যান্ডবাই রিমোট ডাটাবেস পোর্টালের ট্রাফিক পরিচালনা করবে।
+                    </p>
+                </div>
+                <button onclick="openModal('addNodeModal')" class="dc-btn dc-btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                    ➕ রেপ্লিকা নোড যোগ করুন
+                </button>
+            </div>
+
+            <div class="replica-nodes-list">
+                {% for node in replica_nodes %}
+                <div class="replica-node-row {% if node.is_current_primary %}is-primary{% endif %}">
+                    <div style="display: flex; align-items: center; gap: 0.9rem;">
+                        <div style="font-size: 1.6rem;">
+                            {% if node.is_current_primary %}👑{% else %}🖥️{% endif %}
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem; color: #0f172a;">
+                                {{ node.node_name }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748b;">
+                                হোস্ট: <code>{{ node.host }}:{{ node.port }}</code> | প্রায়োরিটি: #{{ node.auto_failover_priority }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a;" id="node-latency-{{ node.id }}">
+                                {{ node.latency_ms }} ms
+                            </div>
+                            <div>
+                                {% if node.is_current_primary %}
+                                <span class="dc-badge badge-online">PRIMARY MASTER</span>
+                                {% else %}
+                                <span class="dc-badge badge-standby">STANDBY REPLICA</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.35rem;">
+                            <button onclick="pingDatabaseNode({{ node.id }})" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;" title="পিং টেস্ট">
+                                📡 পিং
+                            </button>
+                            {% if not node.is_current_primary %}
+                            <form action="{{ url_for('datacenter.trigger_database_failover', node_id=node.id) }}" method="POST" onsubmit="return confirm('এই নোডকে প্রাইমারি মাস্টার হিসেবে সক্রিয় (ফেইলওভার) করতে চান?');" style="display: inline;">
+                                <button type="submit" class="dc-btn dc-btn-warning" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;" title="ফেইলওভার চালান">
+                                    🚨 ফেইলওভার
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- HA Logic Explainer Alert -->
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1rem; margin-top: 1.2rem; display: flex; gap: 0.8rem; align-items: flex-start;">
+                <div style="font-size: 1.4rem;">💡</div>
+                <div style="font-size: 0.82rem; color: #166534; line-height: 1.45;">
+                    <strong>স্বয়ংক্রিয় ফেইলওভার ও রিস্টোর প্রটোকল:</strong> ব্যাকগ্রাউন্ড মনিটরিং ডেমন প্রতি ৩০ সেকেন্ড অন্তর প্রাইমারি নোডে হার্টবিট পরীক্ষা করে। প্রাইমারি নোড বিচ্ছিন্ন হলে ৩ সেকেন্ডের মধ্যে সর্বোচ্চ প্রায়োরিটির স্ট্যান্ডবাই রেপ্লিকাতে ডাটাবেস কানেকশন রিরুট করা হয়।
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 4. AUTOMATED BACKUPS, AES-256 ENCRYPTION & REMOTE CLOUD OFFLOAD      -->
+    <!-- ===================================================================== -->
+    <div class="dc-card">
+        <div class="dc-card-header">
+            <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">
+                    💾 স্বয়ংক্রিয় ব্যাকআপ, এনক্রিপশন ও রিমোট ক্লাউড অফলোডিং
+                </h3>
+                <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">
+                    MySQL ডাটাবেস ডাম্প, পোর্টাল মিডিয়া অ্যাসেট ও ব্লকচেইন লেজার আর্কাইভ। Google Drive, Mega ও SFTP-তে রিমোট ক্লাউড ব্যাকআপ।
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 0.6rem;">
+                <form action="{{ url_for('datacenter.create_backup') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="backup_type" value="DATABASE_SQL">
+                    <input type="hidden" name="auto_cloud_sync" value="1">
+                    <button type="submit" class="dc-btn dc-btn-outline" style="font-size: 0.8rem;">
+                        🗄️ SQL ডাম্প
+                    </button>
+                </form>
+                <form action="{{ url_for('datacenter.create_backup') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="backup_type" value="FULL_SYSTEM">
+                    <input type="hidden" name="auto_cloud_sync" value="1">
+                    <button type="submit" class="dc-btn dc-btn-success" style="font-size: 0.8rem;">
+                        💾 সম্পূর্ণ ফুল সিস্টেম ব্যাকআপ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                <thead>
+                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                        <th style="padding: 0.85rem 1rem;">ব্যাকআপ ফাইলের নাম</th>
+                        <th style="padding: 0.85rem 1rem;">টাইপ</th>
+                        <th style="padding: 0.85rem 1rem;">আকার</th>
+                        <th style="padding: 0.85rem 1rem;">SHA-256 চেকসাম</th>
+                        <th style="padding: 0.85rem 1rem;">এনক্রিপশন ও ক্লাউড স্টোরেজ</th>
+                        <th style="padding: 0.85rem 1rem;">তারিখ</th>
+                        <th style="padding: 0.85rem 1rem; text-align: right;">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in backup_archives %}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 0.85rem 1rem; font-weight: 600; color: #0f172a;">
+                            📦 {{ b.backup_name }}
+                        </td>
+                        <td style="padding: 0.85rem 1rem;">
+                            <span class="dc-badge {% if b.backup_type == 'FULL_SYSTEM' %}badge-primary{% elif b.backup_type == 'DATABASE_SQL' %}badge-online{% else %}badge-standby{% endif %}">
+                                {{ b.backup_type }}
+                            </span>
+                        </td>
+                        <td style="padding: 0.85rem 1rem; color: #475569;">
+                            {{ (b.file_size_bytes / 1024) | round(1) }} KB
+                        </td>
+                        <td style="padding: 0.85rem 1rem; font-family: monospace; font-size: 0.78rem; color: #64748b;">
+                            <code>{{ (b.sha256_checksum or '')[:16] }}...</code>
+                        </td>
+                        <td style="padding: 0.85rem 1rem;">
+                            <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                                <span class="dc-badge badge-encrypted" title="AES-256 Enterprise Encryption">
+                                    🔒 {{ b.encryption_algorithm }}
+                                </span>
+                                {% if b.cloud_upload_status %}
+                                <span class="dc-badge badge-online" title="রিমোট ক্লাউডে অফলোড সম্পন্ন">
+                                    ☁️ CLOUD SYNCED
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 0.85rem 1rem; font-size: 0.8rem; color: #64748b;">
+                            {{ b.created_at.strftime('%d %b %Y, %I:%M %p') if b.created_at else 'N/A' }}
+                        </td>
+                        <td style="padding: 0.85rem 1rem; text-align: right;">
+                            <div style="display: inline-flex; gap: 0.4rem;">
+                                <a href="{{ url_for('datacenter.download_backup', backup_id=b.id) }}" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" title="ডাউনলোড করুন">
+                                    📥
+                                </a>
+                                <form action="{{ url_for('datacenter.restore_backup', backup_id=b.id) }}" method="POST" onsubmit="return confirm('সতর্কতা: এই ব্যাকআপ থেকে ডাটাবেস ও সিস্টেম রিস্টোর করতে চান? বর্তমান ডাটা আপডেট হবে।');" style="display: inline;">
+                                    <button type="submit" class="dc-btn dc-btn-warning" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" title="১-ক্লিকে রিস্টোর করুন">
+                                        ♻️ রিস্টোর
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('datacenter.delete_backup', backup_id=b.id) }}" method="POST" onsubmit="return confirm('এই ব্যাকআপ ফাইলটি চিরতরে মুছে ফেলতে চান?');" style="display: inline;">
+                                    <button type="submit" class="dc-btn dc-btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; color: #ef4444;" title="মুছে ফেলুন">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            কোনো ব্যাকআপ রেকর্ড নেই। উপরের বাটন ক্লিক করে অবিলম্বে ব্যাকআপ তৈরি করুন।
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 5. DATA CENTER SECURITY & AUDIT TRAIL                                -->
+    <!-- ===================================================================== -->
+    <div class="dc-card">
+        <div class="dc-card-header">
+            <div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">
+                    🛡️ ডেটাসেন্টার সিকিউরিটি ও ফেইলওভার অডিট লগ
+                </h3>
+                <p style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: #64748b;">
+                    ফেইলওভার অ্যাকশন, ক্লাউড মিররিং, স্টোরেজ অথেনটিকেশন এবং ব্যাকআপ কার্যকলাপের লাইভ স্ট্রিম।
+                </p>
+            </div>
+            <span class="dc-badge badge-online">LIVE LOG AUDIT</span>
+        </div>
+
+        <div style="max-height: 320px; overflow-y: auto; font-size: 0.85rem;">
+            {% for log in security_logs %}
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 0.65rem 0.85rem; border-bottom: 1px solid #f1f5f9; gap: 1rem;">
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <span class="dc-badge {% if log.severity == 'CRITICAL' %}badge-standby{% elif log.severity == 'SUCCESS' %}badge-online{% else %}badge-primary{% endif %}" style="font-size: 0.7rem;">
+                        {{ log.event_type }}
+                    </span>
+                    <span style="color: #1e293b; font-weight: 500;">
+                        {{ log.description }}
+                    </span>
+                </div>
+                <div style="color: #94a3b8; font-size: 0.75rem; white-space: nowrap;">
+                    {{ log.actor }} • {{ log.created_at.strftime('%H:%M:%S (%d %b)') if log.created_at else '' }}
+                </div>
+            </div>
+            {% else %}
+            <div style="padding: 1.5rem; text-align: center; color: #94a3b8;">
+                কোনো সাম্প্রতিক অডিট লগ রেকর্ড নেই।
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODALS: ADD STORAGE, ADD NODE, UPLOAD MEDIA, BACKUP                      -->
+<!-- ========================================================================= -->
+
+<!-- 1. ADD CLOUD STORAGE PROVIDER MODAL -->
+<div id="addStorageModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">➕ নতুন ক্লাউড স্টোরেজ যোগ করুন</h3>
+            <button onclick="closeModal('addStorageModal')" style="background: none; border: none; font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+        <form action="{{ url_for('datacenter.save_storage_provider') }}" method="POST">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">প্রোভাইডার টাইপ</label>
+                <select name="provider_type" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" required>
+                    <option value="google_drive">Google Drive (API Key & OAuth / Service Account)</option>
+                    <option value="mega">Mega.nz (Encrypted Cloud Store)</option>
+                    <option value="s3">AWS S3 / Wasabi (High-Speed Edge S3)</option>
+                    <option value="ftp">Offsite FTP / SFTP Server</option>
+                    <option value="cloudinary">Cloudinary Media Gateway</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">প্রোভাইডারের নাম / লেবেল</label>
+                <input type="text" name="name" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="e.g. Google Drive Enterprise Media Hub" required>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">সিডিএন বেস ইউআরএল (CDN Base URL)</label>
+                <input type="text" name="cdn_base_url" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="https://drive.google.com/uc?export=view&id=">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">API Key / Auth Token / Credentials JSON</label>
+                <textarea name="credentials_json" rows="3" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-family: monospace;" placeholder='{"api_key": "...", "folder_id": "..."}'></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+                    <input type="checkbox" name="is_primary" value="1"> প্রাইমারি সিডিএন সোর্স করুন
+                </label>
+            </div>
+            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 0.6rem;">
+                <button type="button" onclick="closeModal('addStorageModal')" class="dc-btn dc-btn-outline">বাতিল</button>
+                <button type="submit" class="dc-btn dc-btn-primary">সংরক্ষণ করুন</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. ADD DATABASE REPLICA NODE MODAL -->
+<div id="addNodeModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">➕ নতুন ডাটাবেস রেপ্লিকা নোড যোগ করুন</h3>
+            <button onclick="closeModal('addNodeModal')" style="background: none; border: none; font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+        <form action="{{ url_for('datacenter.save_replica_node') }}" method="POST">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">নোডের নাম</label>
+                <input type="text" name="node_name" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="e.g. Singapore Standby VPS Node 2" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">হোস্ট / আইপি (Host / IP)</label>
+                    <input type="text" name="host" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="db-sg2.cloudcluster.org" required>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">পোর্ট (Port)</label>
+                    <input type="number" name="port" value="3306" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" required>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">ডাটাবেসের নাম</label>
+                    <input type="text" name="database_name" value="ai_news" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" required>
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">অটো-ফেইলওভার প্রায়োরিটি</label>
+                    <input type="number" name="auto_failover_priority" value="2" min="1" max="10" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" required>
+                </div>
+            </div>
+            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem;">
+                <button type="button" onclick="closeModal('addNodeModal')" class="dc-btn dc-btn-outline">বাতিল</button>
+                <button type="submit" class="dc-btn dc-btn-primary">নোড যুক্ত করুন</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. DIRECT CLOUD MEDIA UPLOAD MODAL -->
+<div id="uploadMediaModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">☁️ সরাসরি ক্লাউড মিডিয়া আপলোড ও সিঙ্ক</h3>
+            <button onclick="closeModal('uploadMediaModal')" style="background: none; border: none; font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+        <form action="{{ url_for('datacenter.upload_media_to_cloud') }}" method="POST" enctype="multipart/form-data">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                যেকোনো ছবি বা ভিডিও আপলোড করুন। সিস্টেম ফাইলটি স্বয়ংক্রিয়ভাবে Google Drive, Mega এবং S3-তে প্যারালালি মিরর করবে এবং সরাসরি পোর্টালের আর্টিকেলে ব্যবহারের জন্য সিডিএন লিঙ্ক তৈরি করবে।
+            </p>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">মিডিয়া ফাইল সিলেক্ট করুন</label>
+                <input type="file" name="media_file" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;" accept="image/*,video/*" required>
+            </div>
+            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 0.6rem;">
+                <button type="button" onclick="closeModal('uploadMediaModal')" class="dc-btn dc-btn-outline">বাতিল</button>
+                <button type="submit" class="dc-btn dc-btn-primary">আপলোড ও ক্লাউড সিঙ্ক</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. MANUAL BACKUP TRIGGER MODAL -->
+<div id="backupModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">💾 নতুন এনক্রিপ্টেড ব্যাকআপ তৈরি করুন</h3>
+            <button onclick="closeModal('backupModal')" style="background: none; border: none; font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+        <form action="{{ url_for('datacenter.create_backup') }}" method="POST">
+            <div style="margin-bottom: 1.2rem;">
+                <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem;">ব্যাকআপের ধরন নির্বাচন করুন</label>
+                <select name="backup_type" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <option value="FULL_SYSTEM">সম্পূর্ণ ফুল সিস্টেম ব্যাকআপ (SQL + Media + Ledger)</option>
+                    <option value="DATABASE_SQL">শুধুমাত্র MySQL ডাটাবেস ডাম্প (.sql)</option>
+                    <option value="MEDIA_ASSETS">শুধুমাত্র পোর্টাল মিডিয়া ও ছবি আর্কাইভ (.zip)</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+                    <input type="checkbox" name="auto_cloud_sync" value="1" checked>
+                    <strong>Google Drive, Mega ও SFTP রিমোট ক্লাউডে স্বয়ংক্রিয় আপলোড করুন</strong>
+                </label>
+            </div>
+            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 0.6rem;">
+                <button type="button" onclick="closeModal('backupModal')" class="dc-btn dc-btn-outline">বাতিল</button>
+                <button type="submit" class="dc-btn dc-btn-success">এখনই ব্যাকআপ তৈরি করুন</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// Close modal on background click
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal-backdrop')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// AJAX Storage Test
+function testStorageConnection(provId) {
+    const statusBadge = document.getElementById('prov-status-' + provId);
+    if (statusBadge) {
+        statusBadge.textContent = 'টেস্টিং...';
+        statusBadge.className = 'dc-badge badge-standby';
+    }
+
+    fetch('/admin/datacenter/storage/test/' + provId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (statusBadge) {
+                statusBadge.textContent = 'ONLINE (' + data.latency_ms + ' ms)';
+                statusBadge.className = 'dc-badge badge-online';
+            }
+            alert('কানেকশন সফল!\n' + data.message + '\nলেটেন্সি: ' + data.latency_ms + ' ms');
+        } else {
+            if (statusBadge) {
+                statusBadge.textContent = 'AUTH_ERROR';
+                statusBadge.className = 'dc-badge badge-standby';
+            }
+            alert('কানেকশন ত্রুটি:\n' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('টেস্ট ব্যর্থ হয়েছে: ' + err);
+    });
+}
+
+// AJAX Database Ping
+function pingDatabaseNode(nodeId) {
+    const latSpan = document.getElementById('node-latency-' + nodeId);
+    if (latSpan) latSpan.textContent = 'পিং...';
+
+    fetch('/admin/datacenter/database/ping/' + nodeId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (latSpan) latSpan.textContent = data.latency_ms + ' ms';
+        alert('ডাটাবেস পিং রেসপন্স:\n' + data.message + '\nলেটেন্সি: ' + data.latency_ms + ' ms');
+    })
+    .catch(err => {
+        alert('পিং ব্যর্থ হয়েছে: ' + err);
+    });
+}
+</script>
+{% endblock %}

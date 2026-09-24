@@ -39,11 +39,16 @@ def create_app(test_config: dict = None) -> Flask:
     with get_db_session() as session:
         user_repo = UserRepository(session)
         user_repo.seed_default_users()
-        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository
+        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository, DataCenterRepository, SiteConfigRepository
         sec_repo = SecurityRepository(session)
         sec_repo.seed_default_security_rules()
         ledger_repo = BlockchainLedgerRepository(session)
         ledger_repo.ensure_genesis_block()
+        dc_repo = DataCenterRepository(session)
+        dc_repo.seed_default_providers()
+        dc_repo.seed_default_replica_nodes()
+        cfg_repo = SiteConfigRepository(session)
+        cfg_repo.seed_default_configs()
 
     # Enterprise WAF Security & Threat Defense Guard
     from src.web.security import run_security_firewall
@@ -78,6 +83,7 @@ def create_app(test_config: dict = None) -> Flask:
     from src.web.routes.training_bp import training_bp
     from src.web.routes.chat_bp import chat_bp
     from src.web.routes.admin_bp import admin_bp
+    from src.web.routes.datacenter_bp import datacenter_bp
 
     app.register_blueprint(portal_bp, url_prefix="/news")
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -87,6 +93,7 @@ def create_app(test_config: dict = None) -> Flask:
     app.register_blueprint(training_bp, url_prefix="/training")
     app.register_blueprint(chat_bp, url_prefix="/chat")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(datacenter_bp, url_prefix="/admin/datacenter")
 
     @app.errorhandler(404)
     def page_not_found(e):

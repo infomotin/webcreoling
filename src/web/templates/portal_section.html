@@ -1,13 +1,13 @@
 {% extends "portal_base.html" %}
 
 {% block title %}
-{% if category == 'politics' %}রাজনীতি - প্রথম আলো | Prothom Alo Politics Section
-{% elif category == 'bangladesh' %}বাংলাদেশ - প্রথম আলো | Prothom Alo Bangladesh Section
-{% elif category == 'business' %}অর্থনীতি ও বাণিজ্য - প্রথম আলো | Prothom Alo Business Section
-{% elif category == 'international' %}বিশ্ব সংবাদ - প্রথম আলো | Prothom Alo World Section
-{% elif category == 'sports' %}খেলাধুলা - প্রথম আলো | Prothom Alo Sports Section
-{% elif category == 'technology' %}বিজ্ঞান ও প্রযুক্তি - প্রথম আলো | Prothom Alo Technology Section
-{% else %}{{ category|capitalize }} - প্রথম আলো | Prothom Alo Section
+{% if category == 'politics' %}রাজনীতি — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% elif category == 'bangladesh' %}বাংলাদেশ — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% elif category == 'business' %}অর্থনীতি ও বাণিজ্য — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% elif category == 'international' %}বিশ্ব সংবাদ — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% elif category == 'sports' %}খেলাধুলা — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% elif category == 'technology' %}বিজ্ঞান ও প্রযুক্তি — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% else %}{{ category|capitalize }} — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
 {% endif %}
 {% endblock %}
 
@@ -49,10 +49,11 @@
             <!-- Section Hero Lead Story (if available and page == 1) -->
             {% if section_hero and page == 1 %}
             <div class="palo-hero-box" style="background: #ffffff; border: 1px solid var(--palo-border); border-radius: var(--palo-radius-sm); padding: 1.5rem; margin-bottom: 2rem;">
-                <div class="palo-hero-img-wrap" style="max-height: 380px;">
-                    {% if section_hero.images %}
-                    <img src="/{{ section_hero.images[0].local_path }}" alt="{{ section_hero.title }}" class="palo-hero-img">
-                    {% endif %}
+                <div class="palo-hero-img-wrap" style="max-height: 380px; background: #f8fafc;">
+                    <img src="{{ section_hero.lead_image_url if section_hero.lead_image_url is defined else (('/' + section_hero.images[0].local_path) if section_hero.images else ('/static/img/placeholders/' + (section_hero.category or 'general') + '.svg')) }}" 
+                         alt="{{ section_hero.title }}" 
+                         class="palo-hero-img"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ section_hero.category or 'general' }}.svg';">
                 </div>
 
                 <div class="palo-card-meta" style="margin-bottom: 0.5rem;">
@@ -60,7 +61,7 @@
                         প্রধান প্রতিবেদন
                     </span>
                     <span>•</span>
-                    <span style="font-weight: 600; color: var(--palo-heading);">প্রতিবেদক: {{ section_hero.author or 'প্রথম আলো' }}</span>
+                    <span style="font-weight: 600; color: var(--palo-heading);">প্রতিবেদক: {{ section_hero.author or 'দি ডেইলি এআই আলো' }}</span>
                     <span>•</span>
                     <span>{{ section_hero.published_at or 'আজ' }}</span>
                 </div>
@@ -92,9 +93,10 @@
                 {% for art in articles %}
                 <div class="palo-grid-card">
                     <div>
-                        {% if art.images %}
-                        <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" class="palo-grid-thumb">
-                        {% endif %}
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                             alt="{{ art.title }}" 
+                             class="palo-grid-thumb"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                         <h4 class="palo-grid-title">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                                 {{ art.title }}

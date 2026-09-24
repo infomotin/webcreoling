@@ -51,6 +51,20 @@ class Article(Base):
     shares_count = Column(Integer, default=0)
     scheduled_at = Column(DateTime, nullable=True, index=True)  # Future publishing release timestamp
 
+    # Source provenance & status tracking
+    original_source_url = Column(String(1000), nullable=True)
+    source_status = Column(String(50), default="ACTIVE", index=True)  # 'ACTIVE', 'REMOVED_AT_SOURCE', 'UNAVAILABLE', 'ARCHIVED'
+    source_removed_notice = Column(Text, nullable=True)
+    source_last_checked_at = Column(DateTime, nullable=True)
+
+    # Creation origin & Editorial attribution
+    creation_origin = Column(String(50), default="AI_SYNTHESIZED", index=True)  # 'MANUAL', 'AI_SYNTHESIZED', 'SCRAPED', 'HYBRID'
+
+    # Editorial layout & placement ordering
+    position_placement = Column(String(50), default="STANDARD", index=True)  # 'LEAD', 'FEATURED', 'SUB_LEAD', 'BREAKING', 'CATEGORY_TOP', 'STANDARD'
+    display_order = Column(Integer, default=0, index=True)  # Priority: 1 = Top, 2, 3...
+    is_pinned = Column(Boolean, default=False, index=True)
+
     # Blockchain Cryptographic Ledger Verification
     block_number = Column(Integer, nullable=True, index=True)
     block_hash = Column(String(64), nullable=True, index=True)
@@ -65,12 +79,34 @@ class Article(Base):
     # Relationships
     images = relationship("ArticleImage", back_populates="article", cascade="all, delete-orphan")
 
+    @property
+    def lead_image_url(self) -> str:
+        """Return lead image URL or category-based default fallback SVG."""
+        if self.images:
+            for img in self.images:
+                if img.is_lead_image and img.local_path:
+                    return f"/{img.local_path.lstrip('/')}"
+            if self.images[0].local_path:
+                return f"/{self.images[0].local_path.lstrip('/')}"
+        cat = (self.category or "general").lower()
+        valid_cats = ["politics", "bangladesh", "international", "business", "sports", "technology", "news", "entertainment", "general"]
+        chosen_cat = cat if cat in valid_cats else "general"
+        return f"/static/img/placeholders/{chosen_cat}.svg"
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize article to Python dictionary."""
         return {
             "id": self.id,
             "url": self.url,
+            "original_source_url": self.original_source_url or self.url,
             "source": self.source,
+            "source_status": self.source_status or "ACTIVE",
+            "source_removed_notice": self.source_removed_notice,
+            "source_last_checked_at": self.source_last_checked_at.isoformat() if self.source_last_checked_at else None,
+            "creation_origin": self.creation_origin or "AI_SYNTHESIZED",
+            "position_placement": self.position_placement or "STANDARD",
+            "display_order": self.display_order or 0,
+            "is_pinned": self.is_pinned or False,
             "title": self.title,
             "author": self.author,
             "published_at": self.published_at.isoformat() if self.published_at else None,
@@ -93,6 +129,7 @@ class Article(Base):
             "digital_signature": self.digital_signature,
             "is_ledger_verified": self.is_ledger_verified,
             "images": [img.to_dict() for img in self.images] if self.images else [],
+            "lead_image_url": self.lead_image_url,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -623,6 +660,160 @@ class SocialBroadcastLog(Base):
             "error_message": self.error_message,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+# ==============================================================================
+# Website Data Center, Cloud Storage & Database Failover Models
+# ==============================================================================
+
+class DataCenterStorageProvider(Base):
+    """Stores credentials, endpoints, capacity, and CDN routing for cloud media storage (Google Drive, Mega, S3, FTP)."""
+    __tablename__ = "datacenter_storage_providers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    provider_type = Column(String(50), nullable=False, index=True)  # 'google_drive', 'mega', 's3', 'cloudinary', 'imgur', 'ftp'
+    name = Column(String(150), nullable=False)
+    credentials_json = Column(JSON, nullable=True)  # {'api_key', 'client_id', 'folder_id', 'user', 'password', 'bucket', etc.}
+    is_active = Column(Boolean, default=True, index=True)
+    is_primary = Column(Boolean, default=False)
+    cdn_base_url = Column(String(255), nullable=True)
+    capacity_total_bytes = Column(Float, default=16106127360.0)  # default 15GB
+    capacity_used_bytes = Column(Float, default=1073741824.0)   # default 1GB
+    status = Column(String(50), default="ONLINE", index=True)   # 'ONLINE', 'SYNCING', 'DEGRADED', 'OFFLINE'
+    sync_mode = Column(String(50), default="PRIMARY_CDN")       # 'PRIMARY_CDN', 'AUTO_MIRROR', 'BACKUP_ONLY'
+    last_health_check = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        creds = self.credentials_json or {}
+        masked_creds = {}
+        for k, v in creds.items():
+            if any(secret_term in k.lower() for secret_term in ["pass", "secret", "token", "key"]):
+                masked_creds[k] = ("*" * 8) if v else ""
+            else:
+                masked_creds[k] = v
+
+        used_gb = round(self.capacity_used_bytes / (1024 ** 3), 2)
+        total_gb = round(self.capacity_total_bytes / (1024 ** 3), 2)
+        used_pct = round((self.capacity_used_bytes / max(1.0, self.capacity_total_bytes)) * 100, 1)
+
+        return {
+            "id": self.id,
+            "provider_type": self.provider_type,
+            "name": self.name,
+            "credentials": masked_creds,
+            "is_active": self.is_active,
+            "is_primary": self.is_primary,
+            "cdn_base_url": self.cdn_base_url,
+            "capacity_total_gb": total_gb,
+            "capacity_used_gb": used_gb,
+            "capacity_used_pct": used_pct,
+            "status": self.status,
+            "sync_mode": self.sync_mode,
+            "last_health_check": self.last_health_check.isoformat() if self.last_health_check else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class DatabaseReplicaNode(Base):
+    """Tracks primary and remote standby database replica nodes for high-availability auto-failover."""
+    __tablename__ = "database_replica_nodes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    node_name = Column(String(150), nullable=False)
+    host = Column(String(255), nullable=False)
+    port = Column(Integer, default=3306)
+    database_name = Column(String(100), default="ai_news")
+    username = Column(String(100), default="root")
+    password_masked = Column(String(255), default="••••••••")
+    is_active = Column(Boolean, default=True, index=True)
+    is_current_primary = Column(Boolean, default=False, index=True)
+    replication_status = Column(String(50), default="SYNCED", index=True)  # 'SYNCED', 'REPLICATING', 'STANDBY_READY', 'FAILOVER_ACTIVE', 'DISCONNECTED'
+    latency_ms = Column(Float, default=1.2)
+    auto_failover_priority = Column(Integer, default=1)
+    last_heartbeat = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "node_name": self.node_name,
+            "host": self.host,
+            "port": self.port,
+            "database_name": self.database_name,
+            "username": self.username,
+            "is_active": self.is_active,
+            "is_current_primary": self.is_current_primary,
+            "replication_status": self.replication_status,
+            "latency_ms": self.latency_ms,
+            "auto_failover_priority": self.auto_failover_priority,
+            "last_heartbeat": self.last_heartbeat.isoformat() if self.last_heartbeat else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class DataCenterBackupArchive(Base):
+    """Tracks local and remote cloud backup archives (SQL dumps, Media Zips, Blockchain Ledgers)."""
+    __tablename__ = "datacenter_backup_archives"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    backup_name = Column(String(255), nullable=False)
+    backup_type = Column(String(50), default="DATABASE_SQL", index=True)  # 'DATABASE_SQL', 'MEDIA_ASSETS', 'FULL_SYSTEM', 'BLOCKCHAIN_LEDGER'
+    file_path = Column(String(500), nullable=False)
+    file_size_bytes = Column(Float, default=0.0)
+    sha256_checksum = Column(String(64), nullable=True)
+    target_cloud_destinations = Column(JSON, nullable=True)  # ['google_drive', 'mega', 'ftp']
+    cloud_upload_status = Column(JSON, nullable=True)        # {'google_drive': 'UPLOADED', 'mega': 'UPLOADED'}
+    is_encrypted = Column(Boolean, default=True)
+    encryption_algorithm = Column(String(50), default="AES-256-GCM")
+    status = Column(String(50), default="COMPLETED", index=True)  # 'COMPLETED', 'IN_PROGRESS', 'FAILED'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        size_mb = round(self.file_size_bytes / (1024 ** 2), 2)
+        return {
+            "id": self.id,
+            "backup_name": self.backup_name,
+            "backup_type": self.backup_type,
+            "file_path": self.file_path,
+            "file_size_mb": size_mb,
+            "sha256_checksum": self.sha256_checksum,
+            "target_cloud_destinations": self.target_cloud_destinations or [],
+            "cloud_upload_status": self.cloud_upload_status or {},
+            "is_encrypted": self.is_encrypted,
+            "encryption_algorithm": self.encryption_algorithm,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class DataCenterSecurityLog(Base):
+    """Audit logs for data center activities, failover events, backups, and cloud syncs."""
+    __tablename__ = "datacenter_security_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    event_type = Column(String(50), nullable=False, index=True)  # 'FAILOVER', 'BACKUP_CREATED', 'CLOUD_SYNC', 'RESTORE_EXECUTED', 'STORAGE_AUTH'
+    severity = Column(String(20), default="INFO", index=True)    # 'INFO', 'WARNING', 'CRITICAL', 'SUCCESS'
+    actor = Column(String(100), default="AI DataCenter Engine")
+    description = Column(Text, nullable=False)
+    metadata_json = Column(JSON, nullable=True)
+    ip_address = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "event_type": self.event_type,
+            "severity": self.severity,
+            "actor": self.actor,
+            "description": self.description,
+            "metadata": self.metadata_json or {},
+            "ip_address": self.ip_address,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
 
 
 

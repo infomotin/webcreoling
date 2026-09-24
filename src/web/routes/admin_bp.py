@@ -253,8 +253,14 @@ def create_article():
     summary = request.form.get("summary", "").strip()
     content_text = request.form.get("content_text", "").strip()
     image_path = request.form.get("image_path", "").strip()
-    is_featured = bool(request.form.get("is_featured"))
-    is_breaking = bool(request.form.get("is_breaking"))
+    original_source_url = request.form.get("original_source_url", "").strip()
+    source_status = request.form.get("source_status", "ACTIVE").strip()
+    creation_origin = request.form.get("creation_origin", "MANUAL").strip()
+    position_placement = request.form.get("position_placement", "STANDARD").strip()
+    display_order = int(request.form.get("display_order", 0) or 0)
+    is_pinned = bool(request.form.get("is_pinned"))
+    is_featured = bool(request.form.get("is_featured")) or (position_placement in ["LEAD", "FEATURED"])
+    is_breaking = bool(request.form.get("is_breaking")) or (position_placement == "BREAKING")
     status = request.form.get("status", "completed").strip()
     scheduled_at_raw = request.form.get("scheduled_at", "").strip()
     scheduled_at = parse_iso_datetime(scheduled_at_raw)
@@ -279,6 +285,12 @@ def create_article():
             is_breaking=is_breaking,
             status=status,
             scheduled_at=scheduled_at,
+            original_source_url=original_source_url,
+            source_status=source_status,
+            creation_origin=creation_origin,
+            position_placement=position_placement,
+            display_order=display_order,
+            is_pinned=is_pinned,
         )
 
         audit_repo.log_action(
@@ -286,7 +298,13 @@ def create_article():
             action="article_create",
             resource_type="article",
             resource_id=str(article.id),
-            details={"title": article.title[:60], "status": article.scrape_status, "category": article.category},
+            details={
+                "title": article.title[:60],
+                "status": article.scrape_status,
+                "category": article.category,
+                "placement": article.position_placement,
+                "origin": article.creation_origin,
+            },
             ip_address=request.remote_addr,
         )
 
@@ -314,8 +332,16 @@ def edit_article(article_id: int):
     summary = request.form.get("summary", "").strip()
     content_text = request.form.get("content_text", "").strip()
     image_path = request.form.get("image_path", "").strip()
-    is_featured = bool(request.form.get("is_featured"))
-    is_breaking = bool(request.form.get("is_breaking"))
+    original_source_url = request.form.get("original_source_url")
+    source_status = request.form.get("source_status")
+    source_removed_notice = request.form.get("source_removed_notice")
+    creation_origin = request.form.get("creation_origin")
+    position_placement = request.form.get("position_placement")
+    display_order_raw = request.form.get("display_order")
+    display_order = int(display_order_raw) if (display_order_raw and display_order_raw.isdigit()) else None
+    is_pinned = bool(request.form.get("is_pinned")) if "is_pinned" in request.form else None
+    is_featured = bool(request.form.get("is_featured")) if "is_featured" in request.form else None
+    is_breaking = bool(request.form.get("is_breaking")) if "is_breaking" in request.form else None
     status = request.form.get("status", "completed").strip()
     scheduled_at_raw = request.form.get("scheduled_at", "").strip()
     scheduled_at = parse_iso_datetime(scheduled_at_raw)
@@ -337,6 +363,13 @@ def edit_article(article_id: int):
             is_breaking=is_breaking,
             status=status,
             scheduled_at=scheduled_at,
+            original_source_url=original_source_url if original_source_url is not None else None,
+            source_status=source_status if source_status else None,
+            source_removed_notice=source_removed_notice if source_removed_notice is not None else None,
+            creation_origin=creation_origin if creation_origin else None,
+            position_placement=position_placement if position_placement else None,
+            display_order=display_order,
+            is_pinned=is_pinned,
         )
         if updated:
             audit_repo.log_action(
@@ -344,7 +377,7 @@ def edit_article(article_id: int):
                 action="article_edit",
                 resource_type="article",
                 resource_id=str(article_id),
-                details={"title": updated.title[:60], "status": updated.scrape_status},
+                details={"title": updated.title[:60], "status": updated.scrape_status, "placement": updated.position_placement},
                 ip_address=request.remote_addr,
             )
             flash(f"সংবাদ #{article_id} সফলভাবে আপডেট করা হয়েছে!", "success")
@@ -352,6 +385,60 @@ def edit_article(article_id: int):
             flash("সংবাদ পাওয়া যায়নি।", "danger")
 
     return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/article/placement/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def update_placement_route(article_id: int):
+    """Quick update for placement position, display sequence order, pinned status and source status."""
+    data = request.get_json(silent=True) or request.form
+    position_placement = data.get("position_placement")
+    display_order_val = data.get("display_order")
+    display_order = int(display_order_val) if (display_order_val is not None and str(display_order_val).isdigit()) else None
+    is_pinned = bool(data.get("is_pinned")) if "is_pinned" in data else None
+    source_status = data.get("source_status")
+    source_removed_notice = data.get("source_removed_notice")
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        updated = repo.update_article_placement(
+            article_id=article_id,
+            position_placement=position_placement,
+            display_order=display_order,
+            is_pinned=is_pinned,
+            source_status=source_status,
+            source_removed_notice=source_removed_notice,
+        )
+        if not updated:
+            if request.is_json:
+                return jsonify({"status": "error", "message": "Article not found"}), 404
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            return redirect(url_for("admin.newspaper_management_view"))
+
+        if request.is_json:
+            return jsonify({
+                "status": "success",
+                "article_id": article_id,
+                "placement": updated.position_placement,
+                "display_order": updated.display_order,
+                "is_pinned": updated.is_pinned,
+                "source_status": updated.source_status,
+            })
+
+        flash(f"সংবাদ #{article_id}-এর পজিশন ও ক্রমিক সফলভাবে পরিবর্তন করা হয়েছে!", "success")
+        return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/article/check-source/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def check_source_status_route(article_id: int):
+    """Audit whether the source URL is active or removed."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        audit_res = repo.check_source_url_status(article_id)
+        return jsonify(audit_res)
 
 
 @admin_bp.route("/newspaper/article/delete/<int:article_id>", methods=["POST"])

@@ -12,8 +12,8 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="{{ url_for('dashboard.index_view') }}" class="nav-brand">
-            <span>⚡ WebCreoling AI</span>
+        <a href="{{ url_for('portal.index_view') }}" class="nav-brand">
+            <span>⚡ দি ডেইলি এআই আলো <small style="font-size: 0.75rem; color: #94a3b8;">(The Daily AI Alo)</small></span>
         </a>
 
         <ul class="nav-links">
@@ -25,6 +25,7 @@
             {% if is_editor %}
             <li><a href="{{ url_for('scraper.index_view') }}" class="nav-link">Scraper</a></li>
             <li><a href="{{ url_for('admin.newspaper_management_view') }}" class="nav-link">Editorial Mgr</a></li>
+            <li><a href="{{ url_for('datacenter.index_view') }}" class="nav-link" style="color: #06b6d4; font-weight: 600;">🌐 DataCenter & Cloud</a></li>
             {% endif %}
 
             {% if is_analyst %}
@@ -69,7 +70,7 @@
     </div>
 
     <footer>
-        <p>WebCreoling &copy; 2026 • End-to-End Bangla News Scraping, SQLite FTS5 Storage & CPU LLM Pipeline</p>
+        <p>দি ডেইলি এআই আলো (The Daily AI Alo) &copy; 2026 • বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায় • Enterprise AI & Cloud Storage Hub</p>
     </footer>
 
     {% block scripts %}{% endblock %}

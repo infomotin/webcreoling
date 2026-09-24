@@ -19,7 +19,7 @@ def test_public_newspaper_portal_view(client):
     """Public digital newspaper frontpage should load without requiring login in Prothom Alo style."""
     response = client.get("/news")
     assert response.status_code == 200
-    assert "প্রথম".encode("utf-8") in response.data or b"Prothom" in response.data
+    assert "আলো".encode("utf-8") in response.data or b"The Daily AI Alo" in response.data or "প্রথম".encode("utf-8") in response.data
 
 
 def test_section_wise_news_view(client):

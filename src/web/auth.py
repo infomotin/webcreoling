@@ -94,3 +94,8 @@ def roles_required(*roles: str) -> Callable:
 
         return decorated_function
     return decorator
+
+
+# Alias for convenience
+role_required = roles_required
+

@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block title %}আর্কাইভ - প্রথম আলো | Prothom Alo News Archive - {{ selected_date }}{% endblock %}
+{% block title %}আর্কাইভ - দি ডেইলি এআই আলো | The Daily AI Alo Archive - {{ selected_date }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -41,7 +41,7 @@
     <!-- ===================================================================== -->
     <div class="palo-archive-picker-card">
         <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 800; color: var(--palo-heading); margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
-            <span>📅</span> প্রথম আলো সংবাদ আর্কাইভ (তারিখ অনুযায়ী অনুসন্ধান)
+            <span>📅</span> দি ডেইলি এআই আলো সংবাদ আর্কাইভ (তারিখ অনুযায়ী অনুসন্ধান)
         </h2>
 
         <form method="GET" action="{{ url_for('portal.archive_view') }}" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.2rem;">
@@ -115,9 +115,10 @@
         {% for art in articles %}
         <div class="palo-grid-card">
             <div>
-                {% if art.images %}
-                <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" class="palo-grid-thumb">
-                {% endif %}
+                <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                     alt="{{ art.title }}" 
+                     class="palo-grid-thumb"
+                     onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                 <span style="font-size: 0.72rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase;">
                     {{ art.category or 'সাধারণ' }}
                 </span>

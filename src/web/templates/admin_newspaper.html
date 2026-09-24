@@ -1379,36 +1379,38 @@
             <table class="nr-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">ID</th>
+                        <th style="width: 60px;">ID / পিন</th>
                         <th style="width: 70px;">ছবি</th>
                         <th>সংবাদের শিরোনাম ও বিবরণ</th>
-                        <th>বিভাগ ও রিপোর্টার</th>
+                        <th>বিভাগ ও অরিজিন</th>
+                        <th>পজিশন ও ক্রমিক</th>
                         <th>এনগেজমেন্ট</th>
-                        <th>অবস্থা</th>
-                        <th>লেবেল</th>
-                        <th style="text-align: right; min-width: 220px;">সম্পাদকীয় অ্যাকশন</th>
+                        <th>অবস্থা ও সোর্স</th>
+                        <th style="text-align: right; min-width: 260px;">সম্পাদকীয় অ্যাকশন</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% if articles %}
                     {% for art in articles %}
-                    <tr>
-                        <td style="color: var(--nr-text-muted); font-weight: 700;">#{{ art.id }}</td>
+                    <tr id="articleRow{{ art.id }}" style="{% if art.is_pinned %}background: #f0fdf4;{% endif %}">
+                        <td style="color: var(--nr-text-muted); font-weight: 700;">
+                            {% if art.is_pinned %}<span title="পিন করা সংবাদ">📌</span>{% endif %}
+                            #{{ art.id }}
+                        </td>
                         
                         <td>
-                            {% if art.images %}
-                            <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--nr-border);">
-                            {% else %}
-                            <div style="width: 60px; height: 42px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #64748b;">ছবি নেই</div>
-                            {% endif %}
+                            <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                                 alt="{{ art.title }}" 
+                                 style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--nr-border); background: #f8fafc;"
+                                 onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                         </td>
 
-                        <td style="max-width: 320px;">
+                        <td style="max-width: 300px;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" target="_blank" style="font-weight: 800; font-size: 0.95rem; color: var(--nr-text-dark); text-decoration: none; display: block; line-height: 1.35; margin-bottom: 0.2rem;">
                                 {{ art.title }}
                             </a>
                             <p style="font-size: 0.78rem; color: var(--nr-text-muted); line-height: 1.4; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ (art.summary or art.content_text or '')[:90] }}...
+                                {{ (art.summary or art.content_text or '')[:85] }}...
                             </p>
                         </td>
 
@@ -1416,8 +1418,39 @@
                             <span class="nr-badge nr-badge-category" style="margin-bottom: 3px; display: inline-block;">
                                 {{ art.category or 'সাধারণ' }}
                             </span>
-                            <div style="font-size: 0.75rem; color: var(--nr-text-muted);">
-                                👤 {{ art.author or 'প্রথম আলো' }}
+                            <div style="font-size: 0.74rem; color: var(--nr-text-muted); margin-top: 2px;">
+                                {% if art.creation_origin == 'MANUAL' %}
+                                <span style="color: #4338ca; font-weight: 700;">✍️ ম্যানুয়াল</span>
+                                {% elif art.creation_origin == 'AI_SYNTHESIZED' %}
+                                <span style="color: #7e22ce; font-weight: 700;">🤖 এআই সংকলন</span>
+                                {% elif art.creation_origin == 'HYBRID' %}
+                                <span style="color: #1e40af; font-weight: 700;">⚡ হাইব্রিড</span>
+                                {% else %}
+                                <span>🌐 সোর্স স্ক্যান</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                <span style="font-size: 0.78rem; font-weight: 800; color: #0f172a;">
+                                    {% if art.position_placement == 'LEAD' %}
+                                    <span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px;">👑 LEAD (শীর্ষ)</span>
+                                    {% elif art.position_placement == 'FEATURED' %}
+                                    <span style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px;">⭐ FEATURED</span>
+                                    {% elif art.position_placement == 'SUB_LEAD' %}
+                                    <span style="background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px;">🎯 SUB_LEAD</span>
+                                    {% elif art.position_placement == 'BREAKING' %}
+                                    <span style="background: #ffedd5; color: #9a3412; padding: 2px 6px; border-radius: 4px;">🚨 BREAKING</span>
+                                    {% elif art.position_placement == 'CATEGORY_TOP' %}
+                                    <span style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px;">🔝 CAT_TOP</span>
+                                    {% else %}
+                                    <span style="color: #64748b; font-size: 0.75rem;">STANDARD</span>
+                                    {% endif %}
+                                </span>
+                                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                                    ক্রমিক: <strong style="color: #2563eb;">#{{ art.display_order or 0 }}</strong>
+                                </span>
                             </div>
                         </td>
 
@@ -1432,35 +1465,36 @@
                         </td>
 
                         <td>
-                            {% if art.scrape_status == 'completed' %}
-                            <span class="nr-badge nr-badge-published">✓ প্রকাশিত</span>
-                            {% elif art.scrape_status == 'scheduled' %}
-                            <span class="nr-badge nr-badge-pending">⏱️ নির্ধারিত</span>
-                            {% elif art.scrape_status in ['pending', 'draft', 'partial'] %}
-                            <span class="nr-badge nr-badge-pending">⏳ অপেক্ষমাণ</span>
-                            {% elif art.scrape_status == 'archived' %}
-                            <span class="nr-badge nr-badge-archived">📦 আর্কাইভড</span>
-                            {% else %}
-                            <span class="nr-badge nr-badge-category">{{ art.scrape_status }}</span>
-                            {% endif %}
-                        </td>
-
-                        <td>
                             <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                {% if art.is_featured %}
-                                <span class="nr-badge nr-badge-featured">⭐ শীর্ষ সংবাদ</span>
+                                {% if art.scrape_status == 'completed' %}
+                                <span class="nr-badge nr-badge-published">✓ প্রকাশিত</span>
+                                {% elif art.scrape_status == 'scheduled' %}
+                                <span class="nr-badge nr-badge-pending">⏱️ নির্ধারিত</span>
+                                {% elif art.scrape_status in ['pending', 'draft', 'partial'] %}
+                                <span class="nr-badge nr-badge-pending">⏳ অপেক্ষমাণ</span>
+                                {% elif art.scrape_status == 'archived' %}
+                                <span class="nr-badge nr-badge-archived">📦 আর্কাইভড</span>
+                                {% else %}
+                                <span class="nr-badge nr-badge-category">{{ art.scrape_status }}</span>
                                 {% endif %}
-                                {% if art.is_breaking %}
-                                <span class="nr-badge nr-badge-breaking">🚨 ব্রেকিং</span>
-                                {% endif %}
-                                {% if not art.is_featured and not art.is_breaking %}
-                                <span style="font-size: 0.75rem; color: #94a3b8;">সাধারণ</span>
+
+                                {% if art.source_status == 'REMOVED_AT_SOURCE' %}
+                                <span style="font-size: 0.70rem; background: #fee2e2; color: #dc2626; padding: 1px 4px; border-radius: 3px; font-weight: 700;">🔴 সোর্স অপসারিত</span>
+                                {% elif art.source_status == 'UNAVAILABLE' %}
+                                <span style="font-size: 0.70rem; background: #ffedd5; color: #ea580c; padding: 1px 4px; border-radius: 3px; font-weight: 700;">🟠 সোর্স বিচ্ছিন্ন</span>
+                                {% else %}
+                                <span style="font-size: 0.70rem; background: #dcfce7; color: #16a34a; padding: 1px 4px; border-radius: 3px; font-weight: 700;">🟢 সোর্স লাইভ</span>
                                 {% endif %}
                             </div>
                         </td>
 
                         <td style="text-align: right;">
                             <div style="display: flex; gap: 0.3rem; justify-content: flex-end; flex-wrap: wrap;">
+                                <!-- Quick Placement Button -->
+                                <button type="button" class="nr-btn nr-btn-sm" style="background: #e0e7ff; color: #4338ca; font-weight: 700;" onclick="openPlacementModal({{ art.id }}, '{{ art.position_placement or 'STANDARD' }}', {{ art.display_order or 0 }}, {{ 'true' if art.is_pinned else 'false' }}, '{{ art.source_status or 'ACTIVE' }}', '{{ (art.source_removed_notice or '') | replace("'", "\\'") }}', '{{ (art.original_source_url or art.url) | replace("'", "\\'") }}')" title="পজিশন ও ডিসপ্লে ক্রমিক নিয়ন্ত্রণ">
+                                    📌 পজিশন
+                                </button>
+
                                 {% if art.scrape_status in ['pending', 'draft', 'partial'] %}
                                 <form method="POST" action="{{ url_for('admin.approve_article', article_id=art.id) }}">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-success" title="অনুমোদন ও প্রকাশ করুন">
@@ -1469,19 +1503,17 @@
                                 </form>
                                 {% endif %}
 
-                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}', '{{ art.scheduled_at or "" }}')" title="সম্পাদনা করুন">
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}', '{{ art.scheduled_at or "" }}', '{{ (art.original_source_url or art.url) | replace("'", "\\'") }}', '{{ art.creation_origin or "MANUAL" }}', '{{ art.position_placement or "STANDARD" }}', {{ art.display_order or 0 }}, {{ 'true' if art.is_pinned else 'false' }}, '{{ art.source_status or "ACTIVE" }}')" title="সম্পাদনা করুন">
                                     ✏️ এডিট
+                                </button>
+
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="auditSourceLive({{ art.id }}, this)" title="লাইভ সোর্স ইউআরএল টেস্ট করুন">
+                                    🔍 সোর্স
                                 </button>
 
                                 <form method="POST" action="{{ url_for('admin.toggle_article_featured', article_id=art.id) }}">
                                     <button type="submit" class="nr-btn nr-btn-sm nr-btn-outline" title="শীর্ষ সংবাদ টগল">
                                         {% if art.is_featured %}⭐ সরান{% else %}⭐ শীর্ষ{% endif %}
-                                    </button>
-                                </form>
-
-                                <form method="POST" action="{{ url_for('admin.toggle_article_breaking', article_id=art.id) }}">
-                                    <button type="submit" class="nr-btn nr-btn-sm {% if art.is_breaking %}nr-btn-danger-outline{% else %}nr-btn-outline{% endif %}" title="ব্রেকিং টিকার টগল">
-                                        {% if art.is_breaking %}🚨 বন্ধ{% else %}🚨 ব্রেকিং{% endif %}
                                     </button>
                                 </form>
 
@@ -1554,7 +1586,7 @@
     <!-- MODAL 1: CREATE NEW ARTICLE MODAL COMPOSER                            -->
     <!-- ===================================================================== -->
     <div id="newArticleModal" class="nr-modal-backdrop">
-        <div class="nr-modal-box">
+        <div class="nr-modal-box" style="max-width: 720px;">
             <div class="nr-modal-header">
                 <div style="display: flex; align-items: center; gap: 0.8rem;">
                     <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
@@ -1577,12 +1609,60 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="nr-form-group">
                             <label class="nr-form-label">বিভাগ (Category) *</label>
-                            <input type="text" id="newCategory" name="category" class="nr-form-control" placeholder="যেমন: রাজনীতি, অর্থনীতি, খেলাধুলা" value="জাতীয়" required>
+                            <input type="text" id="newCategory" name="category" class="nr-form-control" placeholder="যেমন: politics, bangladesh, business, international, sports, technology, news" value="bangladesh" required>
                         </div>
 
                         <div class="nr-form-group">
                             <label class="nr-form-label">প্রতিবেদক / রিপোর্টার</label>
-                            <input type="text" name="author" class="nr-form-control" placeholder="যেমন: বিশেষ প্রতিবেদক, ঢাকা">
+                            <input type="text" name="author" class="nr-form-control" placeholder="যেমন: দি ডেইলি এআই আলো নিজস্ব প্রতিবেদক" value="দি ডেইলি এআই আলো নিজস্ব প্রতিবেদক">
+                        </div>
+                    </div>
+
+                    <!-- Source & Origin Fields -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">🌐 মূল সোর্স লিঙ্ক (Original Source URL - ঐচ্ছিক)</label>
+                            <input type="url" name="original_source_url" class="nr-form-control" placeholder="https://example.com/news/12345">
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">সংবাদ অরিজিন</label>
+                            <select name="creation_origin" class="nr-form-control">
+                                <option value="MANUAL" selected>✍️ নিজস্ব প্রতিবেদন / ম্যানুয়াল</option>
+                                <option value="AI_SYNTHESIZED">🤖 এআই সংকলিত ও বিশ্লেষিত</option>
+                                <option value="HYBRID">⚡ হাইব্রিড (এআই + সম্পাদকীয়)</option>
+                                <option value="SCRAPED">🌐 সোর্স স্ক্যানার</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Layout Placement & Sequence Ordering Controls -->
+                    <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <span style="font-weight: 800; font-size: 0.88rem; color: #0f172a; display: block; margin-bottom: 0.6rem;">
+                            📌 পোর্টালে অবস্থান ও ক্রমিক নিয়ন্ত্রণ (Layout Placement & Display Sequence)
+                        </span>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.8rem; align-items: center;">
+                            <div>
+                                <label class="nr-form-label" style="font-size: 0.78rem;">পজিশন নির্বাচন</label>
+                                <select name="position_placement" class="nr-form-control">
+                                    <option value="STANDARD" selected>STANDARD (সাধারণ তালিকা)</option>
+                                    <option value="LEAD">👑 LEAD (প্রধান খবর / লিড নিউজ)</option>
+                                    <option value="FEATURED">⭐ FEATURED (বিশেষ ফিচার)</option>
+                                    <option value="SUB_LEAD">🎯 SUB_LEAD (উপ-প্রধান খবর)</option>
+                                    <option value="BREAKING">🚨 BREAKING (ব্রেকিং টিকার)</option>
+                                    <option value="CATEGORY_TOP">🔝 CATEGORY_TOP (বিভাগীয় শীর্ষ)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="nr-form-label" style="font-size: 0.78rem;">ক্রমিক নম্বর (1, 2, 3...)</label>
+                                <input type="number" name="display_order" class="nr-form-control" value="0" min="0" placeholder="0">
+                            </div>
+                            <div style="padding-top: 1.2rem;">
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                                    <input type="checkbox" name="is_pinned" value="1" style="accent-color: var(--nr-primary);">
+                                    <span>📌 পিন করুন</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -1593,31 +1673,19 @@
 
                     <div class="nr-form-group">
                         <label class="nr-form-label">মূল সংবাদ বিবরণ (Article Body) *</label>
-                        <textarea id="newContentText" name="content_text" class="nr-form-control" rows="7" placeholder="বিস্তারিত প্রতিবেদন এখানে বাংলায় লিখুন..." required></textarea>
+                        <textarea id="newContentText" name="content_text" class="nr-form-control" rows="6" placeholder="বিস্তারিত প্রতিবেদন এখানে বাংলায় লিখুন..." required></textarea>
                     </div>
 
                     <div class="nr-form-grid-2">
                         <div class="nr-form-group">
                             <label class="nr-form-label">ফিচার ছবির পাথ (Image Path)</label>
-                            <input type="text" name="image_path" class="nr-form-control" placeholder="যেমন: data/images/bbc_bangla/example.jpg">
+                            <input type="text" name="image_path" class="nr-form-control" placeholder="যেমন: data/images/prothom_alo/example.jpg">
                         </div>
 
                         <div class="nr-form-group">
                             <label class="nr-form-label">⏱️ নির্ধারিত প্রকাশের সময়সূচী (Scheduled Release)</label>
                             <input type="datetime-local" name="scheduled_at" class="nr-form-control">
                         </div>
-                    </div>
-
-                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--nr-border);">
-                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
-                            <input type="checkbox" name="is_featured" value="1" style="accent-color: var(--nr-primary);">
-                            <span>⭐ শীর্ষ সংবাদ (Hero Lead Story)</span>
-                        </label>
-
-                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
-                            <input type="checkbox" name="is_breaking" value="1" style="accent-color: #ef4444;">
-                            <span>🚨 ব্রেকিং নিউজ টিকার (Breaking Ticker)</span>
-                        </label>
                     </div>
                 </div>
 
@@ -1634,7 +1702,7 @@
     <!-- MODAL 2: EDIT ARTICLE MODAL                                           -->
     <!-- ===================================================================== -->
     <div id="editArticleModal" class="nr-modal-backdrop">
-        <div class="nr-modal-box">
+        <div class="nr-modal-box" style="max-width: 720px;">
             <div class="nr-modal-header">
                 <div style="display: flex; align-items: center; gap: 0.8rem;">
                     <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
@@ -1666,6 +1734,54 @@
                         </div>
                     </div>
 
+                    <!-- Source & Origin Fields -->
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">🌐 মূল সোর্স লিঙ্ক (Original Source URL)</label>
+                            <input type="url" id="editOriginalSourceUrl" name="original_source_url" class="nr-form-control">
+                        </div>
+
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">সংবাদ অরিজিন</label>
+                            <select id="editCreationOrigin" name="creation_origin" class="nr-form-control">
+                                <option value="MANUAL">✍️ নিজস্ব প্রতিবেদন / ম্যানুয়াল</option>
+                                <option value="AI_SYNTHESIZED">🤖 এআই সংকলিত ও বিশ্লেষিত</option>
+                                <option value="HYBRID">⚡ হাইব্রিড (এআই + সম্পাদকীয়)</option>
+                                <option value="SCRAPED">🌐 সোর্স স্ক্যানার</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Layout Placement & Sequence Ordering Controls -->
+                    <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <span style="font-weight: 800; font-size: 0.88rem; color: #0f172a; display: block; margin-bottom: 0.6rem;">
+                            📌 পোর্টালে অবস্থান ও ক্রমিক নিয়ন্ত্রণ (Layout Placement & Display Sequence)
+                        </span>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.8rem; align-items: center;">
+                            <div>
+                                <label class="nr-form-label" style="font-size: 0.78rem;">পজিশন নির্বাচন</label>
+                                <select id="editPositionPlacement" name="position_placement" class="nr-form-control">
+                                    <option value="STANDARD">STANDARD (সাধারণ তালিকা)</option>
+                                    <option value="LEAD">👑 LEAD (প্রধান খবর / লিড নিউজ)</option>
+                                    <option value="FEATURED">⭐ FEATURED (বিশেষ ফিচার)</option>
+                                    <option value="SUB_LEAD">🎯 SUB_LEAD (উপ-প্রধান খবর)</option>
+                                    <option value="BREAKING">🚨 BREAKING (ব্রেকিং টিকার)</option>
+                                    <option value="CATEGORY_TOP">🔝 CATEGORY_TOP (বিভাগীয় শীর্ষ)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="nr-form-label" style="font-size: 0.78rem;">ক্রমিক নম্বর</label>
+                                <input type="number" id="editDisplayOrder" name="display_order" class="nr-form-control" value="0" min="0">
+                            </div>
+                            <div style="padding-top: 1.2rem;">
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                                    <input type="checkbox" id="editIsPinned" name="is_pinned" value="1" style="accent-color: var(--nr-primary);">
+                                    <span>📌 পিন করুন</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="nr-form-group">
                         <label class="nr-form-label">সারসংক্ষেপ</label>
                         <textarea id="editSummary" name="summary" class="nr-form-control" rows="2"></textarea>
@@ -1673,7 +1789,7 @@
 
                     <div class="nr-form-group">
                         <label class="nr-form-label">মূল প্রতিবেদন</label>
-                        <textarea id="editContentText" name="content_text" class="nr-form-control" rows="7" required></textarea>
+                        <textarea id="editContentText" name="content_text" class="nr-form-control" rows="6" required></textarea>
                     </div>
 
                     <div class="nr-form-grid-2">
@@ -1699,24 +1815,83 @@
                                 <option value="archived">আর্কাইভড (Archived)</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; background: #f8fafc; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--nr-border);">
-                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
-                            <input type="checkbox" id="editFeatured" name="is_featured" value="1" style="accent-color: var(--nr-primary);">
-                            <span>⭐ শীর্ষ সংবাদ (Hero Lead)</span>
-                        </label>
-
-                        <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; font-weight: 700; cursor: pointer;">
-                            <input type="checkbox" id="editBreaking" name="is_breaking" value="1" style="accent-color: #ef4444;">
-                            <span>🚨 ব্রেকিং নিউজ টিকার</span>
-                        </label>
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">সোর্স লিঙ্ক স্ট্যাটাস</label>
+                            <select id="editSourceStatus" name="source_status" class="nr-form-control">
+                                <option value="ACTIVE">🟢 ACTIVE (সক্রিয়)</option>
+                                <option value="REMOVED_AT_SOURCE">🔴 REMOVED_AT_SOURCE (অপসারিত)</option>
+                                <option value="UNAVAILABLE">🟠 UNAVAILABLE (অনুপলব্ধ)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="nr-modal-footer">
                     <button type="button" class="nr-btn nr-btn-outline" onclick="closeEditArticleModal()">বাতিল</button>
                     <button type="submit" class="nr-btn nr-btn-primary">আপডেট সংরক্ষণ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: QUICK PLACEMENT & ORDER CONTROLLER MODAL                     -->
+    <!-- ===================================================================== -->
+    <div id="placementModal" class="nr-modal-backdrop">
+        <div class="nr-modal-box" style="max-width: 540px;">
+            <div class="nr-modal-header">
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--nr-text-dark); margin: 0;">
+                    📌 পোর্টালে পজিশন ও ক্রমিক নিয়ন্ত্রণ
+                </h3>
+                <button type="button" onclick="closePlacementModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
+            </div>
+            
+            <form id="placementForm" onsubmit="submitPlacementForm(event)">
+                <input type="hidden" id="placementArticleId" value="">
+                <div class="nr-modal-body">
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">পোর্টালে প্রদর্শনের অবস্থান (Placement Position)</label>
+                        <select id="quickPlacementSelect" class="nr-form-control" style="font-weight: 700;">
+                            <option value="LEAD">👑 LEAD (প্রধান সংবাদ / লিড হিরো)</option>
+                            <option value="FEATURED">⭐ FEATURED (বিশেষ টপ ফিচার)</option>
+                            <option value="SUB_LEAD">🎯 SUB_LEAD (উপ-প্রধান সংবাদ)</option>
+                            <option value="BREAKING">🚨 BREAKING (ব্রেকিং টিকার)</option>
+                            <option value="CATEGORY_TOP">🔝 CATEGORY_TOP (বিভাগীয় শীর্ষ)</option>
+                            <option value="STANDARD">📄 STANDARD (সাধারণ তালিকা)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center;">
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">ক্রমিক নম্বর (1, 2, 3...)</label>
+                            <input type="number" id="quickDisplayOrder" class="nr-form-control" min="0" value="0">
+                        </div>
+                        <div style="padding-top: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; font-weight: 700; cursor: pointer;">
+                                <input type="checkbox" id="quickIsPinned" value="1" style="accent-color: var(--nr-primary);">
+                                <span>📌 শীর্ষে পিন করুন</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="nr-form-group" style="margin-top: 0.8rem;">
+                        <label class="nr-form-label">সোর্স স্ট্যাটাস (Source Status)</label>
+                        <select id="quickSourceStatus" class="nr-form-control">
+                            <option value="ACTIVE">🟢 সক্রিয় ও সচল (ACTIVE)</option>
+                            <option value="REMOVED_AT_SOURCE">🔴 মূল উৎস থেকে অপসারিত (REMOVED_AT_SOURCE)</option>
+                            <option value="UNAVAILABLE">🟠 সংযোগ বিচ্ছিন্ন (UNAVAILABLE)</option>
+                        </select>
+                    </div>
+
+                    <div class="nr-form-group">
+                        <label class="nr-form-label">সোর্স রিমুভাল নোটিস (ঐচ্ছিক কাস্টম মেসেজ)</label>
+                        <textarea id="quickSourceNotice" class="nr-form-control" rows="2" placeholder="মূল উৎস থেকে সংবাদটি সরানো হলে পাঠকদের জন্য বিশেষ নোটিস..."></textarea>
+                    </div>
+                </div>
+
+                <div class="nr-modal-footer">
+                    <button type="button" class="nr-btn nr-btn-outline" onclick="closePlacementModal()">বাতিল</button>
+                    <button type="submit" class="nr-btn nr-btn-primary">সংরক্ষণ করুন</button>
                 </div>
             </form>
         </div>
@@ -1734,7 +1909,7 @@ function closeNewArticleModal() {
     document.getElementById('newArticleModal').classList.remove('show');
 }
 
-function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt) {
+function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt, originalUrl, origin, placement, displayOrder, isPinned, sourceStatus) {
     const form = document.getElementById('editArticleForm');
     form.action = `/admin/newspaper/article/edit/${id}`;
 
@@ -1745,8 +1920,25 @@ function openEditArticleModal(id, title, category, author, summary, content, ima
     document.getElementById('editContentText').value = content || '';
     document.getElementById('editImagePath').value = imagePath || '';
     document.getElementById('editStatus').value = status || 'completed';
-    document.getElementById('editFeatured').checked = Boolean(isFeatured);
-    document.getElementById('editBreaking').checked = Boolean(isBreaking);
+    
+    if (document.getElementById('editOriginalSourceUrl')) {
+        document.getElementById('editOriginalSourceUrl').value = originalUrl || '';
+    }
+    if (document.getElementById('editCreationOrigin')) {
+        document.getElementById('editCreationOrigin').value = origin || 'MANUAL';
+    }
+    if (document.getElementById('editPositionPlacement')) {
+        document.getElementById('editPositionPlacement').value = placement || 'STANDARD';
+    }
+    if (document.getElementById('editDisplayOrder')) {
+        document.getElementById('editDisplayOrder').value = displayOrder || 0;
+    }
+    if (document.getElementById('editIsPinned')) {
+        document.getElementById('editIsPinned').checked = Boolean(isPinned);
+    }
+    if (document.getElementById('editSourceStatus')) {
+        document.getElementById('editSourceStatus').value = sourceStatus || 'ACTIVE';
+    }
 
     if (scheduledAt && scheduledAt.length >= 16) {
         document.getElementById('editScheduledAt').value = scheduledAt.substring(0, 16);
@@ -1759,6 +1951,84 @@ function openEditArticleModal(id, title, category, author, summary, content, ima
 
 function closeEditArticleModal() {
     document.getElementById('editArticleModal').classList.remove('show');
+}
+
+function openPlacementModal(id, placement, order, isPinned, sourceStatus, notice, url) {
+    document.getElementById('placementArticleId').value = id;
+    document.getElementById('quickPlacementSelect').value = placement || 'STANDARD';
+    document.getElementById('quickDisplayOrder').value = order || 0;
+    document.getElementById('quickIsPinned').checked = Boolean(isPinned);
+    document.getElementById('quickSourceStatus').value = sourceStatus || 'ACTIVE';
+    document.getElementById('quickSourceNotice').value = notice || '';
+    document.getElementById('placementModal').classList.add('show');
+}
+
+function closePlacementModal() {
+    document.getElementById('placementModal').classList.remove('show');
+}
+
+function submitPlacementForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('placementArticleId').value;
+    const placement = document.getElementById('quickPlacementSelect').value;
+    const order = parseInt(document.getElementById('quickDisplayOrder').value || 0);
+    const isPinned = document.getElementById('quickIsPinned').checked;
+    const sourceStatus = document.getElementById('quickSourceStatus').value;
+    const sourceNotice = document.getElementById('quickSourceNotice').value;
+
+    fetch(`/admin/newspaper/article/placement/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            position_placement: placement,
+            display_order: order,
+            is_pinned: isPinned,
+            source_status: sourceStatus,
+            source_removed_notice: sourceNotice
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closePlacementModal();
+            window.location.reload();
+        } else {
+            alert('ত্রুটি: ' + (data.message || 'আপডেট করা সম্ভব হয়নি।'));
+        }
+    })
+    .catch(err => {
+        alert('সার্ভার এরর: ' + err);
+    });
+}
+
+function auditSourceLive(articleId, btn) {
+    if (!confirm('এই সংবাদের মূল সোর্স লিঙ্কটি লাইভ টেস্ট করতে চান?')) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ চেকিং...';
+    btn.disabled = true;
+
+    fetch(`/admin/newspaper/article/check-source/${articleId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        if (data.source_status === 'REMOVED_AT_SOURCE') {
+            alert(`⚠️ সোর্স অপসারিত (HTTP ${data.http_status})!\nমূল প্রকাশনা থেকে সংবাদটি মুছে ফেলা বা সরানো হয়েছে। পোর্টালে নোটিস সক্রিয় করা হয়েছে।`);
+        } else if (data.source_status === 'ACTIVE') {
+            alert(`🟢 সোর্স সক্রিয় (HTTP ${data.http_status})!\nমূল লিংকটি সচল এবং সফলভাবে সংযোগযোগ্য।`);
+        } else {
+            alert(`🟠 সোর্স স্ট্যাটাস: ${data.source_status || 'অনুপলব্ধ'}\n${data.error || data.message || ''}`);
+        }
+        window.location.reload();
+    })
+    .catch(err => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        alert('টেস্ট এরর: ' + err);
+    });
 }
 
 // AI Pilot Analysis in Tab

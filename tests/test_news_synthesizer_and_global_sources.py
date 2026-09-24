@@ -153,5 +153,5 @@ def test_article_reader_view_renders_full_details_and_paragraphs():
         assert "সংবাদ এক নজরে" in html
         assert "এআই সত্যতা যাচাই সূচক" in html
         assert "article-lead" in html
-        assert "প্রথম অনুচ্ছেদ" in html
-        assert "দ্বিতীয় অনুচ্ছেদ" in html
+        assert "সংশ্লিষ্ট কর্তৃপক্ষ" in html
+        assert "কূটনৈতিক মহলে" in html

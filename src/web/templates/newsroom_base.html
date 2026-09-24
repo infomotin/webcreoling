@@ -24,10 +24,10 @@
     <aside class="nr-sidebar">
         <!-- Brand Header -->
         <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-sidebar-brand">
-            <div class="nr-brand-badge">আ</div>
+            <div class="nr-brand-badge">আলো</div>
             <div>
-                <div class="nr-brand-title">প্রথম<span>আলো</span></div>
-                <span class="nr-brand-sub">সম্পাদকীয় নিউজরুম CMS</span>
+                <div class="nr-brand-title">দি ডেইলি<span>এআই আলো</span></div>
+                <span class="nr-brand-sub">The Daily AI Alo CMS</span>
             </div>
         </a>
 
@@ -157,6 +157,14 @@
                     <span>📈</span>
                     <span>সার্ভার মনিটরিং ও হেলথ</span>
                 </div>
+            </a>
+
+            <a href="{{ url_for('datacenter.index_view') }}" class="nr-nav-item" style="color: #38bdf8;">
+                <div class="nr-nav-left">
+                    <span>🌐</span>
+                    <span>ডেটাসেন্টার ও ক্লাউড</span>
+                </div>
+                <span class="nr-nav-badge" style="background: #0284c7; color: #fff;">HA</span>
             </a>
 
             {% if current_user and current_user.role == 'admin' %}

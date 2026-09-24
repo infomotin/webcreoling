@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block title %}{{ article.title }} - প্রথম আলো | Prothom Alo Clone Edition{% endblock %}
+{% block title %}{{ article.title }} — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }} (The Daily AI Alo){% endblock %}
 
 {% block portal_content %}
 
@@ -92,17 +92,22 @@
                 </div>
             </div>
 
-            <!-- Lead Image -->
-            {% if article.images %}
-            <div style="margin-bottom: 1.5rem; border-radius: var(--palo-radius-sm); overflow: hidden; border: 1px solid var(--palo-border);">
-                <img src="/{{ article.images[0].local_path }}" alt="{{ article.title }}" class="palo-article-lead-img">
-                {% if article.images[0].caption %}
+            <!-- Lead Image with Absolute Fallback Resilience -->
+            <div style="margin-bottom: 1.5rem; border-radius: var(--palo-radius-sm); overflow: hidden; border: 1px solid var(--palo-border); background: #f8fafc;">
+                <img src="{{ article.lead_image_url if article.lead_image_url is defined else (('/' + article.images[0].local_path) if article.images else ('/static/img/placeholders/' + (article.category or 'general') + '.svg')) }}" 
+                     alt="{{ article.title }}" 
+                     class="palo-article-lead-img"
+                     onerror="this.onerror=null; this.src='/static/img/placeholders/{{ article.category or 'general' }}.svg';">
+                {% if article.images and article.images[0].caption %}
                 <div class="palo-img-caption">
                     📸 {{ article.images[0].caption }}
                 </div>
+                {% else %}
+                <div class="palo-img-caption">
+                    📸 চিত্র সৌজন্য: {{ article.source }} | The Daily AI Alo মাল্টিমিডিয়া ডেস্ক
+                </div>
                 {% endif %}
             </div>
-            {% endif %}
 
             <!-- Executive Summary Callout Box (সংবাদ এক নজরে / মূল সারাংশ) -->
             {% if article.summary or (article.extracted_entities and article.extracted_entities.get('news_synthesis', {}).get('key_takeaways')) %}
@@ -155,6 +160,92 @@
                 {% endif %}
             </div>
 
+            <!-- ============================================================= -->
+            <!-- ORIGINAL NEWS SOURCE & PROVENANCE CARD (প্রতিটি সংবাদের নিচে)    -->
+            <!-- ============================================================= -->
+            <div style="margin: 2.2rem 0; background: #ffffff; border: 1px solid #e2e8f0; border-top: 4px solid var(--palo-red); border-radius: 10px; padding: 1.4rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.8rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.4rem;">📰</span>
+                        <div>
+                            <h4 style="margin: 0; font-family: 'Noto Serif Bengali', serif; font-size: 1.15rem; font-weight: 800; color: var(--palo-heading);">
+                                মূল সংবাদ উৎস ও প্রতিবেদনের বিবরণী
+                            </h4>
+                            <span style="font-size: 0.76rem; color: var(--palo-text-muted);">স্বচ্ছ সাংবাদিকতা ও তথ্যের সত্যতা নিশ্চিতকরণ</span>
+                        </div>
+                    </div>
+                    <div>
+                        {% if article.creation_origin == 'MANUAL' %}
+                        <span style="background: #e0e7ff; color: #3730a3; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            ✍️ নিজস্ব সম্পাদকীয় প্রতিবেদন / ম্যানুয়াল
+                        </span>
+                        {% elif article.creation_origin == 'AI_SYNTHESIZED' %}
+                        <span style="background: #f3e8ff; color: #6b21a8; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            🤖 এআই বিশ্লেষণ ও আন্তর্জাতিক সংবাদ ডায়েরি
+                        </span>
+                        {% elif article.creation_origin == 'HYBRID' %}
+                        <span style="background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            ⚡ এআই সংকলিত ও সম্পাদনা পরিষদ পরীক্ষিত
+                        </span>
+                        {% else %}
+                        <span style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            🌐 গ্লোবাল সোর্স মনিটর
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Source Removal Warning Notice (যদি সোর্স থেকে নিউজ রিমুভ হয়ে যায়) -->
+                {% if article.source_status == 'REMOVED_AT_SOURCE' or article.source_status == 'UNAVAILABLE' %}
+                <div style="background: #fffbeb; border: 1px solid #fef3c7; border-left: 5px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin-bottom: 1.2rem;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span style="font-size: 1.4rem; line-height: 1.2;">⚠️</span>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.94rem; color: #92400e; margin-bottom: 2px;">
+                                মূল উৎস থেকে সংবাদটি সরানো হয়েছে বা সংযোগ বিচ্ছিন্ন
+                            </div>
+                            <div style="font-size: 0.84rem; color: #b45309; line-height: 1.5;">
+                                {{ article.source_removed_notice or "মূল প্রকাশনা সংস্থা থেকে এই সংবাদটি সরিয়ে ফেলা হয়েছে বা এর সংযোগটি বর্তমানে অনুপলব্ধ। তবে পাঠকদের সুবিধার জন্য এবং ঐতিহাসিক তথ্যের সত্যতা বজায় রাখতে 'The Daily AI Alo' পোর্টালে এর একটি ভেরিফায়েড ও ক্রিপ্টোগ্রাফিক আর্কাইভড কপি স্থায়ীভাবে সংরক্ষিত রয়েছে।" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Source Metadata Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; font-size: 0.86rem; color: #334155; margin-bottom: 1.2rem;">
+                    <div style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #f1f5f9;">
+                        <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.76rem; margin-bottom: 2px;">মূল প্রকাশনা / সোর্স:</span>
+                        <strong style="color: #0f172a; font-size: 0.95rem;">{{ article.source }}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #f1f5f9;">
+                        <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.76rem; margin-bottom: 2px;">মূল প্রকাশের তারিখ ও সময়:</span>
+                        <strong style="color: #0f172a;">{{ article.published_at or 'আজকের সংস্করণ' }}</strong>
+                    </div>
+                    <div style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #f1f5f9;">
+                        <span style="color: #64748b; font-weight: 600; display: block; font-size: 0.76rem; margin-bottom: 2px;">সোর্স লিংক স্ট্যাটাস:</span>
+                        {% if article.source_status == 'REMOVED_AT_SOURCE' %}
+                        <span style="color: #dc2626; font-weight: 800; font-size: 0.88rem;">🔴 মূল উৎস থেকে অপসারিত (Archived Copy)</span>
+                        {% elif article.source_status == 'UNAVAILABLE' %}
+                        <span style="color: #ea580c; font-weight: 800; font-size: 0.88rem;">🟠 সংযোগ বিচ্ছিন্ন (Unreachable)</span>
+                        {% else %}
+                        <span style="color: #16a34a; font-weight: 800; font-size: 0.88rem;">🟢 সক্রিয় ও সংযোগযোগ্য (Active Live)</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Original Source Link Action Bar -->
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 0.9rem;">
+                    <div style="font-size: 0.78rem; color: #64748b;">
+                        🔗 সোর্স ইউআরএল: <a href="{{ article.original_source_url or article.url }}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; word-break: break-all; font-family: monospace;">{{ (article.original_source_url or article.url)[:60] }}...</a>
+                    </div>
+                    <a href="{{ article.original_source_url or article.url }}" target="_blank" rel="noopener noreferrer" style="background: var(--palo-red); color: #ffffff; text-decoration: none; padding: 7px 16px; border-radius: 6px; font-size: 0.84rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;">
+                        <span>মূল প্রতিবেদনটি সরাসরি পড়ুন</span>
+                        <span style="font-size: 0.95rem;">↗</span>
+                    </a>
+                </div>
+            </div>
+
             <!-- Admin / Editor Quick Actions Bar -->
             <div style="margin-top: 1.5rem; padding: 12px 16px; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -198,8 +289,11 @@
                 </h3>
                 <div class="palo-grid-4" style="grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                     {% for img in article.images[1:] %}
-                    <div style="border: 1px solid var(--palo-border); border-radius: var(--palo-radius-sm); overflow: hidden;">
-                        <img src="/{{ img.local_path }}" style="width: 100%; height: 200px; object-fit: cover;">
+                    <div style="border: 1px solid var(--palo-border); border-radius: var(--palo-radius-sm); overflow: hidden; background: #f8fafc;">
+                        <img src="/{{ img.local_path }}" 
+                             alt="{{ article.title }}" 
+                             style="width: 100%; height: 200px; object-fit: cover;"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ article.category or 'general' }}.svg';">
                         {% if img.caption %}
                         <p style="padding: 0.4rem 0.8rem; font-size: 0.78rem; color: var(--palo-text-muted); background: #fff;">{{ img.caption }}</p>
                         {% endif %}
@@ -219,9 +313,10 @@
                     {% for rel in related_articles %}
                     <div class="palo-grid-card">
                         <div>
-                            {% if rel.images %}
-                            <img src="/{{ rel.images[0].local_path }}" style="width: 100%; height: 130px; object-fit: cover; border-radius: var(--palo-radius-sm); margin-bottom: 0.6rem;">
-                            {% endif %}
+                            <img src="{{ rel.lead_image_url if rel.lead_image_url is defined else (('/' + rel.images[0].local_path) if rel.images else ('/static/img/placeholders/' + (rel.category or 'general') + '.svg')) }}" 
+                                 alt="{{ rel.title }}" 
+                                 style="width: 100%; height: 130px; object-fit: cover; border-radius: var(--palo-radius-sm); margin-bottom: 0.6rem; background: #f8fafc;"
+                                 onerror="this.onerror=null; this.src='/static/img/placeholders/{{ rel.category or 'general' }}.svg';">
                             <h4 class="palo-grid-title" style="font-size: 0.95rem;">
                                 <a href="{{ url_for('portal.article_reader_view', article_id=rel.id) }}">
                                     {{ rel.title }}

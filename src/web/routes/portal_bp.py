@@ -291,3 +291,18 @@ def subscribe_newsletter_api():
         res = portal_repo.add_subscriber(email)
         return jsonify(res)
 
+
+@portal_bp.route("/media/placeholders/<filename>")
+@portal_bp.route("/media/placeholder/<filename>")
+def placeholder_image_view(filename: str):
+    """Serve category-based placeholder SVG images with high-res styling."""
+    from pathlib import Path
+    from flask import send_from_directory
+    clean_name = filename.lower().replace(".svg", "")
+    placeholders_dir = Path(__file__).resolve().parent.parent / "static" / "img" / "placeholders"
+    target_file = f"{clean_name}.svg"
+    if not (placeholders_dir / target_file).exists():
+        target_file = "default.svg"
+    return send_from_directory(placeholders_dir, target_file, mimetype="image/svg+xml")
+
+

@@ -29,6 +29,10 @@ from src.storage.models import (
     AIBrainCustomRule,
     SocialChannelConfig,
     SocialBroadcastLog,
+    DataCenterStorageProvider,
+    DatabaseReplicaNode,
+    DataCenterBackupArchive,
+    DataCenterSecurityLog,
 )
 from src.common.blockchain import BlockchainLedgerEngine
 
@@ -99,11 +103,20 @@ class ArticleRepository:
         normalized_content = BanglaTextNormalizer.normalize_article_text(raw_text)
         normalized_title = BanglaTextNormalizer.normalize_article_text(article_data.get("title") or "")
 
+        # Normalize author field to string if passed as list or tuple
+        raw_author = article_data.get("author")
+        if isinstance(raw_author, (list, tuple)):
+            clean_author = ", ".join(str(a) for a in raw_author if a)
+        elif raw_author:
+            clean_author = str(raw_author)
+        else:
+            clean_author = None
+
         if existing:
             # Update fields
             existing.title = normalized_title
             existing.content_text = normalized_content
-            existing.author = article_data.get("author") or existing.author
+            existing.author = clean_author or existing.author
             existing.published_at = article_data.get("published_at") or existing.published_at
             existing.category = article_data.get("category") or existing.category
             existing.summary = article_data.get("summary") or existing.summary
@@ -119,7 +132,7 @@ class ArticleRepository:
                 url=url,
                 source=article_data["source"],
                 title=normalized_title,
-                author=article_data.get("author"),
+                author=clean_author,
                 published_at=article_data.get("published_at"),
                 category=article_data.get("category"),
                 content_text=normalized_content,
@@ -266,21 +279,33 @@ class ArticleRepository:
 
     def get_lead_hero_article(self) -> Optional[Article]:
         """Fetch the primary highlighted lead/hero story for the newspaper frontpage."""
-        # Check explicit featured first
+        # 1. Explicit LEAD placement or featured with pinned priority
         hero = (
             self.session.query(Article)
             .options(joinedload(Article.images))
-            .filter(Article.is_featured == True)
-            .order_by(Article.published_at.desc(), Article.id.desc())
+            .filter(
+                (Article.position_placement == "LEAD") | (Article.is_featured == True),
+                Article.scrape_status == "completed"
+            )
+            .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
             .first()
         )
         if not hero:
-            # Fallback to the latest article that has an image
+            # Fallback to the latest article with images
             hero = (
                 self.session.query(Article)
                 .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
                 .join(ArticleImage)
-                .order_by(Article.published_at.desc(), Article.id.desc())
+                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
+                .first()
+            )
+        if not hero:
+            hero = (
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
+                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.id.desc())
                 .first()
             )
         if not hero:
@@ -297,13 +322,16 @@ class ArticleRepository:
         query = (
             self.session.query(Article)
             .options(joinedload(Article.images))
-            .filter(func.length(Article.content_text) > 80)
+            .filter(func.length(Article.content_text) > 40)
+            .filter(Article.scrape_status == "completed")
         )
         if exclude_id:
             query = query.filter(Article.id != exclude_id)
 
-        # Order by featured first, then likes, views, and recency
+        # Order by pinned first, display order, featured status, reader engagement, recency
         query = query.order_by(
+            Article.is_pinned.desc(),
+            Article.display_order.asc(),
             Article.is_featured.desc(),
             Article.likes_count.desc(),
             Article.views_count.desc(),
@@ -316,11 +344,20 @@ class ArticleRepository:
         """Fetch breaking news items for ticker."""
         breaking = (
             self.session.query(Article)
-            .filter(Article.is_breaking == True)
-            .order_by(Article.published_at.desc(), Article.id.desc())
+            .filter((Article.is_breaking == True) | (Article.position_placement == "BREAKING"))
+            .filter(Article.scrape_status == "completed")
+            .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
             .limit(limit)
             .all()
         )
+        if not breaking:
+            breaking = (
+                self.session.query(Article)
+                .filter(Article.scrape_status == "completed")
+                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.id.desc())
+                .limit(limit)
+                .all()
+            )
         if not breaking:
             breaking = (
                 self.session.query(Article)
@@ -335,6 +372,7 @@ class ArticleRepository:
         return (
             self.session.query(Article)
             .options(joinedload(Article.images))
+            .filter(Article.scrape_status == "completed")
             .order_by((Article.views_count * 2 + Article.likes_count * 5).desc(), Article.id.desc())
             .limit(limit)
             .all()
@@ -346,10 +384,16 @@ class ArticleRepository:
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.category == category)
+            .filter(Article.scrape_status == "completed")
         )
         if exclude_id:
             query = query.filter(Article.id != exclude_id)
-        return query.order_by(Article.id.desc()).limit(limit).all()
+        return query.order_by(
+            Article.is_pinned.desc(),
+            Article.display_order.asc(),
+            Article.published_at.desc(),
+            Article.id.desc()
+        ).limit(limit).all()
 
     def get_related_articles(self, article_id: int, category: Optional[str] = None, limit: int = 3) -> List[Article]:
         """Fetch related articles based on category and recency."""
@@ -408,6 +452,13 @@ class ArticleRepository:
         is_breaking: bool = False,
         status: str = "completed",
         scheduled_at: Optional[datetime] = None,
+        original_source_url: Optional[str] = None,
+        source_status: str = "ACTIVE",
+        source_removed_notice: Optional[str] = None,
+        creation_origin: str = "MANUAL",
+        position_placement: str = "STANDARD",
+        display_order: int = 0,
+        is_pinned: bool = False,
     ) -> Article:
         """Create and publish a new article directly from the editorial desk."""
         import uuid
@@ -416,7 +467,7 @@ class ArticleRepository:
         normalized_title = BanglaTextNormalizer.normalize_article_text(title.strip())
         normalized_content = BanglaTextNormalizer.normalize_article_text(content_text.strip())
         slug = uuid.uuid4().hex[:10]
-        url = f"https://prothomalo.com/editorial/{slug}"
+        url = original_source_url.strip() if original_source_url else f"https://daily-ai-alo.news/editorial/{slug}"
 
         # Determine published_at vs scheduled_at
         pub_at = None
@@ -425,11 +476,24 @@ class ArticleRepository:
         elif status == "completed":
             pub_at = datetime.utcnow()
 
+        # Map placement to flags if specified
+        if position_placement in ["LEAD", "FEATURED"]:
+            is_featured = True
+        elif position_placement == "BREAKING":
+            is_breaking = True
+
         article = Article(
             url=url,
-            source="প্রথম আলো সম্পাদকীয় ডেস্ক",
+            original_source_url=original_source_url.strip() if original_source_url else url,
+            source="The Daily AI Alo সম্পাদকীয় ডেস্ক" if creation_origin == "MANUAL" else "সংবাদ সূত্র",
+            source_status=source_status or "ACTIVE",
+            source_removed_notice=source_removed_notice,
+            creation_origin=creation_origin or "MANUAL",
+            position_placement=position_placement or "STANDARD",
+            display_order=display_order or 0,
+            is_pinned=is_pinned or False,
             title=normalized_title,
-            author=author.strip() if author else "প্রথম আলো নিজস্ব প্রতিবেদক",
+            author=author.strip() if author else "দি ডেইলি এআই আলো নিজস্ব প্রতিবেদক",
             published_at=pub_at,
             scheduled_at=scheduled_at,
             category=category.strip() or "general",
@@ -481,6 +545,13 @@ class ArticleRepository:
         is_breaking: Optional[bool] = None,
         status: Optional[str] = None,
         scheduled_at: Optional[datetime] = None,
+        original_source_url: Optional[str] = None,
+        source_status: Optional[str] = None,
+        source_removed_notice: Optional[str] = None,
+        creation_origin: Optional[str] = None,
+        position_placement: Optional[str] = None,
+        display_order: Optional[int] = None,
+        is_pinned: Optional[bool] = None,
     ) -> Optional[Article]:
         """Update an existing article from the editorial desk."""
         import hashlib
@@ -502,6 +573,24 @@ class ArticleRepository:
             article.is_featured = is_featured
         if is_breaking is not None:
             article.is_breaking = is_breaking
+        if original_source_url is not None:
+            article.original_source_url = original_source_url.strip()
+        if source_status is not None:
+            article.source_status = source_status.strip()
+        if source_removed_notice is not None:
+            article.source_removed_notice = source_removed_notice.strip()
+        if creation_origin is not None:
+            article.creation_origin = creation_origin.strip()
+        if position_placement is not None:
+            article.position_placement = position_placement.strip()
+            if position_placement in ["LEAD", "FEATURED"]:
+                article.is_featured = True
+            elif position_placement == "BREAKING":
+                article.is_breaking = True
+        if display_order is not None:
+            article.display_order = display_order
+        if is_pinned is not None:
+            article.is_pinned = is_pinned
         if scheduled_at is not None:
             article.scheduled_at = scheduled_at
             if scheduled_at > datetime.utcnow():
@@ -542,6 +631,103 @@ class ArticleRepository:
             logger.warning(f"Could not re-mint block for updated article #{article.id}: {e}")
 
         return article
+
+    def update_article_placement(
+        self,
+        article_id: int,
+        position_placement: Optional[str] = None,
+        display_order: Optional[int] = None,
+        is_pinned: Optional[bool] = None,
+        is_featured: Optional[bool] = None,
+        is_breaking: Optional[bool] = None,
+        source_status: Optional[str] = None,
+        source_removed_notice: Optional[str] = None,
+    ) -> Optional[Article]:
+        """Update placement, sequence ordering, pin status, and source status."""
+        article = self.get_by_id(article_id)
+        if not article:
+            return None
+        if position_placement is not None:
+            article.position_placement = position_placement
+            if position_placement in ["LEAD", "FEATURED"]:
+                article.is_featured = True
+            elif position_placement == "BREAKING":
+                article.is_breaking = True
+        if display_order is not None:
+            article.display_order = display_order
+        if is_pinned is not None:
+            article.is_pinned = is_pinned
+        if is_featured is not None:
+            article.is_featured = is_featured
+        if is_breaking is not None:
+            article.is_breaking = is_breaking
+        if source_status is not None:
+            article.source_status = source_status
+        if source_removed_notice is not None:
+            article.source_removed_notice = source_removed_notice
+        article.updated_at = datetime.utcnow()
+        self.session.flush()
+        return article
+
+    def check_source_url_status(self, article_id: int) -> Dict[str, Any]:
+        """Audit whether an article's original source URL is still alive or has been removed at the source."""
+        import httpx
+        article = self.get_by_id(article_id)
+        if not article:
+            return {"status": "not_found", "message": "Article not found"}
+
+        target_url = article.original_source_url or article.url
+        if not target_url or not target_url.startswith(("http://", "https://")):
+            return {"status": "manual", "source_status": article.source_status or "ACTIVE", "message": "Manual / In-house article"}
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        try:
+            status_code = 200
+            try:
+                with httpx.Client(timeout=6, headers=headers, follow_redirects=True) as client:
+                    res = client.head(target_url)
+                    if res.status_code in [404, 410, 403]:
+                        res_get = client.get(target_url)
+                        status_code = res_get.status_code
+                    else:
+                        status_code = res.status_code
+            except Exception:
+                status_code = 404
+
+            if status_code in [404, 410]:
+                article.source_status = "REMOVED_AT_SOURCE"
+                if not article.source_removed_notice:
+                    article.source_removed_notice = "মূল উৎস থেকে এই সংবাদটি সরিয়ে ফেলা হয়েছে বা লিঙ্কটি অনুপলব্ধ। তবে The Daily AI Alo পোর্টালে এর একটি ভেরিফায়েড ও ক্রিপ্টোগ্রাফিক আর্কাইভড কপি সংরক্ষিত রয়েছে।"
+                status_label = "REMOVED_AT_SOURCE"
+            elif status_code >= 500:
+                article.source_status = "UNAVAILABLE"
+                status_label = "UNAVAILABLE"
+            else:
+                article.source_status = "ACTIVE"
+                status_label = "ACTIVE"
+
+            article.source_last_checked_at = datetime.utcnow()
+            self.session.flush()
+            return {
+                "article_id": article_id,
+                "url": target_url,
+                "http_status": status_code,
+                "source_status": status_label,
+                "is_active": (status_label == "ACTIVE"),
+            }
+        except Exception as e:
+            logger.warning(f"Error checking source status for article #{article_id} ({target_url}): {e}")
+            article.source_last_checked_at = datetime.utcnow()
+            self.session.flush()
+            return {
+                "article_id": article_id,
+                "url": target_url,
+                "error": str(e),
+                "source_status": article.source_status or "UNAVAILABLE",
+                "is_active": False,
+            }
 
     def get_scheduled_articles(self) -> List[Article]:
         """Fetch all articles queued for future scheduled release."""
@@ -1253,14 +1439,17 @@ class SiteConfigRepository:
         self.set_config("automation_fake_news_policy", current)
         return current
 
-    def seed_default_configs(self) -> None:
+    def seed_default_configs(self, force: bool = False) -> None:
         defaults = {
             "branding": {
-                "site_title": "প্রথম আলো",
-                "site_tagline": "অনলাইন বাংলা দৈনিক ও এআই সংবাদ প্ল্যাটফর্ম",
-                "logo_text": "প্রথম আলো",
+                "site_title": "দি ডেইলি এআই আলো",
+                "site_title_en": "The Daily AI Alo",
+                "site_tagline": "পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল",
+                "site_motto": "বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়",
+                "logo_text": "দি ডেইলি এআই আলো",
+                "logo_subtitle": "The Daily AI Alo — বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়",
                 "logo_image": "",
-                "edition": "বাংলাদেশ সংস্করণ",
+                "edition": "গ্লোবাল ও বাংলাদেশ সংস্করণ",
                 "usd_rate": "১২১.৫০",
                 "eur_rate": "১৩২.২০",
                 "weather_city": "ঢাকা",
@@ -1268,15 +1457,15 @@ class SiteConfigRepository:
                 "weather_desc": "আংশিক মেঘলা",
             },
             "footer": {
-                "publisher": "প্রথম আলো এআই ও মিডিয়া ল্যাব",
-                "editor_in_chief": "সম্পাদক ও প্রকাশক: মোঃ মতিউর রহমান (ভারপ্রাপ্ত)",
-                "office_address": "প্রগতি ইনস্যুরেন্স ভবন, ২০–২১ কারওয়ান বাজার, ঢাকা ১২১৫।",
-                "contact_email": "newsroom@prothomalo.com",
+                "publisher": "The Daily AI Alo Media & Tech Labs",
+                "editor_in_chief": "প্রধান সম্পাদক ও প্রধান এআই প্রযুক্তিবিদ: ড. এআই টিম",
+                "office_address": "সিলিকন টাওয়ার, লেভেল ১২, গুলশান-২, ঢাকা ১২১২।",
+                "contact_email": "editorial@daily-ai-alo.com",
                 "contact_phone": "+৮৮০ ২ ৮১৮০০৭৮",
-                "copyright_text": "© ২০২৬ প্রথম আলো অনলাইন সংস্করণ। সর্বস্বত্ব সংরক্ষিত।",
-                "facebook_url": "https://facebook.com/DailyProthomAlo",
-                "youtube_url": "https://youtube.com/c/ProthomAlo",
-                "twitter_url": "https://twitter.com/ProthomAlo",
+                "copyright_text": "© ২০২৬ দি ডেইলি এআই আলো (The Daily AI Alo)। বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়।",
+                "facebook_url": "https://facebook.com/TheDailyAIAlo",
+                "youtube_url": "https://youtube.com/c/TheDailyAIAlo",
+                "twitter_url": "https://twitter.com/TheDailyAIAlo",
                 "android_app_url": "https://play.google.com",
                 "ios_app_url": "https://apple.com/app-store",
             },
@@ -1290,7 +1479,8 @@ class SiteConfigRepository:
             },
         }
         for key, val in defaults.items():
-            if not self.session.query(SiteConfig).filter(SiteConfig.key == key).first():
+            existing = self.session.query(SiteConfig).filter(SiteConfig.key == key).first()
+            if not existing or force:
                 self.set_config(key, val)
 
 
@@ -2488,6 +2678,490 @@ class SocialChannelRepository:
 
         self.session.add_all([fb_primary, yt, tiktok, tg])
         self.session.flush()
+
+
+# ==============================================================================
+# Website Data Center, Cloud Storage & Database Failover Repository
+# ==============================================================================
+
+class DataCenterRepository:
+    """
+    Repository for Website Data Center, Parallel Cloud Media Storage,
+    Database High-Availability (HA) Failover Nodes, Automated Backups, and Security Audit Logs.
+    """
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    # --------------------------------------------------------------------------
+    # 1. Multi-Cloud Storage Providers (Google Drive, Mega, S3, FTP)
+    # --------------------------------------------------------------------------
+    def list_storage_providers(self) -> List[DataCenterStorageProvider]:
+        """Fetch all configured cloud storage providers."""
+        providers = self.session.query(DataCenterStorageProvider).order_by(DataCenterStorageProvider.id.asc()).all()
+        if not providers:
+            self.seed_default_providers()
+            providers = self.session.query(DataCenterStorageProvider).order_by(DataCenterStorageProvider.id.asc()).all()
+        return providers
+
+    def get_storage_provider(self, provider_id: int) -> Optional[DataCenterStorageProvider]:
+        """Fetch single cloud storage provider by ID."""
+        return self.session.query(DataCenterStorageProvider).filter(DataCenterStorageProvider.id == provider_id).first()
+
+    def get_primary_storage_provider(self) -> Optional[DataCenterStorageProvider]:
+        """Fetch active primary cloud storage provider for public media CDN delivery."""
+        return (
+            self.session.query(DataCenterStorageProvider)
+            .filter(DataCenterStorageProvider.is_primary == True, DataCenterStorageProvider.is_active == True)
+            .first()
+        )
+
+    def get_active_storage_providers(self) -> List[DataCenterStorageProvider]:
+        """Fetch operational cloud storage providers for mirroring and replication."""
+        return (
+            self.session.query(DataCenterStorageProvider)
+            .filter(DataCenterStorageProvider.is_active == True)
+            .order_by(DataCenterStorageProvider.is_primary.desc(), DataCenterStorageProvider.id.asc())
+            .all()
+        )
+
+    def create_or_update_storage_provider(
+        self,
+        provider_type: str,
+        name: str,
+        credentials_json: Optional[Dict[str, Any]] = None,
+        cdn_base_url: Optional[str] = None,
+        capacity_total_bytes: float = 16106127360.0,
+        capacity_used_bytes: float = 1073741824.0,
+        sync_mode: str = "PRIMARY_CDN",
+        is_active: bool = True,
+        is_primary: bool = False,
+        provider_id: Optional[int] = None,
+    ) -> DataCenterStorageProvider:
+        """Create a new cloud storage integration or update existing."""
+        if provider_id:
+            provider = self.get_storage_provider(provider_id)
+            if not provider:
+                provider = DataCenterStorageProvider()
+                self.session.add(provider)
+        else:
+            provider = DataCenterStorageProvider()
+            self.session.add(provider)
+
+        if is_primary:
+            self.session.query(DataCenterStorageProvider).update({DataCenterStorageProvider.is_primary: False})
+
+        provider.provider_type = provider_type.strip().lower()
+        provider.name = name.strip()
+        if credentials_json is not None:
+            provider.credentials_json = credentials_json
+        if cdn_base_url is not None:
+            provider.cdn_base_url = cdn_base_url.strip()
+        provider.capacity_total_bytes = float(capacity_total_bytes)
+        provider.capacity_used_bytes = float(capacity_used_bytes)
+        provider.sync_mode = sync_mode.strip().upper()
+        provider.is_active = bool(is_active)
+        provider.is_primary = bool(is_primary)
+        provider.last_health_check = datetime.utcnow()
+        provider.updated_at = datetime.utcnow()
+
+        self.session.flush()
+        return provider
+
+    def toggle_storage_provider(self, provider_id: int) -> bool:
+        """Toggle active state of a cloud storage provider."""
+        provider = self.get_storage_provider(provider_id)
+        if provider:
+            provider.is_active = not bool(provider.is_active)
+            self.session.flush()
+            return provider.is_active
+        return False
+
+    def delete_storage_provider(self, provider_id: int) -> bool:
+        """Delete a cloud storage provider."""
+        provider = self.get_storage_provider(provider_id)
+        if provider:
+            self.session.delete(provider)
+            self.session.flush()
+            return True
+        return False
+
+    def set_primary_storage_provider(self, provider_id: int) -> bool:
+        """Promote a cloud storage provider to primary CDN source."""
+        provider = self.get_storage_provider(provider_id)
+        if provider:
+            self.session.query(DataCenterStorageProvider).update({DataCenterStorageProvider.is_primary: False})
+            provider.is_primary = True
+            provider.is_active = True
+            self.session.flush()
+            return True
+        return False
+
+    def seed_default_providers(self) -> None:
+        """Seed default multi-cloud storage integrations."""
+        count = self.session.query(func.count(DataCenterStorageProvider.id)).scalar() or 0
+        if count > 0:
+            return
+
+        p1 = DataCenterStorageProvider(
+            provider_type="google_drive",
+            name="Google Drive Enterprise Media Hub (Primary)",
+            credentials_json={
+                "client_id": "982347102938-apps.googleusercontent.com",
+                "folder_id": "1A2B3C4D5E6F7G8H9I_GoogleDriveMediaRoot",
+                "api_key": "AIzaSyD_EXAMPLE_GDRIVE_API_KEY_2026",
+                "service_account_email": "media-sa@the-daily-ai-alo.iam.gserviceaccount.com",
+            },
+            cdn_base_url="https://drive.google.com/uc?export=view&id=",
+            capacity_total_bytes=100 * (1024 ** 3),
+            capacity_used_bytes=14.2 * (1024 ** 3),
+            is_active=True,
+            is_primary=True,
+            sync_mode="PRIMARY_CDN",
+            status="ONLINE",
+        )
+        p2 = DataCenterStorageProvider(
+            provider_type="mega",
+            name="Mega.nz Ultra Cloud Store (Encrypted Mirror)",
+            credentials_json={
+                "user_email": "datacenter@the-daily-ai-alo.com",
+                "api_key": "mega_key_sec_819283746",
+                "vault_folder": "TheDailyAIAlo_MediaVault",
+            },
+            cdn_base_url="https://mega.nz/file/",
+            capacity_total_bytes=50 * (1024 ** 3),
+            capacity_used_bytes=14.2 * (1024 ** 3),
+            is_active=True,
+            is_primary=False,
+            sync_mode="AUTO_MIRROR",
+            status="ONLINE",
+        )
+        p3 = DataCenterStorageProvider(
+            provider_type="s3",
+            name="AWS S3 / Wasabi High-Speed Edge Storage",
+            credentials_json={
+                "bucket_name": "the-daily-ai-alo-cdn",
+                "region": "ap-southeast-1",
+                "access_key_id": "AKIA_SAMPLE_WASABI_KEY_2026",
+                "secret_access_key": "s3_secret_w9283746152",
+            },
+            cdn_base_url="https://s3.ap-southeast-1.wasabisys.com/the-daily-ai-alo-cdn/",
+            capacity_total_bytes=500 * (1024 ** 3),
+            capacity_used_bytes=28.5 * (1024 ** 3),
+            is_active=True,
+            is_primary=False,
+            sync_mode="AUTO_MIRROR",
+            status="ONLINE",
+        )
+        p4 = DataCenterStorageProvider(
+            provider_type="ftp",
+            name="Offsite Disaster Recovery SFTP Server",
+            credentials_json={
+                "ftp_host": "sftp.offsite-backup-node.org",
+                "ftp_port": 22,
+                "username": "alo_backup_user",
+                "remote_dir": "/var/www/daily_alo_backups",
+            },
+            cdn_base_url="https://sftp-mirror.offsite-backup-node.org/media/",
+            capacity_total_bytes=1000 * (1024 ** 3),
+            capacity_used_bytes=45.8 * (1024 ** 3),
+            is_active=True,
+            is_primary=False,
+            sync_mode="BACKUP_ONLY",
+            status="ONLINE",
+        )
+
+        self.session.add_all([p1, p2, p3, p4])
+        self.session.flush()
+
+    # --------------------------------------------------------------------------
+    # 2. Database High-Availability (HA) Replicas & Auto-Failover
+    # --------------------------------------------------------------------------
+    def list_replica_nodes(self) -> List[DatabaseReplicaNode]:
+        """Fetch all database topology nodes sorted by failover priority."""
+        nodes = self.session.query(DatabaseReplicaNode).order_by(DatabaseReplicaNode.auto_failover_priority.asc()).all()
+        if not nodes:
+            self.seed_default_replica_nodes()
+            nodes = self.session.query(DatabaseReplicaNode).order_by(DatabaseReplicaNode.auto_failover_priority.asc()).all()
+        return nodes
+
+    def get_replica_node(self, node_id: int) -> Optional[DatabaseReplicaNode]:
+        """Fetch single database replica node by ID."""
+        return self.session.query(DatabaseReplicaNode).filter(DatabaseReplicaNode.id == node_id).first()
+
+    def get_current_primary_node(self) -> Optional[DatabaseReplicaNode]:
+        """Fetch currently active master database node serving the application."""
+        return self.session.query(DatabaseReplicaNode).filter(DatabaseReplicaNode.is_current_primary == True).first()
+
+    def create_or_update_node(
+        self,
+        node_name: str,
+        host: str,
+        port: int = 3306,
+        database_name: str = "ai_news",
+        username: str = "root",
+        password_masked: str = "••••••••",
+        is_active: bool = True,
+        is_current_primary: bool = False,
+        auto_failover_priority: int = 1,
+        node_id: Optional[int] = None,
+    ) -> DatabaseReplicaNode:
+        """Create a new database replica node or update existing configuration."""
+        if node_id:
+            node = self.get_replica_node(node_id)
+            if not node:
+                node = DatabaseReplicaNode()
+                self.session.add(node)
+        else:
+            node = DatabaseReplicaNode()
+            self.session.add(node)
+
+        if is_current_primary:
+            self.session.query(DatabaseReplicaNode).update({DatabaseReplicaNode.is_current_primary: False})
+
+        node.node_name = node_name.strip()
+        node.host = host.strip()
+        node.port = int(port)
+        node.database_name = database_name.strip()
+        node.username = username.strip()
+        node.password_masked = password_masked
+        node.is_active = bool(is_active)
+        node.is_current_primary = bool(is_current_primary)
+        node.auto_failover_priority = int(auto_failover_priority)
+        node.last_heartbeat = datetime.utcnow()
+        node.updated_at = datetime.utcnow()
+
+        self.session.flush()
+        return node
+
+    def toggle_node(self, node_id: int) -> bool:
+        """Toggle active state of a database replica node."""
+        node = self.get_replica_node(node_id)
+        if node:
+            node.is_active = not bool(node.is_active)
+            self.session.flush()
+            return node.is_active
+        return False
+
+    def delete_node(self, node_id: int) -> bool:
+        """Delete a database replica node."""
+        node = self.get_replica_node(node_id)
+        if node:
+            self.session.delete(node)
+            self.session.flush()
+            return True
+        return False
+
+    def set_primary_node(self, node_id: int) -> bool:
+        """Promote a standby database replica node to primary active master."""
+        node = self.get_replica_node(node_id)
+        if node:
+            self.session.query(DatabaseReplicaNode).update({
+                DatabaseReplicaNode.is_current_primary: False,
+                DatabaseReplicaNode.replication_status: "STANDBY_READY"
+            })
+            node.is_current_primary = True
+            node.is_active = True
+            node.replication_status = "SYNCED"
+            node.last_heartbeat = datetime.utcnow()
+            self.session.flush()
+            return True
+        return False
+
+    def update_node_health(self, node_id: int, status: str, latency_ms: float) -> Optional[DatabaseReplicaNode]:
+        """Update node heartbeat status and response latency."""
+        node = self.get_replica_node(node_id)
+        if node:
+            node.replication_status = status
+            node.latency_ms = round(latency_ms, 2)
+            node.last_heartbeat = datetime.utcnow()
+            self.session.flush()
+            return node
+        return None
+
+    def seed_default_replica_nodes(self) -> None:
+        """Seed default high-availability database cluster topology."""
+        count = self.session.query(func.count(DatabaseReplicaNode.id)).scalar() or 0
+        if count > 0:
+            return
+
+        n1 = DatabaseReplicaNode(
+            node_name="Primary Database Node (Production MySQL)",
+            host="127.0.0.1",
+            port=3306,
+            database_name="ai_news",
+            username="root",
+            password_masked="••••••••",
+            is_active=True,
+            is_current_primary=True,
+            replication_status="SYNCED",
+            latency_ms=0.8,
+            auto_failover_priority=1,
+        )
+        n2 = DatabaseReplicaNode(
+            node_name="Standby Replica Node Alpha (Singapore VPS Cluster)",
+            host="db-sg.the-daily-ai-alo.net",
+            port=3306,
+            database_name="ai_news",
+            username="ai_alo_replica",
+            password_masked="••••••••",
+            is_active=True,
+            is_current_primary=False,
+            replication_status="STANDBY_READY",
+            latency_ms=18.4,
+            auto_failover_priority=2,
+        )
+        n3 = DatabaseReplicaNode(
+            node_name="Disaster Recovery Node Beta (Frankfurt High-Availability)",
+            host="db-eu.backup-datacenter.org",
+            port=3306,
+            database_name="ai_news_dr",
+            username="alo_dr_admin",
+            password_masked="••••••••",
+            is_active=True,
+            is_current_primary=False,
+            replication_status="STANDBY_READY",
+            latency_ms=115.2,
+            auto_failover_priority=3,
+        )
+
+        self.session.add_all([n1, n2, n3])
+        self.session.flush()
+
+    # --------------------------------------------------------------------------
+    # 3. Automated & Scheduled Backup Archives
+    # --------------------------------------------------------------------------
+    def list_backups(self, limit: int = 50) -> List[DataCenterBackupArchive]:
+        """Fetch all backup archives."""
+        return (
+            self.session.query(DataCenterBackupArchive)
+            .order_by(DataCenterBackupArchive.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def get_backup_by_id(self, backup_id: int) -> Optional[DataCenterBackupArchive]:
+        """Fetch single backup archive record by ID."""
+        return self.session.query(DataCenterBackupArchive).filter(DataCenterBackupArchive.id == backup_id).first()
+
+    def create_backup_record(
+        self,
+        backup_name: str,
+        backup_type: str,
+        file_path: str,
+        file_size_bytes: float,
+        sha256_checksum: str,
+        target_cloud_destinations: Optional[List[str]] = None,
+        cloud_upload_status: Optional[Dict[str, str]] = None,
+        is_encrypted: bool = True,
+        encryption_algorithm: str = "AES-256-GCM",
+        status: str = "COMPLETED",
+    ) -> DataCenterBackupArchive:
+        """Record newly generated backup archive."""
+        rec = DataCenterBackupArchive(
+            backup_name=backup_name.strip(),
+            backup_type=backup_type.strip(),
+            file_path=file_path.strip(),
+            file_size_bytes=float(file_size_bytes),
+            sha256_checksum=sha256_checksum,
+            target_cloud_destinations=target_cloud_destinations or [],
+            cloud_upload_status=cloud_upload_status or {},
+            is_encrypted=is_encrypted,
+            encryption_algorithm=encryption_algorithm,
+            status=status,
+            created_at=datetime.utcnow(),
+        )
+        self.session.add(rec)
+        self.session.flush()
+        return rec
+
+    def delete_backup(self, backup_id: int) -> bool:
+        """Delete a backup archive and purge local file."""
+        rec = self.get_backup_by_id(backup_id)
+        if rec:
+            import os
+            try:
+                if os.path.exists(rec.file_path):
+                    os.remove(rec.file_path)
+            except Exception:
+                pass
+            self.session.delete(rec)
+            self.session.flush()
+            return True
+        return False
+
+    # --------------------------------------------------------------------------
+    # 4. Data Center Security Audit Logs
+    # --------------------------------------------------------------------------
+    def log_event(
+        self,
+        event_type: str,
+        description: str,
+        severity: str = "INFO",
+        actor: str = "AI DataCenter Engine",
+        metadata_json: Optional[Dict[str, Any]] = None,
+        ip_address: str = "127.0.0.1",
+    ) -> DataCenterSecurityLog:
+        """Log a data center event (failover, sync, backup, auth)."""
+        log = DataCenterSecurityLog(
+            event_type=event_type,
+            description=description,
+            severity=severity,
+            actor=actor,
+            metadata_json=metadata_json or {},
+            ip_address=ip_address,
+            created_at=datetime.utcnow(),
+        )
+        self.session.add(log)
+        self.session.flush()
+        return log
+
+    def list_logs(
+        self,
+        limit: int = 50,
+        event_type: Optional[str] = None,
+        severity: Optional[str] = None,
+    ) -> List[DataCenterSecurityLog]:
+        """Fetch recent security and data center audit logs."""
+        query = self.session.query(DataCenterSecurityLog)
+        if event_type:
+            query = query.filter(DataCenterSecurityLog.event_type == event_type)
+        if severity:
+            query = query.filter(DataCenterSecurityLog.severity == severity)
+        return query.order_by(DataCenterSecurityLog.id.desc()).limit(limit).all()
+
+    # --------------------------------------------------------------------------
+    # 5. Aggregate Telemetry & Summary
+    # --------------------------------------------------------------------------
+    def get_datacenter_summary(self) -> Dict[str, Any]:
+        """Aggregate high-level overview metrics for data center operations."""
+        providers = self.list_storage_providers()
+        nodes = self.list_replica_nodes()
+        backups = self.list_backups(limit=5)
+
+        total_storage_cap = sum(p.capacity_total_bytes for p in providers)
+        total_storage_used = sum(p.capacity_used_bytes for p in providers)
+        storage_pct = round((total_storage_used / max(1.0, total_storage_cap)) * 100, 1)
+
+        primary_node = next((n for n in nodes if n.is_current_primary), None)
+        standby_count = sum(1 for n in nodes if not n.is_current_primary and n.is_active)
+        total_backups = self.session.query(func.count(DataCenterBackupArchive.id)).scalar() or 0
+
+        return {
+            "total_storage_cap_gb": round(total_storage_cap / (1024 ** 3), 2),
+            "total_storage_used_gb": round(total_storage_used / (1024 ** 3), 2),
+            "storage_percent": storage_pct,
+            "active_providers_count": sum(1 for p in providers if p.is_active),
+            "primary_node_name": primary_node.node_name if primary_node else "None",
+            "primary_node_host": f"{primary_node.host}:{primary_node.port}" if primary_node else "N/A",
+            "primary_latency_ms": primary_node.latency_ms if primary_node else 0.0,
+            "standby_nodes_count": standby_count,
+            "total_backups_count": total_backups,
+            "latest_backup_time": backups[0].created_at.isoformat() if backups else None,
+            "security_logs_count": self.session.query(func.count(DataCenterSecurityLog.id)).scalar() or 0,
+            "ha_mode": "ACTIVE_AUTO_FAILOVER",
+        }
+
 
 
 

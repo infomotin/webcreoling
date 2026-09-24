@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block title %}প্রথম আলো - Prothom Alo Digital Clone Edition | সত্যের সন্ধানে নির্ভীক{% endblock %}
+{% block title %}{{ site_branding.site_title or 'দি ডেইলি এআই আলো' }} (The Daily AI Alo) — {{ site_branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }} | {{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}{% endblock %}
 
 {% block portal_content %}
 
@@ -27,9 +27,10 @@
             {% for art in filter_results %}
             <div class="palo-grid-card">
                 <div>
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path if art.images[0].local_path is defined else art.images[0] }}" class="palo-grid-thumb" alt="{{ art.title }}">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if (art.images and art.images[0] is not string and art.images[0].local_path is defined) else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         class="palo-grid-thumb" 
+                         alt="{{ art.title }}"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <h3 class="palo-grid-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
@@ -69,11 +70,12 @@
             {% if highlighted and highlighted|length >= 2 %}
                 {% for art in highlighted[:3] %}
                 <div class="palo-lead-subcard">
-                    {% if art.images %}
-                    <div style="border-radius: var(--palo-radius-sm); overflow: hidden; height: 135px; margin-bottom: 0.6rem;">
-                        <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div style="border-radius: var(--palo-radius-sm); overflow: hidden; height: 135px; margin-bottom: 0.6rem; background: #f8fafc;">
+                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                             alt="{{ art.title }}" 
+                             style="width: 100%; height: 100%; object-fit: cover;"
+                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     </div>
-                    {% endif %}
                     <h3 class="palo-subcard-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
@@ -98,10 +100,11 @@
         <div class="palo-col-center">
             {% if lead_hero %}
             <div class="palo-hero-box">
-                <div class="palo-hero-img-wrap">
-                    {% if lead_hero.images %}
-                    <img src="/{{ lead_hero.images[0].local_path }}" alt="{{ lead_hero.title }}" class="palo-hero-img">
-                    {% endif %}
+                <div class="palo-hero-img-wrap" style="background: #f8fafc;">
+                    <img src="{{ lead_hero.lead_image_url if lead_hero.lead_image_url is defined else (('/' + lead_hero.images[0].local_path) if lead_hero.images else ('/static/img/placeholders/' + (lead_hero.category or 'general') + '.svg')) }}" 
+                         alt="{{ lead_hero.title }}" 
+                         class="palo-hero-img"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ lead_hero.category or 'general' }}.svg';">
                 </div>
 
                 <div class="palo-card-meta" style="margin-bottom: 0.5rem;">
@@ -146,9 +149,10 @@
             <div class="palo-center-subgrid">
                 {% for art in highlighted[3:5] %}
                 <div class="palo-subgrid-card">
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" class="palo-subgrid-thumb">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         class="palo-subgrid-thumb"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <h4 class="palo-subgrid-title">
                         <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
                             {{ art.title }}
@@ -310,9 +314,10 @@
             {% for art in highlighted[4:8] %}
             <div class="palo-grid-card">
                 <div>
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" alt="{{ art.title }}" class="palo-grid-thumb">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         class="palo-grid-thumb"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <span style="font-size: 0.72rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase;">
                         {{ art.category }}
                     </span>
@@ -351,9 +356,10 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 {% for art in politics_news %}
                 <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0;">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div>
                         <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
@@ -382,9 +388,10 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 {% for art in sports_news %}
                 <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0;">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div>
                         <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
@@ -415,9 +422,10 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 {% for art in business_news %}
                 <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0;">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div>
                         <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
@@ -445,9 +453,10 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 {% for art in tech_news %}
                 <div style="display: flex; gap: 0.9rem; align-items: center; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.8rem;">
-                    {% if art.images %}
-                    <img src="/{{ art.images[0].local_path }}" style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0;">
-                    {% endif %}
+                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else (('/' + art.images[0].local_path) if art.images else ('/static/img/placeholders/' + (art.category or 'general') + '.svg')) }}" 
+                         alt="{{ art.title }}" 
+                         style="width: 85px; height: 60px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div>
                         <h4 style="font-size: 0.92rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.2rem 0;">
                             <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">

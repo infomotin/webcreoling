@@ -10,7 +10,32 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session
 from config.settings import settings
 from src.common.logger import get_logger
-from src.storage.models import Base
+from src.storage.models import (
+    Base,
+    Article,
+    ArticleImage,
+    ScrapeLog,
+    Poll,
+    PollOption,
+    PollVote,
+    NewsletterSubscriber,
+    ArticleLike,
+    User,
+    SiteConfig,
+    Advertisement,
+    EditorialAuditLog,
+    BlockedIP,
+    BlockedCountry,
+    SecurityThreatLog,
+    ArticleBlockLedger,
+    AIBrainCustomRule,
+    SocialChannelConfig,
+    SocialBroadcastLog,
+    DataCenterStorageProvider,
+    DatabaseReplicaNode,
+    DataCenterBackupArchive,
+    DataCenterSecurityLog,
+)
 
 logger = get_logger("webcreoling.storage.database")
 
@@ -58,79 +83,91 @@ def init_db() -> None:
     logger.info(f"Initializing database at {settings.DATABASE_URL}...")
     Base.metadata.create_all(bind=engine)
 
-    # SQLite column migration check for articles table
-    if "sqlite" in settings.DATABASE_URL:
-        with engine.connect() as conn:
-            for col_def in [
-                "is_featured BOOLEAN DEFAULT 0",
-                "is_breaking BOOLEAN DEFAULT 0",
-                "views_count INTEGER DEFAULT 0",
-                "likes_count INTEGER DEFAULT 0",
-                "shares_count INTEGER DEFAULT 0",
-                "scheduled_at DATETIME",
-                "block_number INTEGER",
-                "block_hash VARCHAR(64)",
-                "prev_hash VARCHAR(64)",
-                "digital_signature VARCHAR(128)",
-                "is_ledger_verified BOOLEAN DEFAULT 1",
-            ]:
+    # Database column migration check for articles table (SQLite & MySQL)
+    new_columns = [
+        "is_featured BOOLEAN DEFAULT 0",
+        "is_breaking BOOLEAN DEFAULT 0",
+        "views_count INTEGER DEFAULT 0",
+        "likes_count INTEGER DEFAULT 0",
+        "shares_count INTEGER DEFAULT 0",
+        "scheduled_at DATETIME",
+        "block_number INTEGER",
+        "block_hash VARCHAR(64)",
+        "prev_hash VARCHAR(64)",
+        "digital_signature VARCHAR(128)",
+        "is_ledger_verified BOOLEAN DEFAULT 1",
+        "original_source_url VARCHAR(1000)",
+        "source_status VARCHAR(50) DEFAULT 'ACTIVE'",
+        "source_removed_notice TEXT",
+        "source_last_checked_at DATETIME",
+        "creation_origin VARCHAR(50) DEFAULT 'AI_SYNTHESIZED'",
+        "position_placement VARCHAR(50) DEFAULT 'STANDARD'",
+        "display_order INTEGER DEFAULT 0",
+        "is_pinned BOOLEAN DEFAULT 0",
+    ]
+    with engine.connect() as conn:
+        for col_def in new_columns:
+            try:
+                conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))
+                conn.commit()
+            except Exception:
+                # Column already exists or table freshly created
+                pass
+
+        if "sqlite" in engine.url.drivername:
+            with engine.begin() as conn:
                 try:
-                    conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))
-                    conn.commit()
-                except Exception:
-                    # Column already exists or table freshly created
-                    pass
+                    # Create FTS5 virtual table if it does not exist
+                    conn.execute(
+                        text(
+                            """
+                            CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
+                                id UNINDEXED,
+                                title,
+                                content_text,
+                                category,
+                                author,
+                                source UNINDEXED,
+                                tokenize = 'unicode61'
+                            );
+                            """
+                        )
+                    )
 
-        with engine.begin() as conn:
-            # Create FTS5 virtual table if it does not exist
-            conn.execute(
-                text(
-                    """
-                    CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
-                        id UNINDEXED,
-                        title,
-                        content_text,
-                        category,
-                        author,
-                        source UNINDEXED,
-                        tokenize = 'unicode61'
-                    );
-                    """
-                )
-            )
-
-            # Create Triggers to keep FTS5 in sync with articles table
-            conn.execute(
-                text(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS articles_ai AFTER INSERT ON articles BEGIN
-                        INSERT INTO articles_fts(id, title, content_text, category, author, source)
-                        VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
-                    END;
-                    """
-                )
-            )
-            conn.execute(
-                text(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS articles_ad AFTER DELETE ON articles BEGIN
-                        DELETE FROM articles_fts WHERE id = old.id;
-                    END;
-                    """
-                )
-            )
-            conn.execute(
-                text(
-                    """
-                    CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
-                        DELETE FROM articles_fts WHERE id = old.id;
-                        INSERT INTO articles_fts(id, title, content_text, category, author, source)
-                        VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
-                    END;
-                    """
-                )
-            )
-    logger.info("Database and FTS5 search index initialized successfully.")
+                    # Create Triggers to keep FTS5 in sync with articles table
+                    conn.execute(
+                        text(
+                            """
+                            CREATE TRIGGER IF NOT EXISTS articles_ai AFTER INSERT ON articles BEGIN
+                                INSERT INTO articles_fts(id, title, content_text, category, author, source)
+                                VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
+                            END;
+                            """
+                        )
+                    )
+                    conn.execute(
+                        text(
+                            """
+                            CREATE TRIGGER IF NOT EXISTS articles_ad AFTER DELETE ON articles BEGIN
+                                DELETE FROM articles_fts WHERE id = old.id;
+                            END;
+                            """
+                        )
+                    )
+                    conn.execute(
+                        text(
+                            """
+                            CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
+                                DELETE FROM articles_fts WHERE id = old.id;
+                                INSERT INTO articles_fts(id, title, content_text, category, author, source)
+                                VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
+                            END;
+                            """
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f"FTS5 setup skipped or error: {e}")
+    logger.info("Database and search index initialized successfully.")
 
 
 @contextmanager

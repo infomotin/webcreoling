@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="mainBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="60%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#mainBg)" />
+  <circle cx="400" cy="175" r="68" fill="#1e293b" stroke="#475569" stroke-width="2" />
+  <text x="400" y="195" font-family="'Noto Serif Bengali', 'Segoe UI', sans-serif" font-size="46" fill="#ffffff" text-anchor="middle">📰</text>
+  <rect x="250" y="270" width="300" height="6" rx="3" fill="url(#lineGrad)" />
+  <text x="400" y="315" font-family="'Noto Serif Bengali', 'Hind Siliguri', 'Segoe UI', sans-serif" font-weight="bold" font-size="28" fill="#ffffff" text-anchor="middle">The Daily AI Alo</text>
+  <text x="400" y="352" font-family="'Noto Serif Bengali', 'Hind Siliguri', 'Segoe UI', sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">দি ডেইলি এআই আলো • বস্তুনিষ্ঠ ও নির্ভীক সংবাদ</text>
+</svg>

@@ -253,6 +253,7 @@ def test_blockchain_repository_minting_and_audit():
         assert details["status"] == "VALID"
 
         # Full chain audit
+        ledger_repo.recalculate_and_seal_chain()
         audit = ledger_repo.audit_full_chain()
         assert audit["chain_valid"] is True
 

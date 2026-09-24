@@ -495,3 +495,134 @@ class ArticleBlockLedger(Base):
         }
 
 
+# ==============================================================================
+# AI Brain Custom Rule Engine & Social Outbound Integration Models
+# ==============================================================================
+
+class AIBrainCustomRule(Base):
+    """Custom Targeting Rules, Geo-Filters, Keywords, and Publishing Directives for the AI Brain."""
+    __tablename__ = "ai_brain_custom_rules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(150), nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    target_regions = Column(JSON, nullable=True)  # ["bangladesh", "south_asia", "middle_east", "global", "usa", "europe"]
+    target_countries = Column(JSON, nullable=True)  # ["BD", "IN", "PK", "US", "UK", "SA", "AE", "CN"]
+    target_languages = Column(JSON, nullable=True)  # ["en", "bn", "hi", "ar", "ur"]
+    target_categories = Column(JSON, nullable=True)  # ["politics", "technology", "business", "international", "sports", "science"]
+    required_keywords = Column(JSON, nullable=True)  # e.g., ["AI", "নির্বাচন", "বাজেট"]
+    excluded_keywords = Column(JSON, nullable=True)  # e.g., ["ক্যাসিনো", "প্রাপ্তবয়স্ক", "জুয়া"]
+    allowed_portal_sources = Column(JSON, nullable=True)  # e.g., ["prothomalo.com", "reuters.com", "youtube/jamunatv"]
+    min_credibility_score = Column(Float, default=70.0)
+    auto_translate_to_bangla = Column(Boolean, default=True)
+    auto_publish = Column(Boolean, default=True)
+    auto_broadcast_social = Column(Boolean, default=True)
+    custom_prompt_rules = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "is_active": self.is_active,
+            "target_regions": self.target_regions or [],
+            "target_countries": self.target_countries or [],
+            "target_languages": self.target_languages or [],
+            "target_categories": self.target_categories or [],
+            "required_keywords": self.required_keywords or [],
+            "excluded_keywords": self.excluded_keywords or [],
+            "allowed_portal_sources": self.allowed_portal_sources or [],
+            "min_credibility_score": self.min_credibility_score,
+            "auto_translate_to_bangla": self.auto_translate_to_bangla,
+            "auto_publish": self.auto_publish,
+            "auto_broadcast_social": self.auto_broadcast_social,
+            "custom_prompt_rules": self.custom_prompt_rules or "",
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class SocialChannelConfig(Base):
+    """Configuration for Connected Social Media Pages / Channels with Failover Support."""
+    __tablename__ = "social_channel_configs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    platform = Column(String(50), nullable=False, index=True)  # 'facebook', 'youtube', 'tiktok', 'telegram', 'twitter'
+    account_name = Column(String(150), nullable=False)
+    page_id_or_channel_id = Column(String(255), nullable=False)
+    app_id = Column(String(255), nullable=True)
+    app_secret = Column(String(255), nullable=True)
+    access_token = Column(Text, nullable=True)
+    webhook_verify_token = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    is_primary = Column(Boolean, default=True)
+    status = Column(String(50), default="HEALTHY", index=True)  # 'HEALTHY', 'RESTRICTED', 'TOKEN_EXPIRED', 'BACKUP_ACTIVE'
+    failover_account_id = Column(Integer, ForeignKey("social_channel_configs.id", ondelete="SET NULL"), nullable=True)
+    total_posts_dispatched = Column(Integer, default=0)
+    last_post_at = Column(DateTime, nullable=True)
+    last_error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Self-referential relationship for failover
+    failover_account = relationship("SocialChannelConfig", remote_side=[id], foreign_keys=[failover_account_id])
+
+    def to_dict(self) -> Dict[str, Any]:
+        failover_name = None
+        if "failover_account" in self.__dict__ and self.failover_account:
+            failover_name = self.failover_account.account_name
+
+        return {
+            "id": self.id,
+            "platform": self.platform,
+            "account_name": self.account_name,
+            "page_id_or_channel_id": self.page_id_or_channel_id,
+            "app_id": self.app_id,
+            "app_secret": ("*" * 8) if self.app_secret else None,
+            "access_token": (self.access_token[:10] + "..." + self.access_token[-6:]) if self.access_token and len(self.access_token) > 16 else self.access_token,
+            "is_active": self.is_active,
+            "is_primary": self.is_primary,
+            "status": self.status,
+            "failover_account_id": self.failover_account_id,
+            "failover_account_name": failover_name,
+            "total_posts_dispatched": self.total_posts_dispatched,
+            "last_post_at": self.last_post_at.isoformat() if self.last_post_at else None,
+            "last_error_message": self.last_error_message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class SocialBroadcastLog(Base):
+    """Audit log trail tracking all outbound social media cross-postings and failover dispatches."""
+    __tablename__ = "social_broadcast_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="SET NULL"), nullable=True, index=True)
+    channel_id = Column(Integer, ForeignKey("social_channel_configs.id", ondelete="SET NULL"), nullable=True, index=True)
+    platform = Column(String(50), nullable=False, index=True)
+    target_account = Column(String(150), nullable=False)
+    post_payload = Column(JSON, nullable=True)
+    external_post_id = Column(String(255), nullable=True)
+    dispatch_status = Column(String(50), default="SUCCESS", index=True)  # 'SUCCESS', 'FAILED', 'FALLBACK_SWITCHED'
+    response_data = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "article_id": self.article_id,
+            "channel_id": self.channel_id,
+            "platform": self.platform,
+            "target_account": self.target_account,
+            "post_payload": self.post_payload or {},
+            "external_post_id": self.external_post_id,
+            "dispatch_status": self.dispatch_status,
+            "response_data": self.response_data or {},
+            "error_message": self.error_message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+

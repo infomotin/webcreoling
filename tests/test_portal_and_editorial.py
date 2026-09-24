@@ -149,7 +149,11 @@ def test_editorial_article_crud_and_approval(client):
     # Retrieve created article
     with get_db_session() as session:
         from src.storage.models import Article
-        art = session.query(Article).filter(Article.title.like("%টেস্ট খসড়া একনেক%")).order_by(Article.id.desc()).first()
+        from src.common.normalizer import BanglaTextNormalizer
+        norm_title = BanglaTextNormalizer.normalize_article_text(unique_test_title)
+        art = session.query(Article).filter(Article.title == norm_title).order_by(Article.id.desc()).first()
+        if not art:
+            art = session.query(Article).filter(Article.title.like("%একনেক%")).order_by(Article.id.desc()).first()
         assert art is not None
         art_id = art.id
         assert art.scrape_status == "draft"

@@ -1,49 +1,156 @@
 {% extends "base.html" %}
 
-{% block title %}অটোমেশন কন্ট্রোল হাব - WebCreoling News Pipeline Automation{% endblock %}
+{% block title %}অটোমেশন ও এআই ফেক নিউজ কন্ট্রোল প্যানেল - WebCreoling{% endblock %}
 
 {% block extra_head %}
 <style>
-.auto-header {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+.auto-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
     color: #ffffff;
-    border-radius: 12px;
-    padding: 1.8rem 2rem;
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1.5rem;
-    box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.3);
+    box-shadow: 0 12px 30px -8px rgba(49, 46, 129, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.auto-stats-grid {
+.kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.25rem;
     margin-bottom: 2rem;
 }
 
-.auto-stat-card {
+.kpi-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    padding: 1.25rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    gap: 1.1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auto-stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.kpi-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.controller-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+}
+
+.fake-slider-container {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+}
+
+.fake-meter {
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #10b981 0%, #3b82f6 30%, #f59e0b 55%, #ea580c 75%, #ef4444 100%);
+    position: relative;
+    margin: 10px 0 6px 0;
+}
+
+.fake-meter-pointer {
+    position: absolute;
+    top: -4px;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border: 3px solid #1e1b4b;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    transition: left 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.live-badge-pulse {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulseGlow 1.5s infinite;
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.stream-table th {
+    background: var(--bg-body);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.stream-table td {
+    padding: 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.88rem;
+}
+
+.preset-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-body);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-btn:hover, .preset-btn.active {
+    background: #4338ca;
+    color: #ffffff;
+    border-color: #4338ca;
 }
 
 .job-card {
@@ -57,321 +164,299 @@
 
 .job-card:hover {
     border-color: #6366f1;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
-}
-
-.job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.progress-bar-container {
-    background: #e2e8f0;
-    border-radius: 999px;
-    height: 8px;
-    overflow: hidden;
-    margin: 8px 0;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    transition: width 0.3s ease;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="auto-header">
+<!-- Top Hero Header -->
+<div class="auto-hero">
     <div>
         <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #a5b4fc; font-weight: 700; margin-bottom: 0.3rem;">
-            Autonomous Operations & Job Manager
+            Autonomous Operations & AI Fact-Checking Intelligence
         </div>
-        <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: #ffffff;">
-            ⚡ অটোমেশন কন্ট্রোল হাব (Automation Hub)
+        <h1 style="font-size: 1.95rem; font-weight: 800; margin: 0; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+            <span>⚡ অটোমেশন ও এআই ফেক নিউজ কন্ট্রোল প্যানেল</span>
+            <span class="live-badge-pulse" style="background: rgba(255,255,255,0.15); color: #ffffff;">
+                <span class="live-dot" style="background: #10b981;"></span> LIVE 2.0
+            </span>
         </h1>
-        <p style="margin: 0.4rem 0 0 0; color: #e0e7ff; font-size: 0.95rem;">
-            স্বয়ংক্রিয় সংবাদ ক্রলিং, নির্ধারিত প্রকাশনা, ব্লকচেইন সিলিং এবং ব্যাকগ্রাউন্ড টাস্ক এক্সিকিউশন
+        <p style="margin: 0.4rem 0 0 0; color: #e0e7ff; font-size: 0.95rem; max-width: 780px;">
+            স্বয়ংক্রিয় ক্রলিং, অনুবাদ, এআই ফেক নিউজ ডিটেকশন মডেল, কাস্টম সহনশীলতা রুল এবং পোর্টাল ও সোশ্যাল মিডিয়া লাইভ ব্রডকাস্টিং।
         </p>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <form method="POST" action="{{ url_for('admin.automation_run_full_cycle') }}">
+            <button type="submit" class="btn" style="background: #10b981; color: #ffffff; font-weight: 700; padding: 0.65rem 1.3rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                <span>🚀</span> <span>পূর্ণাঙ্গ এআই সাইকেল চালান</span>
+            </button>
+        </form>
+
         <form method="POST" action="{{ url_for('admin.automation_toggle_scheduler') }}">
             {% if scheduler_status.is_active %}
-            <button type="submit" class="btn" style="background: #ef4444; color: #fff; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
-                <span>🛑</span> <span>অটোমেশন বন্ধ করুন</span>
+            <button type="submit" class="btn" style="background: #ef4444; color: #ffffff; font-weight: 700; padding: 0.65rem 1.2rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <span>🛑</span> <span>শিডিউলার বন্ধ</span>
             </button>
             {% else %}
-            <button type="submit" class="btn" style="background: #10b981; color: #fff; font-weight: 700; padding: 0.6rem 1.4rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
-                <span>▶️</span> <span>অটোমেশন চালু করুন</span>
+            <button type="submit" class="btn" style="background: #6366f1; color: #ffffff; font-weight: 700; padding: 0.65rem 1.2rem; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <span>▶️</span> <span>শিডিউলার চালু</span>
             </button>
             {% endif %}
         </form>
     </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="auto-stats-grid">
-    <div class="auto-stat-card">
-        <div class="auto-stat-icon" style="background: #e0e7ff; color: #4338ca;">⏱️</div>
+<!-- Real-time KPI Counters -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background: #e0e7ff; color: #4338ca;">📰</div>
         <div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">শিডিউলার অবস্থা</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: {% if scheduler_status.is_active %}#10b981{% else %}#ef4444{% endif %};">
-                {{ "সক্রিয় (RUNNING)" if scheduler_status.is_active else "স্থগিত (STOPPED)" }}
-            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">মোট সংরক্ষিত সংবাদ</div>
+            <div style="font-size: 1.45rem; font-weight: 800;" id="kpiTotalArticles">{{ automation_kpis.total_articles }}</div>
         </div>
     </div>
 
-    <div class="auto-stat-card">
-        <div class="auto-stat-icon" style="background: #fef3c7; color: #b45309;">⚙️</div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background: #dcfce7; color: #15803d;">🌐</div>
         <div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">স্বয়ংক্রিয় জবস</div>
-            <div style="font-size: 1.25rem; font-weight: 800;">{{ scheduler_status.jobs_count }} টি সক্রিয় টাস্ক</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">পোর্টালে লাইভ প্রকাশিত</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #10b981;" id="kpiPublishedArticles">{{ automation_kpis.published_articles }}</div>
         </div>
     </div>
 
-    <div class="auto-stat-card">
-        <div class="auto-stat-icon" style="background: #dcfce7; color: #15803d;">🧵</div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background: #fef3c7; color: #b45309;">⏳</div>
         <div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ব্যাকগ্রাউন্ড থ্রেড পুল</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: #15803d;">4 Workers (Async)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">রিভিউ কিউতে অপেক্ষমান</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #f59e0b;" id="kpiPendingArticles">{{ automation_kpis.pending_articles }}</div>
         </div>
     </div>
 
-    <div class="auto-stat-card">
-        <div class="auto-stat-icon" style="background: #f3e8ff; color: #7e22ce;">📊</div>
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background: #fee2e2; color: #b91c1c;">🛑</div>
         <div>
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">মোট ব্যাকগ্রাউন্ড টাস্ক</div>
-            <div style="font-size: 1.25rem; font-weight: 800;">{{ recent_tasks|length }} টি এক্সিকিউশন</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ফেক/কোয়ারেন্টাইন সংবাদ</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #ef4444;" id="kpiQuarantinedArticles">{{ automation_kpis.quarantined_articles }}</div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon" style="background: #f3e8ff; color: #7e22ce;">⛓️</div>
+        <div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ব্লকচেইন লেজার সিল্ড</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #7e22ce;" id="kpiBlockchainSealed">{{ automation_kpis.blockchain_sealed }}</div>
         </div>
     </div>
 </div>
 
-<!-- Main 2-Column Layout -->
-<div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.8rem; align-items: start;">
-
-    <!-- Left Column: Scheduled Recurring Jobs -->
-    <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">
-                🔄 স্বয়ংক্রিয় পুনরাবৃত্তিমূলক জবস (Scheduled Daemon Jobs)
+<!-- AI Fake News Detection Model & Dynamic Rule Controller -->
+<div class="controller-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>🧠 এআই ফেক নিউজ ডিটেক্টর ও অটোমেশন রুল কন্ট্রোলার</span>
+                <span class="badge badge-primary">Model: FactCheck-Pro-v2</span>
             </h2>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                ইনজেস্টেড প্রতিটি সংবাদের ফেক সম্ভাব্যতা (Fake Probability %) নির্ণয় এবং সহনশীলতা সীমা অনুযায়ী স্বয়ংক্রিয় অনুমোদন
+            </p>
         </div>
 
-        {% for job in scheduler_status.jobs %}
-        <div class="job-card">
-            <div class="job-header">
+        <div style="display: flex; gap: 8px;">
+            <form method="POST" action="{{ url_for('admin.automation_run_fact_check_audit') }}">
+                <button type="submit" class="btn btn-secondary" style="font-size: 0.82rem; font-weight: 700; padding: 6px 14px;">
+                    🔍 সকল খবরে ফ্যাক্ট-চেক অডিট চালান
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.automation_update_fake_news_policy') }}">
+        <div class="fake-slider-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <div>
-                    <span style="font-weight: 700; font-size: 1.05rem; color: var(--text-main);">{{ job.name }}</span>
-                    <span class="badge {% if job.enabled %}badge-success{% else %}badge-secondary{% endif %}" style="margin-left: 8px;">
-                        {{ "ACTIVE" if job.enabled else "DISABLED" }}
+                    <strong style="font-size: 0.95rem;">অনুমোদিত সর্বোচ্চ ফেক সম্ভাব্যতা সীমা (Max Allowed Fake News %):</strong>
+                    <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 6px;">
+                        (নির্ধারিত সীমার নিচে থাকা খবর পোর্টালে সরাসরি অটো-পোস্ট হবে)
                     </span>
-                    {% if job.is_running %}
-                    <span class="badge badge-warning" style="margin-left: 4px; animation: pulse 1s infinite;">RUNNING</span>
-                    {% endif %}
                 </div>
-                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
-                    ব্যবধান: {{ job.interval_seconds }} সেকেন্ড
-                </div>
-            </div>
-
-            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0.3rem 0 0.8rem 0;">
-                {{ job.description }}
-            </p>
-
-            <div style="background: var(--bg-body); border-radius: 6px; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 0.8rem;">
-                <div style="display: flex; justify-content: space-between; color: var(--text-muted); margin-bottom: 4px;">
-                    <span>সর্বশেষ রান: <strong>{{ job.last_run or 'কখনো নয়' }}</strong></span>
-                    <span>পরবর্তী রান: <strong>{{ job.next_run or 'নির্ধারিত নয়' }}</strong></span>
-                    <span>রান কাউন্ট: <strong>{{ job.run_count }}</strong></span>
-                </div>
-                <div style="color: {% if job.last_status == 'SUCCESS' %}#10b981{% elif job.last_status == 'FAILED' %}#ef4444{% else %}var(--text-muted){% endif %};">
-                    স্ট্যাটাস: <strong>{{ job.last_status }}</strong> - {{ job.last_message }}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="fakeSliderValDisplay" style="font-size: 1.35rem; font-weight: 800; color: #4338ca;">
+                        {{ fake_news_policy.max_fake_tolerance_pct|int }}%
+                    </span>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <form method="POST" action="{{ url_for('admin.automation_update_interval', job_id=job.job_id) }}" style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 0.78rem; color: var(--text-muted);">ব্যবধান (সেকেন্ড):</span>
-                    <input type="number" name="interval_seconds" value="{{ job.interval_seconds }}" min="10" max="86400" style="width: 80px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem;">
-                    <button type="submit" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.78rem;">সেভ</button>
-                </form>
+            <!-- Visual Gradient Meter with Pointer -->
+            <div class="fake-meter">
+                <div class="fake-meter-pointer" id="fakeMeterPointer" style="left: {{ fake_news_policy.max_fake_tolerance_pct }}%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">
+                <span>০% (খাঁটি)</span>
+                <span>২০% (কঠোর)</span>
+                <span>৩৫% (স্ট্যান্ডার্ড)</span>
+                <span>৫০% (সহনশীল / আপনার নিয়ম)</span>
+                <span>৭৫% (উচ্চ ঝুঁকি)</span>
+                <span>১০০% (বানোয়াট)</span>
+            </div>
 
-                <div style="display: flex; gap: 6px;">
-                    <form method="POST" action="{{ url_for('admin.automation_toggle_job', job_id=job.job_id) }}">
-                        <button type="submit" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.78rem;">
-                            {{ "নিষ্ক্রিয় করুন" if job.enabled else "সক্রিয় করুন" }}
-                        </button>
-                    </form>
+            <!-- Interactive Slider Input -->
+            <input type="range" id="fakeToleranceSlider" name="max_fake_tolerance_pct" min="5" max="95" step="1" 
+                   value="{{ fake_news_policy.max_fake_tolerance_pct|int }}" 
+                   style="width: 100%; margin-top: 15px; cursor: pointer;"
+                   oninput="updateFakeSlider(this.value)">
 
-                    <form method="POST" action="{{ url_for('admin.automation_trigger_job', job_id=job.job_id) }}">
-                        <button type="submit" class="btn btn-primary" style="padding: 4px 14px; font-size: 0.78rem;">
-                            ⚡ এখনই রান করুন
-                        </button>
-                    </form>
-                </div>
+            <!-- Preset Buttons -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">প্রিসেট রুল নির্বাচন:</span>
+                <button type="button" class="preset-btn" onclick="applyPreset(15)">🛡️ কঠোর ফিল্টার (১৫%)</button>
+                <button type="button" class="preset-btn" onclick="applyPreset(35)">⚖️ স্ট্যান্ডার্ড মিডিয়া (৩৫%)</button>
+                <button type="button" class="preset-btn active" onclick="applyPreset(50)">🚀 ৫০% পর্যন্ত প্রকাশযোগ্য (ইউজার রুল)</button>
+                <button type="button" class="preset-btn" onclick="applyPreset(65)">🔓 উদার গেট (৬৫%)</button>
             </div>
         </div>
-        {% endfor %}
-    </div>
 
-    <!-- Right Column: On-Demand Async Job Launchers -->
-    <div>
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 1rem 0;">
-            🚀 ওয়ান-ক্লিক অ্যাসিনক্রোনাস টাস্ক লঞ্চার
-        </h2>
-
-        <!-- 1. Crawl Portal -->
-        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #4338ca;">
-                🕷️ নিউজ পোর্টাল ক্রলিং টাস্ক
-            </h3>
-            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
-                <input type="hidden" name="task_type" value="CRAWL">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">পোর্টাল নির্বাচন:</label>
-                        <select name="site_key" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                            <option value="prothom_alo">প্রথম আলো (Prothom Alo)</option>
-                            <option value="daily_star_bangla">ডেইলি স্টার বাংলা (The Daily Star)</option>
-                            <option value="bbc_bangla">বিবিসি বাংলা (BBC Bangla)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">সর্বোচ্চ পাতা:</label>
-                        <input type="number" name="max_pages" value="2" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                    </div>
+        <!-- Automation Policy Switches -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: var(--bg-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <input type="checkbox" name="auto_publish_enabled" value="1" {% if fake_news_policy.auto_publish_enabled %}checked{% endif %}>
+                <div>
+                    <div style="font-size: 0.88rem; font-weight: 700;">পোর্টালে স্বয়ংক্রিয় প্রকাশনা</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">শর্তপূরণ হলে /news/ এ লাইভ পোস্ট হবে</div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 7px; font-size: 0.85rem;">
-                    ▶ ব্যাকগ্রাউন্ডে ক্রলিং শুরু করুন
-                </button>
-            </form>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: var(--bg-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <input type="checkbox" name="social_dispatch_enabled" value="1" {% if fake_news_policy.social_dispatch_enabled %}checked{% endif %}>
+                <div>
+                    <div style="font-size: 0.88rem; font-weight: 700;">সোশ্যাল মিডিয়া অটো-পোস্টিং</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">ফেসবুক, ইউটিউব ও টেলিগ্রামে ডিসপ্যাচ</div>
+                </div>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; background: var(--bg-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <input type="checkbox" name="quarantine_high_fake" value="1" {% if fake_news_policy.quarantine_high_fake %}checked{% endif %}>
+                <div>
+                    <div style="font-size: 0.88rem; font-weight: 700;">ফেক নিউজ স্বয়ংক্রিয় কোয়ারেন্টাইন</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">সহনশীলতার বাইরে থাকা সংবাদ বাতিল হবে</div>
+                </div>
+            </label>
         </div>
 
-        <!-- 2. Train Base Model -->
-        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #059669;">
-                🧠 বেস মডেল প্রি-ট্রেইনিং (CPU)
-            </h3>
-            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
-                <input type="hidden" name="task_type" value="BASE_TRAIN">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">ইপোক (Epochs):</label>
-                        <input type="number" name="epochs" value="1" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                    </div>
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">ব্যাচ সাইজ:</label>
-                        <input type="number" name="batch_size" value="2" min="1" max="8" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                    </div>
-                </div>
-                <button type="submit" class="btn" style="background: #059669; color: #fff; width: 100%; padding: 7px; font-size: 0.85rem; border: none; border-radius: 6px;">
-                    ▶ বেস মডেল ট্রেইনিং শুরু করুন
-                </button>
-            </form>
+        <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="padding: 8px 24px; font-weight: 700; font-size: 0.9rem;">
+                💾 এআই অটোমেশন নীতি সংরক্ষণ করুন
+            </button>
         </div>
-
-        <!-- 3. Fine-Tune 4 Skills -->
-        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #7c3aed;">
-                🎯 হাইব্রিড LoRA ফাইন-টিউনিং (৪ স্কিলস)
-            </h3>
-            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
-                <input type="hidden" name="task_type" value="FINETUNE">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">ইপোক (Epochs):</label>
-                        <input type="number" name="epochs" value="2" min="1" max="10" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                    </div>
-                    <div>
-                        <label style="font-size: 0.78rem; font-weight: 600;">ব্যাচ সাইজ:</label>
-                        <input type="number" name="batch_size" value="2" min="1" max="8" class="form-control" style="font-size: 0.85rem; padding: 6px;">
-                    </div>
-                </div>
-                <button type="submit" class="btn" style="background: #7c3aed; color: #fff; width: 100%; padding: 7px; font-size: 0.85rem; border: none; border-radius: 6px;">
-                    ▶ LoRA ফাইন-টিউনিং শুরু করুন
-                </button>
-            </form>
-        </div>
-
-        <!-- 4. Run Full Pipeline -->
-        <div class="card" style="padding: 1.25rem; margin-bottom: 1rem; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 1px solid #d8b4fe;">
-            <h3 style="font-size: 1rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #6b21a8;">
-                ✨ সম্পূর্ণ এন্ড-টু-এন্ড পাইপলাইন
-            </h3>
-            <p style="font-size: 0.8rem; color: #6b21a8; margin: 0 0 8px 0;">
-                ক্রলিং ➔ ডাটাবেস ➔ ট্রেইনিং ➔ LoRA ফাইন-টিউনিং ➔ বেঞ্চমার্ক মূল্যায়ন সম্পূর্ণ স্বয়ংক্রিয়ভাবে এক্সিকিউট হবে।
-            </p>
-            <form method="POST" action="{{ url_for('admin.automation_submit_task') }}">
-                <input type="hidden" name="task_type" value="FULL_PIPELINE">
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                        <input type="checkbox" name="use_mock" value="1" checked> মক পোর্টাল টেস্ট ডেটা ব্যবহার করুন
-                    </label>
-                </div>
-                <button type="submit" class="btn" style="background: #6b21a8; color: #fff; width: 100%; padding: 8px; font-size: 0.88rem; font-weight: 700; border: none; border-radius: 6px;">
-                    🚀 সম্পূর্ণ পাইপলাইন চালান
-                </button>
-            </form>
-        </div>
-    </div>
+    </form>
 </div>
 
-<!-- Bottom Section: Live Task History & Telemetry Logs -->
-<div style="margin-top: 2rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.3rem; font-weight: 700; margin: 0;">
-            📜 লাইভ ব্যাকগ্রাউন্ড টাস্ক ও এক্সিকিউশন লগ (Task Monitor)
-        </h2>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">স্বয়ংক্রিয় রিফ্রেশ হচ্ছে প্রতি ৩ সেকেন্ডে</span>
+<!-- Real-time Live Processed Articles Stream -->
+<div class="controller-card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="font-size: 1.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>📡 লাইভ প্রকাশিত ও এআই বিশ্লেষিত সংবাদ ফিড</span>
+                <span class="live-badge-pulse">
+                    <span class="live-dot"></span> অটো-আপডেট হচ্ছে
+                </span>
+            </h2>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 3px 0 0 0;">
+                প্রতিটি সংবাদের ফেক স্কোর, সহনশীলতা রায়, ব্লকচেইন ভেরিফিকেশন এবং সরাসরি পোর্টালে দেখার লিংক
+            </p>
+        </div>
+
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+            সর্বশেষ সিঙ্ক: <strong id="streamLastSync">এখন</strong>
+        </div>
     </div>
 
-    <div class="card" style="padding: 0; overflow: hidden;">
-        <table class="table" style="margin: 0;" id="tasksTable">
+    <div style="overflow-x: auto;">
+        <table class="table stream-table" style="margin: 0;" id="liveStreamTable">
             <thead>
                 <tr>
-                    <th style="width: 90px;">Task ID</th>
-                    <th>টাস্কের নাম</th>
-                    <th style="width: 120px;">ধরন</th>
-                    <th style="width: 110px;">স্ট্যাটাস</th>
-                    <th style="width: 140px;">অগ্রগতি</th>
-                    <th style="width: 110px;">সময়কাল</th>
-                    <th style="width: 150px;">শুরু হওয়ার সময়</th>
+                    <th style="width: 70px;">আইডি</th>
+                    <th>সংবাদের শিরোনাম ও তথ্যসূত্র</th>
+                    <th style="width: 140px;">এআই ফেক স্কোর</th>
+                    <th style="width: 130px;">ফ্যাক্ট রায়</th>
+                    <th style="width: 160px;">অটোমেশন স্ট্যাটাস</th>
+                    <th style="width: 120px;">ব্লকচেইন</th>
+                    <th style="width: 160px; text-align: right;">অ্যাকশন</th>
                 </tr>
             </thead>
-            <tbody id="tasksTableBody">
-                {% if recent_tasks %}
-                {% for task in recent_tasks %}
+            <tbody id="liveStreamTableBody">
+                {% if live_feed %}
+                {% for item in live_feed %}
                 <tr>
-                    <td><code>#{{ task.task_id }}</code></td>
+                    <td><code>#{{ item.id }}</code></td>
                     <td>
-                        <strong>{{ task.title }}</strong>
-                        {% if task.error_message %}
-                        <div style="font-size: 0.78rem; color: #ef4444;">{{ task.error_message }}</div>
-                        {% endif %}
+                        <a href="{{ item.url }}" target="_blank" style="font-weight: 700; color: var(--text-main); text-decoration: none; display: block; margin-bottom: 4px;">
+                            {{ item.title }}
+                        </a>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 10px; align-items: center;">
+                            <span>📰 {{ item.source }}</span>
+                            <span>🏷️ {{ item.category }}</span>
+                            <span>⏱️ {{ item.published_at }}</span>
+                        </div>
                     </td>
-                    <td><span class="badge badge-secondary">{{ task.task_type }}</span></td>
                     <td>
-                        <span class="badge {% if task.status == 'SUCCESS' %}badge-success{% elif task.status == 'RUNNING' %}badge-warning{% elif task.status == 'FAILED' %}badge-danger{% else %}badge-secondary{% endif %}">
-                            {{ task.status }}
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="flex-grow: 1; background: #e2e8f0; height: 8px; border-radius: 999px; overflow: hidden;">
+                                <div style="width: {{ item.fake_probability_pct }}%; height: 100%; background: {{ item.badge_color }};"></div>
+                            </div>
+                            <span style="font-weight: 800; font-size: 0.85rem; color: {{ item.badge_color }};">
+                                {{ item.fake_probability_pct }}%
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: {{ item.badge_color }}22; color: {{ item.badge_color }}; border: 1px solid {{ item.badge_color }}; font-weight: 700; font-size: 0.75rem;">
+                            {{ item.verdict_label }}
                         </span>
                     </td>
                     <td>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: {{ task.progress_pct }}%;"></div>
-                        </div>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">{{ task.progress_pct }}%</span>
+                        <span class="badge {{ item.badge_class }}" style="font-size: 0.76rem;">
+                            {{ item.status_badge }}
+                        </span>
                     </td>
-                    <td>{{ task.elapsed_seconds }}s</td>
-                    <td style="font-size: 0.8rem; color: var(--text-muted);">{{ task.started_at or task.created_at }}</td>
+                    <td>
+                        {% if item.is_ledger_verified %}
+                        <span class="badge badge-success" title="Block #{{ item.block_number }}">
+                            ✅ Block #{{ item.block_number }}
+                        </span>
+                        {% else %}
+                        <span class="badge badge-secondary">অযাচাইকৃত</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                            <a href="{{ item.url }}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">
+                                👁️ দেখুন
+                            </a>
+                            {% if item.scrape_status != 'completed' %}
+                            <form method="POST" action="{{ url_for('admin.automation_article_override', article_id=item.id) }}" style="display: inline;">
+                                <input type="hidden" name="action" value="publish">
+                                <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;">
+                                    পোস্ট
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('admin.automation_article_override', article_id=item.id) }}" style="display: inline;">
+                                <input type="hidden" name="action" value="quarantine">
+                                <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;">
+                                    স্থগিত
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
                 {% else %}
                 <tr>
                     <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
-                        এখনো কোনো অ্যাসিনক্রোনাস ব্যাকগ্রাউন্ড টাস্ক রান করা হয়নি।
+                        কোনো সংবাদ লোড করা হয়নি। উপরে "পূর্ণাঙ্গ এআই সাইকেল চালান" বাটনে ক্লিক করুন।
                     </td>
                 </tr>
                 {% endif %}
@@ -380,46 +465,160 @@
     </div>
 </div>
 
-<script>
-// Auto-refresh tasks list every 3 seconds
-function pollTasks() {
-    fetch('/admin/automation/api/tasks')
-        .then(response => response.json())
-        .then(data => {
-            if (!data || data.length === 0) return;
-            const tbody = document.getElementById('tasksTableBody');
-            let html = '';
-            data.forEach(task => {
-                let badgeClass = 'badge-secondary';
-                if (task.status === 'SUCCESS') badgeClass = 'badge-success';
-                else if (task.status === 'RUNNING') badgeClass = 'badge-warning';
-                else if (task.status === 'FAILED') badgeClass = 'badge-danger';
+<!-- Scheduled Background Daemon Jobs -->
+<div style="margin-top: 2rem;">
+    <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 1rem 0;">
+        🔄 স্বয়ংক্রিয় পুনরাবৃত্তিমূলক শিডিউলার জবস (Daemon Workers)
+    </h2>
 
-                html += `
-                <tr>
-                    <td><code>#${task.task_id}</code></td>
-                    <td>
-                        <strong>${task.title}</strong>
-                        ${task.error_message ? `<div style="font-size: 0.78rem; color: #ef4444;">${task.error_message}</div>` : ''}
-                    </td>
-                    <td><span class="badge badge-secondary">${task.task_type}</span></td>
-                    <td><span class="badge ${badgeClass}">${task.status}</span></td>
-                    <td>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: ${task.progress_pct}%;"></div>
-                        </div>
-                        <span style="font-size: 0.72rem; color: var(--text-muted);">${task.progress_pct}%</span>
-                    </td>
-                    <td>${task.elapsed_seconds}s</td>
-                    <td style="font-size: 0.8rem; color: var(--text-muted);">${task.started_at || task.created_at}</td>
-                </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        })
-        .catch(err => console.debug('Task polling error:', err));
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.25rem;">
+        {% for job in scheduler_status.jobs %}
+        <div class="job-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div>
+                    <strong style="font-size: 1rem; color: var(--text-main);">{{ job.name }}</strong>
+                    <span class="badge {% if job.enabled %}badge-success{% else %}badge-secondary{% endif %}" style="margin-left: 6px;">
+                        {{ "ACTIVE" if job.enabled else "DISABLED" }}
+                    </span>
+                </div>
+                <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">
+                    ব্যবধান: {{ job.interval_seconds }}s
+                </span>
+            </div>
+
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0;">
+                {{ job.description }}
+            </p>
+
+            <div style="background: var(--bg-body); border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; margin-bottom: 10px; color: var(--text-muted);">
+                <div>সর্বশেষ রান: <strong>{{ job.last_run or 'কখনো নয়' }}</strong> | পরবর্তী: <strong>{{ job.next_run or 'অপেক্ষমান' }}</strong></div>
+                <div style="color: {% if job.last_status == 'SUCCESS' %}#10b981{% elif job.last_status == 'FAILED' %}#ef4444{% else %}var(--text-muted){% endif %}; margin-top: 2px;">
+                    স্ট্যাটাস: <strong>{{ job.last_status }}</strong> - {{ job.last_message }}
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <form method="POST" action="{{ url_for('admin.automation_toggle_job', job_id=job.job_id) }}">
+                    <button type="submit" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.76rem;">
+                        {{ "নিষ্ক্রিয় করুন" if job.enabled else "সক্রিয় করুন" }}
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('admin.automation_trigger_job', job_id=job.job_id) }}">
+                    <button type="submit" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.76rem;">
+                        ⚡ এখনই রান করুন
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Dynamic Fake Tolerance Slider Logic
+function updateFakeSlider(val) {
+    document.getElementById('fakeSliderValDisplay').innerText = val + '%';
+    document.getElementById('fakeMeterPointer').style.left = val + '%';
 }
 
-setInterval(pollTasks, 3000);
+function applyPreset(val) {
+    document.getElementById('fakeToleranceSlider').value = val;
+    updateFakeSlider(val);
+
+    // Toggle active class on preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText.includes(val + '%')) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Live Real-Time Polling for Feed & KPIs (Every 2.5 seconds)
+function pollLiveAutomationStatus() {
+    fetch('/admin/automation/api/live-status')
+        .then(response => response.json())
+        .then(data => {
+            if (!data) return;
+
+            // 1. Update KPIs
+            if (data.kpis) {
+                document.getElementById('kpiTotalArticles').innerText = data.kpis.total_articles;
+                document.getElementById('kpiPublishedArticles').innerText = data.kpis.published_articles;
+                document.getElementById('kpiPendingArticles').innerText = data.kpis.pending_articles;
+                document.getElementById('kpiQuarantinedArticles').innerText = data.kpis.quarantined_articles;
+                document.getElementById('kpiBlockchainSealed').innerText = data.kpis.blockchain_sealed;
+            }
+
+            // 2. Update Live Stream Table
+            if (data.live_feed && data.live_feed.length > 0) {
+                const tbody = document.getElementById('liveStreamTableBody');
+                let html = '';
+                data.live_feed.forEach(item => {
+                    html += `
+                    <tr>
+                        <td><code>#${item.id}</code></td>
+                        <td>
+                            <a href="${item.url}" target="_blank" style="font-weight: 700; color: var(--text-main); text-decoration: none; display: block; margin-bottom: 4px;">
+                                ${item.title}
+                            </a>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 10px; align-items: center;">
+                                <span>📰 ${item.source}</span>
+                                <span>🏷️ ${item.category}</span>
+                                <span>⏱️ ${item.published_at}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="flex-grow: 1; background: #e2e8f0; height: 8px; border-radius: 999px; overflow: hidden;">
+                                    <div style="width: ${item.fake_probability_pct}%; height: 100%; background: ${item.badge_color};"></div>
+                                </div>
+                                <span style="font-weight: 800; font-size: 0.85rem; color: ${item.badge_color};">
+                                    ${item.fake_probability_pct}%
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: ${item.badge_color}22; color: ${item.badge_color}; border: 1px solid ${item.badge_color}; font-weight: 700; font-size: 0.75rem;">
+                                ${item.verdict_label}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge ${item.badge_class}" style="font-size: 0.76rem;">
+                                ${item.status_badge}
+                            </span>
+                        </td>
+                        <td>
+                            ${item.is_ledger_verified ? `<span class="badge badge-success" title="Block #${item.block_number}">✅ Block #${item.block_number}</span>` : `<span class="badge badge-secondary">অযাচাইকৃত</span>`}
+                        </td>
+                        <td style="text-align: right;">
+                            <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                                <a href="${item.url}" target="_blank" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">
+                                    👁️ দেখুন
+                                </a>
+                                ${item.scrape_status !== 'completed' ? `
+                                <form method="POST" action="/admin/automation/article-override/${item.id}" style="display: inline;">
+                                    <input type="hidden" name="action" value="publish">
+                                    <button type="submit" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;">পোস্ট</button>
+                                </form>` : `
+                                <form method="POST" action="/admin/automation/article-override/${item.id}" style="display: inline;">
+                                    <input type="hidden" name="action" value="quarantine">
+                                    <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;">স্থগিত</button>
+                                </form>`}
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+                document.getElementById('streamLastSync').innerText = new Date().toLocaleTimeString();
+            }
+        })
+        .catch(err => console.debug('Live polling error:', err));
+}
+
+// Start live polling every 2.5 seconds
+setInterval(pollLiveAutomationStatus, 2500);
 </script>
 {% endblock %}

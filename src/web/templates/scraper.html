@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}AI News Scraper & Auto-Pilot Hub - WebCreoling{% endblock %}
+{% block title %}AI News Scraper, Rule Brain & Social Auto-Broadcaster - WebCreoling{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -16,7 +16,7 @@
 
 .kpi-stat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 1.25rem;
     margin-top: 1.5rem;
 }
@@ -63,9 +63,9 @@
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1.15rem;
     border-radius: 0.5rem 0.5rem 0 0;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -139,28 +139,74 @@
 .badge-world { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .badge-social { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
 .badge-portal { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-facebook { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+.badge-telegram { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3); }
+.badge-tiktok { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
 
-/* Task Execution Cards */
-.task-card {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
+/* Selection Badges & Checkboxes */
+.checkbox-badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
 }
 
-.progress-bar-wrap {
+.checkbox-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.35rem 0.75rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.checkbox-badge:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-radius: 1rem;
-    height: 8px;
-    overflow: hidden;
-    margin: 0.75rem 0;
+    color: #fff;
 }
 
-.progress-bar-fill {
-    background: linear-gradient(90deg, #38bdf8, #818cf8);
-    height: 100%;
-    transition: width 0.4s ease;
+.checkbox-badge input[type="checkbox"] {
+    accent-color: #38bdf8;
+}
+
+.checkbox-badge.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #fff;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 </style>
 {% endblock %}
@@ -171,11 +217,11 @@
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
         <div>
             <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                <h1 style="font-size: 2rem; font-weight: 800; color: #fff; margin: 0;">⚡ AI Scraper & Multi-Source Automation Hub</h1>
-                <span class="source-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">AUTOPILOT READY</span>
+                <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff; margin: 0;">⚡ AI Scraper, Brain Rules & Social Auto-Broadcaster</h1>
+                <span class="source-badge" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff;">AUTOPILOT + SOCIAL SYNC</span>
             </div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem; max-width: 750px;">
-                Open public ingestion without API credentials across YouTube Video News, Public Social Briefs, and Worldwide Multi-Lingual Feeds (Google News, Reuters, BBC). Built-in AI Brain automatically translates, evaluates credibility, and publishes directly to our live Newspaper Portal.
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem; max-width: 800px;">
+                কাস্টম এআই রুলস অনুযায়ী আন্তর্জাতিক ও সোশ্যাল নিউজ স্বয়ংক্রিয়ভাবে বাংলায় অনুবাদ, ফিল্টার ও পোর্টালে প্রকাশ। একই সাথে ফেসবুক পেজ (অ্যান্টি-ব্যান ফেইলওভার সহ), ইউটিউব ও টিকটকে সরাসরি অটো-পোস্টিং।
             </p>
         </div>
         <div style="display: flex; gap: 0.75rem;">
@@ -195,21 +241,21 @@
             <div class="kpi-value" style="color: #38bdf8;">{{ stats.total_articles }}</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-title">ডাউনলোডকৃত ছবি ও মিডিয়া</div>
-            <div class="kpi-value" style="color: #a855f7;">{{ stats.total_images }}</div>
-        </div>
-        <div class="kpi-card">
             <div class="kpi-title">লাইভ প্রকাশিত সংবাদ</div>
             <div class="kpi-value" style="color: #10b981;">{{ published_count }}</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-title">অনুমোদন কিউ (Review)</div>
-            <div class="kpi-value" style="color: #f59e0b;">{{ pending_count }}</div>
+            <div class="kpi-title">সক্রিয় এআই রুলস</div>
+            <div class="kpi-value" style="color: #a855f7;">{{ rules|length }} টি</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-title">এআই পাইলট ডিসিশন মোড</div>
-            <div class="kpi-value" style="font-size: 1.2rem; color: #10b981; margin-top: 0.4rem;">
-                ACTIVE 🧠
+            <div class="kpi-title">কানেক্টেড সোশ্যাল পেজ</div>
+            <div class="kpi-value" style="color: #60a5fa;">{{ social_channels|length }} টি</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">ব্রডকাস্ট স্ট্যাটাস</div>
+            <div class="kpi-value" style="font-size: 1.15rem; color: #10b981; margin-top: 0.4rem;">
+                AUTO-SYNC ON 🟢
             </div>
         </div>
     </div>
@@ -217,11 +263,17 @@
 
 <!-- Navigation Tabs -->
 <div class="hub-nav-tabs">
-    <button class="hub-tab-btn active" onclick="switchTab('tab-autopilot')">
-        <span>🧠</span> এআই পাইলট ব্রেন (Auto-Pilot)
+    <button class="hub-tab-btn active" onclick="switchTab('tab-rules')">
+        <span>🧠</span> এআই রুল ইঞ্জিন ও টার্গেটিং (Brain Rules)
+    </button>
+    <button class="hub-tab-btn" onclick="switchTab('tab-social')">
+        <span>📱</span> সোশ্যাল মিডিয়া অটো-পোস্ট (Facebook, YouTube, TikTok)
+    </button>
+    <button class="hub-tab-btn" onclick="switchTab('tab-autopilot')">
+        <span>🤖</span> এআই পাইলট ব্রেন রান (Auto-Pilot)
     </button>
     <button class="hub-tab-btn" onclick="switchTab('tab-youtube')">
-        <span>📺</span> ইউটিউব ও সোশ্যাল মিডিয়া
+        <span>📺</span> ইউটিউব ও সোশ্যাল ওয়্যার
     </button>
     <button class="hub-tab-btn" onclick="switchTab('tab-world')">
         <span>🌍</span> বিশ্বসংবাদ ও অনুবাদ (World News)
@@ -229,18 +281,386 @@
     <button class="hub-tab-btn" onclick="switchTab('tab-portals')">
         <span>📰</span> ঐতিহ্যবাহী সংবাদপত্র পোর্টাল
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-single')">
-        <span>🔗</span> একক ইউআরএল স্ক্র্যাপার
-    </button>
     <button class="hub-tab-btn" onclick="switchTab('tab-tasks')">
         <span>📊</span> লাইভ টাস্ক ও অডিট লগ
     </button>
 </div>
 
+
 <!-- ========================================================================= -->
-<!-- TAB 1: AI PILOT BRAIN AUTOPILOT CONTROL                                   -->
+<!-- TAB 1: AI BRAIN CUSTOM RULE ENGINE & TARGETING                            -->
 <!-- ========================================================================= -->
-<div id="tab-autopilot" class="tab-pane active">
+<div id="tab-rules" class="tab-pane active">
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Create / Configure Rule Card -->
+        <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent);">
+            <div class="card-header">
+                <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">➕ নতুন এআই ব্রেন রুল ও ফিল্টার সেট করুন</h3>
+                    <span style="font-size: 0.8rem; color: #38bdf8;">Set Regions, Countries, Languages & Categories</span>
+                </div>
+                <span class="source-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">RULE BUILDER</span>
+            </div>
+
+            <form method="POST" action="{{ url_for('scraper.save_rule') }}">
+                <div class="form-group">
+                    <label class="form-label">রুলের নাম / শিরোনাম</label>
+                    <input type="text" name="name" class="form-control" placeholder="যেমন: বাংলাদেশ ও দক্ষিণ এশিয়া স্পেশাল" required>
+                </div>
+
+                <!-- Region Selection -->
+                <div class="form-group">
+                    <label class="form-label">টার্গেট অঞ্চল / উপমহাদেশ (Target Regions)</label>
+                    <div class="checkbox-badge-group">
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="bangladesh" checked> 🇧🇩 বাংলাদেশ</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="south_asia" checked> 🌏 দক্ষিণ এশিয়া</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="middle_east"> 🕌 মধ্যপ্রাচ্য</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="usa"> 🇺🇸 আমেরিকা</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="europe"> 🇪🇺 ইউরোপ</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_regions" value="global" checked> 🌐 গ্লোবাল/বিশ্ব</label>
+                    </div>
+                </div>
+
+                <!-- Country Codes -->
+                <div class="form-group">
+                    <label class="form-label">নির্দিষ্ট দেশের কোড (কমা দিয়ে লিখুন)</label>
+                    <input type="text" name="target_countries" class="form-control" placeholder="BD, IN, PK, US, UK, SA, AE, CN, DE">
+                    <small style="color: var(--text-muted); font-size: 0.75rem;">খালি রাখলে নির্বাচিত অঞ্চলের সকল দেশের সংবাদ গ্রহণযোগ্য হবে।</small>
+                </div>
+
+                <!-- Languages Selection -->
+                <div class="form-group">
+                    <label class="form-label">উৎস সংবাদের ভাষা (Source Languages)</label>
+                    <div class="checkbox-badge-group">
+                        <label class="checkbox-badge"><input type="checkbox" name="target_languages" value="bn" checked> বাংলা (Bangla)</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_languages" value="en" checked> ইংরেজি (English)</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_languages" value="hi" checked> হিন্দি (Hindi)</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_languages" value="ar"> আরবি (Arabic)</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_languages" value="ur"> উর্দু (Urdu)</label>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-group">
+                    <label class="form-label">নিউজ ক্যাটাগরি (Categories)</label>
+                    <div class="checkbox-badge-group">
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="politics" checked> 🏛️ রাজনীতি</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="business" checked> 💼 বাণিজ্য</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="technology" checked> 💻 প্রযুক্তি</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="international" checked> 🌍 আন্তর্জাতিক</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="sports" checked> ⚽ খেলাধুলা</label>
+                        <label class="checkbox-badge"><input type="checkbox" name="target_categories" value="science" checked> 🔬 বিজ্ঞান</label>
+                    </div>
+                </div>
+
+                <!-- Keyword Filters -->
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">বাধ্যতামূলক কী-ওয়ার্ড (Required)</label>
+                        <input type="text" name="required_keywords" class="form-control" placeholder="যেমন: AI, বাজেট, নির্বাচন">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">বর্জনীয় / নেগেটিভ কী-ওয়ার্ড (Excluded)</label>
+                        <input type="text" name="excluded_keywords" class="form-control" placeholder="জুয়া, ক্যাসিনো, প্রাপ্তবয়স্ক">
+                    </div>
+                </div>
+
+                <!-- Action Toggles -->
+                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <label style="color: #fff; font-size: 0.9rem; margin: 0;">🌐 বাংলায় স্বয়ংক্রিয় অনুবাদ (Auto-Translate to Bangla)</label>
+                        <input type="checkbox" name="auto_translate_to_bangla" value="1" checked style="transform: scale(1.3); accent-color: #38bdf8;">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <label style="color: #fff; font-size: 0.9rem; margin: 0;">⚡ পোর্টালে সরাসরি অটো-পাবলিশ (Auto-Publish to Portal)</label>
+                        <input type="checkbox" name="auto_publish" value="1" checked style="transform: scale(1.3); accent-color: #10b981;">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="color: #fff; font-size: 0.9rem; margin: 0;">📢 সোশ্যাল মিডিয়া অটো-পোস্ট (Auto-Broadcast Facebook/YouTube/TikTok)</label>
+                        <input type="checkbox" name="auto_broadcast_social" value="1" checked style="transform: scale(1.3); accent-color: #a855f7;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">কাস্টম এআই প্রম্পট রুলস (Custom Guidance)</label>
+                    <textarea name="custom_prompt_rules" class="form-control" rows="2" placeholder="এআই ব্রেনকে নির্দিষ্ট কোনো বিশেষ নির্দেশনা দিতে চাইলে এখানে লিখুন..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 700; padding: 0.75rem;">
+                    💾 এই এআই রুল সেভ ও সক্রিয় করুন
+                </button>
+            </form>
+        </div>
+
+        <!-- Active Rules List -->
+        <div>
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">📋 সক্রিয় এআই টার্গেটিং রুলস (Active Rules)</h3>
+                    <span class="source-badge badge-portal">{{ rules|length }} টি সক্রিয়</span>
+                </div>
+
+                {% if rules %}
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% for rule in rules %}
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.75rem; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                            <div>
+                                <h4 style="margin: 0; color: #fff; font-size: 1.05rem;">{{ rule.name }}</h4>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">তৈরি: {{ rule.created_at[:10] }}</span>
+                            </div>
+                            <span class="source-badge {% if rule.is_active %}badge-portal{% else %}badge-youtube{% endif %}">
+                                {% if rule.is_active %}সক্রিয় (Active){% else %}স্থগিত{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Rule Criteria Badges -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem;">
+                            {% for reg in rule.target_regions %}
+                            <span class="source-badge badge-world" style="font-size: 0.7rem;">🌍 {{ reg }}</span>
+                            {% endfor %}
+                            {% for lang in rule.target_languages %}
+                            <span class="source-badge badge-social" style="font-size: 0.7rem;">🗣️ {{ lang }}</span>
+                            {% endfor %}
+                            {% for cat in rule.target_categories %}
+                            <span class="source-badge badge-portal" style="font-size: 0.7rem;">📂 {{ cat }}</span>
+                            {% endfor %}
+                        </div>
+
+                        {% if rule.custom_prompt_rules %}
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0.5rem 0; font-style: italic;">
+                            "{{ rule.custom_prompt_rules }}"
+                        </p>
+                        {% endif %}
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; margin-top: 0.75rem;">
+                            <div style="font-size: 0.78rem; color: #38bdf8;">
+                                <span>পাবলিশ: {% if rule.auto_publish %}হ্যাঁ ✅{% else %}না ❌{% endif %}</span> |
+                                <span>সোশ্যাল পোস্ট: {% if rule.auto_broadcast_social %}হ্যাঁ 📢{% else %}না ❌{% endif %}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <form method="POST" action="{{ url_for('scraper.toggle_rule', rule_id=rule.id) }}">
+                                    <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                        {% if rule.is_active %}স্থগিত করুন{% else %}সক্রিয় করুন{% endif %}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('scraper.delete_rule', rule_id=rule.id) }}" onsubmit="return confirm('রুলটি মুছে ফেলতে চান?')">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                        মুছুন
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">কোনো রুল তৈরি করা হয়নি।</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- TAB 2: SOCIAL MEDIA AUTO-POSTING & ANTI-BAN FAILOVER                     -->
+<!-- ========================================================================= -->
+<div id="tab-social" class="tab-pane">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0;">📱 কানেক্টেড সোশ্যাল মিডিয়া চ্যানেল ও অ্যান্টি-ব্যান ফেইলওভার</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">
+                ফেসবুক পেজ, ইউটিউব ওয়্যার, টিকটক ও টেলিগ্রাম সংযুক্ত করুন। পেজ রেস্ট্রিক্ট হলে স্বয়ংক্রিয়ভাবে ব্যাকআপ পেজে সুইচ করবে।
+            </p>
+        </div>
+        <button onclick="document.getElementById('addChannelModal').classList.add('active')" class="btn btn-primary">
+            ➕ নতুন সোশ্যাল পেজ / চ্যানেল কানেক্ট করুন
+        </button>
+    </div>
+
+    <!-- Connected Channels Cards Grid -->
+    <div class="source-grid">
+        {% for ch in social_channels %}
+        <div class="source-card" style="border-color: {% if ch.status == 'RESTRICTED' %}rgba(239, 68, 68, 0.4){% elif ch.status == 'BACKUP_ACTIVE' %}rgba(168, 85, 247, 0.4){% else %}rgba(56, 189, 248, 0.2){% endif %};">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                    <span class="source-badge badge-{{ ch.platform }}">
+                        {% if ch.platform == 'facebook' %}🔵 FACEBOOK{% elif ch.platform == 'youtube' %}🔴 YOUTUBE{% elif ch.platform == 'tiktok' %}⚫ TIKTOK{% else %}🔷 TELEGRAM{% endif %}
+                    </span>
+                    <span class="source-badge {% if ch.status == 'HEALTHY' %}badge-portal{% elif ch.status == 'BACKUP_ACTIVE' %}badge-social{% else %}badge-youtube{% endif %}">
+                        {{ ch.status }}
+                    </span>
+                </div>
+
+                <h4 style="color: #fff; font-size: 1.1rem; margin: 0 0 0.35rem 0;">{{ ch.account_name }}</h4>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    <span>ID: {{ ch.page_id_or_channel_id }}</span>
+                    {% if ch.is_primary %}<span style="color: #38bdf8; margin-left: 0.5rem;">(Primary)</span>{% else %}<span style="color: #a855f7; margin-left: 0.5rem;">(Backup)</span>{% endif %}
+                </div>
+
+                {% if ch.failover_account_name %}
+                <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 0.5rem; padding: 0.5rem; font-size: 0.75rem; color: #c084fc; margin-bottom: 0.75rem;">
+                    🛡️ অ্যান্টি-ব্যান ফেইলওভার: <strong>{{ ch.failover_account_name }}</strong>
+                </div>
+                {% endif %}
+
+                <div style="display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    <div>মোট পোস্ট: <strong style="color: #fff;">{{ ch.total_posts_dispatched }}</strong></div>
+                    <div>স্ট্যাটাস: <strong style="color: {% if ch.is_active %}#10b981{% else %}#f87171{% endif %};">{% if ch.is_active %}সক্রিয়{% else %}স্থগিত{% endif %}</strong></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                <form method="POST" action="{{ url_for('scraper.test_broadcast_channel', channel_id=ch.id) }}" style="flex: 1;">
+                    <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 0.4rem;">
+                        ⚡ টেস্ট পোস্ট
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('scraper.toggle_social_channel', channel_id=ch.id) }}">
+                    <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem;">
+                        {% if ch.is_active %}স্থগিত{% else %}অন{% endif %}
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('scraper.delete_social_channel', channel_id=ch.id) }}" onsubmit="return confirm('অ্যাকাউন্ট মুছে ফেলতে চান?')">
+                    <button type="submit" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.4rem;">
+                        মুছুন
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Live Social Media Outbound Broadcast Logs -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">📡 লাইভ সোশ্যাল মিডিয়া আউটবাউন্ড পোস্ট লগ</h3>
+            <span class="source-badge badge-social">DISPATCH LOGS</span>
+        </div>
+
+        {% if broadcast_logs %}
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>প্ল্যাটফর্ম</th>
+                        <th>টার্গেট অ্যাকাউন্ট</th>
+                        <th>আর্টিকেল আইডি</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>এক্সটার্নাল পোস্ট আইডি</th>
+                        <th>সময়</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in broadcast_logs %}
+                    <tr>
+                        <td>
+                            <span class="source-badge badge-{{ log.platform }}">
+                                {{ log.platform|upper }}
+                            </span>
+                        </td>
+                        <td style="font-weight: 600; color: #fff;">{{ log.target_account }}</td>
+                        <td>
+                            {% if log.article_id %}
+                            <a href="{{ url_for('portal.article_reader_view', article_id=log.article_id) }}" target="_blank" style="color: #38bdf8;">
+                                #{{ log.article_id }}
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>
+                            <span class="source-badge {% if log.dispatch_status == 'SUCCESS' %}badge-portal{% elif log.dispatch_status == 'FALLBACK_SWITCHED' %}badge-social{% else %}badge-youtube{% endif %}">
+                                {{ log.dispatch_status }}
+                            </span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">
+                            {{ log.external_post_id or 'N/A' }}
+                        </td>
+                        <td style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.created_at[:19] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">এখনো কোনো সোশ্যাল পোস্ট ব্রডকাস্ট করা হয়নি।</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Connect Social Channel -->
+<div id="addChannelModal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: #fff; font-size: 1.3rem; margin: 0;">➕ নতুন সোশ্যাল অ্যাকাউন্ট সংযুক্ত করুন</h3>
+            <button onclick="document.getElementById('addChannelModal').classList.remove('active')" class="btn btn-secondary" style="padding: 0.2rem 0.6rem;">✕</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('scraper.save_social_channel') }}">
+            <div class="form-group">
+                <label class="form-label">প্ল্যাটফর্ম নির্বাচন করুন</label>
+                <select name="platform" class="form-control" required>
+                    <option value="facebook">Facebook Page (ফেসবুক পেজ)</option>
+                    <option value="youtube">YouTube Channel (ইউটিউব ওয়্যার)</option>
+                    <option value="tiktok">TikTok News (টিকটক ওয়্যার)</option>
+                    <option value="telegram">Telegram Channel (টেলিগ্রাম চ্যানেল)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">অ্যাকাউন্ট বা পেজের নাম</label>
+                <input type="text" name="account_name" class="form-control" placeholder="যেমন: প্রথম আলো অফিসিয়াল ফেসবুক পেজ" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">পেজ আইডি / চ্যানেল আইডি / চ্যাট আইডি</label>
+                <input type="text" name="page_id_or_channel_id" class="form-control" placeholder="যেমন: 109283746519283 বা @ChannelName" required>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">App ID / Client ID (ঐচ্ছিক)</label>
+                    <input type="text" name="app_id" class="form-control" placeholder="fb_app_982374615">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">App Secret (ঐচ্ছিক)</label>
+                    <input type="password" name="app_secret" class="form-control" placeholder="••••••••">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Page Access Token / Bot Token</label>
+                <textarea name="access_token" class="form-control" rows="2" placeholder="EAAK... অথবা Bot Token পেস্ট করুন"></textarea>
+                <small style="color: var(--text-muted); font-size: 0.75rem;">টেস্ট করার জন্য ডিফল্ট স্যাম্পল টোকেন রাখা যাবে।</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">অ্যান্টি-ব্যান ফেইলওভার অ্যাকাউন্ট (পেজ রেস্ট্রিক্ট হলে এটিতে পোস্ট যাবে)</label>
+                <select name="failover_account_id" class="form-control">
+                    <option value="">-- কোনো ফেইলওভার পেজ নেই --</option>
+                    {% for ch in social_channels %}
+                    <option value="{{ ch.id }}">{{ ch.account_name }} ({{ ch.platform|upper }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" onclick="document.getElementById('addChannelModal').classList.remove('active')" class="btn btn-secondary">
+                    বাতিল
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    💾 অ্যাকাউন্ট সংরক্ষণ করুন
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- TAB 3: AI PILOT BRAIN AUTOPILOT CONTROL                                   -->
+<!-- ========================================================================= -->
+<div id="tab-autopilot" class="tab-pane">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Auto-Pilot Run Card -->
         <div class="card" style="border: 1px solid rgba(99, 102, 241, 0.4); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.1), transparent);">
@@ -249,24 +669,24 @@
                     <span style="font-size: 1.5rem;">🤖</span>
                     <div>
                         <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">এআই পাইলট স্বয়ংক্রিয় ডিসিশন ইঞ্জিন</h3>
-                        <span style="font-size: 0.8rem; color: #818cf8;">Neural Translation • Credibility Scoring • Auto-Publish Gate</span>
+                        <span style="font-size: 0.8rem; color: #818cf8;">Rules Matching • Auto-Translation • Auto-Publish • Social Sync</span>
                     </div>
                 </div>
-                <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1;">GEN-AI</span>
+                <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1;">AUTONOMOUS</span>
             </div>
 
             <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
-                একটি ক্লিকেই সকল ওপেন সোর্স (ইউটিউব, রয়টার্স, বিবিসি, গুগল নিউজ) থেকে পাবলিক ডেটা সংগ্রহ করে, ভাষা স্বয়ংক্রিয়ভাবে বাংলায় রূপান্তর করে, ক্লিকবেট ফিল্টার করে এবং বিশ্বস্ততার স্কোর অনুযায়ী সরাসরি লাইভ পোর্টালে পোস্ট করে।
+                একটি ক্লিকেই সক্রিয় রুলস অনুযায়ী সকল ওপেন সোর্স থেকে ডেটা সংগ্রহ করে, বাংলায় রূপান্তর করে, ক্রিপ্টোগ্রাফিক ব্লকচেইনে সিল করে এবং সরাসরি ফেসবুক ও সোশ্যাল চ্যানেলে পোস্ট করে।
             </p>
 
             <form method="POST" action="{{ url_for('scraper.trigger_ai_pilot') }}" style="margin-top: 1.25rem;">
                 <div class="form-group">
                     <label class="form-label" style="display: flex; justify-content: space-between;">
                         <span>স্বয়ংক্রিয় পাবলিশ থ্রেশহোল্ড (Auto-Publish Threshold)</span>
-                        <span id="thresh-val" style="color: #38bdf8; font-weight: 700;">75%</span>
+                        <span id="thresh-val" style="color: #38bdf8; font-weight: 700;">70%</span>
                     </label>
-                    <input type="range" name="threshold" class="form-control" min="50" max="95" value="75" oninput="document.getElementById('thresh-val').innerText = this.value + '%'">
-                    <small style="color: var(--text-muted); font-size: 0.75rem;">এই স্কোরের বেশি হলে সংবাদ সরাসরি ফ্রন্টপেজে যাবে। কম হলে রিভিউ কিউতে যাবে।</small>
+                    <input type="range" name="threshold" class="form-control" min="50" max="95" value="70" oninput="document.getElementById('thresh-val').innerText = this.value + '%'">
+                    <small style="color: var(--text-muted); font-size: 0.75rem;">স্কোর ৭০% বা বেশি হলে সরাসরি ফ্রন্টপেজে এবং সোশ্যাল চ্যানেলে পোস্ট হবে।</small>
                 </div>
 
                 <div class="form-group">
@@ -279,7 +699,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 700; padding: 0.85rem;">
-                    🚀 এআই পাইলট ফুল সাইকেল রান করুন (Run Auto-Pilot)
+                    🚀 এআই পাইলট ফুল সাইকেল চালান (Run Auto-Pilot Cycle)
                 </button>
             </form>
         </div>
@@ -287,40 +707,40 @@
         <!-- AI Brain Architecture Information -->
         <div class="card">
             <div class="card-header">
-                <h3 style="font-size: 1.1rem; font-weight: 600;">🧠 এআই পাইলটের ৪-ধাপের ডিসিশন লজিক</h3>
-                <span style="font-size: 0.8rem; color: #10b981;">100% Autonomous</span>
+                <h3 style="font-size: 1.1rem; font-weight: 600;">🧠 এআই পাইলটের সম্পূর্ণ কার্যপ্রণালী</h3>
+                <span style="font-size: 0.8rem; color: #10b981;">100% Autonomous Pipeline</span>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem;">
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">১</div>
                     <div>
-                        <strong style="color: #fff;">বহুভাষিক ডেটা সংগ্রহ ও অনুবাদ (Multi-Lingual Localization):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">ইংরেজি ও বিদেশি সংবাদ স্বয়ংক্রিয়ভাবে প্রমিত সাংবাদিকতার বাংলা ভাষায় রূপান্তর করে।</p>
+                        <strong style="color: #fff;">রুল ম্যাচিং ও ওপেন ডেটা সংগ্রহ:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">সক্রিয় দেশ, ভাষা ও ক্যাটাগরি অনুযায়ী পাবলিক ইউটিউব, সোশ্যাল ও গ্লোবাল ফিড সংগ্রহ করে।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">২</div>
                     <div>
-                        <strong style="color: #fff;">ক্লিকবেট ও সত্যতা যাচাই (Credibility Scoring 0-100%):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">উৎস, উদ্ধৃতি, লেখার দৈর্ঘ্য এবং ক্লিকবেট শব্দের উপস্থিতি বিশ্লেষণ করে স্কোর নির্ধারণ করে।</p>
+                        <strong style="color: #fff;">বহুভাষিক অনুবাদ (Bangla Localization):</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">বিদেশি ও আঞ্চলিক ভাষার সংবাদ সরাসরি প্রমিত সাংবাদিকতার বাংলায় রূপান্তর করে।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
                     <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৩</div>
                     <div>
-                        <strong style="color: #fff;">এনএলপি ক্যাটাগরি ও সারসংক্ষেপ তৈরি (Multi-Task NLP):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">খবরের বিষয়বস্তু অনুযায়ী ক্যাটাগরি এবং ২-লাইনের আকর্ষণীয় সারসংক্ষেপ তৈরি করে।</p>
+                        <strong style="color: #fff;">স্বয়ংক্রিয় প্রকাশনা ও ব্লকচেইন সিলিং:</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">স্কোর $\ge$ ৭০% হলে সাথে সাথে ডিজিটাল সংবাদপত্রে পাবলিশ এবং SHA-256 ব্লকচেইনে সিল হয়।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৪</div>
+                    <div style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৪</div>
                     <div>
-                        <strong style="color: #fff;">ব্লকচেইন সিল ও স্বয়ংক্রিয় পোস্টিং (Blockchain Auto-Sealing):</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">সরাসরি ফ্রন্টপেজে পোস্ট করার সাথে সাথে SHA-256 ব্লকচেইন লেজারে ডিজিটাল সিগনেচার যুক্ত করে।</p>
+                        <strong style="color: #fff;">সোশ্যাল মিডিয়া অটো-পোস্টিং (Social Sync):</strong>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">প্রকাশিত সংবাদের আকর্ষণীয় শিরোনাম, সারসংক্ষেপ ও লিংক সরাসরি ফেসবুক পেজ ও অন্যান্য চ্যানেলে চলে যায়।</p>
                     </div>
                 </div>
             </div>
@@ -328,40 +748,43 @@
     </div>
 </div>
 
+
 <!-- ========================================================================= -->
-<!-- TAB 2: YOUTUBE & SOCIAL MEDIA FEEDS                                       -->
+<!-- TAB 4: YOUTUBE & SOCIAL CHANNELS                                          -->
 <!-- ========================================================================= -->
 <div id="tab-youtube" class="tab-pane">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
         <div>
-            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0;">📺 ইউটিউব ও সোশ্যাল পাবলিক নিউজ চ্যানেল</h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">কোনো লগইন বা এপিআই কি ছাড়াই ওপেন আরএসএস ও পাবলিক ওয়েব পেজ থেকে ভিডিও প্রতিবেদন সংগ্রহ।</p>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">📺 পাবলিক ইউটিউব ভিডিও নিউজ চ্যানেল ও সোশ্যাল ওয়্যার</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0 0;">কোনো এপিআই কি ছাড়াই ওপেন Atom/RSS ফিড থেকে স্বয়ংক্রিয় এইচডি ভিডিও নিউজ সংগ্রহ।</p>
         </div>
-        <form method="POST" action="{{ url_for('scraper.trigger_social_crawl') }}" style="display: inline;">
+        <form method="POST" action="{{ url_for('scraper.trigger_social_crawl') }}">
             <input type="hidden" name="max_items" value="3">
-            <button type="submit" class="btn btn-primary" style="background: #ef4444; border: none; font-weight: 600;">
-                ▶️ সকল চ্যানেল স্ক্র্যাপ করুন (Ingest All)
+            <button type="submit" class="btn btn-primary" style="background: #ef4444; border: none;">
+                🔥 সকল ইউটিউব চ্যানেল ক্রল করুন
             </button>
         </form>
     </div>
 
     <div class="source-grid">
-        {% for ch_key, ch in youtube_channels.items() %}
+        {% for key, ch in youtube_channels.items() %}
         <div class="source-card">
             <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span class="source-badge badge-youtube">YouTube Video</span>
-                    <span class="badge badge-editor">{{ ch.category }}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span class="source-badge badge-youtube">YOUTUBE WIRE</span>
+                    <span style="font-size: 0.75rem; color: #10b981;">● Public Open</span>
                 </div>
-                <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.25rem 0 0.5rem 0;">{{ ch.name }}</h4>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">চ্যানেল আইডি: <code>{{ ch.channel_id }}</code></p>
+                <h4 style="color: #fff; font-size: 1.1rem; margin: 0 0 0.4rem 0;">{{ ch.name }}</h4>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.75rem;">
+                    ভাষা: <strong>{{ ch.language|upper }}</strong> | ক্যাটাগরি: <strong>{{ ch.category }}</strong>
+                </p>
             </div>
-            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.75rem; color: #34d399;">● পাবলিক আরএসএস লাইভ</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                <span style="font-size: 0.75rem; color: var(--text-muted);">ফিড রেডি</span>
                 <form method="POST" action="{{ url_for('scraper.trigger_social_crawl') }}">
-                    <input type="hidden" name="max_items" value="2">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">
-                        সংগ্রহ করুন
+                    <input type="hidden" name="max_items" value="3">
+                    <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                        ক্রল চালান ⚡
                     </button>
                 </form>
             </div>
@@ -370,40 +793,43 @@
     </div>
 </div>
 
+
 <!-- ========================================================================= -->
-<!-- TAB 3: WORLDWIDE MULTI-LINGUAL NEWS                                      -->
+<!-- TAB 5: WORLDWIDE MULTI-LINGUAL NEWS                                       -->
 <!-- ========================================================================= -->
 <div id="tab-world" class="tab-pane">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
         <div>
-            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0;">🌍 আন্তর্জাতিক বিশ্বসংবাদ ফিডস ও লাইভ ট্রান্সলেশন</h3>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">রয়টার্স, বিবিসি ওয়ার্ল্ড, আল জাজিরা এবং গুগল নিউজের ওপেন ফিড থেকে রিয়েল-টাইম বাংলা রূপান্তর।</p>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">🌍 আন্তর্জাতিক ও বহুভাষিক সংবাদ ওয়্যার (World News Wire)</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.2rem 0 0 0;">রয়টার্স, বিবিসি, আল জাজিরা এবং গুগল নিউজের উন্মুক্ত গ্লোবাল ফিড।</p>
         </div>
-        <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}" style="display: inline;">
+        <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
             <input type="hidden" name="max_items" value="3">
-            <button type="submit" class="btn btn-primary" style="background: #2563eb; border: none; font-weight: 600;">
-                🌐 বিশ্বসংবাদ স্ক্র্যাপ করুন (Ingest Global)
+            <button type="submit" class="btn btn-primary" style="background: #3b82f6; border: none;">
+                🌐 সকল বিশ্বসংবাদ ক্রল করুন
             </button>
         </form>
     </div>
 
     <div class="source-grid">
-        {% for feed_key, feed in world_feeds.items() %}
+        {% for key, feed in world_feeds.items() %}
         <div class="source-card">
             <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span class="source-badge badge-world">World RSS</span>
-                    <span class="badge badge-analyst">{{ feed.lang|upper }} &rarr; BN</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <span class="source-badge badge-world">GLOBAL RSS</span>
+                    <span style="font-size: 0.75rem; color: #10b981;">● Multi-Lingual</span>
                 </div>
-                <h4 style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.25rem 0 0.5rem 0;">{{ feed.name }}</h4>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; word-break: break-all;"><code>{{ feed.url[:45] }}...</code></p>
+                <h4 style="color: #fff; font-size: 1.1rem; margin: 0 0 0.4rem 0;">{{ feed.name }}</h4>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.75rem;">
+                    উৎস ভাষা: <strong>{{ feed.language|upper }}</strong> | ক্যাটাগরি: <strong>{{ feed.category }}</strong>
+                </p>
             </div>
-            <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.75rem; color: #60a5fa;">ক্যাটাগরি: {{ feed.category }}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
+                <span style="font-size: 0.75rem; color: #818cf8;">স্বয়ংক্রিয় বাংলা অনুবাদ</span>
                 <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
-                    <input type="hidden" name="max_items" value="2">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">
-                        সংগ্রহ করুন
+                    <input type="hidden" name="max_items" value="3">
+                    <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                        ক্রল চালান ⚡
                     </button>
                 </form>
             </div>
@@ -412,246 +838,176 @@
     </div>
 </div>
 
+
 <!-- ========================================================================= -->
-<!-- TAB 4: TRADITIONAL NEWSPAPER PORTALS                                      -->
+<!-- TAB 6: TRADITIONAL NEWSPAPER PORTALS & SINGLE URL SCRAPER                 -->
 <!-- ========================================================================= -->
 <div id="tab-portals" class="tab-pane">
     <div class="grid-2" style="margin-bottom: 2rem;">
-        <!-- Portal Crawl Trigger -->
+        <!-- Single URL Scraper -->
         <div class="card">
             <div class="card-header">
-                <h3 style="font-size: 1.1rem; font-weight: 600;">⚡ দৈনিক সংবাদপত্র পোর্টাল ক্রলার</h3>
-                <span class="badge badge-editor">Multi-Category Traverser</span>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">🔗 একক ইউআরএল দিয়ে সরাসরি সংবাদ সংরক্ষণ</h3>
+                <span class="source-badge badge-portal">URL EXTRACTOR</span>
             </div>
-            <form method="POST" action="{{ url_for('scraper.trigger_crawl') }}">
-                <div class="form-group">
-                    <label class="form-label">টার্গেট পোর্টাল সিলেক্ট করুন</label>
-                    <select name="site_key" class="form-control" required>
-                        {% for key, site in sites.items() %}
-                            {% if site.enabled and site.js_mode != 'skip' %}
-                            <option value="{{ key }}">{{ site.name }} ({{ site.domain }}) - মোড: {{ site.js_mode }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                যেকোনো বাংলা বা ইংরেজি সংবাদ লিংক দিলে এআই ব্রেন স্বয়ংক্রিয়ভাবে মূল টেক্সট, ছবি ও মেটাডাটা প্রসেস করে সংরক্ষণ করবে।
+            </p>
 
+            <form method="POST" action="{{ url_for('scraper.scrape_single_url') }}">
                 <div class="form-group">
-                    <label class="form-label">প্রতি ক্যাটাগরিতে পেজিনেশন গভীরতা (Max Pages)</label>
-                    <input type="number" name="max_pages" class="form-control" value="2" min="1" max="10">
+                    <label class="form-label">সংবাদের সম্পূর্ণ URL</label>
+                    <input type="url" name="url" class="form-control" placeholder="https://www.prothomalo.com/bangladesh/article-slug..." required>
                 </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    পোর্টাল ক্রল শুরু করুন (Start Crawl)
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">সংবাদ সাইট (ঐচ্ছিক)</label>
+                        <select name="site_key" class="form-control">
+                            <option value="">স্বয়ংক্রিয় সনাক্তকরণ</option>
+                            {% for key, site in sites.items() %}
+                            <option value="{{ key }}">{{ site.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ক্যাটাগরি ওভাররাইড (ঐচ্ছিক)</label>
+                        <input type="text" name="category" class="form-control" placeholder="politics, business, tech">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 700;">
+                    📥 সংবাদটি সংগ্রহ ও এআই মূল্যায়ন করুন
                 </button>
             </form>
         </div>
 
-        <!-- Portals Info Table -->
+        <!-- Configured Portals Quick Crawl -->
         <div class="card">
             <div class="card-header">
-                <h3 style="font-size: 1.1rem; font-weight: 600;">কনফিগার করা পোর্টালসমূহ</h3>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">📰 ঐতিহ্যবাহী বাংলা সংবাদপত্র পোর্টাল</h3>
+                <span class="source-badge badge-portal">{{ sites|length }} সাইট কনফিগার করা</span>
             </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>পোর্টাল</th>
-                            <th>জেএস মোড</th>
-                            <th>স্ট্যাটাস</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for key, site in sites.items() %}
-                        <tr>
-                            <td style="font-weight: 600; color: #fff;">{{ site.name }}</td>
-                            <td><span class="badge badge-analyst">{{ site.js_mode }}</span></td>
-                            <td>
-                                {% if site.enabled and site.js_mode != 'skip' %}
-                                <span style="color: #10b981; font-weight: 600;">Active</span>
-                                {% else %}
-                                <span style="color: #ef4444; font-weight: 600;">Skipped</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for key, site in sites.items() %}
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.06);">
+                    <div>
+                        <strong style="color: #fff; font-size: 0.95rem;">{{ site.name }}</strong>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ site.base_url }}</div>
+                    </div>
+                    <form method="POST" action="{{ url_for('scraper.trigger_crawl') }}">
+                        <input type="hidden" name="site_key" value="{{ key }}">
+                        <input type="hidden" name="max_pages" value="2">
+                        <button type="submit" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                            ক্রল চালান ⚡
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- TAB 5: SINGLE URL SCRAPER                                                 -->
-<!-- ========================================================================= -->
-<div id="tab-single" class="tab-pane">
-    <div class="card" style="max-width: 800px; margin: 0 auto 2rem auto;">
-        <div class="card-header">
-            <h3 style="font-size: 1.1rem; font-weight: 600;">🔗 একক সংবাদ ইউআরএল ডিপ স্ক্র্যাপার ও এআই ইনস্পেকশন</h3>
-            <span class="badge badge-editor">Instant Extraction</span>
-        </div>
-        <form method="POST" action="{{ url_for('scraper.scrape_single_url') }}">
-            <div class="form-group">
-                <label class="form-label">আর্টিকেল ইউআরএল (Article URL)</label>
-                <input type="url" name="url" class="form-control" placeholder="https://www.prothomalo.com/bangladesh/..." required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">ক্যাটাগরি ওভাররাইড (ঐচ্ছিক)</label>
-                <select name="category" class="form-control">
-                    <option value="">স্বয়ংক্রিয় এআই ক্যাটাগরি ডিটেকশন</option>
-                    <option value="bangladesh">বাংলাদেশ (Bangladesh)</option>
-                    <option value="politics">রাজনীতি (Politics)</option>
-                    <option value="sports">খেলাধুলা (Sports)</option>
-                    <option value="business">বাণিজ্য (Business)</option>
-                    <option value="technology">প্রযুক্তি (Technology)</option>
-                    <option value="international">আন্তর্জাতিক (International)</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                স্ক্র্যাপ ও এআই মূল্যায়ন করুন (Scrape & Evaluate)
-            </button>
-        </form>
-    </div>
-</div>
 
 <!-- ========================================================================= -->
-<!-- TAB 6: TASKS & AUDIT LOGS                                                 -->
+<!-- TAB 7: LIVE TASKS, AUDIT LOGS & SCHEDULERS                                -->
 <!-- ========================================================================= -->
 <div id="tab-tasks" class="tab-pane">
-    <!-- Active Tasks Stream -->
-    <div class="card" style="margin-bottom: 2rem;">
-        <div class="card-header">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span class="live-dot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
-                <h3 style="font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0;">রিয়েল-টাইম ব্যাকগ্রাউন্ড টাস্কসমূহ (Live Async Workers)</h3>
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Scheduled Background Jobs -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">⏱️ ব্যাকগ্রাউন্ড শিডিউলড অটোমেশন জবস</h3>
+                <span class="source-badge badge-portal">CRON SCHEDULER</span>
             </div>
-            <button onclick="refreshTaskStatus()" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
-                🔄 রিফ্রেশ
-            </button>
-        </div>
 
-        <div id="tasks-container">
-            {% for task in recent_tasks %}
-            <div class="task-card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong style="color: #fff; font-size: 1rem;">{{ task.title }}</strong>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">ID: {{ task.task_id }}</span>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for job in scheduled_jobs %}
+                <div style="background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.06);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #fff; font-size: 0.9rem;">{{ job.name }}</strong>
+                        <span class="source-badge badge-portal" style="font-size: 0.7rem;">প্রতি {{ job.interval_seconds // 60 }} মিনিট</span>
                     </div>
-                    <span class="badge badge-{{ 'admin' if task.status == 'SUCCESS' else ('editor' if task.status == 'RUNNING' else 'analyst') }}">
-                        {{ task.status }}
-                    </span>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+                        <span>রান সংখ্যা: {{ job.run_count }} বার</span>
+                        <span>পরবর্তী রান: {{ job.next_run[:19] if job.next_run else 'এখনই' }}</span>
+                    </div>
                 </div>
-                <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill" style="width: {{ task.progress_pct }}%;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
-                    <span>প্রগ্রেস: {{ task.progress_pct }}%</span>
-                    <span>সময়: {{ task.elapsed_seconds }}s</span>
-                </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <p style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">কোনো সক্রিয় বা সাম্প্রতিক ব্যাকগ্রাউন্ড টাস্ক নেই।</p>
-            {% endfor %}
         </div>
-    </div>
 
-    <!-- Audit Logs -->
-    <div class="card">
-        <div class="card-header">
-            <h3 style="font-size: 1.1rem; font-weight: 600;">স্ক্র্যাপিং অডিট লগ (Scrape Audit History)</h3>
-        </div>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>উৎস</th>
-                        <th>শুরুর সময়</th>
-                        <th>সংরক্ষিত</th>
-                        <th>ছবি</th>
-                        <th>ত্রুটি</th>
-                        <th>স্ট্যাটাস</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>#{{ log.id }}</td>
-                        <td style="font-weight: 600; color: #fff;">{{ log.source }}</td>
-                        <td>{{ log.start_time }}</td>
-                        <td><span style="color: #10b981; font-weight: 600;">{{ log.articles_saved }}</span></td>
-                        <td>{{ log.images_downloaded }}</td>
-                        <td>{{ log.errors_count }}</td>
-                        <td>
-                            <span class="badge badge-{{ 'admin' if log.status == 'completed' else 'editor' }}">
-                                {{ log.status }}
+        <!-- Recent Tasks Progress -->
+        <div class="card">
+            <div class="card-header">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">⚡ চলমান ও সাম্প্রতিক টাস্ক</h3>
+                <button onclick="refreshTaskStatus()" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">🔄 রিফ্রেশ</button>
+            </div>
+
+            <div id="live-tasks-container">
+                {% if recent_tasks %}
+                    {% for task in recent_tasks %}
+                    <div style="background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: #fff; font-size: 0.85rem;">{{ task.name }}</strong>
+                            <span class="source-badge {% if task.status == 'COMPLETED' %}badge-portal{% elif task.status == 'RUNNING' %}badge-world{% else %}badge-youtube{% endif %}" style="font-size: 0.7rem;">
+                                {{ task.status }} ({{ task.progress }}%)
                             </span>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; color: var(--text-muted);">কোনো লগ পাওয়া যায়নি।</td>
-                    </tr>
+                        </div>
+                        <div class="progress-bar-wrap" style="height: 6px; margin: 0.5rem 0;">
+                            <div class="progress-bar-fill" style="width: {{ task.progress }}%;"></div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                            <span>{{ task.message }}</span>
+                            <span>{{ task.completed_at[:19] if task.completed_at else task.started_at[:19] if task.started_at else '' }}</span>
+                        </div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 1.5rem 0;">বর্তমানে কোনো ব্যাকগ্রাউন্ড টাস্ক চলমান নেই।</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
+// Tab Switching Helper
 function switchTab(tabId) {
-    document.querySelectorAll('.hub-tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-    
-    event.currentTarget.classList.add('active');
-    const target = document.getElementById(tabId);
-    if (target) {
-        target.classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.hub-tab-btn').forEach(el => el.classList.remove('active'));
+
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) {
+        targetTab.classList.add('active');
     }
+
+    event.currentTarget.classList.add('active');
+    history.replaceState(null, null, '?tab=' + tabId.replace('tab-', ''));
 }
 
+// Auto-activate tab from URL query param if present
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        const targetBtn = Array.from(document.querySelectorAll('.hub-tab-btn')).find(b => b.getAttribute('onclick').includes(tabParam));
+        if (targetBtn) {
+            targetBtn.click();
+        }
+    }
+});
+
+// Periodic live status refresher
 function refreshTaskStatus() {
-    fetch("{{ url_for('scraper.api_scraper_status') }}")
-        .then(r => r.json())
+    fetch('{{ url_for("scraper.api_scraper_status") }}')
+        .then(res => res.json())
         .then(data => {
-            const container = document.getElementById("tasks-container");
-            if (!container) return;
-            if (data.tasks && data.tasks.length > 0) {
-                let html = "";
-                data.tasks.forEach(task => {
-                    const badgeClass = task.status === 'SUCCESS' ? 'badge-admin' : (task.status === 'RUNNING' ? 'badge-editor' : 'badge-analyst');
-                    html += `
-                        <div class="task-card">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong style="color: #fff; font-size: 1rem;">${task.title}</strong>
-                                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">ID: ${task.task_id}</span>
-                                </div>
-                                <span class="badge ${badgeClass}">${task.status}</span>
-                            </div>
-                            <div class="progress-bar-wrap">
-                                <div class="progress-bar-fill" style="width: ${task.progress_pct}%;"></div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary);">
-                                <span>প্রগ্রেস: ${task.progress_pct}%</span>
-                                <span>সময়: ${task.elapsed_seconds}s</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            }
+            console.log("Scraper telemetry update:", data);
         })
-        .catch(err => console.error("Error updating tasks:", err));
+        .catch(err => console.error("Telemetry refresh error:", err));
 }
 
-// Auto-refresh tasks every 6 seconds
-setInterval(refreshTaskStatus, 6000);
+setInterval(refreshTaskStatus, 15000);
 </script>
 {% endblock %}

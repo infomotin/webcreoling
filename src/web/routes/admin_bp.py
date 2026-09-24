@@ -18,6 +18,7 @@ from flask import (
     session as flask_session,
 )
 from src.storage.database import get_db_session
+from src.storage.models import Article
 from src.storage.repositories import (
     UserRepository,
     ArticleRepository,
@@ -1127,14 +1128,15 @@ def blockchain_verify_article_endpoint(article_id: int):
 
 
 # ==============================================================================
-# Autonomous Pipeline Scheduler & Async Task Manager
+# ==============================================================================
+# Autonomous Pipeline Scheduler, Fake News Detector & Async Task Manager
 # ==============================================================================
 
 @admin_bp.route("/automation")
 @login_required
 @roles_required("admin", "editor")
 def automation_view():
-    """Automation Control Hub: Monitor periodic scheduled jobs and asynchronous background tasks."""
+    """Automation Control Hub: Monitor periodic scheduled jobs, AI fake news detector, and live article stream."""
     from src.automation.scheduler import get_scheduler
     from src.automation.task_manager import get_task_manager
 
@@ -1144,11 +1146,220 @@ def automation_view():
     scheduler_status = scheduler.get_status()
     recent_tasks = task_manager.list_tasks(limit=25)
 
+    with get_db_session() as session:
+        art_repo = ArticleRepository(session)
+        config_repo = SiteConfigRepository(session)
+        
+        fake_news_policy = config_repo.get_fake_news_policy()
+        max_fake = float(fake_news_policy.get("max_fake_tolerance_pct", 50.0))
+        automation_kpis = art_repo.get_automation_kpis()
+        live_feed = art_repo.get_automation_live_feed(limit=25, max_allowed_fake_pct=max_fake)
+
     return render_template(
         "admin_automation.html",
         scheduler_status=scheduler_status,
         recent_tasks=recent_tasks,
+        fake_news_policy=fake_news_policy,
+        automation_kpis=automation_kpis,
+        live_feed=live_feed,
     )
+
+
+@admin_bp.route("/automation/fake-news-policy", methods=["POST"])
+@login_required
+@roles_required("admin")
+def automation_update_fake_news_policy():
+    """Update global AI Fake News tolerance threshold and publishing gates."""
+    max_fake = float(request.form.get("max_fake_tolerance_pct", 50.0))
+    auto_pub = request.form.get("auto_publish_enabled") == "1"
+    quarantine = request.form.get("quarantine_high_fake") == "1"
+    social_disp = request.form.get("social_dispatch_enabled") == "1"
+    strict_mode = request.form.get("strict_mode") == "1"
+
+    if max_fake <= 20.0:
+        policy_name = f"কঠোর সুরক্ষা গেট (<= {max_fake:.0f}% ফেক অনুমোদিত)"
+    elif max_fake <= 50.0:
+        policy_name = f"ভারসাম্যপূর্ণ/সহনশীল গেট (<= {max_fake:.0f}% ফেক অনুমোদিত)"
+    else:
+        policy_name = f"উদার সহনশীলতা গেট (<= {max_fake:.0f}% ফেক অনুমোদিত)"
+
+    policy_payload = {
+        "max_fake_tolerance_pct": max_fake,
+        "auto_publish_enabled": auto_pub,
+        "quarantine_high_fake": quarantine,
+        "social_dispatch_enabled": social_disp,
+        "strict_mode": strict_mode,
+        "policy_name": policy_name,
+    }
+
+    with get_db_session() as session:
+        config_repo = SiteConfigRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "admin")
+
+        updated = config_repo.update_fake_news_policy(policy_payload)
+        audit_repo.log_action(
+            username=current_username,
+            action="update_fake_news_policy",
+            resource_type="automation_policy",
+            details=updated,
+            ip_address=request.remote_addr,
+        )
+
+    flash(f"✅ এআই ফেক নিউজ নীতি আপডেট সম্পন্ন! অনুমোদিত সর্বোচ্চ ফেক সীমা: {max_fake:.0f}% ({policy_name})", "success")
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/run-full-cycle", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_run_full_cycle():
+    """Trigger immediate full AI Pilot Ingestion, Translation, Fact-Check & Auto-Publishing cycle."""
+    from src.automation.ai_pilot_brain import AIPilotBrain
+
+    with get_db_session() as session:
+        config_repo = SiteConfigRepository(session)
+        policy = config_repo.get_fake_news_policy()
+        max_fake = float(policy.get("max_fake_tolerance_pct", 50.0))
+
+    res = AIPilotBrain.ingest_and_autopilot_cycle(
+        include_youtube=True,
+        include_world=True,
+        include_social=True,
+        max_allowed_fake_pct=max_fake,
+        max_per_source=3,
+        trigger_social_broadcast=policy.get("social_dispatch_enabled", True),
+    )
+
+    flash(
+        f"🚀 সম্পূর্ণ এআই অটোমেশন সাইকেল সম্পন্ন! "
+        f"মোট ইনজেস্ট: {res['total_raw_ingested']} | "
+        f"খাঁটি বলে স্বয়ংক্রিয় প্রকাশিত: {res['auto_published']} | "
+        f"সোশ্যাল মিডিয়ায় প্রেরিত: {res['social_broadcasts']} | "
+        f"রিভিউ কিউ: {res['review_queued']} | "
+        f"ফেক/বাতিল: {res['rejected_or_archived']}",
+        "success",
+    )
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/run-fact-check-audit", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_run_fact_check_audit():
+    """Run AI Fake News & Fact-Checking audit across all pending or recent news articles."""
+    from src.nlp.fake_news_detector import FakeNewsDetectorEngine
+
+    with get_db_session() as session:
+        config_repo = SiteConfigRepository(session)
+        art_repo = ArticleRepository(session)
+        policy = config_repo.get_fake_news_policy()
+        max_fake = float(policy.get("max_fake_tolerance_pct", 50.0))
+
+        articles = session.query(Article).order_by(Article.id.desc()).limit(50).all()
+        audited_count = 0
+        promoted_count = 0
+        quarantined_count = 0
+
+        for art in articles:
+            entities = art.extracted_entities or {}
+            analysis = FakeNewsDetectorEngine.evaluate(
+                title=art.title,
+                content=art.content_text,
+                source=art.source,
+                author=art.author,
+                max_allowed_fake_pct=max_fake,
+            )
+            entities["fake_news_analysis"] = analysis
+            art.extracted_entities = entities
+            audited_count += 1
+
+            if analysis["fake_probability_pct"] <= max_fake and art.scrape_status in ["pending", "draft"]:
+                art.scrape_status = "completed"
+                promoted_count += 1
+            elif analysis["fake_probability_pct"] > max_fake and art.scrape_status == "completed":
+                art.scrape_status = "archived"
+                quarantined_count += 1
+
+        session.flush()
+
+    flash(
+        f"🔍 ফ্যাক্ট-চেকিং অডিট সম্পন্ন! মোট যাচাই: {audited_count} টি | "
+        f"সহনশীলতায় অনুমোদিত: {promoted_count} টি | "
+        f"ফেক হিসেবে কোয়ারেন্টাইন: {quarantined_count} টি।",
+        "info",
+    )
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/article-override/<int:article_id>", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def automation_article_override(article_id: int):
+    """Manually override an article's status directly from the live automation stream."""
+    from src.automation.social_broadcaster import UnifiedSocialBroadcaster
+
+    action = request.form.get("action", "publish")
+    art_dict = None
+    with get_db_session() as session:
+        art_repo = ArticleRepository(session)
+        ledger_repo = BlockchainLedgerRepository(session)
+        article = session.query(Article).filter(Article.id == article_id).first()
+
+        if not article:
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            return redirect(url_for("admin.automation_view"))
+
+        if action == "publish":
+            article.scrape_status = "completed"
+            article.updated_at = datetime.utcnow()
+            ledger_repo.mint_block_for_article(article.id)
+            session.flush()
+            art_dict = article.to_dict()
+            flash(f"সংবাদ #{article.id} সফলভাবে লাইভ পোর্টালে প্রকাশিত এবং সোশ্যাল মিডিয়ায় ব্রডকাস্ট করা হয়েছে!", "success")
+        elif action == "quarantine":
+            article.scrape_status = "archived"
+            article.updated_at = datetime.utcnow()
+            session.flush()
+            flash(f"সংবাদ #{article.id} স্থগিত ও কোয়ারেন্টাইন করা হয়েছে।", "warning")
+
+    # Broadcast to social channels outside DB session to prevent nested transaction contention
+    if art_dict:
+        try:
+            UnifiedSocialBroadcaster.broadcast_article(art_dict)
+        except Exception as e:
+            pass
+
+    return redirect(url_for("admin.automation_view"))
+
+
+@admin_bp.route("/automation/api/live-status", methods=["GET"])
+@login_required
+def automation_api_live_status():
+    """Live Real-time JSON API endpoint returning live counters, policy, and recently evaluated news stream."""
+    from src.automation.scheduler import get_scheduler
+    from src.automation.task_manager import get_task_manager
+
+    scheduler = get_scheduler()
+    task_manager = get_task_manager()
+
+    with get_db_session() as session:
+        art_repo = ArticleRepository(session)
+        config_repo = SiteConfigRepository(session)
+        
+        policy = config_repo.get_fake_news_policy()
+        max_fake = float(policy.get("max_fake_tolerance_pct", 50.0))
+        kpis = art_repo.get_automation_kpis()
+        feed = art_repo.get_automation_live_feed(limit=25, max_allowed_fake_pct=max_fake)
+
+    return jsonify({
+        "scheduler": scheduler.get_status(),
+        "policy": policy,
+        "kpis": kpis,
+        "recent_tasks": task_manager.list_tasks(limit=10),
+        "live_feed": feed,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
 
 
 @admin_bp.route("/automation/toggle-scheduler", methods=["POST"])

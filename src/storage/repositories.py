@@ -26,6 +26,9 @@ from src.storage.models import (
     BlockedCountry,
     SecurityThreatLog,
     ArticleBlockLedger,
+    AIBrainCustomRule,
+    SocialChannelConfig,
+    SocialBroadcastLog,
 )
 from src.common.blockchain import BlockchainLedgerEngine
 
@@ -681,6 +684,18 @@ class ArticleRepository:
             "breaking_count": breaking_count,
         }
 
+    def get_database_stats(self) -> Dict[str, Any]:
+        """Fetch general article and database statistics."""
+        kpis = self.get_editorial_kpis()
+        return {
+            "total_articles": kpis.get("total_articles", 0),
+            "completed_articles": kpis.get("published_count", 0),
+            "pending_articles": kpis.get("pending_count", 0),
+            "archived_articles": kpis.get("archived_count", 0),
+            "featured_articles": kpis.get("featured_count", 0),
+            "breaking_articles": kpis.get("breaking_count", 0),
+        }
+
     def toggle_featured(self, article_id: int) -> bool:
         """Toggle featured/lead status of an article."""
         article = self.session.query(Article).filter(Article.id == article_id).first()
@@ -744,6 +759,97 @@ class ArticleRepository:
             "total_count": total_count,
             "page": page,
             "total_pages": total_pages,
+        }
+
+    def get_automation_live_feed(self, limit: int = 25, max_allowed_fake_pct: float = 50.0) -> List[Dict[str, Any]]:
+        """Fetch real-time feed of recently processed/scraped articles with live fact-checking and fake news metrics."""
+        from src.nlp.fake_news_detector import FakeNewsDetectorEngine
+        articles = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .order_by(Article.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+        feed = []
+        for art in articles:
+            entities = art.extracted_entities or {}
+            fake_analysis = entities.get("fake_news_analysis")
+            if not fake_analysis:
+                # Calculate on the fly and persist
+                fake_analysis = FakeNewsDetectorEngine.evaluate(
+                    title=art.title,
+                    content=art.content_text,
+                    source=art.source,
+                    author=art.author,
+                    max_allowed_fake_pct=max_allowed_fake_pct,
+                )
+                entities["fake_news_analysis"] = fake_analysis
+                art.extracted_entities = entities
+                self.session.flush()
+
+            lead_img = None
+            if art.images:
+                lead_img = art.images[0].local_path or art.images[0].original_url
+
+            # Formatting decision badge
+            is_fake = fake_analysis["fake_probability_pct"] > max_allowed_fake_pct
+            if art.scrape_status == "completed":
+                status_badge = "PUBLISHED"
+                status_label = "পোর্টাল ও সোশ্যাল মিডিয়ায় প্রকাশিত"
+                badge_class = "badge-success"
+            elif art.scrape_status == "pending":
+                status_badge = "PENDING_REVIEW"
+                status_label = "রিভিউ কিউতে অপেক্ষমান"
+                badge_class = "badge-warning"
+            else:
+                status_badge = "QUARANTINED"
+                status_label = "স্থগিত / কোয়ারেন্টাইন"
+                badge_class = "badge-danger" if is_fake else "badge-secondary"
+
+            feed.append({
+                "id": art.id,
+                "title": art.title,
+                "source": art.source,
+                "category": art.category or "জাতীয়",
+                "author": art.author or art.source,
+                "published_at": art.published_at.strftime("%I:%M %p, %d %b") if art.published_at else (art.created_at.strftime("%I:%M %p, %d %b") if art.created_at else "এখন"),
+                "lead_image": lead_img,
+                "scrape_status": art.scrape_status,
+                "status_badge": status_badge,
+                "status_label": status_label,
+                "badge_class": badge_class,
+                "is_ledger_verified": bool(art.is_ledger_verified),
+                "block_number": art.block_number,
+                "fake_probability_pct": fake_analysis.get("fake_probability_pct", 0.0),
+                "factuality_score": fake_analysis.get("factuality_score", 100.0),
+                "clickbait_score": fake_analysis.get("clickbait_score", 0.0),
+                "verdict": fake_analysis.get("verdict", "AUTHENTIC"),
+                "verdict_label": fake_analysis.get("verdict_label", "যাচাইকৃত"),
+                "badge_color": fake_analysis.get("badge_color", "#10b981"),
+                "is_publishable": fake_analysis.get("is_publishable", True),
+                "decision_text": fake_analysis.get("decision_text", ""),
+                "flags": fake_analysis.get("flags", []),
+                "url": f"/news/{art.id}",
+            })
+
+        return feed
+
+    def get_automation_kpis(self) -> Dict[str, Any]:
+        """Fetch high-level counters for the automation hub."""
+        total = self.session.query(func.count(Article.id)).scalar() or 0
+        published = self.session.query(func.count(Article.id)).filter(Article.scrape_status == "completed").scalar() or 0
+        pending = self.session.query(func.count(Article.id)).filter(Article.scrape_status.in_(["pending", "draft", "partial"])).scalar() or 0
+        quarantined = self.session.query(func.count(Article.id)).filter(Article.scrape_status == "archived").scalar() or 0
+        blockchain_sealed = self.session.query(func.count(Article.id)).filter(Article.is_ledger_verified == True).scalar() or 0
+
+        return {
+            "total_articles": total,
+            "published_articles": published,
+            "pending_articles": pending,
+            "quarantined_articles": quarantined,
+            "blockchain_sealed": blockchain_sealed,
         }
 
     def get_available_archive_dates(self, limit: int = 60) -> List[str]:
@@ -1125,6 +1231,27 @@ class SiteConfigRepository:
         for r in records:
             configs[r.key] = r.value
         return configs
+
+    def get_fake_news_policy(self) -> Dict[str, Any]:
+        """Fetch active AI Fake News & Fact-Checking policy thresholds and gates."""
+        default_policy = {
+            "max_fake_tolerance_pct": 50.0,
+            "auto_publish_enabled": True,
+            "quarantine_high_fake": True,
+            "social_dispatch_enabled": True,
+            "strict_mode": False,
+            "policy_name": "স্ট্যান্ডার্ড সহনশীলতা গেট (<= ৫০% ফেক অনুমোদিত)",
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        return self.get_config("automation_fake_news_policy", default_policy)
+
+    def update_fake_news_policy(self, policy_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update and persist AI Fake News & Fact-Checking tolerance policy."""
+        current = self.get_fake_news_policy()
+        current.update(policy_data)
+        current["updated_at"] = datetime.utcnow().isoformat()
+        self.set_config("automation_fake_news_policy", current)
+        return current
 
     def seed_default_configs(self) -> None:
         defaults = {
@@ -1635,6 +1762,16 @@ class SecurityRepository:
 
         return True
 
+    def prune_expired_blocks(self) -> int:
+        """Remove expired IP blacklist records from the database."""
+        now = datetime.utcnow()
+        expired = self.session.query(BlockedIP).filter(BlockedIP.expires_at != None, BlockedIP.expires_at <= now).all()
+        count = len(expired)
+        for r in expired:
+            self.session.delete(r)
+        self.session.flush()
+        return count
+
     def get_blocked_countries(self) -> List[BlockedCountry]:
         """Fetch all country geo-firewall rules."""
         return self.session.query(BlockedCountry).order_by(BlockedCountry.id.desc()).all()
@@ -1872,8 +2009,14 @@ class BlockchainLedgerRepository:
             else:
                 blk.prev_block_hash = prev_hash
 
+            ts_str = blk.timestamp.isoformat() if blk.timestamp else datetime.utcnow().isoformat()
             blk.block_hash = BlockchainLedgerEngine.calculate_block_hash(
-                idx, blk.timestamp or datetime.utcnow(), blk.merkle_root or "", blk.prev_block_hash, blk.nonce or 0
+                block_number=idx,
+                article_id=blk.article_id or 0,
+                merkle_root=blk.merkle_root or "",
+                prev_block_hash=blk.prev_block_hash,
+                timestamp_iso=ts_str,
+                nonce=blk.nonce or 0,
             )
             blk.digital_signature = BlockchainLedgerEngine.generate_digital_signature(blk.block_hash)
             blk.verification_status = "VALID"
@@ -1973,5 +2116,378 @@ class BlockchainLedgerRepository:
             "hash_algorithm": "SHA-256 + Merkle Tree",
             "signature_algorithm": "HMAC-SHA256 Server Key",
         }
+
+
+# ==============================================================================
+# AI Brain Custom Rule Engine Repository
+# ==============================================================================
+
+class AIBrainRuleRepository:
+    """Repository handling custom AI Brain filtering, geo-targeting, language, and translation rules."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_all_rules(self) -> List[AIBrainCustomRule]:
+        """Fetch all configured AI Brain rules."""
+        return self.session.query(AIBrainCustomRule).order_by(AIBrainCustomRule.id.asc()).all()
+
+    def get_active_rules(self) -> List[AIBrainCustomRule]:
+        """Fetch active targeting rules."""
+        rules = self.session.query(AIBrainCustomRule).filter(AIBrainCustomRule.is_active == True).all()
+        if not rules:
+            self.seed_default_rules()
+            rules = self.session.query(AIBrainCustomRule).filter(AIBrainCustomRule.is_active == True).all()
+        return rules
+
+    def get_rule_by_id(self, rule_id: int) -> Optional[AIBrainCustomRule]:
+        """Fetch single rule by ID."""
+        return self.session.query(AIBrainCustomRule).filter(AIBrainCustomRule.id == rule_id).first()
+
+    def create_or_update_rule(
+        self,
+        name: str,
+        target_regions: Optional[List[str]] = None,
+        target_countries: Optional[List[str]] = None,
+        target_languages: Optional[List[str]] = None,
+        target_categories: Optional[List[str]] = None,
+        required_keywords: Optional[List[str]] = None,
+        excluded_keywords: Optional[List[str]] = None,
+        allowed_portal_sources: Optional[List[str]] = None,
+        min_credibility_score: float = 70.0,
+        auto_translate_to_bangla: bool = True,
+        auto_publish: bool = True,
+        auto_broadcast_social: bool = True,
+        custom_prompt_rules: Optional[str] = None,
+        is_active: bool = True,
+        rule_id: Optional[int] = None,
+    ) -> AIBrainCustomRule:
+        """Create a new AI Brain targeting rule or update existing."""
+        if rule_id:
+            rule = self.get_rule_by_id(rule_id)
+            if not rule:
+                rule = AIBrainCustomRule()
+                self.session.add(rule)
+        else:
+            rule = AIBrainCustomRule()
+            self.session.add(rule)
+
+        rule.name = name.strip()
+        rule.target_regions = target_regions or []
+        rule.target_countries = target_countries or []
+        rule.target_languages = target_languages or []
+        rule.target_categories = target_categories or []
+        rule.required_keywords = required_keywords or []
+        rule.excluded_keywords = excluded_keywords or []
+        rule.allowed_portal_sources = allowed_portal_sources or []
+        rule.min_credibility_score = float(min_credibility_score)
+        rule.auto_translate_to_bangla = bool(auto_translate_to_bangla)
+        rule.auto_publish = bool(auto_publish)
+        rule.auto_broadcast_social = bool(auto_broadcast_social)
+        rule.custom_prompt_rules = custom_prompt_rules.strip() if custom_prompt_rules else ""
+        rule.is_active = bool(is_active)
+        rule.updated_at = datetime.utcnow()
+
+        self.session.flush()
+        return rule
+
+    def toggle_rule(self, rule_id: int) -> bool:
+        """Toggle active state of a targeting rule."""
+        rule = self.get_rule_by_id(rule_id)
+        if rule:
+            rule.is_active = not bool(rule.is_active)
+            rule.updated_at = datetime.utcnow()
+            self.session.flush()
+            return rule.is_active
+        return False
+
+    def delete_rule(self, rule_id: int) -> bool:
+        """Delete an AI Brain custom rule."""
+        rule = self.get_rule_by_id(rule_id)
+        if rule:
+            self.session.delete(rule)
+            self.session.flush()
+            return True
+        return False
+
+    def seed_default_rules(self) -> None:
+        """Seed high-intelligence default rules if database is clean."""
+        count = self.session.query(func.count(AIBrainCustomRule.id)).scalar() or 0
+        if count > 0:
+            return
+
+        rule1 = AIBrainCustomRule(
+            name="দক্ষিণ এশিয়া ও বাংলাদেশ প্রায়োরিটি (South Asia & Bangladesh Priority)",
+            is_active=True,
+            target_regions=["bangladesh", "south_asia", "global"],
+            target_countries=["BD", "IN", "PK"],
+            target_languages=["bn", "en", "hi", "ur"],
+            target_categories=["politics", "business", "technology", "international", "sports"],
+            required_keywords=[],
+            excluded_keywords=["জুয়া", "ক্যাসিনো", "প্রাপ্তবয়স্ক", "পর্নোগ্রাফি", "অশ্লীল"],
+            allowed_portal_sources=[],
+            min_credibility_score=70.0,
+            auto_translate_to_bangla=True,
+            auto_publish=True,
+            auto_broadcast_social=True,
+            custom_prompt_rules="বাংলাদেশ ও দক্ষিণ এশিয়ার যেকোনো গুরুত্বপূর্ণ সংবাদ সর্বোচ্চ বিশ্বাসযোগ্যতায় প্রকাশ ও সোশ্যাল মিডিয়ায় শেয়ার করুন।",
+        )
+        rule2 = AIBrainCustomRule(
+            name="আন্তর্জাতিক প্রযুক্তি ও এআই ট্রেন্ডস (Global Tech & AI Trends)",
+            is_active=True,
+            target_regions=["global", "usa", "europe", "middle_east"],
+            target_countries=["US", "UK", "SA", "AE", "CN", "DE"],
+            target_languages=["en", "ar"],
+            target_categories=["technology", "science", "business"],
+            required_keywords=["AI", "Artificial Intelligence", "Tech", "Space", "Startup", "Software"],
+            excluded_keywords=["clickbait", "rumor", "leak"],
+            allowed_portal_sources=[],
+            min_credibility_score=75.0,
+            auto_translate_to_bangla=True,
+            auto_publish=True,
+            auto_broadcast_social=True,
+            custom_prompt_rules="বিশ্বের শীর্ষ বিজ্ঞান ও প্রযুক্তি আবিষ্কারের খবর সাবলীল বাংলায় অনুবাদ করে প্রকাশ করুন।",
+        )
+        self.session.add_all([rule1, rule2])
+        self.session.flush()
+
+
+# ==============================================================================
+# Social Media Channel & Broadcast Repository
+# ==============================================================================
+
+class SocialChannelRepository:
+    """Repository handling Connected Social Media Accounts, Token Management, and Outbound Sync."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def list_channels(self) -> List[SocialChannelConfig]:
+        """Fetch all configured social channels."""
+        channels = self.session.query(SocialChannelConfig).order_by(SocialChannelConfig.id.asc()).all()
+        if not channels:
+            self.seed_default_channels()
+            channels = self.session.query(SocialChannelConfig).order_by(SocialChannelConfig.id.asc()).all()
+        return channels
+
+    def get_channel_by_id(self, channel_id: int) -> Optional[SocialChannelConfig]:
+        """Fetch single channel config by ID."""
+        return self.session.query(SocialChannelConfig).filter(SocialChannelConfig.id == channel_id).first()
+
+    def get_active_channels(self, platform: Optional[str] = None) -> List[SocialChannelConfig]:
+        """Fetch operational channels for outbound broadcasting."""
+        query = self.session.query(SocialChannelConfig).filter(SocialChannelConfig.is_active == True)
+        if platform:
+            query = query.filter(SocialChannelConfig.platform == platform.strip().lower())
+        return query.all()
+
+    def create_or_update_channel(
+        self,
+        platform: str,
+        account_name: str,
+        page_id_or_channel_id: str,
+        app_id: Optional[str] = None,
+        app_secret: Optional[str] = None,
+        access_token: Optional[str] = None,
+        webhook_verify_token: Optional[str] = None,
+        is_active: bool = True,
+        is_primary: bool = True,
+        failover_account_id: Optional[int] = None,
+        channel_id: Optional[int] = None,
+    ) -> SocialChannelConfig:
+        """Add or update social media account credentials."""
+        if channel_id:
+            channel = self.get_channel_by_id(channel_id)
+            if not channel:
+                channel = SocialChannelConfig()
+                self.session.add(channel)
+        else:
+            channel = SocialChannelConfig()
+            self.session.add(channel)
+
+        channel.platform = platform.strip().lower()
+        channel.account_name = account_name.strip()
+        channel.page_id_or_channel_id = page_id_or_channel_id.strip()
+        if app_id is not None:
+            channel.app_id = app_id.strip()
+        if app_secret is not None:
+            channel.app_secret = app_secret.strip()
+        if access_token is not None:
+            channel.access_token = access_token.strip()
+        if webhook_verify_token is not None:
+            channel.webhook_verify_token = webhook_verify_token.strip()
+        channel.is_active = bool(is_active)
+        channel.is_primary = bool(is_primary)
+        channel.failover_account_id = failover_account_id if failover_account_id else None
+        channel.status = "HEALTHY"
+        channel.updated_at = datetime.utcnow()
+
+        self.session.flush()
+        return channel
+
+    def toggle_channel(self, channel_id: int) -> bool:
+        """Toggle active state of a social channel."""
+        channel = self.get_channel_by_id(channel_id)
+        if channel:
+            channel.is_active = not bool(channel.is_active)
+            channel.updated_at = datetime.utcnow()
+            self.session.flush()
+            return channel.is_active
+        return False
+
+    def delete_channel(self, channel_id: int) -> bool:
+        """Delete social channel configuration."""
+        channel = self.get_channel_by_id(channel_id)
+        if channel:
+            self.session.delete(channel)
+            self.session.flush()
+            return True
+        return False
+
+    def mark_channel_restricted(self, channel_id: int, error_message: str) -> Optional[SocialChannelConfig]:
+        """Mark channel as restricted upon Facebook/Platform API ban or token revocation and switch to failover."""
+        channel = self.get_channel_by_id(channel_id)
+        if not channel:
+            return None
+
+        channel.status = "RESTRICTED"
+        channel.last_error_message = error_message
+        channel.updated_at = datetime.utcnow()
+        self.session.flush()
+
+        logger.warning(f"Social channel #{channel.id} ({channel.account_name}) marked as RESTRICTED. Error: {error_message}")
+
+        # Activate failover account if configured
+        if channel.failover_account_id:
+            failover = self.get_channel_by_id(channel.failover_account_id)
+            if failover and failover.status != "RESTRICTED":
+                failover.is_active = True
+                failover.status = "BACKUP_ACTIVE"
+                self.session.flush()
+                logger.info(f"Automatically activated fallback failover account: {failover.account_name} (ID: #{failover.id})")
+                return failover
+        return channel
+
+    def record_broadcast_success(self, channel_id: int) -> None:
+        """Increment success counter and update timestamp."""
+        channel = self.get_channel_by_id(channel_id)
+        if channel:
+            channel.total_posts_dispatched = (channel.total_posts_dispatched or 0) + 1
+            channel.last_post_at = datetime.utcnow()
+            channel.status = "HEALTHY"
+            self.session.flush()
+
+    def log_broadcast(
+        self,
+        platform: str,
+        target_account: str,
+        dispatch_status: str,
+        article_id: Optional[int] = None,
+        channel_id: Optional[int] = None,
+        post_payload: Optional[Dict[str, Any]] = None,
+        external_post_id: Optional[str] = None,
+        response_data: Optional[Dict[str, Any]] = None,
+        error_message: Optional[str] = None,
+    ) -> SocialBroadcastLog:
+        """Log an outbound social media dispatch event."""
+        log = SocialBroadcastLog(
+            article_id=article_id,
+            channel_id=channel_id,
+            platform=platform,
+            target_account=target_account,
+            post_payload=post_payload or {},
+            external_post_id=external_post_id,
+            dispatch_status=dispatch_status,
+            response_data=response_data or {},
+            error_message=error_message,
+            created_at=datetime.utcnow(),
+        )
+        self.session.add(log)
+        self.session.flush()
+        return log
+
+    def get_broadcast_logs(self, limit: int = 25) -> List[SocialBroadcastLog]:
+        """Fetch recent outbound social media broadcast logs."""
+        return (
+            self.session.query(SocialBroadcastLog)
+            .order_by(SocialBroadcastLog.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def seed_default_channels(self) -> None:
+        """Seed default social media accounts and anti-ban failover configurations."""
+        count = self.session.query(func.count(SocialChannelConfig.id)).scalar() or 0
+        if count > 0:
+            return
+
+        # 1. Facebook Backup Account
+        fb_backup = SocialChannelConfig(
+            platform="facebook",
+            account_name="প্রথম আলো ডিজিটাল বার্তা (Backup Page)",
+            page_id_or_channel_id="109283746519284",
+            app_id="fb_app_982374616",
+            app_secret="sec_fb_82736482",
+            access_token="EAAK_BACKUP_ACCESS_TOKEN_PROTHOM_ALO_2026",
+            is_active=True,
+            is_primary=False,
+            status="HEALTHY",
+        )
+        self.session.add(fb_backup)
+        self.session.flush()
+
+        # 2. Facebook Primary Account (with failover pointing to backup)
+        fb_primary = SocialChannelConfig(
+            platform="facebook",
+            account_name="প্রথম আলো অফিসিয়াল নিউজ পেজ (Primary)",
+            page_id_or_channel_id="109283746519283",
+            app_id="fb_app_982374615",
+            app_secret="sec_fb_82736481",
+            access_token="EAAK_PRIMARY_ACCESS_TOKEN_PROTHOM_ALO_2026",
+            is_active=True,
+            is_primary=True,
+            status="HEALTHY",
+            failover_account_id=fb_backup.id,
+        )
+
+        # 3. YouTube Wire & Shorts
+        yt = SocialChannelConfig(
+            platform="youtube",
+            account_name="প্রথম আলো ডিজিটাল ভিডিও বুলেটিন (YouTube Wire)",
+            page_id_or_channel_id="UC_ProthomAloDigitalNews",
+            app_id="yt_client_829374",
+            access_token="ya29.a0ARrdaM_SAMPLE_OAUTH_TOKEN",
+            is_active=True,
+            is_primary=True,
+            status="HEALTHY",
+        )
+
+        # 4. TikTok News Flash
+        tiktok = SocialChannelConfig(
+            platform="tiktok",
+            account_name="@ProthomAloNewsDaily (TikTok Wire)",
+            page_id_or_channel_id="tiktok_open_news_wire_bd",
+            app_id="tiktok_app_771829",
+            access_token="act.tiktok.open.token.sample",
+            is_active=True,
+            is_primary=True,
+            status="HEALTHY",
+        )
+
+        # 5. Telegram Instant Wire
+        tg = SocialChannelConfig(
+            platform="telegram",
+            account_name="@ProthomAloInstantWire (Telegram Channel)",
+            page_id_or_channel_id="@ProthomAloInstantWire",
+            app_id="bot192837465",
+            access_token="192837465:AAH_SAMPLE_TELEGRAM_BOT_TOKEN",
+            is_active=True,
+            is_primary=True,
+            status="HEALTHY",
+        )
+
+        self.session.add_all([fb_primary, yt, tiktok, tg])
+        self.session.flush()
+
 
 

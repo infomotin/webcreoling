@@ -50,7 +50,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
         logger.debug(f"SQLite pragma error ignored: {e}")
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 
 def init_db() -> None:

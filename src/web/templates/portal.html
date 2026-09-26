@@ -757,6 +757,54 @@
 
     {% endif %}
 
+    <!-- ===================================================================== -->
+    <!-- 8. LIVE FEED — সর্বশেষ সংবাদ (date-time wise, newest first, infinite)  -->
+    <!-- ===================================================================== -->
+    <section id="liveFeedSection"
+             style="margin: 0.5rem 0 2.5rem 0;"
+             data-has-more="{{ '1' if feed_has_more else '0' }}"
+             data-newest="{{ feed_newest or '' }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.6rem; margin-bottom: 0.5rem;">
+            <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 800; color: var(--palo-heading); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                সর্বশেষ সংবাদ
+                <span id="livePulse" style="display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 0.7rem; font-weight: 800; color: #fff; background: var(--palo-red); padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: paloLiveBlink 1.2s infinite;"></span>
+                    লাইভ
+                </span>
+            </h2>
+            <span style="font-size: 0.82rem; color: var(--palo-text-muted); font-weight: 600;">তারিখ-সময় অনুযায়ী • নতুন সবার উপরে</span>
+        </div>
+
+        <div id="liveFeedList">
+            {% for art in feed_items %}
+            {% include 'partials/feed_item.html' %}
+            {% endfor %}
+        </div>
+
+        <div id="feedSentinel" style="height: 1px;"></div>
+        <div id="feedLoader" hidden style="text-align: center; padding: 1rem; font-size: 0.88rem; font-weight: 600; color: var(--palo-text-muted);">
+            ⏳ পরবর্তী খবর লোড হচ্ছে…
+        </div>
+        <div id="feedEnd" hidden style="text-align: center; padding: 1.1rem; font-size: 0.88rem; font-weight: 700; color: #10b981;">
+            ✓ সব খবর দেখা হয়েছে
+        </div>
+        <div id="feedNewBadge" hidden style="position: sticky; top: 8px; z-index: 30; text-align: center; margin-bottom: 0.5rem;">
+            <button type="button" onclick="scrollTo({top: 0, behavior: 'smooth'})"
+                    style="border: none; cursor: pointer; background: var(--palo-red); color: #fff; font-weight: 800; font-size: 0.82rem; padding: 8px 18px; border-radius: 999px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);">
+                ↑ নতুন খবর এসেছে — দেখুন
+            </button>
+        </div>
+    </section>
+    <style>
+        @keyframes paloLiveBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+        .palo-feed-new { animation: paloFeedFlash 2.2s ease-out; }
+        @keyframes paloFeedFlash {
+            0% { background: #fef2f2; transform: translateY(-6px); opacity: 0; }
+            15% { opacity: 1; transform: translateY(0); }
+            100% { background: transparent; }
+        }
+    </style>
+
 {% endblock %}
 
 {% block scripts %}

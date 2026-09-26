@@ -49,15 +49,6 @@ class Settings(BaseSettings):
     SERVER_HOST: str = "127.0.0.1"
     SERVER_PORT: int = 8080
 
-    # Mail Server (SMTP) Defaults — sandbox Mailtrap credentials
-    MAIL_SERVER: str = "sandbox.smtp.mailtrap.io"
-    MAIL_PORT: int = 2525
-    MAIL_USERNAME: str = "6056bdc6c17f23"
-    MAIL_PASSWORD: str = "4e1119bb236ac7"
-    MAIL_USE_TLS: bool = True
-    MAIL_USE_SSL: bool = False
-    MAIL_DEFAULT_SENDER: str = "no-reply@daily-ai-alo.com"
-
     # SSLCommerz Payment Gateway (Sandbox) Defaults
     SSLCOMMERZ_STORE_ID: str = "arobw6a3cf7767fa7c"
     SSLCOMMERZ_STORE_PASSWORD: str = "arobw6a3cf7767fa7c@ssl"
@@ -116,6 +107,45 @@ class Settings(BaseSettings):
     MAIL_USE_SSL: bool = False
     MAIL_DEFAULT_SENDER: str = "noreply@webcreoling.ai"
     MAIL_SENDER_NAME: str = "WebCreoling AI Newsroom"
+
+    # ------------------------------------------------------------------
+    # Dynamic site identity — ALL identity/contact text lives here (or in
+    # the database), NEVER as literals inside source code or templates.
+    # Override any value via environment / .env. Empty email fields fall
+    # back to the primary admin account's email at runtime.
+    # ------------------------------------------------------------------
+    SITE_TITLE: str = "দি ডেইলি এআই আলো"
+    SITE_TITLE_EN: str = "The Daily AI Alo"
+    SITE_PUBLISHER: str = "The Daily AI Alo Media & Tech Labs"
+    SITE_EDITOR_IN_CHIEF: str = "প্রধান সম্পাদক ও প্রধান এআই প্রযুক্তিবিদ: ড. এআই টিম"
+    SITE_OFFICE_ADDRESS: str = "সিলিকন টাওয়ার, লেভেল ১২, গুলশান-২, ঢাকা ১২১২।"
+    SITE_CONTACT_EMAIL: str = ""  # empty -> primary admin account email
+    SITE_CONTACT_PHONE: str = "+৮৮০ ২ ৮১৮০০৭৮"
+    SITE_COPYRIGHT: str = "© ২০২৬ দি ডেইলি এআই আলো (The Daily AI Alo)। সর্বস্বত্ব সংরক্ষিত।"
+    SITE_FACEBOOK_URL: str = "https://facebook.com/TheDailyAIAlo"
+    SITE_YOUTUBE_URL: str = "https://youtube.com/c/TheDailyAIAlo"
+    SITE_TWITTER_URL: str = "https://twitter.com/TheDailyAIAlo"
+    SITE_NEWSLETTER_NAME: str = "দি ডেইলি এআই আলো ই-বুলেটিন"
+
+    # Emergency vault master-recovery-code recipient (empty -> saved vault
+    # state -> primary admin account email -> MAIL_DEFAULT_SENDER)
+    SECURITY_ALERT_EMAIL: str = ""
+
+    # Seeded demo accounts use this email domain (seed_default_users)
+    SEED_EMAIL_DOMAIN: str = "webcreoling.ai"
+
+    # AI Agent workflow approval-notification recipients (editable at /agent/policy)
+    AGENT_EMAIL_EDITORIAL_LEAD: str = "editorial-lead@daily-ai-alo.com"
+    AGENT_EMAIL_AD_MANAGER: str = "ad-manager@daily-ai-alo.com"
+    AGENT_EMAIL_ONBOARDING_OFFICER: str = "onboarding@daily-ai-alo.com"
+    AGENT_EMAIL_ADMIN: str = "admin@daily-ai-alo.com"
+
+    # Cloud / backup integration seed identities
+    CLOUD_SERVICE_ACCOUNT_EMAIL: str = "media-sa@the-daily-ai-alo.iam.gserviceaccount.com"
+    CLOUD_BACKUP_USER_EMAIL: str = "datacenter@the-daily-ai-alo.com"
+
+    # Checkout fallbacks when a user profile has no phone
+    DEFAULT_CHECKOUT_PHONE: str = "01700000000"
 
     # SMS Gateway Configuration
     SMS_PROVIDER: str = "SANDBOX"  # SANDBOX, SSL_WIRELESS, GREENWEB, BULKSMS_BD, TWILIO

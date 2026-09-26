@@ -4,6 +4,8 @@ Provides a modern Bangla digital newspaper frontend with breaking news tickers,
 lead hero banners, auto-highlighted articles, opinion polls, likes, social shares, and newsletter subscription.
 """
 
+from datetime import datetime
+
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from sqlalchemy.orm import joinedload
 from src.storage.database import get_db_session
@@ -75,7 +77,6 @@ def index_view():
         breaking_news = article_repo.get_breaking_news(limit=6)
         highlighted = article_repo.get_highlighted_articles(limit=8, exclude_id=exclude_id)
         trending = article_repo.get_trending_articles(limit=5)
-        latest_news = session.query(Article).order_by(Article.id.desc()).limit(5).all()
         active_poll = portal_repo.get_active_poll()
 
         # Category Blocks
@@ -91,9 +92,29 @@ def index_view():
             session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.scrape_status == "completed")
-            .order_by(Article.id.desc())
+            .order_by(Article.published_at.desc(), Article.id.desc())
             .limit(6)
             .all()
+        )
+
+        # Live infinite-scroll stream (date-time wise, newest first)
+        feed_query = (
+            session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.scrape_status == "completed")
+        )
+        feed_total = feed_query.count()
+        feed_limit = 12
+        feed_items = (
+            feed_query.order_by(Article.published_at.desc(), Article.id.desc())
+            .limit(feed_limit)
+            .all()
+        )
+        feed_has_more = feed_total > len(feed_items)
+        feed_newest = (
+            feed_items[0].published_at.strftime("%Y-%m-%d %H:%M:%S")
+            if feed_items and feed_items[0].published_at
+            else None
         )
 
         # If search or category filter active
@@ -110,6 +131,9 @@ def index_view():
             breaking_news=breaking_news,
             trending=trending,
             latest_news=latest_news,
+            feed_items=feed_items,
+            feed_has_more=feed_has_more,
+            feed_newest=feed_newest,
             active_poll=active_poll.to_dict() if active_poll else None,
             national_news=national_news,
             politics_news=politics_news,
@@ -122,6 +146,87 @@ def index_view():
             category_filter=category_filter,
             search_query=search_query,
             filter_results=filter_results,
+        )
+
+
+@portal_bp.route("/api/feed")
+def feed_stream_api():
+    """JSON feed for the live infinite-scroll news stream.
+
+    Modes:
+      - default:      next page of articles strictly older than ?before=cursor (date-time wise, newest first)
+      - ?since=...:   brand-new articles published after that timestamp (for live prepend)
+    Returns rendered HTML fragments so the portal keeps a single card markup source.
+    """
+    since = request.args.get("since", "").strip()
+    before = request.args.get("before", "").strip()
+    before_id = request.args.get("before_id", type=int)
+    category = request.args.get("category", "").strip()
+    limit = min(50, max(1, request.args.get("limit", 12, type=int)))
+
+    def parse_dt(raw):
+        raw = raw.replace("T", " ")[:19]
+        try:
+            return datetime.strptime(raw, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return None
+
+    with get_db_session() as session:
+        query = (
+            session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.scrape_status == "completed")
+        )
+        if category:
+            query = query.filter(Article.category == category)
+
+        if since:
+            since_dt = parse_dt(since)
+            items = (
+                query.filter(Article.published_at > since_dt)
+                .order_by(Article.published_at.desc(), Article.id.desc())
+                .limit(limit)
+                .all()
+                if since_dt
+                else []
+            )
+            has_more = False
+        else:
+            if before:
+                before_dt = parse_dt(before)
+                if before_dt:
+                    query = query.filter(
+                        (Article.published_at < before_dt)
+                        | (
+                            (Article.published_at == before_dt)
+                            & (Article.id < (before_id or 0))
+                        )
+                    )
+            total = query.count()
+            items = (
+                query.order_by(Article.published_at.desc(), Article.id.desc())
+                .limit(limit)
+                .all()
+            )
+            has_more = len(items) == limit and len(items) < total
+
+        newest = None
+        if items and items[0].published_at:
+            newest = items[0].published_at.strftime("%Y-%m-%d %H:%M:%S")
+
+        return jsonify(
+            {
+                "items": [
+                    {
+                        "id": art.id,
+                        "html": render_template("partials/feed_item.html", art=art),
+                    }
+                    for art in items
+                ],
+                "count": len(items),
+                "has_more": has_more,
+                "newest": newest,
+            }
         )
 
 

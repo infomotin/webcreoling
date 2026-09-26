@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('OTP ভেরিফিকেশন', 'OTP Verification') }} - WebCreoling{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 3rem auto;">
+    <div class="card" style="box-shadow: var(--shadow-lg);">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-size: 2.4rem; margin-bottom: 0.5rem;">🔐</div>
+            <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem;">
+                {{ tr('ভেরিফিকেশন কোড', 'Verification Code') }}
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 0.88rem;">
+                {% if mode == 'register' %}
+                    {{ tr('আপনার ইমেইলে পাঠানো ৬-সংখ্যার কোড লিখুন', 'Enter the code sent to your email') }}
+                {% elif mode == 'login' %}
+                    {{ tr('টু-ফ্যাক্টর অথেনটিকেশন কোড লিখুন', 'Enter your two-factor authentication code') }}
+                {% else %}
+                    {{ tr('পাসওয়ার্ড রিসেট কোড লিখুন', 'Enter your password reset code') }}
+                {% endif %}
+                <br><span class="badge badge-sky" style="margin-top: 0.5rem; display: inline-block;">{{ destination }}</span>
+            </p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.verify_view') }}">
+            <div class="form-group">
+                <label class="form-label">{{ tr('কোড', 'Code') }}</label>
+                <input type="text" name="code" class="form-control" inputmode="numeric" pattern="[0-9]*"
+                       maxlength="{{ cfg.otp_length|default(6) }}" autocomplete="one-time-code"
+                       placeholder="{{ '0' * (cfg.otp_length|default(6)) }}"
+                       style="text-align:center; font-size:1.6rem; letter-spacing:0.6rem; font-weight:800;" required autofocus>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    {{ tr('কোড বৈধ', 'Code valid') }}: {{ cfg.otp_ttl_minutes|default(10) }} {{ tr('মিনিট', 'minutes') }}
+                    • {{ tr('সর্বোচ্চ ভুল চেষ্টা', 'Max attempts') }}: {{ cfg.otp_max_attempts|default(5) }}
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                ✅ {{ tr('ভেরিফাই করুন', 'Verify') }}
+            </button>
+        </form>
+
+        <form method="POST" action="{{ url_for('auth.verify_resend_view') }}" style="margin-top: 1rem; text-align: center;">
+            <button type="submit" class="btn btn-secondary" style="width: 100%; padding: 0.65rem;">
+                🔄 {{ tr('আবার কোড পাঠান', 'Resend Code') }}
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1.25rem; font-size: 0.83rem;">
+            <a href="{{ url_for('auth.login_view') }}" style="color: #38bdf8;">↩ {{ tr('লগইনে ফিরে যান', 'Back to login') }}</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

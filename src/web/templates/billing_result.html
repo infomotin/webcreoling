@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('পেমেন্ট ফলাফল', 'Payment Result') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}💳 {{ tr('পেমেন্ট ফলাফল', 'Payment Result') }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 560px; margin: 3rem auto; text-align: center;">
+    <div class="card" style="padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">
+            {% if success %}✅{% elif view == 'cancel' %}🚫{% else %}❌{% endif %}
+        </div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">
+            {% if success %}
+                {{ tr('পেমেন্ট সফল!', 'Payment Successful!') }}
+            {% elif view == 'cancel' %}
+                {{ tr('পেমেন্ট বাতিল করা হয়েছে', 'Payment Cancelled') }}
+            {% else %}
+                {{ tr('পেমেন্ট ব্যর্থ হয়েছে', 'Payment Failed') }}
+            {% endif %}
+        </h2>
+
+        <p style="color: var(--text-secondary); font-size: 0.92rem;">
+            {% if success %}
+                {{ tr('আপনার সাবস্ক্রিপশন সক্রিয় হয়েছে এবং নিশ্চিতকরণ মেইল পাঠানো হয়েছে।',
+                      'Your subscription is now active and a confirmation mail has been sent.') }}
+            {% elif view == 'cancel' %}
+                {{ tr('কোনো টাকা কাটা হয়নি। আবার চেষ্টা করতে পারেন।', 'No money was charged. You can try again.') }}
+            {% else %}
+                {{ tr('লেনদেন সম্পন্ন হয়নি — আবার চেষ্টা করুন।', 'The transaction did not complete — please try again.') }}
+            {% endif %}
+        </p>
+
+        {% if tran_id %}
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.75rem;">
+            Tran ID: <code>{{ tran_id }}</code>
+            {% if outcome and outcome.status %} • Status: <b>{{ outcome.status }}</b>{% endif %}
+        </p>
+        {% endif %}
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('billing.plans_view') }}" class="btn btn-primary">⭐ {{ tr('প্ল্যান পাতা', 'Back to Plans') }}</a>
+            <a href="{{ url_for('dashboard.index_view') }}" class="btn btn-secondary">📊 {{ tr('ড্যাশবোর্ড', 'Dashboard') }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

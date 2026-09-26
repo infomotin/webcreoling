@@ -1,13 +1,34 @@
 {
   "version": "2.5",
-  "last_scan_time": "2026-09-26T03:18:05.234708",
-  "total_articles_scanned": 85,
-  "total_sft_pairs_generated": 255,
-  "domain_vocabulary_count": 330,
+  "last_scan_time": "2026-09-26T04:47:48.239112",
+  "total_articles_scanned": 185,
+  "total_sft_pairs_generated": 555,
+  "domain_vocabulary_count": 361,
   "topic_breakdown": {
-    "politics": 85
+    "politics": 94,
+    "sports": 4,
+    "business": 22,
+    "technology": 20,
+    "international": 30,
+    "national": 15
   },
   "datasets": [
+    {
+      "filename": "knowledge_multi_topic_20260926_044748.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260926_044748.jsonl",
+      "articles_count": 100,
+      "sft_pairs_count": 300,
+      "topics": [
+        "politics",
+        "sports",
+        "business",
+        "technology",
+        "international",
+        "national"
+      ],
+      "created_at": "2026-09-26T04:47:48.239226",
+      "size_kb": 1171.56
+    },
     {
       "filename": "knowledge_multi_topic_20260926_031805.jsonl",
       "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260926_031805.jsonl",

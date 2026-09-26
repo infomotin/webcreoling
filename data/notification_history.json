@@ -278,5 +278,25 @@
     "timestamp": "03:33:58 (26 Sep)",
     "url": "/news/",
     "is_read": true
+  },
+  {
+    "id": "notif_1790398248205",
+    "title": "নতুন সংবাদপত্র সংযুক্ত: দ্য নিউ ইয়র্ক টাইমস",
+    "message": "মনিটরিং ওয়াচলিস্টে 'The New York Times' সফলভাবে যুক্ত করা হয়েছে। ব্যবধান: 45 মিনিট।",
+    "source": "Watchlist Manager",
+    "category": "মনিটরিং",
+    "timestamp": "04:50:48 (26 Sep)",
+    "url": "https://www.nytimes.com",
+    "is_read": true
+  },
+  {
+    "id": "notif_1790398248820",
+    "title": "🔔 টেস্ট ব্রেকিং নিউজ নোটিফিকেশন",
+    "message": "প্রথম আলো ও ডেইলি স্টারে নতুন গুরুত্বপূর্ণ জাতীয় সংবাদ প্রকাশিত হয়েছে। এআই পাইলট তাৎক্ষণিক বিশ্লেষণ শুরু করেছে।",
+    "source": "Prothom Alo Live Feed",
+    "category": "ব্রেকিং নিউজ",
+    "timestamp": "04:50:48 (26 Sep)",
+    "url": "/news/",
+    "is_read": true
   }
 ]

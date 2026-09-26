@@ -24,6 +24,11 @@
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.75rem;">
                 Sign In
             </button>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 0.85rem; font-size: 0.83rem;">
+                <a href="{{ url_for('auth.forgot_view') }}" style="color: #38bdf8;">🔑 {{ tr('পাসওয়ার্ড ভুলে গেছেন?', 'Forgot password?') }}</a>
+                <a href="{{ url_for('billing.plans_view') }}" style="color: #94a3b8;">⭐ {{ tr('প্ল্যান', 'Plans') }}</a>
+            </div>
         </form>
 
         <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">

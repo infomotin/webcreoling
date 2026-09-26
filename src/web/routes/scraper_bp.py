@@ -4,6 +4,8 @@ Enables Admins and Editors to trigger portal crawls, ingest YouTube/Social news,
 run Worldwide multi-lingual scrapers, and control the Autonomous AI Pilot Brain.
 """
 
+from datetime import datetime
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from src.common.logger import get_logger
 from src.scraper.engine import ScraperEngine
@@ -148,13 +150,13 @@ def trigger_ai_pilot():
 def synthesize_existing_article(article_id: int):
     """Synthesize 95% meaning-preserved multi-paragraph report and evaluate 70% truth gate for any article."""
     from src.nlp.news_synthesizer import AINewsSynthesizerAndParaphraser
-    from src.common.blockchain import BlockchainEngine
+    from src.storage.repositories import BlockchainLedgerRepository
 
     with get_db_session() as session:
         repo = ArticleRepository(session)
         article = repo.get_by_id(article_id)
         if not article:
-            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
             return redirect(url_for("scraper.index_view"))
 
         synth = AINewsSynthesizerAndParaphraser.process_and_synthesize_news(
@@ -182,6 +184,15 @@ def synthesize_existing_article(article_id: int):
         
         if synth["is_truth_verified"]:
             article.scrape_status = "completed"
+
+        article.updated_at = datetime.utcnow()
+        session.flush()
+
+        # Re-seal cryptographic ledger so verification reflects the synthesized content
+        try:
+            BlockchainLedgerRepository(session).mint_block_for_article(article.id)
+        except Exception as e:
+            logger.warning(f"Could not re-mint ledger block for article #{article_id}: {e}")
 
         session.commit()
         flash(f"সংবাদ #{article_id} সফলভাবে এআই দ্বারা বিশ্লেষণ ও ৯৫% মূল ভাবধারা সহকারে পূর্ণাঙ্গ প্রতিবেদনে রূপান্তর করা হয়েছে! সত্যতা সূচক: {synth['factuality_score']}%", "success")

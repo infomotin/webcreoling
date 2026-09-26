@@ -124,59 +124,59 @@ def init_db() -> None:
     except Exception as e:
         logger.debug(f"Column migration check note: {e}")
 
-        if "sqlite" in engine.url.drivername:
-            with engine.begin() as conn:
-                try:
-                    # Create FTS5 virtual table if it does not exist
-                    conn.execute(
-                        text(
-                            """
-                            CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
-                                id UNINDEXED,
-                                title,
-                                content_text,
-                                category,
-                                author,
-                                source UNINDEXED,
-                                tokenize = 'unicode61'
-                            );
-                            """
-                        )
+    if "sqlite" in engine.url.drivername:
+        with engine.begin() as conn:
+            try:
+                # Create FTS5 virtual table if it does not exist
+                conn.execute(
+                    text(
+                        """
+                        CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts USING fts5(
+                            id UNINDEXED,
+                            title,
+                            content_text,
+                            category,
+                            author,
+                            source UNINDEXED,
+                            tokenize = 'unicode61'
+                        );
+                        """
                     )
+                )
 
-                    # Create Triggers to keep FTS5 in sync with articles table
-                    conn.execute(
-                        text(
-                            """
-                            CREATE TRIGGER IF NOT EXISTS articles_ai AFTER INSERT ON articles BEGIN
-                                INSERT INTO articles_fts(id, title, content_text, category, author, source)
-                                VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
-                            END;
-                            """
-                        )
+                # Create Triggers to keep FTS5 in sync with articles table
+                conn.execute(
+                    text(
+                        """
+                        CREATE TRIGGER IF NOT EXISTS articles_ai AFTER INSERT ON articles BEGIN
+                            INSERT INTO articles_fts(id, title, content_text, category, author, source)
+                            VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
+                        END;
+                        """
                     )
-                    conn.execute(
-                        text(
-                            """
-                            CREATE TRIGGER IF NOT EXISTS articles_ad AFTER DELETE ON articles BEGIN
-                                DELETE FROM articles_fts WHERE id = old.id;
-                            END;
-                            """
-                        )
+                )
+                conn.execute(
+                    text(
+                        """
+                        CREATE TRIGGER IF NOT EXISTS articles_ad AFTER DELETE ON articles BEGIN
+                            DELETE FROM articles_fts WHERE id = old.id;
+                        END;
+                        """
                     )
-                    conn.execute(
-                        text(
-                            """
-                            CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
-                                DELETE FROM articles_fts WHERE id = old.id;
-                                INSERT INTO articles_fts(id, title, content_text, category, author, source)
-                                VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
-                            END;
-                            """
-                        )
+                )
+                conn.execute(
+                    text(
+                        """
+                        CREATE TRIGGER IF NOT EXISTS articles_au AFTER UPDATE ON articles BEGIN
+                            DELETE FROM articles_fts WHERE id = old.id;
+                            INSERT INTO articles_fts(id, title, content_text, category, author, source)
+                            VALUES (new.id, new.title, new.content_text, new.category, new.author, new.source);
+                        END;
+                        """
                     )
-                except Exception as e:
-                    logger.warning(f"FTS5 setup skipped or error: {e}")
+                )
+            except Exception as e:
+                logger.warning(f"FTS5 setup skipped or error: {e}")
     logger.info("Database and search index initialized successfully.")
 
 

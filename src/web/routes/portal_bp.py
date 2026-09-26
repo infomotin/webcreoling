@@ -180,6 +180,7 @@ def archive_view():
         )
 
 
+@portal_bp.route("/article/<int:article_id>")
 @portal_bp.route("/<int:article_id>")
 def article_reader_view(article_id: int):
     """Render full professional article reader view."""

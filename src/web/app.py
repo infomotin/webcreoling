@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -131,7 +132,8 @@ def create_app(test_config: dict = None) -> Flask:
         return render_template("403.html"), 403
 
     # Start autonomous background scheduler if not in test suite
-    if not app.config.get("TESTING"):
+    running_under_pytest = bool(os.environ.get("PYTEST_CURRENT_TEST"))
+    if not app.config.get("TESTING") and not running_under_pytest:
         try:
             from src.automation.scheduler import get_scheduler
             scheduler = get_scheduler()

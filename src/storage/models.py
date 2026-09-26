@@ -322,6 +322,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(30), default="viewer", nullable=False, index=True)  # 'admin', 'editor', 'analyst', 'viewer'
     is_active = Column(Boolean, default=True)
+    phone = Column(String(30), nullable=True)  # optional, enables SMS OTP
+    is_verified = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def set_password(self, password: str) -> None:
@@ -345,6 +347,8 @@ class User(Base):
             "email": self.email,
             "role": self.role,
             "is_active": self.is_active,
+            "phone": self.phone,
+            "is_verified": self.is_verified,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -911,3 +915,149 @@ class EncryptedVaultBackupRecord(Base):
     iv_nonce = Column(String(64), nullable=False)
     auth_tag = Column(String(64), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class OtpCode(Base):
+    """Stores hashed one-time verification codes (email / SMS) for auth flows."""
+    __tablename__ = "otp_codes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    channel = Column(String(20), nullable=False, default="email")  # 'email' | 'sms'
+    destination = Column(String(255), nullable=False, index=True)
+    purpose = Column(String(50), nullable=False, index=True)  # register_verify | login_2fa | password_reset | test
+    code_hash = Column(String(255), nullable=False)
+    attempts = Column(Integer, default=0, nullable=False)
+    max_attempts = Column(Integer, default=5, nullable=False)
+    user_id = Column(Integer, nullable=True, index=True)
+    is_used = Column(Boolean, default=False, nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "channel": self.channel,
+            "destination": self.destination,
+            "purpose": self.purpose,
+            "attempts": self.attempts,
+            "max_attempts": self.max_attempts,
+            "is_used": self.is_used,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class MessageLog(Base):
+    """Outbound mail / SMS delivery log for system-generated messages."""
+    __tablename__ = "message_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    channel = Column(String(20), nullable=False, index=True)  # 'mail' | 'sms'
+    recipient = Column(String(255), nullable=False, index=True)
+    subject = Column(String(255), nullable=True)
+    body = Column(Text, nullable=True)
+    purpose = Column(String(50), nullable=True, default="general")
+    status = Column(String(30), nullable=False, default="SENT")  # SENT | SIMULATED | FAILED
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "channel": self.channel,
+            "recipient": self.recipient,
+            "subject": self.subject,
+            "purpose": self.purpose,
+            "status": self.status,
+            "error": self.error,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class SubscriptionPlan(Base):
+    """Sellable subscription plans checked out via SSLCommerz."""
+    __tablename__ = "subscription_plans"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(50), unique=True, nullable=False, index=True)
+    name = Column(String(120), nullable=False)
+    name_en = Column(String(120), nullable=True)
+    price = Column(Float, nullable=False, default=0.0)
+    currency = Column(String(10), nullable=False, default="BDT")
+    duration_days = Column(Integer, nullable=False, default=30)
+    features = Column(JSON, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "code": self.code,
+            "name": self.name,
+            "name_en": self.name_en,
+            "price": self.price,
+            "currency": self.currency,
+            "duration_days": self.duration_days,
+            "features": self.features or [],
+            "is_active": self.is_active,
+            "sort_order": self.sort_order,
+        }
+
+
+class PaymentTransaction(Base):
+    """SSLCommerz checkout sessions and validation results."""
+    __tablename__ = "payment_transactions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tran_id = Column(String(80), unique=True, nullable=False, index=True)
+    session_key = Column(String(255), nullable=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    plan_id = Column(Integer, nullable=True, index=True)
+    amount = Column(Float, nullable=False, default=0.0)
+    currency = Column(String(10), nullable=False, default="BDT")
+    status = Column(String(30), nullable=False, default="PENDING", index=True)  # PENDING|VALID|FAILED|CANCELLED
+    payment_method = Column(String(50), nullable=True)
+    bank_tran_id = Column(String(80), nullable=True)
+    risk_level = Column(String(20), nullable=True)
+    raw_response = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "tran_id": self.tran_id,
+            "user_id": self.user_id,
+            "plan_id": self.plan_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "status": self.status,
+            "payment_method": self.payment_method,
+            "bank_tran_id": self.bank_tran_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class UserSubscription(Base):
+    """Active entitlement granted after a validated payment."""
+    __tablename__ = "user_subscriptions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    plan_id = Column(Integer, nullable=False, index=True)
+    transaction_id = Column(Integer, nullable=True)
+    status = Column(String(30), nullable=False, default="active")  # active | expired | cancelled
+    started_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "plan_id": self.plan_id,
+            "status": self.status,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+        }

@@ -49,6 +49,22 @@ class Settings(BaseSettings):
     SERVER_HOST: str = "127.0.0.1"
     SERVER_PORT: int = 8080
 
+    # Mail Server (SMTP) Defaults — sandbox Mailtrap credentials
+    MAIL_SERVER: str = "sandbox.smtp.mailtrap.io"
+    MAIL_PORT: int = 2525
+    MAIL_USERNAME: str = "6056bdc6c17f23"
+    MAIL_PASSWORD: str = "4e1119bb236ac7"
+    MAIL_USE_TLS: bool = True
+    MAIL_USE_SSL: bool = False
+    MAIL_DEFAULT_SENDER: str = "no-reply@daily-ai-alo.com"
+
+    # SSLCommerz Payment Gateway (Sandbox) Defaults
+    SSLCOMMERZ_STORE_ID: str = "arobw6a3cf7767fa7c"
+    SSLCOMMERZ_STORE_PASSWORD: str = "arobw6a3cf7767fa7c@ssl"
+    SSLCOMMERZ_SANDBOX_URL: str = "https://sandbox.sslcommerz.com"
+    SSLCOMMERZ_LIVE_URL: str = "https://securepay.sslcommerz.com"
+    SSLCOMMERZ_IS_LIVE: bool = False
+
     # Scraper Configuration
     USER_AGENT: str = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

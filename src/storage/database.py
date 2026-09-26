@@ -124,6 +124,28 @@ def init_db() -> None:
     except Exception as e:
         logger.debug(f"Column migration check note: {e}")
 
+    # Users table column migration (OTP / SMS support)
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        user_columns = [
+            "phone VARCHAR(30)",
+            "is_verified BOOLEAN DEFAULT 1",
+        ]
+        if "users" in inspector.get_table_names():
+            existing_cols = {col["name"].lower() for col in inspector.get_columns("users")}
+            with engine.connect() as conn:
+                for col_def in user_columns:
+                    col_name = col_def.split()[0].lower()
+                    if col_name not in existing_cols:
+                        try:
+                            conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_def};"))
+                            conn.commit()
+                        except Exception:
+                            pass
+    except Exception as e:
+        logger.debug(f"Users column migration note: {e}")
+
     if "sqlite" in engine.url.drivername:
         with engine.begin() as conn:
             try:

@@ -35,6 +35,11 @@ from src.storage.models import (
     DataCenterSecurityLog,
     EmergencyVaultState,
     EncryptedVaultBackupRecord,
+    OtpCode,
+    MessageLog,
+    SubscriptionPlan,
+    PaymentTransaction,
+    UserSubscription,
 )
 from src.common.blockchain import BlockchainLedgerEngine
 
@@ -1527,6 +1532,48 @@ class SiteConfigRepository:
                 "auto_categorize": True,
                 "auto_hero_ranking": True,
                 "model_name": "webcreoling-lora-v1",
+            },
+            "integrations_mail": {
+                "enabled": True,
+                "mail_server": "sandbox.smtp.mailtrap.io",
+                "mail_port": 2525,
+                "mail_username": "6056bdc6c17f23",
+                "mail_password": "4e1119bb236ac7",
+                "mail_use_tls": True,
+                "mail_use_ssl": False,
+                "mail_default_sender": "no-reply@daily-ai-alo.com",
+                "mail_timeout": 10,
+            },
+            "integrations_sms": {
+                "enabled": True,
+                "provider": "Generic HTTP Gateway",
+                "api_url": "",
+                "api_key": "",
+                "sender_id": "",
+                "method": "GET",
+                "param_to": "to",
+                "param_text": "msg",
+                "extra_params": "",
+                "test_mode": True,
+            },
+            "integrations_payment": {
+                "provider": "SSLCommerz",
+                "is_live": False,
+                "store_id": "arobw6a3cf7767fa7c",
+                "store_password": "arobw6a3cf7767fa7c@ssl",
+                "sandbox_base_url": "https://sandbox.sslcommerz.com",
+                "live_base_url": "https://securepay.sslcommerz.com",
+                "currency": "BDT",
+            },
+            "security_otp": {
+                "register_email_otp": True,
+                "login_2fa": False,
+                "password_reset_otp": True,
+                "sms_otp": False,
+                "otp_length": 6,
+                "otp_ttl_minutes": 10,
+                "otp_max_attempts": 5,
+                "otp_resend_cooldown_seconds": 60,
             },
         }
         for key, val in defaults.items():
@@ -3279,3 +3326,205 @@ class EmergencyVaultRepository:
             state.recipient_email = recipient_email.strip()
         self.session.flush()
         return state
+
+
+class OtpRepository:
+    """Repository for one-time verification codes (issue / verify / purge)."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def latest_for(self, destination: str, purpose: str) -> Optional[OtpCode]:
+        return (
+            self.session.query(OtpCode)
+            .filter(OtpCode.destination == destination, OtpCode.purpose == purpose)
+            .order_by(OtpCode.id.desc())
+            .first()
+        )
+
+    def add(self, otp: OtpCode) -> OtpCode:
+        self.session.add(otp)
+        self.session.flush()
+        return otp
+
+    def save(self, otp: OtpCode) -> OtpCode:
+        self.session.add(otp)
+        self.session.flush()
+        return otp
+
+    def purge_expired(self) -> int:
+        cutoff = datetime.utcnow()
+        deleted = (
+            self.session.query(OtpCode)
+            .filter(OtpCode.expires_at < cutoff)
+            .delete(synchronize_session=False)
+        )
+        return deleted or 0
+
+
+class MessageLogRepository:
+    """Repository for outbound mail / SMS delivery history."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def add(self, log: MessageLog) -> MessageLog:
+        self.session.add(log)
+        self.session.flush()
+        return log
+
+    def recent(self, limit: int = 100, channel: Optional[str] = None) -> List[MessageLog]:
+        q = self.session.query(MessageLog)
+        if channel:
+            q = q.filter(MessageLog.channel == channel)
+        return q.order_by(MessageLog.id.desc()).limit(limit).all()
+
+
+class SubscriptionPlanRepository:
+    """Repository for sellable subscription plans."""
+
+    DEFAULT_PLANS = [
+        {
+            "code": "basic",
+            "name": "বেসিক প্ল্যান",
+            "name_en": "Basic Plan",
+            "price": 99.0,
+            "duration_days": 30,
+            "features": ["স্ট্যান্ডার্ড নিউজ ফিড", "দৈনিক ২০টি আর্টিকেল", "ইমেইল সাপোর্ট"],
+            "sort_order": 1,
+        },
+        {
+            "code": "pro",
+            "name": "প্রো প্ল্যান",
+            "name_en": "Pro Plan",
+            "price": 499.0,
+            "duration_days": 30,
+            "features": ["আনলিমিটেড আর্টিকেল", "AI চ্যাট ও সামথেসাইজার", "অগ্রাধিকার সাপোর্ট"],
+            "sort_order": 2,
+        },
+        {
+            "code": "enterprise",
+            "name": "এন্টারপ্রাইজ প্ল্যান",
+            "name_en": "Enterprise Plan",
+            "price": 1999.0,
+            "duration_days": 365,
+            "features": ["টিম অ্যাকাউন্ট", "API এক্সেস", "ডেডিকেটেড ম্যানেজার"],
+            "sort_order": 3,
+        },
+    ]
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def all(self, active_only: bool = False) -> List[SubscriptionPlan]:
+        q = self.session.query(SubscriptionPlan)
+        if active_only:
+            q = q.filter(SubscriptionPlan.is_active == True)
+        return q.order_by(SubscriptionPlan.sort_order.asc(), SubscriptionPlan.id.asc()).all()
+
+    def get_by_id(self, plan_id: int) -> Optional[SubscriptionPlan]:
+        return self.session.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+
+    def get_by_code(self, code: str) -> Optional[SubscriptionPlan]:
+        return self.session.query(SubscriptionPlan).filter(SubscriptionPlan.code == code).first()
+
+    def add(self, plan: SubscriptionPlan) -> SubscriptionPlan:
+        self.session.add(plan)
+        self.session.flush()
+        return plan
+
+    def delete(self, plan: SubscriptionPlan) -> None:
+        self.session.delete(plan)
+        self.session.flush()
+
+    def ensure_default_plans(self) -> None:
+        for spec in self.DEFAULT_PLANS:
+            if not self.get_by_code(spec["code"]):
+                self.add(SubscriptionPlan(**spec))
+
+
+class PaymentRepository:
+    """Repository for SSLCommerz transactions and user subscriptions."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def create_transaction(self, **kwargs) -> PaymentTransaction:
+        tx = PaymentTransaction(**kwargs)
+        self.session.add(tx)
+        self.session.flush()
+        return tx
+
+    def get_by_tran_id(self, tran_id: str) -> Optional[PaymentTransaction]:
+        return (
+            self.session.query(PaymentTransaction)
+            .filter(PaymentTransaction.tran_id == tran_id)
+            .first()
+        )
+
+    def update_transaction(self, tx: PaymentTransaction, **kwargs) -> PaymentTransaction:
+        for key, value in kwargs.items():
+            setattr(tx, key, value)
+        self.session.flush()
+        return tx
+
+    def transactions_for_user(self, user_id: int, limit: int = 50) -> List[PaymentTransaction]:
+        return (
+            self.session.query(PaymentTransaction)
+            .filter(PaymentTransaction.user_id == user_id)
+            .order_by(PaymentTransaction.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def all_transactions(self, limit: int = 100) -> List[PaymentTransaction]:
+        return (
+            self.session.query(PaymentTransaction)
+            .order_by(PaymentTransaction.id.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def activate_subscription(
+        self,
+        user_id: int,
+        plan: SubscriptionPlan,
+        transaction: Optional[PaymentTransaction] = None,
+        duration_days: Optional[int] = None,
+    ) -> UserSubscription:
+        from datetime import timedelta
+
+        now = datetime.utcnow()
+        days = duration_days or plan.duration_days or 30
+        sub = UserSubscription(
+            user_id=user_id,
+            plan_id=plan.id,
+            transaction_id=transaction.id if transaction else None,
+            status="active",
+            started_at=now,
+            expires_at=now + timedelta(days=days),
+        )
+        self.session.add(sub)
+        self.session.flush()
+        return sub
+
+    def active_subscription(self, user_id: int) -> Optional[UserSubscription]:
+        return (
+            self.session.query(UserSubscription)
+            .filter(
+                UserSubscription.user_id == user_id,
+                UserSubscription.status == "active",
+                UserSubscription.expires_at > datetime.utcnow(),
+            )
+            .order_by(UserSubscription.expires_at.desc())
+            .first()
+        )
+
+    def subscriptions_for_user(self, user_id: int, limit: int = 20) -> List[UserSubscription]:
+        return (
+            self.session.query(UserSubscription)
+            .filter(UserSubscription.user_id == user_id)
+            .order_by(UserSubscription.id.desc())
+            .limit(limit)
+            .all()
+        )

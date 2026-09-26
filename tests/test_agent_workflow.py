@@ -57,6 +57,22 @@ def purge_agent_tables():
     _purge()
 
 
+@pytest.fixture(autouse=True)
+def offline_services(monkeypatch):
+    """No real SMTP / Ollama calls in tests (sandbox rate-limits + latency)."""
+    monkeypatch.setattr(
+        "src.integrations.mail_service.send_mail",
+        lambda *args, **kw: {"ok": True, "status": "SIMULATED", "simulated": True},
+    )
+    monkeypatch.setattr(
+        "src.integrations.llm_service.get_llm_config",
+        lambda: {"enabled": False, "provider": "none",
+                 "base_url": "http://127.0.0.1:59999", "model": "test",
+                 "embed_model": "test", "timeout": 1},
+    )
+    yield
+
+
 class _User:
     """Minimal user stand-in for controller-level tests."""
     def __init__(self, username, role, uid=1):
@@ -231,8 +247,14 @@ def test_editorial_lead_approval_publishes_submission():
         from src.storage.models import Article
         art = session.query(Article).filter(Article.id == sub.article_id).first()
         assert art is not None
-        assert "Submitter" in (art.extracted_entities or {}).get("auto_scroller", {}).get(
-            "publisher", "") or "publisher" in str(art.extracted_entities).lower()
+        ents = art.extracted_entities or {}
+        sub_meta = ents.get("submission") or {}
+        assert sub_meta.get("publisher", "").startswith("The Daily AI Alo")
+        assert sub_meta.get("approval_request_id") == res["approval_request_id"]
+        assert sub_meta.get("submitter") == "Guest Writer"
+        # Publisher + submitter credit present in the body (appended post-creation)
+        assert "প্রকাশক: The Daily AI Alo" in (art.content_text or "")
+        assert "জমাদাতা" in (art.content_text or "")
 
 
 def test_onboarding_officer_approval_creates_reporter_user():
@@ -261,11 +283,16 @@ def test_onboarding_officer_approval_creates_reporter_user():
 def test_admin_can_decide_any_request_and_wrong_role_cannot():
     res = AgenticController.submit_ad_inquiry(
         name="Admin Case", email=_unique("adm") + "@adtest.test")
-    # A different senior role (editorial_lead) has no authority over ads:
+    # editorial_lead is not in the ad chain (ad_manager -> admin): no authority
     out = AgenticController.decide(res["approval_request_id"], "approve",
                                    _User("lead", "editorial_lead"))
-    assert out["success"] is True
-    assert out["status"] == "flagged"  # routed back, not finalized
+    assert out["success"] is False
+    assert "cannot act" in out["error"].lower()
+    with get_db_session() as session:
+        req = session.query(ApprovalRequest).filter(
+            ApprovalRequest.id == res["approval_request_id"]).first()
+        assert req.is_open()  # untouched by the unrelated role
+        assert req.status == "pending"
 
     out2 = AgenticController.decide(res["approval_request_id"], "approve",
                                     _User("root", "admin"))
@@ -325,15 +352,16 @@ def test_sweep_auto_approves_by_silence_when_configured():
         AgenticController.save_policy({
             "auto_approve_enabled": True,
             "auto_approve_hours": 1,
-            "escalation_hours": 6,
-            "max_escalation_level": 0,   # no escalation ladder -> straight to auto-approve
         })
         res = AgenticController.submit_ad_inquiry(
             name="Silent", email=_unique("sil") + "@adtest.test")
         with get_db_session() as session:
             req = session.query(ApprovalRequest).filter(
                 ApprovalRequest.id == res["approval_request_id"]).first()
-            # deadline far in the past: overdue AND past auto-approve threshold
+            # Request has climbed to the top of the ladder (admin) and BOTH
+            # deadlines passed with nobody acting:
+            req.assigned_role = "admin"
+            req.escalation_level = req.max_escalation_level
             req.due_at = datetime.utcnow() - timedelta(hours=2)
             req.auto_approve_at = datetime.utcnow() - timedelta(hours=1)
             session.commit()

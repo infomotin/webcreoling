@@ -172,6 +172,78 @@ Initialize the SQLite database with WAL mode and the FTS5 virtual table:
 python -m src.cli setup-db
 ```
 
+### 3. Web Portal & Background Services
+
+Copy `.env.example` to `.env` and adjust (database, SMTP, LLM, API keys — see below), then:
+
+```bash
+# Start the portal (dev server, http://127.0.0.1:8080)
+.venv\Scripts\python.exe src\web\app.py
+
+# Run the test suite (unit + integration)
+.venv\Scripts\python.exe -m pytest -q
+```
+
+The web app creates all missing tables on startup (`init_db`) and starts the built-in
+**Automation background scheduler** automatically (thread-based; auto-skipped under
+`TESTING` config or pytest). An optional standalone APScheduler runner is
+available for deployments that prefer a separate process:
+
+```bash
+.venv\Scripts\python.exe -m src.tasks.apscheduler_runner
+```
+
+### 4. Scheduled Task Configuration
+
+All jobs live in the `AutomationScheduler` (`src/automation/scheduler.py`) and are
+manageable under **অটোমেশন ও শিডিউলার** (`/admin/automation`) — enable/disable, trigger
+now, edit interval, batch actions. Defaults:
+
+| Job id | Interval | What it does |
+|---|---|---|
+| `auto_scroller_cycle` | 900 s (15 min) | Ingest → classify → 0.98 mine → translate → rewrite → AI gate → publish/queue |
+| `multi_source_scrape` | 10800 s (3 h) | RSS/HTML/NewsAPI/Guardian fetch with per-source exponential backoff, skip-and-continue |
+| `approval_escalation_sweep` | 3600 s | Escalate overdue approval requests to the next senior role; auto-approve by silence when enabled |
+| `fact_check_reaudit` | 21600 s (6 h) | Re-run cross-source fact-check on recent articles |
+
+Intervals can be tuned per job in the scheduler config; no cron setup is required.
+
+### 5. Self-Hosted LLM, News APIs & Fact-Checking
+
+* **LLM (local only)** — `LLM_*` env vars (see `.env.example`). Provider `ollama`
+  (default, `http://127.0.0.1:11434`) or `openai_compat` for TGI/vLLM. Used for
+  rewriting, ad-reply drafting, embeddings and semantic fidelity (0.98 threshold with
+  lexical fallback). If the endpoint is down the pipeline degrades gracefully to
+  template/rule-based output — never a hard failure.
+* **News APIs** — `NEWSAPI_API_KEY`, `GUARDIAN_API_KEY` enable those source types in the
+  multi-source scraper (kept disabled when empty). RSS/HTML sources need no key.
+* **Fact-checking** — dual strategy: cross-source corroboration against the local DB
+  corpus (always on) plus optional external API (`FACTCHECK_*`). External calls stay off
+  until a key/URL is configured.
+
+### 6. Agent Workflow Roles & Approval Policy
+
+Public intake routes: `/submissions/ad` (advertiser), `/submissions/news` (external news
+tip), `/submissions/reporter` (application), `/reporter` (reporter dashboard posts).
+Each intake creates a row in `approval_requests` routed to a senior role:
+
+| Intake | Required role (final say) | Escalates to |
+|---|---|---|
+| Ad inquiry | `ad_manager` | `admin` |
+| News submission / reporter post | `editorial_lead` | `admin` |
+| Reporter application | `onboarding_officer` | `admin` |
+
+* Junior reviewers (`editor`, `analyst`) may only **flag** — requests stay pending for
+  the senior role; only the required role or `admin` can approve/reject. Rejections by
+  juniors never finalize automatically.
+* Timeout escalation (default 6 h) and optional approval-by-silence (default 24 h, off)
+  are configured in `/agent/policy` (admin) or the `APPROVAL_*` env vars. Every
+  decision, escalation, notification and auto-approval is recorded in
+  `agent_audit_logs` plus the inline audit trail on the request.
+* Creating users with roles `editorial_lead` / `ad_manager` / `onboarding_officer` /
+  `reporter` is done by an admin in **Users**; approve a reporter application to
+  auto-create a `reporter` account. Inbox UI: `/agent/`.
+
 ---
 
 ## Configuration Guide (`config/sites_config.yaml`)

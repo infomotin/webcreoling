@@ -650,8 +650,11 @@ class AgenticController:
             submission = session.query(NewsSubmission).filter(NewsSubmission.id == req.subject_id).first()
             if submission:
                 from src.storage.repositories import ArticleRepository
-                credit = (f"\n\nপ্রকাশক: The Daily AI Alo · জমাদাতা (Submitter): "
+                credit_marker = "প্রকাশক: The Daily AI Alo"
+                credit = (f"\n\n{credit_marker} · জমাদাতা (Submitter): "
                           f"{submission.author_name or submission.submitter_email}")
+                if submission.source_url:
+                    credit += f"\nমূল সংবাদ (Original Source): {submission.source_url}"
                 article = ArticleRepository(session).create_editorial_article(
                     title=submission.title,
                     category="general",
@@ -664,8 +667,23 @@ class AgenticController:
                     creation_origin="HYBRID",
                     position_placement="STANDARD",
                 )
-                if submission.source_url and submission.source_url not in article.content_text:
+                # Append credit AFTER creation (normalizer strips URLs during creation)
+                if credit_marker not in (article.content_text or ""):
                     article.content_text = f"{article.content_text.rstrip()}{credit}"
+                article.extracted_entities = {
+                    **(article.extracted_entities or {}),
+                    "submission": {
+                        "submission_id": submission.id,
+                        "approval_request_id": req.id,
+                        "submitter": submission.author_name or submission.submitter_email,
+                        "submitter_email": submission.submitter_email,
+                        "kind": submission.kind,
+                        "source_url": submission.source_url,
+                        "fact_check": submission.fact_check,
+                        "publisher": "The Daily AI Alo (publisher credit; original byline/source preserved)",
+                        "published_at": datetime.utcnow().isoformat(),
+                    },
+                }
                 submission.status = "published"
                 submission.article_id = article.id
                 session.flush()

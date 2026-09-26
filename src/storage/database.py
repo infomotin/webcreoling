@@ -107,14 +107,22 @@ def init_db() -> None:
         "display_order INTEGER DEFAULT 0",
         "is_pinned BOOLEAN DEFAULT 0",
     ]
-    with engine.connect() as conn:
-        for col_def in new_columns:
-            try:
-                conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))
-                conn.commit()
-            except Exception:
-                # Column already exists or table freshly created
-                pass
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        if "articles" in inspector.get_table_names():
+            existing_cols = {col["name"].lower() for col in inspector.get_columns("articles")}
+            with engine.connect() as conn:
+                for col_def in new_columns:
+                    col_name = col_def.split()[0].lower()
+                    if col_name not in existing_cols:
+                        try:
+                            conn.execute(text(f"ALTER TABLE articles ADD COLUMN {col_def};"))
+                            conn.commit()
+                        except Exception:
+                            pass
+    except Exception as e:
+        logger.debug(f"Column migration check note: {e}")
 
         if "sqlite" in engine.url.drivername:
             with engine.begin() as conn:

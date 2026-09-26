@@ -15,6 +15,19 @@ from config.settings import settings
 _LOGGERS = {}
 
 
+class SafeRotatingFileHandler(RotatingFileHandler):
+    """Windows-safe rotating file handler that gracefully handles file-in-use locks."""
+    def doRollover(self):
+        try:
+            if self.stream:
+                self.stream.close()
+                self.stream = None
+            super().doRollover()
+        except (PermissionError, OSError):
+            # File locked by another process on Windows, continue logging to current file
+            pass
+
+
 def setup_logger(
     name: str = "webcreoling",
     log_file: Optional[Path] = None,
@@ -63,11 +76,12 @@ def setup_logger(
         log_file = settings.LOGS_DIR / "webcreoling.log"
 
     try:
-        file_handler = RotatingFileHandler(
+        file_handler = SafeRotatingFileHandler(
             log_file,
-            maxBytes=10 * 1024 * 1024,  # 10 MB per file
+            maxBytes=20 * 1024 * 1024,  # 20 MB per file
             backupCount=5,
             encoding="utf-8",
+            delay=True,
         )
         file_handler.setLevel(logging.DEBUG)  # Always log DEBUG to file
         file_format = logging.Formatter(

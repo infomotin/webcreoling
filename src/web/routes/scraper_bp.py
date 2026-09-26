@@ -707,10 +707,13 @@ def api_custom_portal_recent_ingested():
 @roles_required("admin", "editor")
 def save_scroller_config():
     """Save Auto Scroller pipeline settings (source URLs, thresholds, auto-post toggle)."""
+    def _form_bool(key: str) -> bool:
+        return str(request.form.get(key, "")).lower() in ("1", "true", "on", "yes")
+
     data = {
-        "enabled": bool(request.form.get("enabled")),
-        "auto_post_enabled": bool(request.form.get("auto_post_enabled")),
-        "translate_to_bangla": bool(request.form.get("translate_to_bangla")),
+        "enabled": _form_bool("enabled"),
+        "auto_post_enabled": _form_bool("auto_post_enabled"),
+        "translate_to_bangla": _form_bool("translate_to_bangla"),
         "source_urls": request.form.get("source_urls", "").strip(),
         "similarity_threshold": float(request.form.get("similarity_threshold", 0.98)),
         "ai_publish_threshold": float(request.form.get("ai_publish_threshold", 75.0)),

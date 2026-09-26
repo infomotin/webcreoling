@@ -59,7 +59,7 @@ class AutoScroller:
         if na == nb:
             return 1.0
 
-        ratio = SequenceMatcher(None, na, nb).quick_ratio()
+        ratio = SequenceMatcher(None, na[:4000], nb[:4000]).ratio()
 
         def shingles(text: str) -> set:
             words = text.split()
@@ -335,11 +335,9 @@ class AutoScroller:
             logger.warning(f"[Auto Scroller] item #{item.id} has no regenerated content to publish")
             return None
 
-        # Original source attribution inside the body (portal also renders the link)
-        body = item.regenerated_body.rstrip()
+        # Original source attribution inside the body (portal also renders the link).
+        # NOTE: appended AFTER create_editorial_article because BanglaTextNormalizer strips URLs.
         credit = f"মূল সংবাদ (Original Source): {item.source_url}"
-        if item.source_url and item.source_url not in body:
-            body = f"{body}\n\n{credit}"
 
         # Download lead image from the original news post
         image_path = None
@@ -360,7 +358,7 @@ class AutoScroller:
         article = article_repo.create_editorial_article(
             title=item.regenerated_title,
             category=item.category or "general",
-            content_text=body,
+            content_text=item.regenerated_body.rstrip(),
             author=item.author_raw or None,
             summary=item.regenerated_summary,
             image_path=image_path,
@@ -372,6 +370,10 @@ class AutoScroller:
             creation_origin="AI_SYNTHESIZED",
             position_placement="STANDARD",
         )
+        # Append source credit after creation (normalizer strips URLs during creation)
+        if item.source_url and item.source_url not in article.content_text:
+            article.content_text = f"{article.content_text.rstrip()}\n\n{credit}"
+
         article.extracted_entities = {
             **(article.extracted_entities or {}),
             "auto_scroller": {

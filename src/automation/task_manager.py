@@ -31,7 +31,8 @@ class AsyncTask:
         self.log_lines: List[str] = []
         self.result_data: Dict[str, Any] = {}
         self.error_message: Optional[str] = None
-        self._lock = threading.Lock()
+        # Reentrant lock: set_progress() holds the lock and calls add_log() which acquires it again
+        self._lock = threading.RLock()
 
     def add_log(self, text: str) -> None:
         """Add timestamped log entry."""

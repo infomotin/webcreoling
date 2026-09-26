@@ -63,6 +63,7 @@ def list_articles_view():
         page=page,
         total_pages=total_pages,
         total=total,
+        category_counts=category_counts,
     )
 
 

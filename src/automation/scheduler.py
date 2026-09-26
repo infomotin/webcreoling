@@ -717,10 +717,10 @@ class AutomationScheduler:
         all_items = yt_items + fb_items
 
         saved = 0
-        with get_db_session() as session:
-            repo = ArticleRepository(session)
-            for item in all_items:
-                try:
+        for item in all_items:
+            try:
+                with get_db_session() as session:
+                    repo = ArticleRepository(session)
                     img_records = [
                         {
                             "original_url": img["original_url"],
@@ -735,8 +735,8 @@ class AutomationScheduler:
                     ]
                     repo.upsert_article(article_data=item, image_records=img_records)
                     saved += 1
-                except Exception as e:
-                    logger.warning(f"Error saving social item: {e}")
+            except Exception as e:
+                logger.warning(f"Error saving social item: {e}")
 
         return f"Social & YouTube Ingest: Processed {len(all_items)} items, saved {saved} into database."
 
@@ -745,10 +745,10 @@ class AutomationScheduler:
         from src.scraper.social_world_ingestion import WorldNewsMultiLingualIngester
         world_items = WorldNewsMultiLingualIngester.fetch_all_world_feeds(max_per_feed=2)
         saved = 0
-        with get_db_session() as session:
-            repo = ArticleRepository(session)
-            for item in world_items:
-                try:
+        for item in world_items:
+            try:
+                with get_db_session() as session:
+                    repo = ArticleRepository(session)
                     img_records = [
                         {
                             "original_url": img["original_url"],
@@ -763,8 +763,8 @@ class AutomationScheduler:
                     ]
                     repo.upsert_article(article_data=item, image_records=img_records)
                     saved += 1
-                except Exception as e:
-                    logger.warning(f"Error saving world item: {e}")
+            except Exception as e:
+                logger.warning(f"Error saving world item: {e}")
 
         return f"World News Ingest: Processed {len(world_items)} items, saved {saved} into database."
 

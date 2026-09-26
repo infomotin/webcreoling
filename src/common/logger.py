@@ -33,8 +33,20 @@ def setup_logger(
     if logger.hasHandlers():
         logger.handlers.clear()
 
-    # Rich Console Handler
+    # Rich Console Handler with UTF-8 support
+    from rich.console import Console
+    if sys.platform == "win32":
+        try:
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "reconfigure"):
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    safe_console = Console(force_terminal=True, legacy_windows=False)
     rich_handler = RichHandler(
+        console=safe_console,
         rich_tracebacks=True,
         markup=True,
         show_time=True,

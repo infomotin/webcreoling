@@ -23,6 +23,7 @@ from src.storage.database import get_db_session
 from src.storage.models import ScrapeLog, Article, AIBrainCustomRule, SocialChannelConfig, SocialBroadcastLog
 from src.storage.repositories import ArticleRepository, AIBrainRuleRepository, SocialChannelRepository
 from src.automation.social_broadcaster import UnifiedSocialBroadcaster, FacebookPagePublisher
+from src.automation.auto_scroller import AutoScroller
 from src.web.auth import login_required, roles_required
 
 logger = get_logger("webcreoling.web.scraper_bp")
@@ -65,6 +66,11 @@ def index_view():
 
     recent_custom_articles = CustomPortalIngester.list_recent_custom_ingested(limit=15)
 
+    with get_db_session() as session:
+        scroller_config = AutoScroller.get_config(session)
+    scroller_items = AutoScroller.list_recent_items(limit=25)
+    scroller_stats = AutoScroller.get_stats()
+
     return render_template(
         "scraper.html",
         sites=sites,
@@ -81,6 +87,9 @@ def index_view():
         social_outlets=FacebookPublicNewsIngester.PUBLIC_OUTLETS,
         scheduled_jobs=scheduler.get_status()["jobs"],
         recent_tasks=task_manager.list_tasks(limit=10),
+        scroller_config=scroller_config,
+        scroller_items=scroller_items,
+        scroller_stats=scroller_stats,
     )
 
 
@@ -688,3 +697,111 @@ def api_custom_portal_recent_ingested():
 
 
 
+
+
+# ==============================================================================
+# Auto Scroller (Scrape -> 98% Mine -> Rewrite -> AI Gate -> Auto/Manual Publish)
+# ==============================================================================
+
+@scraper_bp.route("/scroller/config", methods=["POST"])
+@roles_required("admin", "editor")
+def save_scroller_config():
+    """Save Auto Scroller pipeline settings (source URLs, thresholds, auto-post toggle)."""
+    data = {
+        "enabled": bool(request.form.get("enabled")),
+        "auto_post_enabled": bool(request.form.get("auto_post_enabled")),
+        "translate_to_bangla": bool(request.form.get("translate_to_bangla")),
+        "source_urls": request.form.get("source_urls", "").strip(),
+        "similarity_threshold": float(request.form.get("similarity_threshold", 0.98)),
+        "ai_publish_threshold": float(request.form.get("ai_publish_threshold", 75.0)),
+        "max_items_per_cycle": int(request.form.get("max_items_per_cycle", 10)),
+        "category": (request.form.get("category", "general") or "general").strip(),
+    }
+    if not 0.5 <= data["similarity_threshold"] <= 1.0:
+        flash("Similarity threshold 0.5 থেকে 1.0 এর মধ্যে হতে হবে।", "danger")
+        return redirect(url_for("scraper.index_view", tab="scroller"))
+
+    with get_db_session() as session:
+        AutoScroller.save_config(session, data)
+        session.commit()
+
+    auto_txt = "অটো-পোস্ট চালু ✅" if data["auto_post_enabled"] else "ম্যানুয়াল পাবলিশ (অপেক্ষমান)"
+    flash(f"Auto Scroller কনফিগ সংরক্ষিত হয়েছে। {auto_txt}", "success")
+    return redirect(url_for("scraper.index_view", tab="scroller"))
+
+
+@scraper_bp.route("/scroller/run", methods=["POST"])
+@roles_required("admin", "editor")
+def run_scroller_cycle():
+    """Trigger a background Auto Scroller cycle over the configured source URLs."""
+    source_urls_raw = request.form.get("source_urls", "").strip()
+    source_urls = [u.strip() for u in source_urls_raw.replace("\n", ",").split(",") if u.strip()] or None
+    max_items = int(request.form.get("max_items", 5) or 5)
+
+    task_mgr = get_task_manager()
+
+    def _work(task):
+        task.set_progress(15, "Auto Scroller: scraping source portals...")
+        summary = AutoScroller.run_cycle(source_urls=source_urls, max_items=max_items)
+        task.set_progress(80, "Auto Scroller: processing waiting queue...")
+        queue_result = AutoScroller.process_waiting_queue()
+        task.set_progress(100, "Cycle finished.")
+        return {"cycle": summary, "queue": queue_result}
+
+    task = task_mgr.submit_task(
+        task_type="AUTO_SCROLLER",
+        title="Auto Scroller Cycle (Scrape -> Mine -> Rewrite -> Publish)",
+        worker_func=_work,
+        description=f"Scraping up to {max_items} source URLs through the 98% similarity mining + AI Brain gate pipeline.",
+    )
+    flash(f"অটো স্ক্রলার সাইকেল শুরু হয়েছে (Task ID: {task.task_id})!", "success")
+    return redirect(url_for("scraper.index_view", tab="scroller"))
+
+
+@scraper_bp.route("/scroller/queue-process", methods=["POST"])
+@roles_required("admin", "editor")
+def process_scroller_queue():
+    """Release the waiting queue: auto-post queued items when auto-post is enabled."""
+    result = AutoScroller.process_waiting_queue()
+    if result.get("published"):
+        flash(f"কিউ থেকে {result['published']} টি সংবাদ পোর্টালে প্রকাশ করা হয়েছে 🚀", "success")
+    else:
+        flash(result.get("note", f"কিউ প্রসেস সম্পন্ন: {result.get('queued_count', 0)} টি আইটেম অপেক্ষমান।"), "info")
+    return redirect(url_for("scraper.index_view", tab="scroller"))
+
+
+@scraper_bp.route("/scroller/publish/<int:item_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def publish_scroller_item(item_id: int):
+    """Manually publish a queued Auto Scroller item to the live /news/ portal."""
+    res = AutoScroller.manual_publish(item_id)
+    if res.get("success"):
+        flash(f"সংবাদ পোর্টালে প্রকাশ করা হয়েছে (Article #{res['article_id']}) — মূল সোর্স লিংকসহ 🚀", "success")
+    else:
+        flash(res.get("error", "প্রকাশ ব্যর্থ হয়েছে।", ), "danger")
+    return redirect(url_for("scraper.index_view", tab="scroller"))
+
+
+@scraper_bp.route("/scroller/reject/<int:item_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def reject_scroller_item(item_id: int):
+    """Reject a raw Auto Scroller item (never published)."""
+    res = AutoScroller.manual_reject(item_id)
+    if res.get("success"):
+        flash(f"আইটেম #{item_id} বাতিল করা হয়েছে।", "warning")
+    else:
+        flash(res.get("error", "বাতিল করা যায়নি।"), "danger")
+    return redirect(url_for("scraper.index_view", tab="scroller"))
+
+
+@scraper_bp.route("/api/scroller/items")
+@login_required
+def api_scroller_items():
+    """JSON list of recent Auto Scroller raw staging items."""
+    limit = int(request.args.get("limit", 30))
+    status = request.args.get("status") or None
+    return jsonify({
+        "success": True,
+        "items": AutoScroller.list_recent_items(limit=limit, status=status),
+        "stats": AutoScroller.get_stats(),
+    })

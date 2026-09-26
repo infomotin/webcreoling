@@ -710,6 +710,7 @@ class AIPilotBrain:
         active_rules: Optional[List[AIBrainCustomRule]] = None,
         auto_publish_threshold: int = DEFAULT_AUTO_PUBLISH_THRESHOLD,
         max_allowed_fake_pct: float = 50.0,
+        force_rewrite: bool = False,
     ) -> Dict[str, Any]:
         """
         Processes a single raw news item through the complete AI Brain pipeline:
@@ -734,6 +735,7 @@ class AIPilotBrain:
             author=raw_author,
             category=raw_cat,
             max_allowed_fake_pct=max_allowed_fake_pct,
+            force_rewrite=force_rewrite,
         )
 
         bn_title = synth_report["synthesized_title"]

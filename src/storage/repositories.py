@@ -40,6 +40,7 @@ from src.storage.models import (
     SubscriptionPlan,
     PaymentTransaction,
     UserSubscription,
+    RawNewsItem,
 )
 from src.common.blockchain import BlockchainLedgerEngine
 
@@ -1495,6 +1496,29 @@ class SiteConfigRepository:
         self.set_config("automation_fake_news_policy", current)
         return current
 
+    def get_auto_scroller_config(self) -> Dict[str, Any]:
+        """Fetch Auto Scroller pipeline settings (scrape -> classify -> dedup -> rewrite -> publish)."""
+        default_cfg = {
+            "enabled": True,
+            "source_urls": "",
+            "auto_post_enabled": False,
+            "similarity_threshold": 0.98,
+            "ai_publish_threshold": 75.0,
+            "translate_to_bangla": True,
+            "max_items_per_cycle": 10,
+            "category": "general",
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        return self.get_config("auto_scroller", default_cfg)
+
+    def update_auto_scroller_config(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        current = self.get_auto_scroller_config()
+        current.update(data)
+        current["updated_at"] = datetime.utcnow().isoformat()
+        self.set_config("auto_scroller", current)
+        return current
+
+
     def seed_default_configs(self, force: bool = False) -> None:
         defaults = {
             "branding": {
@@ -1574,6 +1598,16 @@ class SiteConfigRepository:
                 "otp_ttl_minutes": 10,
                 "otp_max_attempts": 5,
                 "otp_resend_cooldown_seconds": 60,
+            },
+            "auto_scroller": {
+                "enabled": True,
+                "source_urls": "",
+                "auto_post_enabled": False,
+                "similarity_threshold": 0.98,
+                "ai_publish_threshold": 75.0,
+                "translate_to_bangla": True,
+                "max_items_per_cycle": 10,
+                "category": "general",
             },
         }
         for key, val in defaults.items():
@@ -3528,3 +3562,50 @@ class PaymentRepository:
             .limit(limit)
             .all()
         )
+
+
+class RawNewsItemRepository:
+    """Repository for Auto Scroller raw news staging items (scrape -> mine -> rewrite -> publish)."""
+
+    def __init__(self, session: Session):
+        self.session = session
+
+    def get_by_id(self, item_id: int) -> Optional[RawNewsItem]:
+        return self.session.query(RawNewsItem).filter(RawNewsItem.id == item_id).first()
+
+    def get_by_source_url(self, source_url: str) -> Optional[RawNewsItem]:
+        return self.session.query(RawNewsItem).filter(RawNewsItem.source_url == source_url).first()
+
+    def create_item(self, **kwargs) -> RawNewsItem:
+        item = RawNewsItem(**kwargs)
+        self.session.add(item)
+        self.session.flush()
+        return item
+
+    def update_item(self, item: RawNewsItem, **kwargs) -> RawNewsItem:
+        for key, value in kwargs.items():
+            setattr(item, key, value)
+        self.session.flush()
+        return item
+
+    def list_items(self, limit: int = 50, status: Optional[str] = None) -> List[RawNewsItem]:
+        q = self.session.query(RawNewsItem).order_by(RawNewsItem.id.desc())
+        if status:
+            q = q.filter(RawNewsItem.status == status)
+        return q.limit(limit).all()
+
+    def queued_items(self) -> List[RawNewsItem]:
+        return (
+            self.session.query(RawNewsItem)
+            .filter(RawNewsItem.status == "queued")
+            .order_by(RawNewsItem.id.asc())
+            .all()
+        )
+
+    def counts_by_status(self) -> Dict[str, int]:
+        rows = (
+            self.session.query(RawNewsItem.status, func.count(RawNewsItem.id))
+            .group_by(RawNewsItem.status)
+            .all()
+        )
+        return {status: count for status, count in rows}

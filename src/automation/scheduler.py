@@ -258,6 +258,19 @@ class AutomationScheduler:
             is_system=True,
         )
 
+        self.add_job(
+            job_id="auto_scroller_cycle",
+            name="Auto Scroller Scrape-to-Portal Pipeline",
+            name_bn="অটো স্ক্রলার স্ক্র্যাপ-টু-পোর্টাল পাইপলাইন",
+            description="Scrapes configured source news URLs, mines 98% duplicates, regenerates copyright-safe Bangla content, runs the AI Brain gate, and auto-posts (or queues) to /news/ with the original source link.",
+            interval_seconds=900,  # 15 mins
+            target_func=self._task_auto_scroller,
+            job_type="auto_scroller",
+            enabled=True,
+            is_system=True,
+            params={"max_items": 5},
+        )
+
     def add_job(
         self,
         job_id: str,
@@ -557,6 +570,10 @@ class AutomationScheduler:
 
         elif job_type == "model_cache_cleaner":
             return self._task_model_cache_cleaner
+
+        elif job_type == "auto_scroller":
+            max_items = int(params.get("max_items", 5))
+            return lambda: self._task_auto_scroller(max_items)
 
         # Generic default
         return lambda: f"Custom task '{job_type}' executed successfully."
@@ -872,6 +889,18 @@ class AutomationScheduler:
         import gc
         gc.collect()
         return "Cleaned in-memory ML model caches and freed unallocated RAM."
+
+    def _task_auto_scroller(self, max_items: int = 5) -> str:
+        """Run one Auto Scroller cycle: scrape -> mine 98% dups -> rewrite -> AI gate -> publish/queue."""
+        from src.automation.auto_scroller import AutoScroller
+        summary = AutoScroller.run_cycle(max_items=max_items)
+        queue_result = AutoScroller.process_waiting_queue()
+        return (
+            f"Auto Scroller: scraped {summary['scraped']} | ingested {summary['ingested']} | "
+            f"duplicates {summary['duplicates']} | rejected {summary['rejected']} | "
+            f"auto-published {summary['auto_published']} | queue backlog {queue_result.get('queued_count', 0)} "
+            f"(released {queue_result.get('published', 0)})."
+        )
 
 
 def get_scheduler() -> AutomationScheduler:

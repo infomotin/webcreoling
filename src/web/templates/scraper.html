@@ -334,6 +334,9 @@
     <button class="hub-tab-btn active" onclick="switchTab('tab-custom')">
         <span>🌐</span> কাস্টম পোর্টাল ও ১০০% এআই অরিজিনাল পাবলিশার (Custom Ingestion)
     </button>
+    <button class="hub-tab-btn" onclick="switchTab('tab-scroller')">
+        <span>🔄</span> অটো স্ক্রলার পাইপলাইন (Auto Scroller)
+    </button>
     <button class="hub-tab-btn" onclick="switchTab('tab-rules')">
         <span>🧠</span> এআই রুল ইঞ্জিন ও টার্গেটিং (Brain Rules)
     </button>
@@ -692,6 +695,223 @@
                             </td>
                         </tr>
                     {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- TAB: AUTO SCROLLER — SCRAPE → 98% MINE → REWRITE → AI GATE → PUBLISH     -->
+<!-- ========================================================================= -->
+<div id="tab-scroller" class="tab-pane">
+    <!-- Auto Scroller KPIs -->
+    <div class="kpi-stat-grid" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card">
+            <div class="kpi-title">মোট র-নিউজ আইটেম (Raw Items)</div>
+            <div class="kpi-value" style="color: #38bdf8;">{{ scroller_stats.total }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">কিউতে অপেক্ষমান (Waiting Queue)</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ scroller_stats.queued }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">অটো-পোস্টেড (Auto Published)</div>
+            <div class="kpi-value" style="color: #10b981;">{{ scroller_stats.auto_published }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">ম্যানুয়াল প্রকাশিত (Manual)</div>
+            <div class="kpi-value" style="color: #60a5fa;">{{ scroller_stats.published_manual }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">ডুপ্লিকেট বাদ (98% Similarity)</div>
+            <div class="kpi-value" style="color: #a855f7;">{{ scroller_stats.duplicates }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">বাতিকৃত (Rejected)</div>
+            <div class="kpi-value" style="color: #ef4444;">{{ scroller_stats.rejected }}</div>
+        </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom: 1.5rem;">
+        <!-- Pipeline Config -->
+        <div class="card" style="border: 1px solid rgba(168, 85, 247, 0.4); background: radial-gradient(circle at top left, rgba(168, 85, 247, 0.12), rgba(15, 23, 42, 0.95));">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.6rem;">⚙️</span>
+                    <div>
+                        <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">অটো স্ক্রলার কনফিগ (Auto Scroller Config)</h2>
+                        <span style="font-size: 0.82rem; color: #c084fc;">স্ক্র্যাপ → ৯৮% সিমিলারিটি মাইনিং → কপিরাইট-সেফ রিরাইট → এআই ব্রেন গেট → পোর্টাল পাবলিশ</span>
+                    </div>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('scraper.save_scroller_config') }}">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" style="color:#fff;">🔗 সোর্স নিউজ লিংক (এক লাইনে একটি URL, কমা/নতুন লাইনে আলাদা)</label>
+                    <textarea name="source_urls" class="form-control" rows="4" style="background: rgba(0,0,0,0.4); color: #fff; border-color: rgba(168,85,247,0.3);" placeholder="https://www.prothomalo.com/bangladesh/...&#10;https://www.thedailystar.net/...">{{ scroller_config.get('source_urls', '') }}</textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="color:#fff;">⛏️ Similarity Threshold (0.5–1.0)</label>
+                        <input type="number" step="0.01" min="0.5" max="1.0" name="similarity_threshold" class="form-control" value="{{ scroller_config.get('similarity_threshold', 0.98) }}" style="background: rgba(0,0,0,0.4); color: #fff;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="color:#fff;">🤖 AI Publish Threshold (%)</label>
+                        <input type="number" step="1" min="0" max="100" name="ai_publish_threshold" class="form-control" value="{{ scroller_config.get('ai_publish_threshold', 75) }}" style="background: rgba(0,0,0,0.4); color: #fff;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="color:#fff;">📦 Max Items / Cycle</label>
+                        <input type="number" min="1" max="50" name="max_items_per_cycle" class="form-control" value="{{ scroller_config.get('max_items_per_cycle', 10) }}" style="background: rgba(0,0,0,0.4); color: #fff;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="color:#fff;">🏷️ ডিফল্ট ক্যাটাগরি</label>
+                        <input type="text" name="category" class="form-control" value="{{ scroller_config.get('category', 'general') }}" style="background: rgba(0,0,0,0.4); color: #fff;">
+                    </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #e2e8f0;">
+                    <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                        <input type="checkbox" name="enabled" value="1" {% if scroller_config.get('enabled') %}checked{% endif %}> ⏻ পাইপলাইন চালু (Enabled)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                        <input type="checkbox" name="auto_post_enabled" value="1" {% if scroller_config.get('auto_post_enabled') %}checked{% endif %}> 🚀 অটো-পোস্ট চালু (Auto-Publish to /news/)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                        <input type="checkbox" name="translate_to_bangla" value="1" {% if scroller_config.get('translate_to_bangla') %}checked{% endif %}> 🌐 বাংলায় অনুবাদ (Translate non-Bangla)
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #a855f7, #6366f1); border: none; font-weight: 700; padding: 0.6rem 1.5rem;">
+                    💾 কনফিগ সংরক্ষণ করুন (Save Config)
+                </button>
+            </form>
+        </div>
+
+        <!-- Manual Cycle Trigger -->
+        <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.95));">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.6rem;">🔄</span>
+                    <div>
+                        <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0;">ম্যানুয়াল সাইকেল ও কিউ কন্ট্রোল</h2>
+                        <span style="font-size: 0.82rem; color: #38bdf8;">স্ক্র্যাপ → ক্লাসিফাই → ৯৮% ডুপ্লিকেট মাইন → বাংলা রিরাইট → এআই ব্রেন → অটো/ম্যানুয়াল পাবলিশ</span>
+                    </div>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('scraper.run_scroller_cycle') }}" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" style="color:#fff;">⚡ এখনই রান করুন — সাময়িক সোর্স লিংক (খালি রাখলে কনফিগের লিংক ব্যবহার হবে)</label>
+                    <textarea name="source_urls" class="form-control" rows="3" style="background: rgba(0,0,0,0.4); color: #fff; border-color: rgba(56,189,248,0.3);" placeholder="https://example.com/breaking-news-1&#10;https://example.com/breaking-news-2"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 0.75rem; max-width: 220px;">
+                    <label class="form-label" style="color:#fff;">📦 Max Items</label>
+                    <input type="number" name="max_items" min="1" max="50" class="form-control" value="5" style="background: rgba(0,0,0,0.4); color: #fff;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; font-weight: 700; padding: 0.6rem 1.5rem;">
+                    ▶️ অটো স্ক্রলার সাইকেল শুরু করুন
+                </button>
+            </form>
+            <div style="border-top: 1px dashed rgba(148, 163, 184, 0.3); padding-top: 1rem;">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                    ⏳ কিউতে থাকা সংবাদ এখন প্রকাশ করুন — অটো-পোস্ট বন্ধ থাকলে নিচের বাটন দিয়ে ম্যানুয়ালি রিলিজ করা যাবে; অটো-পোস্ট চালু থাকলে AI Brain অনুমোদিত আইটেম নিজে থেকেই পোস্ট হবে।
+                </p>
+                <form method="POST" action="{{ url_for('scraper.process_scroller_queue') }}">
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; border: none; font-weight: 700; padding: 0.55rem 1.25rem;">
+                        📤 উেটিং কিউ প্রসেস করুন (Process Queue)
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw Staging Items Table -->
+    <div class="card" style="border: 1px solid rgba(148, 163, 184, 0.25);">
+        <div class="card-header">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin: 0;">📋 র-নিউজ স্টেজিং টেবিল (Raw News → Classified → Regenerated → Published)</h2>
+            <span class="source-badge" style="background: rgba(56,189,248,0.15); color: #38bdf8; font-size: 0.8rem;">98% SIMILARITY MINING + AI BRAIN GATE</span>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.86rem;">
+                <thead>
+                    <tr style="background: rgba(0,0,0,0.35); color: #94a3b8; text-align: left;">
+                        <th style="padding: 0.7rem 0.6rem;">#</th>
+                        <th style="padding: 0.7rem 0.6rem;">শিরোনাম / Title</th>
+                        <th style="padding: 0.7rem 0.6rem;">সোর্স</th>
+                        <th style="padding: 0.7rem 0.6rem;">ক্যাটাগরি</th>
+                        <th style="padding: 0.7rem 0.6rem;">সিমিলারিটি</th>
+                        <th style="padding: 0.7rem 0.6rem;">স্ট্যাটাস</th>
+                        <th style="padding: 0.7rem 0.6rem;">AI সিদ্ধান্ত</th>
+                        <th style="padding: 0.7rem 0.6rem;">মূল সোর্স লিংক</th>
+                        <th style="padding: 0.7rem 0.6rem;">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for it in scroller_items %}
+                    <tr style="border-bottom: 1px solid rgba(148,163,184,0.12); color: #e2e8f0;">
+                        <td style="padding: 0.6rem;">{{ it.id }}</td>
+                        <td style="padding: 0.6rem; max-width: 320px;">
+                            <div style="font-weight: 700; color: #fff;">{{ (it.regenerated_title or it.title_raw)[:90] }}</div>
+                            {% if it.language != 'bn' %}
+                            <span style="font-size: 0.72rem; color: #f59e0b;">🌐 {{ it.language }} → বাংলা {% if it.translated %}(অনুবাদিত ✅){% endif %}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.6rem;">{{ it.source_name or '—' }}</td>
+                        <td style="padding: 0.6rem;">{{ it.category }}</td>
+                        <td style="padding: 0.6rem;">
+                            {% if it.similarity_score is not none %}
+                            <span style="color: {% if it.similarity_score >= 0.98 %}#ef4444{% else %}#10b981{% endif %}; font-weight: 700;">{{ '%.1f'|format(it.similarity_score * 100) }}%</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td style="padding: 0.6rem;">
+                            {% if it.status == 'queued' %}
+                            <span style="background: rgba(245,158,11,0.18); color: #fbbf24; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">⏳ কিউতে</span>
+                            {% elif it.status == 'auto_published' %}
+                            <span style="background: rgba(16,185,129,0.18); color: #34d399; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">🚀 অটো-পোস্ট</span>
+                            {% elif it.status == 'published_manual' %}
+                            <span style="background: rgba(56,189,248,0.18); color: #38bdf8; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">✅ প্রকাশিত</span>
+                            {% elif it.status == 'duplicate' %}
+                            <span style="background: rgba(168,85,247,0.18); color: #c084fc; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">♻️ ডুপ্লিকেট</span>
+                            {% elif it.status == 'rejected' %}
+                            <span style="background: rgba(239,68,68,0.18); color: #f87171; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">⛔ বাতিল</span>
+                            {% elif it.status == 'failed' %}
+                            <span style="background: rgba(239,68,68,0.18); color: #f87171; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">❌ ফেল</span>
+                            {% else %}
+                            <span style="background: rgba(56,189,248,0.15); color: #7dd3fc; padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">{{ it.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.6rem; font-size: 0.8rem;">
+                            {% if it.ai_decision %}
+                            <div style="color: {% if it.ai_decision == 'AUTO_PUBLISH' %}#34d399{% elif 'REJECT' in it.ai_decision or 'QUARANTINE' in it.ai_decision %}#f87171{% else %}#fbbf24{% endif %}; font-weight: 700;">{{ it.ai_decision }}</div>
+                            <div style="color: var(--text-muted);">
+                                সত্যতা: {{ it.factuality_score if it.factuality_score is not none else '—' }}%
+                                {% if it.meaning_retention_score is not none %} • ভাবধারা: {{ it.meaning_retention_score }}%{% endif %}
+                            </div>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td style="padding: 0.6rem; max-width: 180px;">
+                            <a href="{{ it.source_url }}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; word-break: break-all; text-decoration: underline;">🔗 মূল খবর দেখুন</a>
+                        </td>
+                        <td style="padding: 0.6rem; white-space: nowrap;">
+                            {% if it.status == 'queued' %}
+                            <form method="POST" action="{{ url_for('scraper.publish_scroller_item', item_id=it.id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-primary" style="font-size: 0.72rem; padding: 0.22rem 0.55rem; background: #10b981; border: none;">🚀 প্রকাশ</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('scraper.reject_scroller_item', item_id=it.id) }}" style="display: inline;">
+                                <button type="submit" class="btn" style="font-size: 0.72rem; padding: 0.22rem 0.55rem; background: #7f1d1d; color: #fca5a5; border: 1px solid #b91c1c;">⛔ বাতিল</button>
+                            </form>
+                            {% elif it.article_id %}
+                            <a href="{{ url_for('portal.article_reader_view', article_id=it.article_id) }}" target="_blank" style="color: #34d399; font-weight: 700; font-size: 0.78rem;">📄 আর্টিকেল দেখুন</a>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            এখনো কোনো র-আইটেম নেই — উপরে সোর্স লিংক দিয়ে সাইকেল চালু করুন!
+                        </td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

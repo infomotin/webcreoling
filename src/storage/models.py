@@ -1061,3 +1061,71 @@ class UserSubscription(Base):
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
+
+
+class RawNewsItem(Base):
+    """Staging layer for the Auto Scroller: raw scraped news before it becomes a portal article.
+
+    Lifecycle (status):
+      raw -> classified -> duplicate | regenerated -> queued
+          -> auto_published | published_manual | rejected | failed
+    """
+    __tablename__ = "raw_news_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_key = Column(String(80), nullable=True, index=True)
+    source_name = Column(String(160), nullable=True)
+    source_url = Column(String(500), nullable=False, index=True)  # original news link (kept on the published post)
+    title_raw = Column(Text, nullable=False)
+    content_raw = Column(Text, nullable=True)
+    author_raw = Column(String(255), nullable=True)
+    image_url = Column(String(1000), nullable=True)
+    lead_image_path = Column(String(500), nullable=True)
+
+    language = Column(String(20), nullable=True, default="bn")     # detected source language
+    needs_translation = Column(Boolean, default=False)
+    translated = Column(Boolean, default=False)
+
+    category = Column(String(100), nullable=True, default="general", index=True)
+    status = Column(String(40), nullable=False, default="raw", index=True)
+
+    similarity_score = Column(Float, nullable=True)
+    duplicate_of_url = Column(String(1000), nullable=True)
+
+    regenerated_title = Column(Text, nullable=True)
+    regenerated_summary = Column(Text, nullable=True)
+    regenerated_body = Column(Text, nullable=True)
+    meaning_retention_score = Column(Float, nullable=True)
+
+    ai_decision = Column(String(60), nullable=True, index=True)
+    ai_reason = Column(Text, nullable=True)
+    credibility_score = Column(Float, nullable=True)
+    factuality_score = Column(Float, nullable=True)
+    fake_probability_pct = Column(Float, nullable=True)
+
+    article_id = Column(Integer, nullable=True, index=True)
+    meta = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "source_key": self.source_key,
+            "source_name": self.source_name,
+            "source_url": self.source_url,
+            "title_raw": self.title_raw,
+            "category": self.category,
+            "language": self.language,
+            "needs_translation": self.needs_translation,
+            "translated": self.translated,
+            "status": self.status,
+            "similarity_score": self.similarity_score,
+            "duplicate_of_url": self.duplicate_of_url,
+            "regenerated_title": self.regenerated_title,
+            "ai_decision": self.ai_decision,
+            "ai_reason": self.ai_reason,
+            "article_id": self.article_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }

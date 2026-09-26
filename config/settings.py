@@ -107,6 +107,37 @@ class Settings(BaseSettings):
     TEMPERATURE: float = 0.7
     TOP_P: float = 0.9
 
+    # Mail Server Configuration (Default: Mailtrap Sandbox)
+    MAIL_SERVER: str = "sandbox.smtp.mailtrap.io"
+    MAIL_PORT: int = 2525
+    MAIL_USERNAME: str = "6056bdc6c17f23"
+    MAIL_PASSWORD: str = "4e1119bb236ac7"
+    MAIL_USE_TLS: bool = True
+    MAIL_USE_SSL: bool = False
+    MAIL_DEFAULT_SENDER: str = "noreply@webcreoling.ai"
+    MAIL_SENDER_NAME: str = "WebCreoling AI Newsroom"
+
+    # SMS Gateway Configuration
+    SMS_PROVIDER: str = "SANDBOX"  # SANDBOX, SSL_WIRELESS, GREENWEB, BULKSMS_BD, TWILIO
+    SMS_API_KEY: str = "sandbox_sms_api_key_bangla_news"
+    SMS_SENDER_ID: str = "WEBCREOLING"
+    SMS_API_URL: str = "https://api.sms-gateway.mock/v1/send"
+
+    # Payment Gateway Configuration
+    PAYMENT_GATEWAY_DEFAULT: str = "BKASH"  # BKASH, NAGAD, ROCKET, SSLCOMMERZ, STRIPE, SANDBOX
+    BKASH_APP_KEY: str = "sandbox_bkash_app_key_88017"
+    BKASH_APP_SECRET: str = "sandbox_bkash_secret_secure_9901"
+    BKASH_MERCHANT_NUMBER: str = "01700000000"
+    NAGAD_MERCHANT_ID: str = "sandbox_nagad_merchant_123"
+    NAGAD_PUBLIC_KEY: str = "sandbox_nagad_pub_key"
+    SSLCOMMERZ_STORE_ID: str = "webcreoling_sandbox_store"
+    SSLCOMMERZ_STORE_PASS: str = "webcreoling_sandbox_pass@123"
+    STRIPE_PUBLIC_KEY: str = "pk_test_sample_51O..."
+    STRIPE_SECRET_KEY: str = "sk_test_sample_51O..."
+
+    # Localization Default
+    DEFAULT_LANGUAGE: str = "bn"  # 'bn' (Bangla) or 'en' (English)
+
     def create_required_directories(self) -> None:
         """Create necessary directories if they do not exist."""
         for path in [

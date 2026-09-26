@@ -26,149 +26,260 @@
         <!-- Mobile Sidebar Backdrop -->
         <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
 
-        <!-- Collapsible & Scrollable Sidebar -->
+        <!-- Collapsible & Scrollable Standard Admin Sidebar -->
         <aside class="app-sidebar" id="appSidebar">
             <!-- Sidebar Brand Header -->
             <div class="sidebar-header">
                 <a href="{{ url_for('dashboard.index_view') }}" class="sidebar-brand-box">
-                    <div class="brand-icon-logo">⚡</div>
+                    <div class="brand-icon-logo">
+                        <span class="brand-bolt-icon">⚡</span>
+                        <span class="brand-pulse-beacon"></span>
+                    </div>
                     <div class="brand-title-wrap">
-                        <span class="brand-main-title">দি ডেইলি এআই আলো</span>
-                        <span class="brand-sub-badge">
-                            <span class="pulse-online-dot"></span> AI NEWSROOM
-                        </span>
+                        <div class="brand-main-title">দি ডেইলি এআই আলো</div>
+                        <div class="brand-sub-badge">
+                            <span class="pulse-online-dot"></span>
+                            <span class="brand-tag-text">AI NEWSROOM CMS • v2.5</span>
+                        </div>
                     </div>
                 </a>
-                <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebarCollapse()" title="সাইডবার সংকোচন / প্রসারণ (Toggle Sidebar)">
-                    ◀
+                <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebarCollapse()" title="সাইডবার সংকোচন / প্রসারণ (Ctrl+B)">
+                    <span class="toggle-icon">◀</span>
                 </button>
             </div>
 
+            <!-- Interactive Quick Search / Menu Filter -->
+            <div class="sidebar-search-wrap">
+                <div class="sidebar-search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="sidebarMenuSearch" class="sidebar-search-input" placeholder="মেনু ফিল্টার করুন (Search menu)..." oninput="filterSidebarMenu(this.value)" autocomplete="off">
+                    <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="clearSidebarSearch()" title="মুছুন">✕</button>
+                </div>
+            </div>
+
             <!-- Scrollable Nav Items Area -->
-            <div class="sidebar-nav-scroll">
-                <!-- Group 1: Main Intelligence -->
-                <div class="nav-section-group">
-                    <div class="nav-section-title">📊 প্রধান ড্যাশবোর্ড ও বিশ্লেষণ</div>
+            <div class="sidebar-nav-scroll" id="sidebarNavScroll">
+                <!-- Group 1: Core Dashboard & Intelligence -->
+                <div class="nav-section-group" data-nav-group="dashboard">
+                    <div class="nav-section-title">
+                        <span class="section-title-icon">📊</span>
+                        <span class="section-title-text">প্রধান ড্যাশবোর্ড ও অ্যানালিটিক্স</span>
+                    </div>
                     <ul class="sidebar-menu-list">
                         <li class="sidebar-menu-item">
                             <a href="{{ url_for('dashboard.index_view') }}" class="sidebar-menu-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}" data-tooltip="এক্সিকিউটিভ ড্যাশবোর্ড">
-                                <span class="menu-icon">📊</span>
+                                <span class="menu-icon-box">📊</span>
                                 <span class="menu-label">এক্সিকিউটিভ ড্যাশবোর্ড</span>
-                                <span class="menu-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">360° LIVE</span>
+                                <span class="menu-badge badge-cyan">360° LIVE</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item">
                             <a href="{{ url_for('portal.index_view') }}" target="_blank" class="sidebar-menu-link" data-tooltip="লাইভ সংবাদপত্র পোর্টাল">
-                                <span class="menu-icon">📰</span>
+                                <span class="menu-icon-box">📰</span>
                                 <span class="menu-label">লাইভ সংবাদপত্র পোর্টাল</span>
-                                <span class="menu-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">LIVE ↗</span>
+                                <span class="menu-badge badge-green">PORTAL ↗</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('article.list_articles_view') }}" class="sidebar-menu-link {% if request.path.startswith('/articles') %}active{% endif %}" data-tooltip="সংরক্ষিত সংবাদ তালিকা">
-                                <span class="menu-icon">📑</span>
-                                <span class="menu-label">সংরক্ষিত সংবাদ তালিকা</span>
+                            <a href="{{ url_for('article.list_articles_view') }}" class="sidebar-menu-link {% if request.path.startswith('/articles') %}active{% endif %}" data-tooltip="সংরক্ষিত সংবাদ আর্কাইভ">
+                                <span class="menu-icon-box">📑</span>
+                                <span class="menu-label">সংরক্ষিত সংবাদ আর্কাইভ</span>
+                                <span class="menu-badge badge-blue">FTS5</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Group 2: Newsroom & AI Ingestion -->
+                <!-- Group 2: Newsroom & Editorial CMS (Accordion Dropdown) -->
                 {% if is_editor or is_admin %}
-                <div class="nav-section-group">
-                    <div class="nav-section-title">🌐 সংবাদ সংগ্রহ ও এআই স্টুডিও</div>
+                <div class="nav-section-group" data-nav-group="newsroom">
+                    <div class="nav-section-title">
+                        <span class="section-title-icon">✍️</span>
+                        <span class="section-title-text">সম্পাদকীয় নিউজরুম ও প্রকাশনা</span>
+                    </div>
                     <ul class="sidebar-menu-list">
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('scraper.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/scraper') and 'tab=' not in request.query_string.decode('utf-8') %}active{% endif %}" data-tooltip="কাস্টম স্ক্র্যাপ ও ১০০% অরিজিনাল">
-                                <span class="menu-icon">🌐</span>
-                                <span class="menu-label">কাস্টম স্ক্র্যাপ ও অরিজিনাল</span>
-                                <span class="menu-badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">100% UNIQUE</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('admin.newspaper_management_view') }}" class="sidebar-menu-link {% if request.path.startswith('/admin/newspaper') %}active{% endif %}" data-tooltip="সম্পাদকীয় ও নিউজ ম্যানেজমেন্ট">
-                                <span class="menu-icon">✍️</span>
-                                <span class="menu-label">সম্পাদকীয় ডেস্ক ও প্লেসমেন্ট</span>
-                                <span class="menu-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">NEWSROOM</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('scraper.index_view') }}?tab=autopilot" class="sidebar-menu-link {% if 'tab=autopilot' in request.query_string.decode('utf-8') %}active{% endif %}" data-tooltip="এআই পাইলট ব্রেন রান">
-                                <span class="menu-icon">🤖</span>
-                                <span class="menu-label">এআই পাইলট অটো-পাবলিশ</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('scraper.index_view') }}?tab=social" class="sidebar-menu-link {% if 'tab=social' in request.query_string.decode('utf-8') %}active{% endif %}" data-tooltip="সোশ্যাল মিডিয়া ব্রডকাস্টার">
-                                <span class="menu-icon">📱</span>
-                                <span class="menu-label">সোশ্যাল মিডিয়া ও অ্যান্টি-ব্যান</span>
-                                <span class="menu-badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">FB/TG</span>
-                            </a>
-                        </li>
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('scraper.index_view') }}?tab=rules" class="sidebar-menu-link {% if 'tab=rules' in request.query_string.decode('utf-8') %}active{% endif %}" data-tooltip="এআই ব্রেন রুল ইঞ্জিন">
-                                <span class="menu-icon">🎯</span>
-                                <span class="menu-label">এআই ব্রেন রুল ও টার্গেটিং</span>
-                            </a>
+                        <li class="sidebar-menu-item has-submenu {% if request.path.startswith('/admin/newspaper') %}open active-parent{% endif %}">
+                            <div class="sidebar-menu-link submenu-trigger" onclick="toggleSubmenu(this)">
+                                <span class="menu-icon-box">✍️</span>
+                                <span class="menu-label">নিউজরুম সিএমএস ডেস্ক</span>
+                                <span class="menu-badge badge-amber">CMS</span>
+                                <span class="submenu-chevron">▼</span>
+                            </div>
+                            <ul class="sidebar-submenu-list">
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view') }}" class="submenu-link {% if request.path == '/admin/newspaper' and not request.args.get('status') and not request.args.get('tab') %}active{% endif %}">
+                                        <span class="sub-dot"></span> সব সংবাদ ফিড
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', status='pending') }}" class="submenu-link {% if request.args.get('status') == 'pending' %}active{% endif %}">
+                                        <span class="sub-dot"></span> অনুমোদন কিউ (Review)
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='scheduler') }}" class="submenu-link {% if request.args.get('tab') == 'scheduler' %}active{% endif %}">
+                                        <span class="sub-dot"></span> নির্ধারিত প্রকাশনা (Scheduler)
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='ads') }}" class="submenu-link {% if request.args.get('tab') == 'ads' %}active{% endif %}">
+                                        <span class="sub-dot"></span> বিজ্ঞাপন ক্যাম্পেইন (Ads)
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="submenu-link {% if request.args.get('tab') == 'polls' %}active{% endif %}">
+                                        <span class="sub-dot"></span> মতামত জরিপ (Polls)
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='subscribers') }}" class="submenu-link {% if request.args.get('tab') == 'subscribers' %}active{% endif %}">
+                                        <span class="sub-dot"></span> ই-বুলেটিন গ্রাহক
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="submenu-link {% if request.args.get('tab') == 'settings' %}active{% endif %}">
+                                        <span class="sub-dot"></span> পোর্টাল ব্র্যান্ডিং ও সেটিংস
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='footer') }}" class="submenu-link {% if request.args.get('tab') == 'footer' %}active{% endif %}">
+                                        <span class="sub-dot"></span> ডায়নামিক ফুটার কনফিগ
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
                 </div>
                 {% endif %}
 
-                <!-- Group 3: Neural Studio & Training -->
+                <!-- Group 3: AI Scraping & Data Mining (Accordion Dropdown) -->
+                {% if is_editor or is_admin %}
+                <div class="nav-section-group" data-nav-group="scraper">
+                    <div class="nav-section-title">
+                        <span class="section-title-icon">🌐</span>
+                        <span class="section-title-text">এআই স্ক্র্যাপার ও সোর্স হাব</span>
+                    </div>
+                    <ul class="sidebar-menu-list">
+                        <li class="sidebar-menu-item has-submenu {% if request.path.startswith('/scraper') %}open active-parent{% endif %}">
+                            <div class="sidebar-menu-link submenu-trigger" onclick="toggleSubmenu(this)">
+                                <span class="menu-icon-box">🌐</span>
+                                <span class="menu-label">স্ক্র্যাপার ও মাল্টি-সোর্স</span>
+                                <span class="menu-badge badge-sky">INGEST</span>
+                                <span class="submenu-chevron">▼</span>
+                            </div>
+                            <ul class="sidebar-submenu-list">
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('scraper.index_view') }}" class="submenu-link {% if request.path == '/scraper' and not request.args.get('tab') %}active{% endif %}">
+                                        <span class="sub-dot"></span> কাস্টম স্ক্র্যাপ ও অরিজিনাল
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('scraper.index_view') }}?tab=autopilot" class="submenu-link {% if request.args.get('tab') == 'autopilot' %}active{% endif %}">
+                                        <span class="sub-dot"></span> এআই পাইলট ব্রেন রান
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('scraper.index_view') }}?tab=social" class="submenu-link {% if request.args.get('tab') == 'social' %}active{% endif %}">
+                                        <span class="sub-dot"></span> সোশ্যাল মিডিয়া ব্রডকাস্টার
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('scraper.index_view') }}?tab=rules" class="submenu-link {% if request.args.get('tab') == 'rules' %}active{% endif %}">
+                                        <span class="sub-dot"></span> এআই ব্রেন রুল ও টার্গেটিং
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Group 4: Neural Studio, RAG & Automation (Accordion Dropdown) -->
                 {% if is_analyst or is_admin %}
-                <div class="nav-section-group">
-                    <div class="nav-section-title">🧠 নিউরাল ব্রেন ও অটোমেশন</div>
+                <div class="nav-section-group" data-nav-group="neural">
+                    <div class="nav-section-title">
+                        <span class="section-title-icon">🧠</span>
+                        <span class="section-title-text">নিউরাল এআই ও শিডিউলার</span>
+                    </div>
                     <ul class="sidebar-menu-list">
                         {% if is_admin %}
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('training.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/training') %}active{% endif %}" data-tooltip="নিউরাল এলএলএম ট্রেইনিং">
-                                <span class="menu-icon">🧠</span>
+                            <a href="{{ url_for('training.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/training') %}active{% endif %}" data-tooltip="নিউরাল ট্রেইনিং স্টুডিও">
+                                <span class="menu-icon-box">🧠</span>
                                 <span class="menu-label">নিউরাল ট্রেইনিং স্টুডিও</span>
-                                <span class="menu-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">LoRA SPLIT</span>
+                                <span class="menu-badge badge-rose">LoRA SPLIT</span>
                             </a>
                         </li>
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('admin.automation_view') }}" class="sidebar-menu-link {% if request.path.startswith('/admin/automation') %}active{% endif %}" data-tooltip="অটোমেশন ও শিডিউলার">
-                                <span class="menu-icon">⚙️</span>
-                                <span class="menu-label">শিডিউলার ও অটোমেশন</span>
-                                <span class="menu-badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">CRON</span>
+                            <a href="{{ url_for('admin.automation_view') }}" class="sidebar-menu-link {% if request.path.startswith('/admin/automation') %}active{% endif %}" data-tooltip="অটোমেশন শিডিউলার">
+                                <span class="menu-icon-box">⚙️</span>
+                                <span class="menu-label">অটোমেশন ও শিডিউলার</span>
+                                <span class="menu-badge badge-purple">CRON</span>
                             </a>
                         </li>
                         {% endif %}
                         <li class="sidebar-menu-item">
                             <a href="{{ url_for('chat.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/chat') %}active{% endif %}" data-tooltip="এআই চ্যাট ও RAG">
-                                <span class="menu-icon">💬</span>
+                                <span class="menu-icon-box">💬</span>
                                 <span class="menu-label">এআই চ্যাট ও RAG অ্যাসিস্ট্যান্ট</span>
+                                <span class="menu-badge badge-indigo">AI Q&A</span>
                             </a>
                         </li>
                     </ul>
                 </div>
                 {% endif %}
 
-                <!-- Group 4: Infrastructure & Security -->
+                <!-- Group 5: Data Center & Enterprise Security (Accordion Dropdown) -->
                 {% if is_editor or is_admin %}
-                <div class="nav-section-group">
-                    <div class="nav-section-title">🛡️ ক্লাউড, সিকিউরিটি ও সিস্টেম</div>
+                <div class="nav-section-group" data-nav-group="infrastructure">
+                    <div class="nav-section-title">
+                        <span class="section-title-icon">🛡️</span>
+                        <span class="section-title-text">ক্লাউড, সিকিউরিটি ও সিস্টেম</span>
+                    </div>
                     <ul class="sidebar-menu-list">
                         <li class="sidebar-menu-item">
                             <a href="{{ url_for('datacenter.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/datacenter') or request.path.startswith('/admin/datacenter') %}active{% endif %}" data-tooltip="ডাটা সেন্টার ও ক্লাউড">
-                                <span class="menu-icon">🌐</span>
+                                <span class="menu-icon-box">🌐</span>
                                 <span class="menu-label">ডাটা সেন্টার ও ক্লাউড স্টোরেজ</span>
+                                <span class="menu-badge badge-cyan">HA CLOUD</span>
                             </a>
                         </li>
                         {% if is_admin %}
-                        <li class="sidebar-menu-item">
-                            <a href="{{ url_for('admin.security_view') if 'admin.security_view' in url_map else url_for('admin.users_view') }}" class="sidebar-menu-link {% if request.path.startswith('/admin/security') %}active{% endif %}" data-tooltip="সিকিউরিটি ও ব্লকচেইন">
-                                <span class="menu-icon">🛡️</span>
-                                <span class="menu-label">সিকিউরিটি ও ব্লকচেইন লেজার</span>
-                                <span class="menu-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">VERIFIED</span>
-                            </a>
+                        <li class="sidebar-menu-item has-submenu {% if request.path.startswith('/admin/security') or request.path.startswith('/admin/blockchain') or (request.path.startswith('/admin/newspaper') and (request.args.get('tab') in ['security', 'blockchain', 'datahub', 'monitor'])) %}open active-parent{% endif %}">
+                            <div class="sidebar-menu-link submenu-trigger" onclick="toggleSubmenu(this)">
+                                <span class="menu-icon-box">🛡️</span>
+                                <span class="menu-label">সিকিউরিটি ও ক্রিপ্টো লেজার</span>
+                                <span class="menu-badge badge-emerald">SOC</span>
+                                <span class="submenu-chevron">▼</span>
+                            </div>
+                            <ul class="sidebar-submenu-list">
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="submenu-link {% if request.args.get('tab') == 'security' or request.path == '/admin/security' %}active{% endif %}">
+                                        <span class="sub-dot"></span> WAF সিকিউরিটি ও আইপি ব্যান
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='blockchain') }}" class="submenu-link {% if request.args.get('tab') == 'blockchain' or request.path == '/admin/blockchain' %}active{% endif %}">
+                                        <span class="sub-dot"></span> ব্লকচেইন ডিজিটাল লেজার
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}#vault" class="submenu-link">
+                                        <span class="sub-dot"></span> সেলফ-এনক্রিপশন ভল্ট
+                                    </a>
+                                </li>
+                                <li class="submenu-item">
+                                    <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="submenu-link {% if request.args.get('tab') == 'monitor' %}active{% endif %}">
+                                        <span class="sub-dot"></span> সার্ভার হেলথ ও রিসোর্স মনিটর
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
                         <li class="sidebar-menu-item">
                             <a href="{{ url_for('admin.users_view') }}" class="sidebar-menu-link {% if request.path.startswith('/admin/users') %}active{% endif %}" data-tooltip="ইউজার ম্যানেজমেন্ট">
-                                <span class="menu-icon">👥</span>
+                                <span class="menu-icon-box">👥</span>
                                 <span class="menu-label">ইউজার ম্যানেজমেন্ট ও RBAC</span>
+                                <span class="menu-badge badge-violet">USERS</span>
                             </a>
                         </li>
                         {% endif %}
@@ -177,18 +288,27 @@
                 {% endif %}
             </div>
 
-            <!-- Sidebar Footer User Profile -->
+            <!-- Sidebar Footer User Profile & System Health Dock -->
             <div class="sidebar-footer">
+                <div class="system-health-pill">
+                    <span class="pulse-online-dot"></span>
+                    <span class="health-text">ENGINE ONLINE • 127.0.0.1:8080</span>
+                </div>
                 <div class="user-profile-card">
-                    <div class="user-avatar">
-                        {{ current_user.username[:1].upper() if current_user.username else 'U' }}
+                    <div class="user-avatar-ring">
+                        <div class="user-avatar">
+                            {{ current_user.username[:1].upper() if current_user.username else 'U' }}
+                        </div>
+                        <span class="avatar-online-dot"></span>
                     </div>
                     <div class="user-meta">
-                        <div class="user-name">{{ current_user.username }}</div>
-                        <div class="user-role">{{ current_user.role }}</div>
+                        <div class="user-name" title="{{ current_user.username }}">{{ current_user.username }}</div>
+                        <div class="user-role-badge role-{{ current_user.role }}">
+                            {{ current_user.role|upper }}
+                        </div>
                     </div>
-                    <a href="{{ url_for('auth.logout_view') }}" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-color: rgba(239, 68, 68, 0.3); color: #f87171;" title="লগআউট (Logout)">
-                        🚪
+                    <a href="{{ url_for('auth.logout_view') }}" class="sidebar-logout-btn" title="লগআউট (Logout)">
+                        <span class="logout-icon">🚪</span>
                     </a>
                 </div>
             </div>
@@ -303,7 +423,8 @@
                 
                 const toggleBtn = document.getElementById('sidebarToggleBtn');
                 if (toggleBtn) {
-                    toggleBtn.innerText = isCollapsed ? '▶' : '◀';
+                    const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
+                    icon.innerText = isCollapsed ? '▶' : '◀';
                 }
             }
         }
@@ -312,12 +433,106 @@
             document.body.classList.remove('sidebar-mobile-open');
         }
 
-        // Set initial toggle button text
+        // Submenu Accordion Toggle
+        function toggleSubmenu(triggerEl) {
+            const parentItem = triggerEl.closest('.sidebar-menu-item.has-submenu');
+            if (!parentItem) return;
+
+            // If sidebar is collapsed on desktop, clicking expands sidebar first
+            if (document.body.classList.contains('sidebar-collapsed') && window.innerWidth > 992) {
+                toggleSidebarCollapse();
+                setTimeout(() => {
+                    parentItem.classList.toggle('open');
+                }, 150);
+                return;
+            }
+
+            // Close other sibling accordions for a clean single-open accordion feel
+            const allSubmenus = document.querySelectorAll('.sidebar-menu-item.has-submenu');
+            allSubmenus.forEach(item => {
+                if (item !== parentItem && !item.classList.contains('active-parent')) {
+                    item.classList.remove('open');
+                }
+            });
+
+            parentItem.classList.toggle('open');
+        }
+
+        // Live Sidebar Menu Instant Filter
+        function filterSidebarMenu(searchTerm) {
+            const query = (searchTerm || '').toLowerCase().trim();
+            const clearBtn = document.getElementById('searchClearBtn');
+            if (clearBtn) {
+                clearBtn.style.display = query.length > 0 ? 'inline-flex' : 'none';
+            }
+
+            const groups = document.querySelectorAll('.nav-section-group');
+            groups.forEach(group => {
+                let groupHasVisibleItems = false;
+                const items = group.querySelectorAll('.sidebar-menu-item');
+
+                items.forEach(item => {
+                    const mainLink = item.querySelector('.sidebar-menu-link');
+                    const label = mainLink ? (mainLink.textContent || '').toLowerCase() : '';
+                    const subLinks = item.querySelectorAll('.submenu-link');
+                    let hasMatchingSublink = false;
+
+                    subLinks.forEach(subLink => {
+                        const subText = (subLink.textContent || '').toLowerCase();
+                        if (query === '' || subText.includes(query)) {
+                            subLink.closest('.submenu-item').style.display = '';
+                            hasMatchingSublink = true;
+                        } else {
+                            subLink.closest('.submenu-item').style.display = 'none';
+                        }
+                    });
+
+                    if (query === '' || label.includes(query) || hasMatchingSublink) {
+                        item.style.display = '';
+                        groupHasVisibleItems = true;
+                        if (hasMatchingSublink && query !== '') {
+                            item.classList.add('open');
+                        }
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                group.style.display = (query === '' || groupHasVisibleItems) ? '' : 'none';
+            });
+        }
+
+        function clearSidebarSearch() {
+            const searchInput = document.getElementById('sidebarMenuSearch');
+            if (searchInput) {
+                searchInput.value = '';
+                filterSidebarMenu('');
+                searchInput.focus();
+            }
+        }
+
+        // Keyboard Shortcut: Ctrl + B or Cmd + B to toggle sidebar
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                toggleSidebarCollapse();
+            }
+        });
+
+        // Set initial toggle button text & auto-open active submenus on DOM load
         document.addEventListener('DOMContentLoaded', () => {
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             if (toggleBtn && document.body.classList.contains('sidebar-collapsed')) {
-                toggleBtn.innerText = '▶';
+                const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
+                icon.innerText = '▶';
             }
+
+            // Ensure any submenu with an active link is expanded
+            document.querySelectorAll('.sidebar-menu-item.has-submenu').forEach(item => {
+                if (item.querySelector('.submenu-link.active') || item.classList.contains('active-parent')) {
+                    item.classList.add('open');
+                }
+            });
         });
     </script>
     {% block scripts %}{% endblock %}

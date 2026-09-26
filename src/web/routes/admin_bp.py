@@ -52,6 +52,38 @@ def parse_iso_datetime(val: Optional[str]) -> Optional[datetime]:
     return None
 
 
+@admin_bp.route("/newsroom")
+@login_required
+@roles_required("admin", "editor")
+def newsroom_view():
+    """Shortcut redirect to Newsroom Management."""
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/security")
+@login_required
+@roles_required("admin", "editor")
+def security_view():
+    """Shortcut redirect to Newsroom Security & WAF tab."""
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/blockchain")
+@login_required
+@roles_required("admin", "editor")
+def blockchain_view():
+    """Shortcut redirect to Newsroom Blockchain Ledger tab."""
+    return redirect(url_for("admin.newspaper_management_view", tab="blockchain"))
+
+
+@admin_bp.route("/settings")
+@login_required
+@roles_required("admin", "editor")
+def settings_view():
+    """Shortcut redirect to Newsroom Portal Settings tab."""
+    return redirect(url_for("admin.newspaper_management_view", tab="settings"))
+
+
 @admin_bp.route("/users")
 @login_required
 @roles_required("admin")

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('সাবমিশন ফর্ম', 'Submissions') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}
+    📤 {{ tr('বিজ্ঞাপন · খবর · রিপোর্টার সাবমিশন', 'Ad · News · Reporter Submissions') }}
+{% endblock %}
+
+{% block content %}
+<style>
+    .sub-tabbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.3rem; }
+    .sub-tab { padding: 0.55rem 1.1rem; border-radius: 2rem; font-size: 0.85rem; font-weight: 700;
+               text-decoration: none; color: #94a3b8; background: rgba(255,255,255,0.04);
+               border: 1px solid rgba(255,255,255,0.08); }
+    .sub-tab.active { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; border-color: transparent; }
+    .sub-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .muted-note { font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; }
+    textarea.form-control { min-height: 140px; }
+</style>
+
+<div class="sub-tabbar">
+    <a class="sub-tab {% if active_type == 'ad' %}active{% endif %}" href="{{ url_for('submissions.index_view', type='ad') }}">📢 {{ tr('বিজ্ঞাপন অনুসন্ধান', 'Ad Inquiry') }}</a>
+    <a class="sub-tab {% if active_type == 'news' %}active{% endif %}" href="{{ url_for('submissions.index_view', type='news') }}">🗞️ {{ tr('খবর জমা', 'News Submission') }}</a>
+    <a class="sub-tab {% if active_type == 'reporter' %}active{% endif %}" href="{{ url_for('submissions.index_view', type='reporter') }}">🎤 {{ tr('রিপোর্টার আবেদন', 'Reporter Application') }}</a>
+</div>
+
+{# ================= AD INQUIRY ================= #}
+{% if active_type == 'ad' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>📢 {{ tr('বিজ্ঞাপন অনুসন্ধান ফর্ম', 'Advertising Inquiry Form') }}</strong>
+        <span class="chip chip-info" style="font-size:0.7rem;">{{ tr('Ad Manager অনুমোদনের পর ইমেইল যাবে', 'Email sent after Ad Manager approval') }}</span>
+    </div>
+    <form method="POST" action="{{ url_for('submissions.ad_inquiry_submit') }}">
+        <div class="sub-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('আপনার নাম', 'Your name') }} *</label>
+                <input type="text" name="name" class="form-control" required maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ইমেইল', 'Email') }} *</label>
+                <input type="email" name="email" class="form-control" required maxlength="255">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('কোম্পানি', 'Company') }}</label>
+                <input type="text" name="company" class="form-control" maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ফোন', 'Phone') }}</label>
+                <input type="text" name="phone" class="form-control" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('আগ্রহের প্যাকেজ', 'Package interest') }}</label>
+                <select name="package_interest" class="form-control">
+                    <option value="homepage_banner">{{ tr('হোমপেজ ব্যানার', 'Homepage Banner') }}</option>
+                    <option value="sponsored_article">{{ tr('স্পনসরড কন্টেন্ট', 'Sponsored Article') }}</option>
+                    <option value="newsletter">{{ tr('নিউজলেটার প্লেসমেন্ট', 'Newsletter Placement') }}</option>
+                    <option value="social_boost">{{ tr('সোশ্যাল বুস্ট', 'Social Boost') }}</option>
+                    <option value="other">{{ tr('অন্যান্য', 'Other') }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('বাজেট নোট', 'Budget note') }}</label>
+                <input type="text" name="budget_note" class="form-control" maxlength="255" placeholder="{{ tr('যেমন: মাসিক ৳ ২০,০০০', 'e.g. BDT 20,000/month') }}">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:0.8rem;">
+            <label class="form-label">{{ tr('বার্তা', 'Message') }}</label>
+            <textarea name="message" class="form-control" rows="4" maxlength="3000"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ tr('অনুসন্ধান পাঠান', 'Send inquiry') }}</button>
+        <p class="muted-note">{{ tr('AI এজেন্ট উত্তরের খসড়া তৈরি করবে; Ad Manager অনুমোদনের পর ইমেইলে পাঠানো হবে।',
+            'The AI agent drafts a reply; it is emailed only after Ad Manager approval.') }}</p>
+    </form>
+</div>
+{% endif %}
+
+{# ================= NEWS SUBMISSION ================= #}
+{% if active_type == 'news' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>🗞️ {{ tr('খবর / প্রতিবেদন জমা দিন', 'Submit a news report') }}</strong>
+        <span class="chip chip-warn" style="font-size:0.7rem;">{{ tr('Editorial Lead চূড়ান্ত সিদ্ধান্ত নেন', 'Editorial Lead gives final verdict') }}</span>
+    </div>
+    <form method="POST" action="{{ url_for('submissions.news_submit') }}">
+        <div class="sub-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('শিরোনাম', 'Title') }} *</label>
+                <input type="text" name="title" class="form-control" required maxlength="500">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('লেখকের নাম', 'Author name') }}</label>
+                <input type="text" name="author" class="form-control" maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('আপনার ইমেইল', 'Your email') }} *</label>
+                <input type="email" name="email" class="form-control" required maxlength="255">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('উৎস লিংক (ঐচ্ছিক)', 'Source URL (optional)') }}</label>
+                <input type="url" name="source_url" class="form-control" maxlength="1000" placeholder="https://...">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:0.8rem;">
+            <label class="form-label">{{ tr('প্রতিবেদনের পূর্ণ খসড়া', 'Full report draft') }} *</label>
+            <textarea name="content" class="form-control" rows="10" required minlength="50" maxlength="40000"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ tr('জমা দিন (ফ্যাক্ট-চেক সহ)', 'Submit (with fact-check)') }}</button>
+        <p class="muted-note">{{ tr('AI এজেন্ট ক্রস-সোর্স + এক্সটার্নাল ফ্যাক্ট-চেক চালাবে, উদ্বেগ ফ্ল্যাগ করবে, তারপর Editorial Lead চূড়ান্ত সিদ্ধান্ত নেবেন — স্বয়ংক্রিয় প্রত্যাখ্যান নেই।',
+            'The agent cross-checks sources + external fact-check APIs, flags concerns, then the Editorial Lead decides — no autonomous rejection.') }}</p>
+    </form>
+</div>
+{% endif %}
+
+{# ================= REPORTER APPLICATION ================= #}
+{% if active_type == 'reporter' %}
+<div class="card">
+    <div class="card-header">
+        <strong>🎤 {{ tr('রিপোর্টার রেজিস্ট্রেশন', 'Reporter Registration') }}</strong>
+        <span class="chip chip-info" style="font-size:0.7rem;">{{ tr('Onboarding Officer অনুমোদন প্রয়োজন', 'Onboarding Officer approval required') }}</span>
+    </div>
+    <form method="POST" action="{{ url_for('submissions.reporter_apply') }}">
+        <div class="sub-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('পূর্ণ নাম', 'Full name') }} *</label>
+                <input type="text" name="full_name" class="form-control" required maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ইমেইল', 'Email') }} *</label>
+                <input type="email" name="email" class="form-control" required maxlength="255">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ফোন', 'Phone') }}</label>
+                <input type="text" name="phone" class="form-control" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('বছরের অভিজ্ঞতা', 'Years of experience') }}</label>
+                <input type="text" name="experience_years" class="form-control" maxlength="20" placeholder="e.g. 3">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('সাবেক আউটলেট', 'Previous outlet') }}</label>
+                <input type="text" name="outlet" class="form-control" maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('বিষয় (বিট)', 'Beat') }}</label>
+                <input type="text" name="beat" class="form-control" maxlength="120" placeholder="{{ tr('রাজনীতি, অর্থনীতি...', 'Politics, economy...') }}">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:0.8rem;">
+            <label class="form-label">{{ tr('পোর্টফোলিও লিংক (কমা-সেপারেটেড)', 'Portfolio links (comma-separated)') }}</label>
+            <input type="text" name="portfolio_links" class="form-control" maxlength="2000" placeholder="https://example.com/story1, https://...">
+        </div>
+        <div class="form-group" style="margin-top:0.8rem;">
+            <label class="form-label">{{ tr('লেখার নমুনা', 'Writing sample') }} *</label>
+            <textarea name="sample_text" class="form-control" rows="8" maxlength="20000" placeholder="{{ tr('কমপক্ষে ২০ শব্দের নমুনা লিখুন — AI কোয়ালিটি স্কোর করবে', 'Write at least 20 words — AI scores quality') }}"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">{{ tr('ক্রেডেনশিয়াল নোট', 'Credentials note') }}</label>
+            <textarea name="credentials_note" class="form-control" rows="3" maxlength="2000"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">{{ tr('আবেদন জমা দিন', 'Submit application') }}</button>
+        <p class="muted-note">{{ tr('AI এজেন্ট ক্রেডেনশিয়াল ও নমুনার মান যাচাই করবে; উদ্বেগ ফ্ল্যাগ করে Onboarding Officer-এর কাছে পাঠাবে।',
+            'The agent verifies credentials & sample quality, flags concerns and routes to the Onboarding Officer.') }}</p>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

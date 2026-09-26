@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('এআই এজেন্ট কন্ট্রোলার', 'AI Agent Controller') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}
+    🤖 {{ tr('এআই এজেন্ট অনুমোদন ও এস্কেলেশন', 'AI Agent Approvals & Escalation') }}
+{% endblock %}
+
+{% block content %}
+<style>
+    .ag-tabbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.2rem; }
+    .ag-tab { padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.83rem; font-weight: 700;
+              text-decoration: none; color: #94a3b8; background: rgba(255,255,255,0.04);
+              border: 1px solid rgba(255,255,255,0.08); }
+    .ag-tab.active { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; border-color: transparent; }
+    .ag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; margin-bottom: 1.2rem; }
+    .ag-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+               border-radius: 12px; padding: 0.9rem 1rem; }
+    .ag-stat .val { font-size: 1.35rem; font-weight: 800; color: #38bdf8; }
+    .ag-stat .lbl { font-size: 0.76rem; color: #94a3b8; margin-top: 0.15rem; }
+    .ag-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    .ag-table th, .ag-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.07); text-align: left; vertical-align: top; }
+    .ag-table th { color: #94a3b8; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .chip { display: inline-block; padding: 0.14rem 0.55rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; }
+    .chip-ok { background: rgba(16,185,129,0.18); color: #34d399; }
+    .chip-warn { background: rgba(245,158,11,0.18); color: #fbbf24; }
+    .chip-err { background: rgba(239,68,68,0.18); color: #f87171; }
+    .chip-info { background: rgba(56,189,248,0.15); color: #38bdf8; }
+    .chip-mut { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .ag-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .ag-actions button { font-size: 0.72rem; padding: 0.28rem 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12);
+                         background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; font-weight: 700; }
+    .ag-actions button.appr { background: rgba(16,185,129,0.2); color: #34d399; border-color: rgba(16,185,129,0.4); }
+    .ag-actions button.rej { background: rgba(239,68,68,0.18); color: #f87171; border-color: rgba(239,68,68,0.35); }
+    .ag-actions button.flag { background: rgba(245,158,11,0.16); color: #fbbf24; border-color: rgba(245,158,11,0.35); }
+    .ag-note-input { width: 100%; min-width: 140px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                     color: #e2e8f0; border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.75rem; margin-bottom: 0.3rem; }
+    .ag-details summary { cursor: pointer; color: #38bdf8; font-size: 0.76rem; }
+    .ag-details pre { background: rgba(0,0,0,0.3); padding: 0.6rem; border-radius: 8px; font-size: 0.72rem; overflow-x: auto; white-space: pre-wrap; }
+    .muted-note { font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; }
+</style>
+
+{# ---- KPI row ---- #}
+<div class="ag-grid">
+    <div class="ag-stat"><div class="val">{{ open_count }}</div><div class="lbl">{{ tr('খোলা অনুমোদন', 'Open requests') }}</div></div>
+    <div class="ag-stat"><div class="val">{{ sweep.get('escalated', 0) }}</div><div class="lbl">{{ tr('সাম্প্রতিক এস্কেলেশন', 'Recent escalations') }}</div></div>
+    <div class="ag-stat"><div class="val">{{ sweep.get('auto_approved', 0) }}</div><div class="lbl">{{ tr('অটো-অনুমোদিত', 'Auto-approved') }}</div></div>
+    <div class="ag-stat"><div class="val">{{ policy.escalation_hours }}h</div><div class="lbl">{{ tr('এস্কেলেশন টাইমআউট', 'Escalation timeout') }}</div></div>
+    <div class="ag-stat"><div class="val">{{ 'ON' if policy.auto_approve_enabled else 'OFF' }}</div><div class="lbl">{{ tr('অটো-অনুমোদন (সাইলেন্স)', 'Auto-approve by silence') }}</div></div>
+</div>
+
+{# ---- Type filter tabs ---- #}
+<div class="ag-tabbar">
+    <a class="ag-tab {% if not active_type %}active{% endif %}" href="{{ url_for('agent.index_view') }}">{{ tr('সব', 'All') }}</a>
+    {% for tkey, (tbn, ten) in type_labels.items() %}
+    <a class="ag-tab {% if active_type == tkey %}active{% endif %}" href="{{ url_for('agent.index_view', type=tkey) }}">{{ tr(tbn, ten) }}</a>
+    {% endfor %}
+    <a class="ag-tab" href="{{ url_for('agent.index_view', status='open') }}">{{ tr('শুধু খোলা', 'Open only') }}</a>
+    <a class="ag-tab" href="{{ url_for('agent.index_view', status='approved') }}">{{ tr('অনুমোদিত', 'Approved') }}</a>
+    <a class="ag-tab" href="{{ url_for('agent.index_view', status='rejected') }}">{{ tr('প্রত্যাখ্যাত', 'Rejected') }}</a>
+</div>
+
+{# ---- Approval inbox ---- #}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>📥 {{ tr('অনুমোদন ইনবক্স', 'Approval Inbox') }}</strong>
+        <span class="chip chip-info">{{ requests|length }} {{ tr('টি রেকর্ড', 'records') }}</span>
+        {% if is_admin %}
+        <form method="POST" action="{{ url_for('agent.sweep_now') }}" style="display:inline; margin-left:auto;">
+            <button type="submit" class="btn btn-secondary" style="font-size:0.78rem; padding:0.35rem 0.8rem;">⏳ {{ tr('টাইমআউট সুইপ চালান', 'Run timeout sweep') }}</button>
+        </form>
+        {% endif %}
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="ag-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ tr('টাইপ', 'Type') }}</th>
+                    <th>{{ tr('বিষয়', 'Subject') }}</th>
+                    <th>{{ tr('ফ্ল্যাগ / উদ্বেগ', 'Flags / concerns') }}</th>
+                    <th>{{ tr('দায়িত্বপ্রাপ্ত রোল', 'Assigned role') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th>{{ tr('ডিউ / Escalation', 'Due / level') }}</th>
+                    <th>{{ tr('সিদ্ধান্ত', 'Decision') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.id }}</td>
+                    <td><span class="chip chip-mut">{{ req.request_type }}</span></td>
+                    <td style="max-width:280px;">
+                        <strong>{{ req.subject_label }}</strong>
+                        <details class="ag-details">
+                            <summary>{{ tr('বিস্তারিত / অডিট', 'Details / audit') }}</summary>
+                            <pre>{{ req.payload | tojson(indent=2) }}</pre>
+                            {% if req.audit_trail %}
+                            <ul style="font-size:0.72rem; color:#94a3b8; padding-left:1.1rem;">
+                                {% for ev in req.audit_trail %}
+                                <li>{{ ev.event }} — {{ ev.message }} <i>({{ ev.actor }}, {{ ev.at[:19] }})</i></li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </details>
+                    </td>
+                    <td>
+                        {% if req.flags %}
+                            {% for f in req.flags %}<span class="chip chip-warn" style="margin:1px;">{{ f[:48] }}</span>{% endfor %}
+                        {% else %}
+                            <span class="chip chip-ok">{{ tr('কোনো উদ্বেগ নেই', 'No concerns') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="chip chip-info">{{ req.assigned_role or req.required_role }}</span>
+                        {% if req.escalation_level %}<span class="chip chip-warn">L{{ req.escalation_level }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if req.status == 'approved' %}<span class="chip chip-ok">✅ approved</span>
+                        {% elif req.status == 'auto_approved' %}<span class="chip chip-ok">🤖 auto_approved</span>
+                        {% elif req.status == 'rejected' %}<span class="chip chip-err">❌ rejected</span>
+                        {% elif req.status == 'flagged' %}<span class="chip chip-warn">🚩 flagged</span>
+                        {% elif req.status == 'escalated' %}<span class="chip chip-warn">⬆ escalated</span>
+                        {% else %}<span class="chip chip-info">⏳ {{ req.status }}</span>{% endif %}
+                    </td>
+                    <td style="font-size:0.72rem; color:#94a3b8;">
+                        {% if req.due_at %}{{ req.due_at[:16] }}{% endif %}
+                        {% if req.decided_at %}<br>by {{ req.decided_by }}{% endif %}
+                    </td>
+                    <td>
+                        {% if req.is_open %}
+                        <form method="POST" action="{{ url_for('agent.decision_view', request_id=req.id) }}">
+                            <input type="text" class="ag-note-input" name="note" placeholder="{{ tr('নোট (ঐচ্ছিক)', 'Note (optional)') }}">
+                            <div class="ag-actions">
+                                <button type="submit" name="decision" value="approve" class="appr">✅ {{ tr('অনুমোদন', 'Approve') }}</button>
+                                <button type="submit" name="decision" value="reject" class="rej">❌ {{ tr('প্রত্যাখ্যান', 'Reject') }}</button>
+                                <button type="submit" name="decision" value="flag" class="flag">🚩 {{ tr('ফ্ল্যাগ', 'Flag') }}</button>
+                            </div>
+                        </form>
+                        <div class="muted-note">{{ tr('জুনিয়র শুধু ফ্ল্যাগ করতে পারে — চূড়ান্ত সিদ্ধান্ত ', 'Juniors only flag — final verdict by ') }}<b>{{ req.required_role }}</b></div>
+                        {% else %}
+                        <span style="font-size:0.72rem; color:#94a3b8;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align:center; color:#94a3b8; padding:1.2rem;">{{ tr('কোনো অনুরোধ নেই।', 'No requests.') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ---- Policy settings (admin) ---- #}
+{% if is_admin %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>⚙️ {{ tr('অনুমোদন পলিসি — টাইমআউট, এস্কেলেশন, অটো-অনুমোদন', 'Approval Policy — Timeouts, Escalation, Auto-Approval') }}</strong>
+    </div>
+    <form method="POST" action="{{ url_for('agent.policy_save') }}">
+        <div class="int-form-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">{{ tr('এস্কেলেশন টাইমআউট (ঘণ্টা)', 'Escalation timeout (hours)') }}</label>
+                <input type="number" min="1" max="72" name="escalation_hours" class="form-control" value="{{ policy.escalation_hours }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('অটো-অনুমোদন (ঘণ্টা)', 'Auto-approve after (hours)') }}</label>
+                <input type="number" min="1" max="168" name="auto_approve_hours" class="form-control" value="{{ policy.auto_approve_hours }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('সর্বোচ্চ এস্কেলেশন লেভেল', 'Max escalation levels') }}</label>
+                <input type="number" min="0" max="3" name="max_escalation_level" class="form-control" value="{{ policy.max_escalation_level }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('Editorial Lead ইমেইল', 'Editorial Lead email') }}</label>
+                <input type="text" name="recipient_editorial_lead" class="form-control" value="{{ policy.role_recipients.get('editorial_lead', '') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('Ad Manager ইমেইল', 'Ad Manager email') }}</label>
+                <input type="text" name="recipient_ad_manager" class="form-control" value="{{ policy.role_recipients.get('ad_manager', '') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('Onboarding Officer ইমেইল', 'Onboarding Officer email') }}</label>
+                <input type="text" name="recipient_onboarding_officer" class="form-control" value="{{ policy.role_recipients.get('onboarding_officer', '') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('Admin ইমেইল', 'Admin email') }}</label>
+                <input type="text" name="recipient_admin" class="form-control" value="{{ policy.role_recipients.get('admin', '') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ফ্ল্যাগ', 'Flags') }}</label>
+                <label style="display:block; font-size:0.82rem; color:#cbd5e1;">
+                    <input type="checkbox" name="auto_approve_enabled" {{ 'checked' if policy.auto_approve_enabled else '' }}>
+                    {{ tr('অটো-অনুমোদন (সাইলেন্সে অনুমোদন)', 'Auto-approve by silence') }}
+                </label>
+                <label style="display:block; font-size:0.82rem; color:#cbd5e1;">
+                    <input type="checkbox" name="notify_on_create" {{ 'checked' if policy.notify_on_create else '' }}>
+                    {{ tr('রোল-রেসিপিয়েন্টে ইমেইল নোটিফিকেশন', 'Email role recipients on intake') }}
+                </label>
+                <label style="display:block; font-size:0.82rem; color:#cbd5e1;">
+                    <input type="checkbox" name="enabled" {{ 'checked' if policy.enabled else '' }}>
+                    {{ tr('এজেন্ট ওয়ার্কফ্লো চালু', 'Agent workflow enabled') }}
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary">{{ tr('পলিসি সংরক্ষণ', 'Save policy') }}</button>
+            <span class="muted-note">{{ tr('পরিবর্তন সাথে সাথে সুইপ-জবে প্রযোজ্য হবে।', 'Changes apply to the next sweep immediately.') }}</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{# ---- Audit trail ---- #}
+<div class="card">
+    <div class="card-header">
+        <strong>📜 {{ tr('এজেন্ট অডিট ট্রেইল', 'Agent Audit Trail') }}</strong>
+        <span class="chip chip-mut">{{ tr('AI সিদ্ধান্ত ও মানবহস্তক্ষেপ', 'AI decisions & human interventions') }}</span>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="ag-table">
+            <thead>
+                <tr><th>#</th><th>{{ tr('ইভেন্ট', 'Event') }}</th><th>{{ tr('অ্যাক্টর', 'Actor') }}</th>
+                    <th>{{ tr('টাইপ', 'Type') }}</th><th>{{ tr('বার্তা', 'Message') }}</th><th>{{ tr('সময়', 'Time (UTC)') }}</th></tr>
+            </thead>
+            <tbody>
+                {% for ev in audit %}
+                <tr>
+                    <td>{{ ev.id }}</td>
+                    <td><span class="chip {{ 'chip-ok' if ev.event_type in ['APPROVED','AUTO_APPROVED'] else ('chip-err' if ev.event_type == 'REJECTED' else ('chip-warn' if ev.event_type in ['ESCALATED','FLAGGED','JUNIOR_REVIEW'] else 'chip-info')) }}">{{ ev.event_type }}</span></td>
+                    <td>{{ ev.actor }}{% if ev.actor_role %} <span class="chip chip-mut">{{ ev.actor_role }}</span>{% endif %}</td>
+                    <td>{{ ev.request_type or '—' }}</td>
+                    <td style="max-width:380px;">{{ ev.message }}</td>
+                    <td style="font-size:0.72rem; color:#94a3b8;">{{ ev.created_at[:19] if ev.created_at else '' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:1rem;">{{ tr('কোনো অডিট ইভেন্ট নেই।', 'No audit events yet.') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

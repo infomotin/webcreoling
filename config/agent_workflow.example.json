@@ -1,0 +1,114 @@
+{
+  "_comment": "Template for the runtime workflow configuration stored in site_configs. Import values via the admin UI (/agent policy, /scraper multi-source settings) or by calling SiteConfigRepository.set_config with the keys below. All values here are DEFAULTS — the DB copy overrides them.",
+  "news_sources": {
+    "hours_between_runs": 3,
+    "max_retries": 3,
+    "backoff_base_seconds": 2.0,
+    "per_source_limit": 5,
+    "request_timeout": 15,
+    "sources": [
+      {
+        "key": "bbc_world_rss",
+        "name": "BBC World News",
+        "type": "rss",
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "category": "international",
+        "enabled": true,
+        "max_retries": 3,
+        "backoff_base": 2.0,
+        "max_items": 3
+      },
+      {
+        "key": "aljazeera_rss",
+        "name": "Al Jazeera",
+        "type": "rss",
+        "url": "https://www.aljazeera.com/xml/rss/all.xml",
+        "category": "international",
+        "enabled": true,
+        "max_retries": 2,
+        "backoff_base": 2.0,
+        "max_items": 3
+      },
+      {
+        "key": "prothom_alo_html",
+        "name": "Prothom Alo (Direct HTML)",
+        "type": "html",
+        "url": "https://www.prothomalo.com",
+        "category": "bangladesh",
+        "enabled": false,
+        "max_retries": 3,
+        "backoff_base": 2.0,
+        "max_items": 2
+      },
+      {
+        "key": "newsapi_top_headlines",
+        "name": "NewsAPI Top Headlines",
+        "type": "newsapi",
+        "url": "https://newsapi.org/v2/top-headlines",
+        "params": { "country": "us", "pageSize": 10 },
+        "api_key": "",
+        "category": "general",
+        "enabled": false,
+        "max_retries": 3,
+        "backoff_base": 2.0,
+        "max_items": 5
+      },
+      {
+        "key": "guardian_world",
+        "name": "The Guardian API",
+        "type": "guardian",
+        "url": "https://content.guardianapis.com/search",
+        "params": { "section": "world", "page-size": 10 },
+        "api_key": "",
+        "category": "international",
+        "enabled": false,
+        "max_retries": 3,
+        "backoff_base": 2.0,
+        "max_items": 5
+      }
+    ]
+  },
+  "agent_policy": {
+    "enabled": true,
+    "escalation_hours": 6,
+    "auto_approve_enabled": false,
+    "auto_approve_hours": 24,
+    "max_escalation_level": 1,
+    "notify_on_create": true,
+    "role_recipients": {
+      "editorial_lead": "editorial-lead@daily-ai-alo.com",
+      "ad_manager": "ad-manager@daily-ai-alo.com",
+      "onboarding_officer": "onboarding@daily-ai-alo.com",
+      "admin": "admin@daily-ai-alo.com"
+    }
+  },
+  "fact_check_policy": {
+    "cross_source_enabled": true,
+    "cross_source_min_similarity": 0.55,
+    "cross_source_sample": 300,
+    "external_enabled": false,
+    "weight_cross_source": 0.6,
+    "weight_external": 0.4,
+    "low_confidence_threshold": 60.0,
+    "high_confidence_threshold": 80.0
+  },
+  "llm_config": {
+    "enabled": true,
+    "provider": "ollama",
+    "base_url": "http://127.0.0.1:11434",
+    "model": "llama3.2",
+    "embed_model": "nomic-embed-text",
+    "timeout": 60
+  },
+  "auto_scroller": {
+    "enabled": true,
+    "source_urls": "",
+    "auto_post_enabled": false,
+    "similarity_threshold": 0.98,
+    "semantic_fidelity_embedding_threshold": 0.98,
+    "ai_publish_threshold": 75.0,
+    "translate_to_bangla": true,
+    "max_items_per_cycle": 10,
+    "category": "general"
+  }
+}

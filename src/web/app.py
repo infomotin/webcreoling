@@ -116,6 +116,8 @@ def create_app(test_config: dict = None) -> Flask:
             "is_editor": user.role in ["admin", "editor"] if user else False,
             "is_analyst": user.role in ["admin", "editor", "analyst"] if user else False,
             "is_viewer": user is not None,
+            "can_agent": user.role in ["admin", "editor", "editorial_lead", "ad_manager", "onboarding_officer"] if user else False,
+            "is_reporter": user.role in ["reporter", "editor", "admin"] if user else False,
             "lang": lang,
             "tr": tr,
         }
@@ -138,6 +140,9 @@ def create_app(test_config: dict = None) -> Flask:
     from src.web.routes.datacenter_bp import datacenter_bp
     from src.web.routes.integrations_bp import integrations_bp
     from src.web.routes.billing_bp import billing_bp
+    from src.web.routes.agent_bp import agent_bp
+    from src.web.routes.submissions_bp import submissions_bp
+    from src.web.routes.reporter_bp import reporter_bp
 
     app.register_blueprint(portal_bp,   url_prefix="/news")
     app.register_blueprint(auth_bp,    url_prefix="/auth")
@@ -150,6 +155,9 @@ def create_app(test_config: dict = None) -> Flask:
     app.register_blueprint(datacenter_bp, url_prefix="/admin/datacenter")
     app.register_blueprint(integrations_bp, url_prefix="/admin/integrations")
     app.register_blueprint(billing_bp,  url_prefix="/billing")
+    app.register_blueprint(agent_bp,      url_prefix="/agent")
+    app.register_blueprint(submissions_bp, url_prefix="/submissions")
+    app.register_blueprint(reporter_bp,   url_prefix="/reporter")
 
     @app.errorhandler(404)
     def page_not_found(e):

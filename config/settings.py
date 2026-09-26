@@ -135,6 +135,31 @@ class Settings(BaseSettings):
     STRIPE_PUBLIC_KEY: str = "pk_test_sample_51O..."
     STRIPE_SECRET_KEY: str = "sk_test_sample_51O..."
 
+    # Self-Hosted Local LLM (Ollama / Hugging Face inference server) — used for AI agent tasks
+    LLM_PROVIDER: str = "ollama"  # 'ollama' | 'openai_compat' | 'none'
+    LLM_BASE_URL: str = "http://127.0.0.1:11434"
+    LLM_MODEL: str = "llama3.2"
+    LLM_EMBED_MODEL: str = "nomic-embed-text"
+    LLM_TIMEOUT: int = 60
+    LLM_ENABLED: bool = True
+
+    # Third-Party News APIs (multi-source scraper)
+    NEWSAPI_API_KEY: str = ""
+    NEWSAPI_BASE_URL: str = "https://newsapi.org/v2"
+    GUARDIAN_API_KEY: str = ""
+    GUARDIAN_BASE_URL: str = "https://content.guardianapis.com"
+
+    # External Fact-Checking APIs (dual strategy: cross-source DB + external)
+    FACTCHECK_PROVIDER: str = "generic"  # 'snopes' | 'factcheck_org' | 'generic'
+    FACTCHECK_API_URL: str = ""
+    FACTCHECK_API_KEY: str = ""
+    FACTCHECK_TIMEOUT: int = 10
+
+    # Approval Workflow defaults (overridable at runtime via admin UI / site_configs)
+    APPROVAL_ESCALATION_HOURS: int = 6
+    APPROVAL_AUTO_APPROVE_HOURS: int = 24
+    APPROVAL_AUTO_APPROVE_ENABLED: bool = False
+
     # Localization Default
     DEFAULT_LANGUAGE: str = "bn"  # 'bn' (Bangla) or 'en' (English)
 

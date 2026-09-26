@@ -78,6 +78,12 @@ class Article(Base):
 
     # Relationships
     images = relationship("ArticleImage", back_populates="article", cascade="all, delete-orphan")
+    related_articles = relationship(
+        "ArticleRelation",
+        back_populates="article",
+        foreign_keys="ArticleRelation.article_id",
+        cascade="all, delete-orphan",
+    )
 
     @property
     def lead_image_url(self) -> str:
@@ -1128,4 +1134,270 @@ class RawNewsItem(Base):
             "article_id": self.article_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class ArticleRelation(Base):
+    """Links duplicate / near-duplicate articles across sources.
+
+    Duplicates are NEVER merged: both entries are kept and linked here with a
+    similarity score plus per-side source metadata for editorial auditing.
+    """
+    __tablename__ = "related_articles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(Integer, ForeignKey("articles.id"), nullable=False, index=True)
+    related_article_id = Column(Integer, ForeignKey("articles.id"), nullable=False, index=True)
+    similarity_score = Column(Float, nullable=False, default=0.0)
+    relation_type = Column(String(30), nullable=False, default="near_duplicate")  # 'duplicate' | 'near_duplicate'
+    source_metadata = Column(JSON, nullable=True)  # {source_a, url_a, source_b, url_b, method, byline...}
+    detected_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    article = relationship("Article", back_populates="related_articles", foreign_keys=[article_id])
+    related_article = relationship("Article", foreign_keys=[related_article_id])
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "article_id": self.article_id,
+            "related_article_id": self.related_article_id,
+            "similarity_score": self.similarity_score,
+            "relation_type": self.relation_type,
+            "source_metadata": self.source_metadata or {},
+            "detected_at": self.detected_at.isoformat() if self.detected_at else None,
+        }
+
+
+class RawItemRelation(Base):
+    """Links duplicate / near-duplicate RawNewsItem staging records (kept separate, never merged)."""
+    __tablename__ = "raw_news_item_relations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    item_id = Column(Integer, nullable=False, index=True)
+    related_item_id = Column(Integer, nullable=False, index=True)
+    similarity_score = Column(Float, nullable=False, default=0.0)
+    relation_type = Column(String(30), nullable=False, default="duplicate")
+    source_metadata = Column(JSON, nullable=True)
+    detected_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "item_id": self.item_id,
+            "related_item_id": self.related_item_id,
+            "similarity_score": self.similarity_score,
+            "relation_type": self.relation_type,
+            "source_metadata": self.source_metadata or {},
+            "detected_at": self.detected_at.isoformat() if self.detected_at else None,
+        }
+
+
+class ApprovalRequest(Base):
+    """Role-based human-in-the-loop approval workflow item.
+
+    Tracks timeout escalation, auto-approval (approval by silence), hierarchical
+    review (junior reviewers FLAG, senior roles give the final verdict) and full
+    audit metadata for every critical AI Agent decision.
+    """
+    __tablename__ = "approval_requests"
+
+    STATUS_PENDING = "pending"
+    STATUS_FLAGGED = "flagged"
+    STATUS_ESCALATED = "escalated"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_AUTO_APPROVED = "auto_approved"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    request_type = Column(String(40), nullable=False, index=True)
+    # ad_inquiry | news_submission | reporter_onboarding | editorial_review
+    subject_id = Column(Integer, nullable=True, index=True)   # pk of the subject row
+    subject_label = Column(String(255), nullable=True)
+    payload = Column(JSON, nullable=True)                     # snapshot for review UI
+
+    required_role = Column(String(40), nullable=False, index=True)  # final decision authority
+    assigned_role = Column(String(40), nullable=False, default="")  # current holder (after escalations)
+    assigned_to = Column(Integer, nullable=True)                     # optional user id hint
+
+    status = Column(String(40), nullable=False, default=STATUS_PENDING, index=True)
+    priority = Column(String(20), nullable=False, default="normal")   # normal | high (flagged intake)
+    flags = Column(JSON, nullable=True)                               # concerns raised by the AI agent
+    audit_trail = Column(JSON, nullable=True)                         # inline event list (mirrors AgentAuditLog)
+
+    escalation_level = Column(Integer, nullable=False, default=0)
+    max_escalation_level = Column(Integer, nullable=False, default=1)
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    due_at = Column(DateTime, nullable=True, index=True)               # escalation deadline
+    auto_approve_at = Column(DateTime, nullable=True)                  # approval-by-silence deadline
+    escalated_at = Column(DateTime, nullable=True)
+    decided_at = Column(DateTime, nullable=True)
+    decided_by = Column(String(120), nullable=True)                    # username or 'system:timeout'
+    decision_note = Column(Text, nullable=True)
+
+    def is_open(self) -> bool:
+        return self.status in (self.STATUS_PENDING, self.STATUS_FLAGGED, self.STATUS_ESCALATED)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "request_type": self.request_type,
+            "subject_id": self.subject_id,
+            "subject_label": self.subject_label,
+            "payload": self.payload or {},
+            "required_role": self.required_role,
+            "assigned_role": self.assigned_role,
+            "status": self.status,
+            "priority": self.priority,
+            "flags": self.flags or [],
+            "audit_trail": self.audit_trail or [],
+            "escalation_level": self.escalation_level,
+            "max_escalation_level": self.max_escalation_level,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "due_at": self.due_at.isoformat() if self.due_at else None,
+            "auto_approve_at": self.auto_approve_at.isoformat() if self.auto_approve_at else None,
+            "escalated_at": self.escalated_at.isoformat() if self.escalated_at else None,
+            "decided_at": self.decided_at.isoformat() if self.decided_at else None,
+            "decided_by": self.decided_by,
+            "decision_note": self.decision_note,
+            "is_open": self.is_open(),
+        }
+
+
+class AgentAuditLog(Base):
+    """Append-only audit trail of every AI Agent decision & human intervention."""
+    __tablename__ = "agent_audit_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    event_type = Column(String(60), nullable=False, index=True)
+    # INTAKE | FLAGGED | ESCALATED | AUTO_APPROVED | APPROVED | REJECTED | NOTIFY | EMAIL_SENT | JUNIOR_REVIEW
+    actor = Column(String(40), nullable=False, default="ai_agent")   # ai_agent | user | system
+    actor_user_id = Column(Integer, nullable=True)
+    actor_role = Column(String(40), nullable=True)
+    request_type = Column(String(40), nullable=True, index=True)
+    subject_id = Column(Integer, nullable=True, index=True)
+    approval_request_id = Column(Integer, nullable=True, index=True)
+    message = Column(Text, nullable=True)
+    details = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "event_type": self.event_type,
+            "actor": self.actor,
+            "actor_user_id": self.actor_user_id,
+            "actor_role": self.actor_role,
+            "request_type": self.request_type,
+            "subject_id": self.subject_id,
+            "approval_request_id": self.approval_request_id,
+            "message": self.message,
+            "details": self.details or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class AdInquiry(Base):
+    """Advertising inquiry: AI agent drafts a reply email, Ad Manager approves before sending."""
+    __tablename__ = "ad_inquiries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(200), nullable=False)
+    company = Column(String(200), nullable=True)
+    email = Column(String(255), nullable=False, index=True)
+    phone = Column(String(50), nullable=True)
+    package_interest = Column(String(120), nullable=True)   # banner / sponsored / package
+    budget_note = Column(String(255), nullable=True)
+    message = Column(Text, nullable=True)
+
+    status = Column(String(40), nullable=False, default="received", index=True)
+    # received -> drafted -> pending_approval -> approved -> sent | rejected
+    draft_subject = Column(String(255), nullable=True)
+    draft_body = Column(Text, nullable=True)
+    draft_generated_by = Column(String(40), nullable=True)  # llm | template
+    approval_request_id = Column(Integer, nullable=True, index=True)
+    sent_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id, "name": self.name, "company": self.company, "email": self.email,
+            "phone": self.phone, "package_interest": self.package_interest,
+            "budget_note": self.budget_note, "message": self.message, "status": self.status,
+            "draft_subject": self.draft_subject, "draft_body": self.draft_body,
+            "draft_generated_by": self.draft_generated_by,
+            "approval_request_id": self.approval_request_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+        }
+
+
+class NewsSubmission(Base):
+    """External / user news submission screened by the AI agent, routed to Editorial Lead."""
+    __tablename__ = "news_submissions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(Text, nullable=False)
+    content_text = Column(Text, nullable=False)
+    author_name = Column(String(200), nullable=True)
+    submitter_email = Column(String(255), nullable=False, index=True)
+    source_url = Column(String(1000), nullable=True)
+    language = Column(String(20), nullable=True, default="bn")
+    kind = Column(String(30), nullable=False, default="external")  # external | reporter_post
+
+    fact_check = Column(JSON, nullable=True)   # cross-source + external API results, combined confidence
+    flags = Column(JSON, nullable=True)        # agent concerns surfaced for human review
+
+    status = Column(String(40), nullable=False, default="received", index=True)
+    # received -> screened -> pending_approval | flagged -> approved -> published | rejected
+    approval_request_id = Column(Integer, nullable=True, index=True)
+    article_id = Column(Integer, nullable=True, index=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id, "title": self.title, "author_name": self.author_name,
+            "submitter_email": self.submitter_email, "source_url": self.source_url,
+            "language": self.language, "kind": self.kind,
+            "fact_check": self.fact_check or {}, "flags": self.flags or [],
+            "status": self.status, "approval_request_id": self.approval_request_id,
+            "article_id": self.article_id,
+            "content_text": self.content_text,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ReporterApplication(Base):
+    """Reporter registration: credentials verified by AI agent, Onboarding Officer approves."""
+    __tablename__ = "reporter_applications"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    full_name = Column(String(200), nullable=False)
+    email = Column(String(255), nullable=False, index=True)
+    phone = Column(String(50), nullable=True)
+    credentials = Column(JSON, nullable=True)      # experience, outlet, beat, id proofs
+    portfolio_links = Column(JSON, nullable=True)  # sample work links
+    sample_text = Column(Text, nullable=True)      # writing sample for quality scoring
+    verification = Column(JSON, nullable=True)     # AI verification: quality score, checks, concerns
+
+    status = Column(String(40), nullable=False, default="received", index=True)
+    # received -> verified -> pending_approval | flagged -> approved | rejected
+    approval_request_id = Column(Integer, nullable=True, index=True)
+    user_id = Column(Integer, nullable=True)  # created reporter account after approval
+
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id, "full_name": self.full_name, "email": self.email, "phone": self.phone,
+            "credentials": self.credentials or {}, "portfolio_links": self.portfolio_links or [],
+            "sample_text": self.sample_text, "verification": self.verification or {},
+            "status": self.status, "approval_request_id": self.approval_request_id,
+            "user_id": self.user_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

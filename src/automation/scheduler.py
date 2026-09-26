@@ -271,6 +271,44 @@ class AutomationScheduler:
             params={"max_items": 5},
         )
 
+        self.add_job(
+            job_id="multi_source_scrape",
+            name="Multi-Source News Scraper (HTML / RSS / APIs)",
+            name_bn="মাল্টি-সোর্স নিউজ স্ক্র্যাপার (HTML / RSS / API)",
+            description="Polls all configured sources (direct HTML, RSS feeds, NewsAPI, Guardian) every 2-4 hours with per-source exponential backoff — failed sources are skipped, remaining sources continue.",
+            interval_seconds=10800,  # 3 hours (2-4h spec window)
+            target_func=self._task_multi_source_scrape,
+            job_type="multi_source_scrape",
+            enabled=True,
+            is_system=True,
+            params={"max_items": 40},
+        )
+
+        self.add_job(
+            job_id="approval_escalation_sweep",
+            name="AI Agent Approval Timeout & Escalation Sweep",
+            name_bn="এআই এজেন্ট অনুমোদন টাইমআউট ও এস্কেলেশন সুইপ",
+            description="Escalates overdue approval requests to the next senior role (Editorial Lead / Ad Manager / Onboarding Officer -> admin) and auto-approves by silence when configured. All actions audited.",
+            interval_seconds=3600,  # 1 hour
+            target_func=self._task_approval_sweep,
+            job_type="approval_sweep",
+            enabled=True,
+            is_system=True,
+        )
+
+        self.add_job(
+            job_id="fact_check_reaudit",
+            name="Dual-Strategy Fact-Check Re-Audit",
+            name_bn="ডুয়াল স্ট্র্যাটেজি ফ্যাক্ট-চেক রি-অডিট",
+            description="Re-runs cross-source + external fact-checking on recent articles and refreshes confidence scores for editorial review.",
+            interval_seconds=21600,  # 6 hours
+            target_func=self._task_fact_check_reaudit,
+            job_type="fact_check_reaudit",
+            enabled=True,
+            is_system=True,
+            params={"limit": 20},
+        )
+
     def add_job(
         self,
         job_id: str,
@@ -574,6 +612,19 @@ class AutomationScheduler:
         elif job_type == "auto_scroller":
             max_items = int(params.get("max_items", 5))
             return lambda: self._task_auto_scroller(max_items)
+
+        elif job_type == "multi_source_scrape":
+            max_items = params.get("max_items")
+            return lambda: self._task_multi_source_scrape(
+                int(max_items) if max_items is not None else None
+            )
+
+        elif job_type == "approval_sweep":
+            return self._task_approval_sweep
+
+        elif job_type == "fact_check_reaudit":
+            limit = int(params.get("limit", 20))
+            return lambda: self._task_fact_check_reaudit(limit)
 
         # Generic default
         return lambda: f"Custom task '{job_type}' executed successfully."
@@ -901,6 +952,21 @@ class AutomationScheduler:
             f"auto-published {summary['auto_published']} | queue backlog {queue_result.get('queued_count', 0)} "
             f"(released {queue_result.get('published', 0)})."
         )
+
+    def _task_multi_source_scrape(self, max_items: Optional[int] = None) -> str:
+        """Scrape all configured HTML/RSS/API sources with per-source backoff retry."""
+        from src.tasks.jobs import multi_source_scrape_task
+        return multi_source_scrape_task(max_items=max_items)
+
+    def _task_approval_sweep(self) -> str:
+        """Escalate overdue approval requests; auto-approve by silence when configured."""
+        from src.tasks.jobs import approval_sweep_task
+        return approval_sweep_task()
+
+    def _task_fact_check_reaudit(self, limit: int = 20) -> str:
+        """Refresh dual-strategy fact-check confidence for recent articles."""
+        from src.tasks.jobs import fact_check_reaudit_task
+        return fact_check_reaudit_task(limit=limit)
 
 
 def get_scheduler() -> AutomationScheduler:

@@ -201,6 +201,10 @@ class AutoScroller:
                 "item_id": existing.id, "source_url": source_url,
             }
 
+        # Keep the ORIGINAL pre-translation text for fidelity scoring & fact-checking
+        source_title_orig, source_content_orig = title, content
+        fidelity_reference = content  # same-language baseline for rewrite fidelity
+
         # Step 1: classify category
         assigned_category = NewsNLPSkillEngine.classify_category(
             title=title, content=content, default_cat=category or cfg.get("category", "general")
@@ -219,6 +223,7 @@ class AutoScroller:
                     title=title, content=content, source_lang=lang
                 )
                 translated = True
+                fidelity_reference = content  # compare rewrite against translated source
             except Exception as te:
                 logger.warning(f"[Auto Scroller] translation failed: {te}")
 
@@ -235,11 +240,17 @@ class AutoScroller:
             translated=translated,
             category=assigned_category,
             status="classified",
+            meta={
+                "source_title": source_title_orig[:8000],
+                "source_content": source_content_orig[:40000],
+                "fidelity_reference": (fidelity_reference or "")[:40000],
+            },
         )
         session.add(item)
         session.flush()
 
-        # Step 3: 98% similarity mining (duplicate gate)
+        # Step 3: 98% similarity mining (duplicate gate) — duplicates are KEPT
+        # as separate entries and LINKED (related_items) rather than merged.
         score, dup_url = cls.find_similar(
             session, title, content, threshold=threshold, exclude_id=item.id
         )
@@ -247,12 +258,15 @@ class AutoScroller:
             item.status = "duplicate"
             item.similarity_score = score
             item.duplicate_of_url = dup_url
+            from src.automation.dedup import link_raw_items
+            relation = link_raw_items(session, item, dup_url, score)
+            item.meta = {**(item.meta or {}), "related_link": bool(relation)}
             session.flush()
-            logger.info(f"[Auto Scroller] duplicate detected ({score:.4f}) -> {source_url}")
+            logger.info(f"[Auto Scroller] duplicate detected ({score:.4f}) -> linked, kept separately: {source_url}")
             return {
                 "success": True, "status": "duplicate", "item_id": item.id,
                 "similarity_score": score, "duplicate_of_url": dup_url,
-                "source_url": source_url,
+                "linked": bool(relation), "source_url": source_url,
             }
         item.similarity_score = score
         item.status = "regenerated"
@@ -288,12 +302,25 @@ class AutoScroller:
         item.fake_probability_pct = processed.get("fake_probability_pct")
         item.ai_reason = (processed.get("eval_result") or {}).get("rating")
         item.meta = {
+            **(item.meta or {}),
             "extracted_entities": processed.get("extracted_entities"),
             "is_breaking": processed.get("is_breaking", False),
             "is_featured": processed.get("is_featured", False),
             "processed_at": datetime.utcnow().isoformat(),
         }
         session.flush()
+
+        # Step 6b: semantic fidelity of rewrite vs original source (embedding-based,
+        # 98% target) — sub-target rewrites are flagged and NEVER auto-published.
+        fidelity = None
+        try:
+            from src.nlp.semantic_fidelity import SemanticFidelity
+            reference = (item.meta or {}).get("fidelity_reference") or content
+            fidelity = SemanticFidelity.measure(reference, processed.get("content_text") or "")
+            item.meta = {**(item.meta or {}), "semantic_fidelity": fidelity}
+            session.flush()
+        except Exception as fe:
+            logger.warning(f"[Auto Scroller] fidelity measurement failed: {fe}")
 
         decision = item.ai_decision or "QUEUE_FOR_REVIEW"
 
@@ -306,21 +333,28 @@ class AutoScroller:
                 "ai_decision": decision, "source_url": source_url,
             }
 
-        if decision == "AUTO_PUBLISH" and cfg.get("auto_post_enabled", False):
+        fidelity_ok = bool(fidelity) and bool(fidelity.get("passed"))
+        if decision == "AUTO_PUBLISH" and cfg.get("auto_post_enabled", False) and fidelity_ok:
             article_id = cls._publish_item(session, item, origin="auto")
             if article_id:
                 return {
                     "success": True, "status": "auto_published", "item_id": item.id,
                     "article_id": article_id, "ai_decision": decision, "source_url": source_url,
+                    "semantic_fidelity": fidelity,
                 }
 
-        # Default: wait for AI Brain / manual publish
+        # Default: wait for AI Brain / manual publish (also when fidelity < target)
         item.status = "queued"
         session.flush()
         return {
             "success": True, "status": "queued", "item_id": item.id,
             "ai_decision": decision, "source_url": source_url,
-            "reason": "Waiting for AI Brain cycle or manual editor publish",
+            "semantic_fidelity": fidelity,
+            "reason": (
+                "Fidelity below target — held for editorial review"
+                if (fidelity and not fidelity.get("passed"))
+                else "Waiting for AI Brain cycle or manual editor publish"
+            ),
         }
 
     # ------------------------------------------------------------------
@@ -374,6 +408,15 @@ class AutoScroller:
         if item.source_url and item.source_url not in article.content_text:
             article.content_text = f"{article.content_text.rstrip()}\n\n{credit}"
 
+        # Link duplicate / near-duplicate articles (kept separate, never merged)
+        related_ids: List[int] = []
+        try:
+            from src.automation.dedup import link_related_articles
+            relations = link_related_articles(session, article)
+            related_ids = [r.related_article_id for r in relations]
+        except Exception as dedup_err:
+            logger.warning(f"[Auto Scroller] related-article linking failed: {dedup_err}")
+
         article.extracted_entities = {
             **(article.extracted_entities or {}),
             "auto_scroller": {
@@ -381,11 +424,14 @@ class AutoScroller:
                 "origin": origin,
                 "similarity_score": item.similarity_score,
                 "meaning_retention_score": item.meaning_retention_score,
+                "semantic_fidelity": (item.meta or {}).get("semantic_fidelity"),
                 "ai_decision": item.ai_decision,
                 "credibility_score": item.credibility_score,
                 "factuality_score": item.factuality_score,
                 "fake_probability_pct": item.fake_probability_pct,
                 "original_source_url": item.source_url,
+                "related_article_ids": related_ids,
+                "publisher": "The Daily AI Alo (publisher credit; original byline/source preserved)",
                 "published_at": datetime.utcnow().isoformat(),
             },
         }
@@ -404,10 +450,13 @@ class AutoScroller:
                 return {"success": False, "error": f"Raw news item #{item_id} not found."}
             if item.status in ("auto_published", "published_manual"):
                 return {"success": False, "error": "Item is already published.", "article_id": item.article_id}
-            if item.status == "duplicate":
-                return {"success": False, "error": "Duplicate item cannot be published."}
+            if item.status == "duplicate" and not item.regenerated_body:
+                return {"success": False, "error": "Duplicate item has no regenerated content yet."}
             if not item.regenerated_body:
                 return {"success": False, "error": "Item has no regenerated content yet."}
+            if item.status == "duplicate":
+                # Duplicates are kept separate + linked; the editor makes the final call.
+                item.meta = {**(item.meta or {}), "duplicate_manual_publish": True}
 
             article_id = cls._publish_item(session, item, origin="manual")
             session.commit()
@@ -449,7 +498,9 @@ class AutoScroller:
 
             published, skipped = 0, 0
             for item in queued:
-                if item.ai_decision == "AUTO_PUBLISH" and item.regenerated_body:
+                fidelity = (item.meta or {}).get("semantic_fidelity")
+                fidelity_ok = fidelity is None or bool(fidelity.get("passed"))
+                if item.ai_decision == "AUTO_PUBLISH" and item.regenerated_body and fidelity_ok:
                     if cls._publish_item(session, item, origin="auto"):
                         published += 1
                 else:

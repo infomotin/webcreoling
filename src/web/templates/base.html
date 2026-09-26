@@ -259,6 +259,31 @@
                                 <span class="menu-badge badge-emerald" style="background:#10b981;color:#fff;">{{ tr('ইন্টিগ্রেশন', 'INTEGRATION') }}</span>
                             </a>
                         </li>
+                        {% if can_agent %}
+                        <li class="sidebar-menu-item">
+                            <a href="{{ url_for('agent.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/agent') %}active{% endif %}" data-tooltip="AI Agent Approval Workflow">
+                                <span class="menu-icon-box">🤖</span>
+                                <span class="menu-label">{{ tr('এআই এজেন্ট কন্ট্রোলার', 'AI Agent Controller') }}</span>
+                                <span class="menu-badge badge-amber" style="background:#f59e0b;color:#fff;">{{ tr('অনুমোদন', 'APPROVAL') }}</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if is_reporter %}
+                        <li class="sidebar-menu-item">
+                            <a href="{{ url_for('reporter.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/reporter') %}active{% endif %}" data-tooltip="Reporter Dashboard">
+                                <span class="menu-icon-box">📰</span>
+                                <span class="menu-label">{{ tr('রিপোর্টার ড্যাশবোর্ড', 'Reporter Dashboard') }}</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if is_viewer %}
+                        <li class="sidebar-menu-item">
+                            <a href="{{ url_for('submissions.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/submissions') %}active{% endif %}" data-tooltip="Ad · News · Reporter Submissions">
+                                <span class="menu-icon-box">📤</span>
+                                <span class="menu-label">{{ tr('সাবমিশন ফর্ম', 'Submissions') }}</span>
+                            </a>
+                        </li>
+                        {% endif %}
                         <li class="sidebar-menu-item has-submenu {% if request.path.startswith('/admin/security') or request.path.startswith('/admin/blockchain') or (request.path.startswith('/admin/newspaper') and (request.args.get('tab') in ['security', 'blockchain', 'datahub', 'monitor'])) %}open active-parent{% endif %}">
                             <div class="sidebar-menu-link submenu-trigger" onclick="toggleSubmenu(this)">
                                 <span class="menu-icon-box">🛡️</span>

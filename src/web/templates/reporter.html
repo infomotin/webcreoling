@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('রিপোর্টার ড্যাশবোর্ড', 'Reporter Dashboard') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}
+    📰 {{ tr('রিপোর্টার ড্যাশবোর্ড', 'Reporter Dashboard') }}
+{% endblock %}
+
+{% block content %}
+<style>
+    .rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.9rem; margin-bottom: 1.2rem; }
+    .rp-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+               border-radius: 12px; padding: 0.9rem 1rem; }
+    .rp-stat .val { font-size: 1.3rem; font-weight: 800; color: #38bdf8; }
+    .rp-stat .lbl { font-size: 0.76rem; color: #94a3b8; margin-top: 0.15rem; }
+    .rp-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    .rp-table th, .rp-table td { padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.07); text-align: left; }
+    .rp-table th { color: #94a3b8; font-size: 0.72rem; text-transform: uppercase; }
+    .chip { display: inline-block; padding: 0.14rem 0.55rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 700; }
+    .chip-ok { background: rgba(16,185,129,0.18); color: #34d399; }
+    .chip-warn { background: rgba(245,158,11,0.18); color: #fbbf24; }
+    .chip-err { background: rgba(239,68,68,0.18); color: #f87171; }
+    .chip-info { background: rgba(56,189,248,0.15); color: #38bdf8; }
+    .muted-note { font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; }
+    textarea.form-control { min-height: 160px; }
+</style>
+
+<div class="rp-grid">
+    <div class="rp-stat"><div class="val">{{ my_submissions|length }}</div><div class="lbl">{{ tr('মোট জমা', 'Total submissions') }}</div></div>
+    <div class="rp-stat"><div class="val">{{ pending_count }}</div><div class="lbl">{{ tr('অনুমোদনের অপেক্ষায়', 'Awaiting approval') }}</div></div>
+    <div class="rp-stat"><div class="val">{{ my_submissions | selectattr('status', 'equalto', 'published') | list | length }}</div><div class="lbl">{{ tr('প্রকাশিত', 'Published') }}</div></div>
+    <div class="rp-stat"><div class="val">{{ my_application.status if my_application else tr('নতুন', 'New') }}</div><div class="lbl">{{ tr('রিপোর্টার স্ট্যাটাস', 'Reporter status') }}</div></div>
+</div>
+
+{# ---- Submit post ---- #}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>✍️ {{ tr('নতুন পোস্ট জমা দিন', 'Submit a new post') }}</strong>
+        <span class="chip chip-info" style="font-size:0.7rem;">{{ tr('Editorial Lead স্ক্রিনিং + ফ্যাক্ট-চেক', 'Editorial Lead screening + fact-check') }}</span>
+    </div>
+    <form method="POST" action="{{ url_for('reporter.submit_post') }}">
+        <div class="form-group">
+            <label class="form-label">{{ tr('শিরোনাম', 'Title') }} *</label>
+            <input type="text" name="title" class="form-control" required maxlength="500">
+        </div>
+        <div class="form-group" style="margin-top:0.7rem;">
+            <label class="form-label">{{ tr('খসড়া (কমপক্ষে ৮০ অক্ষর)', 'Draft (≥80 chars)') }} *</label>
+            <textarea name="content" class="form-control" rows="10" required minlength="80" maxlength="40000"></textarea>
+        </div>
+        <div class="sub-form-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem;">
+            <div class="form-group">
+                <label class="form-label">{{ tr('যোগাযোগ ইমেইল', 'Contact email') }}</label>
+                <input type="email" name="email" class="form-control" value="{{ email }}" maxlength="255">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('উৎস লিংক (ঐচ্ছিক)', 'Source URL (optional)') }}</label>
+                <input type="url" name="source_url" class="form-control" maxlength="1000" placeholder="https://...">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:0.6rem;">{{ tr('Editorial Lead-এর কাছে পাঠান', 'Send for Editorial Lead review') }}</button>
+        <p class="muted-note">{{ tr('পোস্ট সরাসরি প্রকাশিত হবে না — AI এজেন্ট স্ক্রিন করবে, চূড়ান্ত অনুমোদন Editorial Lead-এর।',
+            'Posts are never auto-published — the agent screens, the Editorial Lead decides.') }}</p>
+    </form>
+</div>
+
+{# ---- Application status ---- #}
+{% if my_application %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>🪪 {{ tr('আমার রিপোর্টার আবেদন', 'My reporter application') }}</strong>
+        <span class="chip {{ 'chip-ok' if my_application.status == 'approved' else 'chip-warn' }}">{{ my_application.status }}</span>
+    </div>
+    <p style="font-size:0.85rem; color:#cbd5e1; margin:0.2rem 0;">
+        {{ my_application.full_name }} · {{ my_application.email }}
+        {% if my_application.verification and my_application.verification.quality_score is defined %}
+        · {{ tr('কোয়ালিটি স্কোর', 'Quality score') }}: <b>{{ my_application.verification.quality_score }}/100</b>
+        {% endif %}
+    </p>
+    {% if my_application.verification and my_application.verification.concerns %}
+    <p style="font-size:0.78rem; color:#fbbf24; margin:0;">
+        ⚠ {{ tr('ফ্ল্যাগ করা উদ্বেগ', 'Flagged concerns') }}: {{ my_application.verification.concerns | join(', ') }}
+    </p>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ---- My submissions ---- #}
+<div class="card">
+    <div class="card-header">
+        <strong>📋 {{ tr('আমার সাবমিশন', 'My submissions') }}</strong>
+    </div>
+    <div style="overflow-x:auto;">
+        <table class="rp-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ tr('শিরোনাম', 'Title') }}</th>
+                    <th>{{ tr('ফ্যাক্ট-চেক', 'Fact-check') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th>{{ tr('প্রকাশনা', 'Publication') }}</th>
+                    <th>{{ tr('তারিখ', 'Date') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in my_submissions %}
+                <tr>
+                    <td>{{ s.id }}</td>
+                    <td style="max-width:320px;">{{ s.title }}</td>
+                    <td>
+                        {% set conf = (s.fact_check or {}).get('combined_confidence') %}
+                        {% if conf is not none %}
+                            <span class="chip {{ 'chip-ok' if conf >= 60 else 'chip-warn' }}">{{ conf }}%</span>
+                        {% else %}<span class="chip chip-info">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if s.status == 'published' %}<span class="chip chip-ok">✅ {{ s.status }}</span>
+                        {% elif s.status in ('flagged',) %}<span class="chip chip-warn">🚩 {{ s.status }}</span>
+                        {% elif s.status == 'rejected' %}<span class="chip chip-err">❌ {{ s.status }}</span>
+                        {% else %}<span class="chip chip-info">⏳ {{ s.status }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if s.article_id %}
+                            <a href="{{ url_for('portal.article_reader_view', article_id=s.article_id) }}" target="_blank" style="color:#38bdf8;">{{ tr('দেখুন', 'View') }} #{{ s.article_id }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="font-size:0.72rem; color:#94a3b8;">{{ (s.created_at or '')[:10] }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:1rem;">{{ tr('এখনো কিছু জমা দেননি।', 'Nothing submitted yet.') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

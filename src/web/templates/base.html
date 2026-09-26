@@ -36,10 +36,10 @@
                         <span class="brand-pulse-beacon"></span>
                     </div>
                     <div class="brand-title-wrap">
-                        <div class="brand-main-title">দি ডেইলি এআই আলো</div>
+                        <div class="brand-main-title">{{ tr('দি ডেইলি এআই আলো', 'The Daily AI Alo') }}</div>
                         <div class="brand-sub-badge">
                             <span class="pulse-online-dot"></span>
-                            <span class="brand-tag-text">AI NEWSROOM CMS • v2.5</span>
+                            <span class="brand-tag-text">{{ tr('AI NEWSROOM CMS • v2.5', 'AI NEWSROOM CMS • v2.5') }}</span>
                         </div>
                     </div>
                 </a>
@@ -63,34 +63,58 @@
                 <div class="nav-section-group" data-nav-group="dashboard">
                     <div class="nav-section-title">
                         <span class="section-title-icon">📊</span>
-                        <span class="section-title-text">প্রধান ড্যাশবোর্ড ও অ্যানালিটিক্স</span>
+                        <span class="section-title-text">{{ tr('প্রধান ড্যাশবোর্ড ও পোর্টাল', 'Core Dashboard & Portal') }}</span>
                     </div>
                     <ul class="sidebar-menu-list">
+                        {% if is_admin or is_editor or is_analyst %}
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('dashboard.index_view') }}" class="sidebar-menu-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}" data-tooltip="এক্সিকিউটিভ ড্যাশবোর্ড">
+                            <a href="{{ url_for('dashboard.index_view') }}" class="sidebar-menu-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %}" data-tooltip="{{ tr('এক্সিকিউটিভ ড্যাশবোর্ড', 'Executive Dashboard') }}">
                                 <span class="menu-icon-box">📊</span>
-                                <span class="menu-label">এক্সিকিউটিভ ড্যাশবোর্ড</span>
+                                <span class="menu-label">{{ tr('এক্সিকিউটিভ ড্যাশবোর্ড', 'Executive Dashboard') }}</span>
                                 <span class="menu-badge badge-cyan">360° LIVE</span>
                             </a>
                         </li>
+                        {% endif %}
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="sidebar-menu-link" data-tooltip="লাইভ সংবাদপত্র পোর্টাল">
+                            <a href="{{ url_for('portal.index_view') }}" target="_blank" class="sidebar-menu-link" data-tooltip="{{ tr('লাইভ সংবাদপত্র পোর্টাল', 'Live News Portal') }}">
                                 <span class="menu-icon-box">📰</span>
-                                <span class="menu-label">লাইভ সংবাদপত্র পোর্টাল</span>
+                                <span class="menu-label">{{ tr('লাইভ সংবাদপত্র পোর্টাল', 'Live News Portal') }}</span>
                                 <span class="menu-badge badge-green">PORTAL ↗</span>
                             </a>
                         </li>
+                        
+                        {# Reporter Dedicated Field Desk #}
+                        {% if is_reporter %}
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('article.list_articles_view') }}" class="sidebar-menu-link {% if request.path.startswith('/articles') %}active{% endif %}" data-tooltip="সংরক্ষিত সংবাদ আর্কাইভ">
+                            <a href="{{ url_for('reporter.index_view') }}" class="sidebar-menu-link {% if request.path.startswith('/reporter') %}active{% endif %}" data-tooltip="{{ tr('রিপোর্টার ফিল্ড ডেস্ক', 'Reporter Field Desk') }}">
+                                <span class="menu-icon-box">✍️</span>
+                                <span class="menu-label">{{ tr('রিপোর্টার ফিল্ড ডেস্ক', 'Reporter Field Desk') }}</span>
+                                <span class="menu-badge badge-amber" style="background:#f59e0b;color:#fff;">DESK</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {# Subscriber Dedicated Portal #}
+                        <li class="sidebar-menu-item">
+                            <a href="{{ url_for('subscriber.portal_view') }}" class="sidebar-menu-link {% if request.path.startswith('/subscriber') %}active{% endif %}" data-tooltip="{{ tr('সাবস্ক্রাইবার পোর্টাল', 'Subscriber Portal') }}">
+                                <span class="menu-icon-box">💎</span>
+                                <span class="menu-label">{{ tr('সাবস্ক্রাইবার পোর্টাল', 'Subscriber Portal') }}</span>
+                                <span class="menu-badge badge-purple" style="background:#8b5cf6;color:#fff;">PRO</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-menu-item">
+                            <a href="{{ url_for('article.list_articles_view') }}" class="sidebar-menu-link {% if request.path.startswith('/articles') %}active{% endif %}" data-tooltip="{{ tr('সংরক্ষিত সংবাদ আর্কাইভ', 'Articles Explorer') }}">
                                 <span class="menu-icon-box">📑</span>
-                                <span class="menu-label">সংরক্ষিত সংবাদ আর্কাইভ</span>
+                                <span class="menu-label">{{ tr('সংরক্ষিত সংবাদ আর্কাইভ', 'Articles Explorer') }}</span>
                                 <span class="menu-badge badge-blue">FTS5</span>
                             </a>
                         </li>
+
                         <li class="sidebar-menu-item">
-                            <a href="{{ url_for('billing.plans_view') }}" class="sidebar-menu-link {% if request.path.startswith('/billing') %}active{% endif %}" data-tooltip="সাবস্ক্রিপশন ও পেমেন্ট">
+                            <a href="{{ url_for('billing.plans_view') }}" class="sidebar-menu-link {% if request.path.startswith('/billing') %}active{% endif %}" data-tooltip="{{ tr('সাবস্ক্রিপশন ও বিলিং', 'Subscriptions & Billing') }}">
                                 <span class="menu-icon-box">⭐</span>
-                                <span class="menu-label">{{ tr('সাবস্ক্রিপশন ও পেমেন্ট', 'Subscription & Billing') }}</span>
+                                <span class="menu-label">{{ tr('সাবস্ক্রিপশন ও বিলিং', 'Subscriptions & Billing') }}</span>
                                 <span class="menu-badge badge-amber" style="background:#f59e0b;color:#fff;">{{ tr('প্ল্যান', 'PLANS') }}</span>
                             </a>
                         </li>
@@ -102,57 +126,59 @@
                 <div class="nav-section-group" data-nav-group="newsroom">
                     <div class="nav-section-title">
                         <span class="section-title-icon">✍️</span>
-                        <span class="section-title-text">সম্পাদকীয় নিউজরুম ও প্রকাশনা</span>
+                        <span class="section-title-text">{{ tr('সম্পাদকীয় নিউজরুম ও প্রকাশনা', 'Editorial Newsroom & Publishing') }}</span>
                     </div>
                     <ul class="sidebar-menu-list">
                         <li class="sidebar-menu-item has-submenu {% if request.path.startswith('/admin/newspaper') %}open active-parent{% endif %}">
                             <div class="sidebar-menu-link submenu-trigger" onclick="toggleSubmenu(this)">
                                 <span class="menu-icon-box">✍️</span>
-                                <span class="menu-label">নিউজরুম সিএমএস ডেস্ক</span>
+                                <span class="menu-label">{{ tr('নিউজরুম সিএমএস ডেস্ক', 'Newsroom CMS Desk') }}</span>
                                 <span class="menu-badge badge-amber">CMS</span>
                                 <span class="submenu-chevron">▼</span>
                             </div>
                             <ul class="sidebar-submenu-list">
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view') }}" class="submenu-link {% if request.path == '/admin/newspaper' and not request.args.get('status') and not request.args.get('tab') %}active{% endif %}">
-                                        <span class="sub-dot"></span> সব সংবাদ ফিড
+                                        <span class="sub-dot"></span> {{ tr('সব সংবাদ ফিড', 'All News Feed') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', status='pending') }}" class="submenu-link {% if request.args.get('status') == 'pending' %}active{% endif %}">
-                                        <span class="sub-dot"></span> অনুমোদন কিউ (Review)
+                                        <span class="sub-dot"></span> {{ tr('অনুমোদন কিউ (Review)', 'Review Queue') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='scheduler') }}" class="submenu-link {% if request.args.get('tab') == 'scheduler' %}active{% endif %}">
-                                        <span class="sub-dot"></span> নির্ধারিত প্রকাশনা (Scheduler)
+                                        <span class="sub-dot"></span> {{ tr('নির্ধারিত প্রকাশনা (Scheduler)', 'Scheduled Releases') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='ads') }}" class="submenu-link {% if request.args.get('tab') == 'ads' %}active{% endif %}">
-                                        <span class="sub-dot"></span> বিজ্ঞাপন ক্যাম্পেইন (Ads)
+                                        <span class="sub-dot"></span> {{ tr('বিজ্ঞাপন ক্যাম্পেইন (Ads)', 'Advertisement Ads') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='polls') }}" class="submenu-link {% if request.args.get('tab') == 'polls' %}active{% endif %}">
-                                        <span class="sub-dot"></span> মতামত জরিপ (Polls)
+                                        <span class="sub-dot"></span> {{ tr('মতামত জরিপ (Polls)', 'Opinion Polls') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='subscribers') }}" class="submenu-link {% if request.args.get('tab') == 'subscribers' %}active{% endif %}">
-                                        <span class="sub-dot"></span> ই-বুলেটিন গ্রাহক
+                                        <span class="sub-dot"></span> {{ tr('ই-বুলেটিন গ্রাহক', 'Newsletter Subscribers') }}
                                     </a>
                                 </li>
+                                {% if is_admin %}
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="submenu-link {% if request.args.get('tab') == 'settings' %}active{% endif %}">
-                                        <span class="sub-dot"></span> পোর্টাল ব্র্যান্ডিং ও সেটিংস
+                                        <span class="sub-dot"></span> {{ tr('পোর্টাল ব্র্যান্ডিং ও সেটিংস', 'Portal Branding & Settings') }}
                                     </a>
                                 </li>
                                 <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='footer') }}" class="submenu-link {% if request.args.get('tab') == 'footer' %}active{% endif %}">
-                                        <span class="sub-dot"></span> ডায়নামিক ফুটার কনফিগ
+                                        <span class="sub-dot"></span> {{ tr('ডায়নামিক ফুটার কনফিগ', 'Dynamic Footer Config') }}
                                     </a>
                                 </li>
+                                {% endif %}
                             </ul>
                         </li>
                     </ul>

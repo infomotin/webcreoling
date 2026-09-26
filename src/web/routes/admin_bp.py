@@ -2080,3 +2080,132 @@ def automation_api_single_task(task_id: str):
         return jsonify({"error": "Task not found"}), 404
     return jsonify(task.to_dict())
 
+
+# =========================================================================
+# EMERGENCY CIPHER VAULT & SECURITY CONTROLS
+# =========================================================================
+
+@admin_bp.route("/newspaper/security/vault/update-settings", methods=["POST"])
+@admin_bp.route("/update_vault_settings", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_vault_settings():
+    """Update AI Brain Emergency Vault defense threshold and manual/auto mode."""
+    auto_lockdown = bool(request.form.get("auto_lockdown_enabled"))
+    threat_threshold = int(request.form.get("threat_threshold_score", 85))
+    recipient_email = request.form.get("recipient_email", "").strip() or "chief-security@daily-ai-alo.com"
+
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        state = vault.get_or_create_state(session)
+        state.auto_lockdown_enabled = auto_lockdown
+        state.threat_threshold_score = threat_threshold
+        state.recipient_email = recipient_email
+        session.flush()
+
+        mode_str = "স্বয়ংক্রিয় এআই ডিফেন্স (Autonomous)" if auto_lockdown else "ম্যানুয়াল মোড (Manual Mode - Safe)"
+        flash(f"সিকিউরিটি ভল্ট পলিসি আপডেট সম্পন্ন: {mode_str}, থ্রেশহোল্ড: {threat_threshold}।", "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/lockdown", methods=["POST"])
+@admin_bp.route("/trigger_emergency_lockdown_route", methods=["POST"])
+@login_required
+@roles_required("admin")
+def trigger_emergency_lockdown_route():
+    """Manually trigger emergency AES-256 vault encryption and lockdown."""
+    reason = request.form.get("reason", "Manual Administrator Emergency Vault Lockdown Activated")
+    recipient_email = request.form.get("recipient_email", "chief-security@daily-ai-alo.com")
+    current_username = flask_session.get("username", "admin")
+
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        result = vault.trigger_lockdown(
+            session=session,
+            trigger_type="MANUAL_ADMIN_KILLSWITCH",
+            actor=current_username,
+            custom_reason=reason,
+            recipient_email=recipient_email,
+        )
+        if result.get("success"):
+            code = result.get("unlock_code")
+            flash(f"🚨 জরুরি লকডাউন ও এনক্রিপশন সফল! মাস্টার রিকভারি কোড: {code} (ইমেইলে পাঠানো হয়েছে)", "danger")
+        else:
+            flash(result.get("message", "লকডাউন কার্যকর করা যায়নি।"), "warning")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/decrypt", methods=["POST"])
+@admin_bp.route("/decrypt_and_restore_vault_route", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def decrypt_and_restore_vault_route():
+    """Decrypt and restore all articles with the master emergency recovery code."""
+    unlock_code = request.form.get("unlock_code", "").strip()
+    current_username = flask_session.get("username", "admin")
+
+    if not unlock_code:
+        flash("অনুগ্রহ করে মাস্টার ডিক্রিপশন কোড প্রদান করুন।", "warning")
+        return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        result = vault.unlock_and_restore(
+            session=session,
+            unlock_code=unlock_code,
+            actor=current_username,
+        )
+        if result.get("success"):
+            flash(result.get("message"), "success")
+        else:
+            flash(result.get("message"), "danger")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/force-restore-all", methods=["POST"])
+@admin_bp.route("/force_restore_all_news_route", methods=["POST"])
+@login_required
+@roles_required("admin")
+def force_restore_all_news_route():
+    """Emergency master reset: remove all encrypted news markers and restore clean database."""
+    current_username = flask_session.get("username", "admin")
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        result = vault.force_restore_and_unencrypt_all(session, actor=current_username)
+        flash(result.get("message", "সকল সংবাদ সফলভাবে রিস্টোর ও আনলক করা হয়েছে।"), "success")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/simulate-attack", methods=["POST"])
+@admin_bp.route("/simulate_attack_route", methods=["POST"])
+@login_required
+@roles_required("admin")
+def simulate_attack_route():
+    """Simulate an attack payload to test WAF and threat calculation."""
+    attack_type = request.form.get("attack_type", "SQL_INJECTION_CLUSTER")
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        result = vault.simulate_attack(session, attack_type=attack_type)
+        flash(f"⚡ সিমুলেটেড আক্রমণ '{attack_type}' পরীক্ষা সফল! WAF দ্বারা আইপি প্রতিহত ও লগ করা হয়েছে।", "info")
+
+    return redirect(url_for("admin.newspaper_management_view", tab="security"))
+
+
+@admin_bp.route("/newspaper/security/vault/status", methods=["GET"])
+@login_required
+def vault_live_status():
+    """JSON API for real-time vault and threat assessment."""
+    with get_db_session() as session:
+        vault = get_emergency_vault()
+        assessment = vault.assess_threat_status(session)
+        state = vault.get_or_create_state(session)
+        return jsonify({
+            "state": state.to_dict(),
+            "assessment": assessment,
+        })
+
+

@@ -78,11 +78,11 @@ class EmergencyCipherVault:
         if not state:
             state = EmergencyVaultState(
                 is_locked=False,
-                auto_lockdown_enabled=True,
-                threat_threshold_score=75,
-                current_threat_score=12,
+                auto_lockdown_enabled=False,  # Default to safe manual mode
+                threat_threshold_score=85,
+                current_threat_score=10,
                 threat_status="NORMAL",
-                recipient_email="security-officer@daily-ai-alo.com",
+                recipient_email="chief-security@daily-ai-alo.com",
                 encryption_algorithm="AES-256-GCM / Fernet",
                 email_dispatch_status="IDLE",
             )
@@ -666,6 +666,72 @@ Autonomous AI Brain Cyber Defense Unit
             "payload_sample": payload,
             "attacker_ip": "198.51.100.42",
             "threat_assessment": assessment,
+        }
+
+    def force_restore_and_unencrypt_all(
+        self,
+        session: Session,
+        actor: str = "admin",
+    ) -> Dict[str, Any]:
+        """
+        Emergency Override & Decryption Reset:
+        Removes all '[SYSTEM ENCRYPTED DATA...]' placeholders, restores articles from
+        vault backups if any, resets EmergencyVaultState to UNLOCKED and MANUAL mode.
+        """
+        state = self.get_or_create_state(session)
+
+        # 1. Clean and restore articles
+        articles = session.query(Article).all()
+        cleaned_count = 0
+        for art in articles:
+            dirty = False
+            if art.title and "SYSTEM ENCRYPTED DATA" in art.title:
+                clean_title = art.title.replace("🔒 [SYSTEM ENCRYPTED DATA: ", "সংবাদ #").replace("]", "").strip()
+                art.title = clean_title if clean_title else f"সংবাদ #{art.id}"
+                dirty = True
+            if art.content_text and ("এই সংবাদের সম্পূর্ণ ডাটাবেস এআই ব্রেন সিকিউরিটি ভল্ট দ্বারা" in art.content_text or "🔒 [SYSTEM ENCRYPTED" in art.content_text):
+                art.content_text = art.summary or f"এই সংবাদটি সফলভাবে আনলক ও রিস্টোর করা হয়েছে ({art.title})।"
+                dirty = True
+            if art.summary and "🔒 ডাটা এনক্রিপ্টেড" in art.summary:
+                art.summary = f"সংবাদ #{art.id} এর সংক্ষিপ্ত বিবরণ।"
+                dirty = True
+            if dirty:
+                cleaned_count += 1
+
+        # 2. Clean backup records table
+        session.query(EncryptedVaultBackupRecord).delete()
+
+        # 3. Reset state
+        state.is_locked = False
+        state.auto_lockdown_enabled = False
+        state.current_threat_score = 10
+        state.threat_status = "NORMAL"
+        state.threat_summary = "ম্যানুয়াল মোড: পোর্টাল ডাটাবেস সম্পূর্ণ আনলকড ও স্বাভাবিক অবস্থায় রয়েছে।"
+        state.emergency_unlock_code_hash = None
+        state.emergency_unlock_code_hint = None
+        state.encrypted_articles_count = 0
+        state.encrypted_configs_count = 0
+        state.unlocked_at = datetime.utcnow()
+        state.unlocked_by = actor
+        state.failed_unlock_attempts = 0
+
+        # 4. Audit Log
+        audit = EditorialAuditLog(
+            username=actor,
+            action="EMERGENCY_FORCE_RESTORE_ALL",
+            resource_type="EMERGENCY_VAULT",
+            resource_id="ALL_ARTICLES",
+            details={"cleaned_articles": cleaned_count, "actor": actor},
+        )
+        session.add(audit)
+        session.flush()
+
+        logger.info(f"EMERGENCY FORCE RESTORE: {cleaned_count} articles cleaned & vault unlocked by {actor}.")
+        return {
+            "success": True,
+            "message": f"সফলভাবে ডাটাবেস আনলক ও রিস্টোর করা হয়েছে! {cleaned_count}টি আর্টিকেল স্বাভাবিক অবস্থায় ফিরিয়ে আনা হয়েছে।",
+            "cleaned_articles": cleaned_count,
+            "state": state.to_dict(),
         }
 
 

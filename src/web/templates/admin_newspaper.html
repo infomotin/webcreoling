@@ -595,26 +595,33 @@
                         </form>
 
                         <!-- Decrypt & Restore Input Form -->
-                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
+                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
                             <label style="font-size: 0.82rem; font-weight: 800; color: #1e293b; display: block; margin-bottom: 6px;">
-                                🔑 মাস্টার কোড দিয়ে ডিক্রিপ্ট ও রিস্টোর
+                                🔑 {{ tr('মাস্টার কোড দিয়ে ডিক্রিপ্ট ও রিস্টোর', 'Decrypt & Restore with Master Code') }}
                             </label>
                             <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}">
                                 <div style="display: flex; gap: 8px;">
                                     <input type="text" name="unlock_code" class="nr-form-control" placeholder="ALO-SEC-XXXX-XXXX-XXXX" style="font-family: monospace; font-size: 0.88rem; font-weight: 700; text-transform: uppercase;" required>
                                     <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; font-weight: 800; white-space: nowrap; font-size: 0.82rem; padding: 6px 14px;">
-                                        🔓 ডিক্রিপ্ট
+                                        🔓 {{ tr('ডিক্রিপ্ট', 'Decrypt') }}
                                     </button>
                                 </div>
                             </form>
                         </div>
+
+                        <!-- Direct 1-Click Master Unencrypt & Force Restore -->
+                        <form method="POST" action="{{ url_for('admin.force_restore_all_news_route') }}" onsubmit="return confirm('{{ tr('আপনি কি নিশ্চিত যে সকল সংবাদ ডিক্রিপ্ট ও আনলক করতে চান?', 'Are you sure you want to force restore and unlock all news?') }}');">
+                            <button type="submit" class="nr-btn" style="background: #047857; color: #fff; font-weight: 700; width: 100%; font-size: 0.82rem; padding: 8px;" title="ম্যানুয়াল মোড নিশ্চিত করুন এবং সমস্ত সংবাদ স্বাভাবিক অবস্থায় আনলক করুন">
+                                🔄 {{ tr('ম্যানুয়াল মোড ও সকল সংবাদ আনলক (Force Restore All News)', 'Manual Mode & Force Restore All News') }}
+                            </button>
+                        </form>
                     </div>
 
                     <div style="font-size: 0.76rem; color: #64748b; margin-top: 1rem; border-top: 1px solid #f1f5f9; padding-top: 8px;">
-                        <span>📩 সর্বশেষ ইমেইল নোটিফিকেশন স্ট্যাটাস:</span>
+                        <span>📩 {{ tr('সর্বশেষ ইমেইল নোটিফিকেশন স্ট্যাটাস:', 'Last Email Dispatch Status:') }}</span>
                         <strong style="color: #0284c7;">{{ vault_state.email_dispatch_status if vault_state else 'IDLE' }}</strong>
                         {% if vault_state and vault_state.emergency_unlock_code_hint %}
-                        | <span>কোড হিন্ট: <code>{{ vault_state.emergency_unlock_code_hint }}</code></span>
+                        | <span>{{ tr('কোড হিন্ট:', 'Code Hint:') }} <code>{{ vault_state.emergency_unlock_code_hint }}</code></span>
                         {% endif %}
                     </div>
                 </div>

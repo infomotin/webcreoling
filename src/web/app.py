@@ -98,29 +98,54 @@ def create_app(test_config: dict = None) -> Flask:
             pass
         return None
 
+    # Global Language Switcher Hook
+    @app.before_request
+    def language_handler_hook():
+        from flask import request, session as flask_session, g
+        lang_arg = request.args.get("lang")
+        if lang_arg in ("bn", "en"):
+            flask_session["lang"] = lang_arg
+            g.lang = lang_arg
+        else:
+            cookie_lang = request.cookies.get("app_lang")
+            g.lang = flask_session.get("lang") or cookie_lang or "bn"
+            flask_session["lang"] = g.lang
+
     # Context processor to make current_user available across all templates
     @app.context_processor
     def inject_user_and_roles():
+        from src.common.i18n import t, tr, get_current_language
         user = get_current_user()
-        lang = flask_session.get("lang", "bn")
-
-        def tr(bn_text, en_text=None):
-            """Bilingual label helper: returns English text when lang == 'en'."""
-            if lang == "en":
-                return en_text if en_text is not None else bn_text
-            return bn_text
+        lang = get_current_language()
 
         return {
             "current_user": user,
             "is_admin": user.role == "admin" if user else False,
             "is_editor": user.role in ["admin", "editor"] if user else False,
+            "is_reporter": user.role in ["reporter", "editor", "admin"] if user else False,
+            "is_subscriber": user.role in ["subscriber", "viewer", "admin", "editor", "reporter", "analyst"] if user else False,
             "is_analyst": user.role in ["admin", "editor", "analyst"] if user else False,
             "is_viewer": user is not None,
             "can_agent": user.role in ["admin", "editor", "editorial_lead", "ad_manager", "onboarding_officer"] if user else False,
-            "is_reporter": user.role in ["reporter", "editor", "admin"] if user else False,
             "lang": lang,
+            "current_lang": lang,
+            "t": t,
+            "_t": t,
             "tr": tr,
         }
+
+    # Global direct language toggle route
+    @app.route("/set-language/<lang_code>")
+    def set_language_global(lang_code: str):
+        from flask import request, redirect, session as flask_session
+        clean_code = "en" if str(lang_code).lower() == "en" else "bn"
+        flask_session["lang"] = clean_code
+        next_url = request.args.get("next") or request.referrer or "/"
+        if "/set-language/" in next_url or "/lang/" in next_url:
+            next_url = "/"
+        resp = redirect(next_url)
+        resp.set_cookie("app_lang", clean_code, max_age=365 * 24 * 60 * 60)
+        return resp
 
     # Route to serve downloaded article images safely
     @app.route("/media/images/<path:filename>")
@@ -143,6 +168,7 @@ def create_app(test_config: dict = None) -> Flask:
     from src.web.routes.agent_bp import agent_bp
     from src.web.routes.submissions_bp import submissions_bp
     from src.web.routes.reporter_bp import reporter_bp
+    from src.web.routes.subscriber_bp import subscriber_bp
 
     app.register_blueprint(portal_bp,   url_prefix="/news")
     app.register_blueprint(auth_bp,    url_prefix="/auth")
@@ -158,6 +184,7 @@ def create_app(test_config: dict = None) -> Flask:
     app.register_blueprint(agent_bp,      url_prefix="/agent")
     app.register_blueprint(submissions_bp, url_prefix="/submissions")
     app.register_blueprint(reporter_bp,   url_prefix="/reporter")
+    app.register_blueprint(subscriber_bp, url_prefix="/subscriber")
 
     @app.errorhandler(404)
     def page_not_found(e):

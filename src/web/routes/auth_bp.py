@@ -62,14 +62,6 @@ def _issue_and_deliver(destination: str, purpose: str, channel: str = "email",
     return True, f"SMTP অদৃশ্য — স্যান্ডবক্স কোড: {code} / SMTP unavailable, sandbox code: {code}"
 
 
-@auth_bp.route("/lang/<code>")
-def lang_view(code: str):
-    """Toggle the admin panel / site interface language (bn <-> en)."""
-    session["lang"] = "en" if code.lower().startswith("e") else "bn"
-    target = request.args.get("next") or request.referrer or url_for("dashboard.index_view")
-    return redirect(target)
-
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login_view():
     """User login view (optional OTP two-factor when enabled)."""
@@ -312,3 +304,24 @@ def profile_view():
     """User profile overview."""
     user = get_current_user()
     return render_template("profile.html", user=user)
+
+
+@auth_bp.route("/lang/<code>")
+def lang_view(code: str):
+    """Toggle interface language between 'bn' and 'en'."""
+    clean_code = "en" if str(code).lower() == "en" else "bn"
+    session["lang"] = clean_code
+
+    next_url = request.args.get("next") or request.referrer or "/"
+    if "/lang/" in next_url or "/set-language/" in next_url:
+        next_url = "/"
+
+    resp = redirect(next_url)
+    resp.set_cookie("app_lang", clean_code, max_age=365 * 24 * 60 * 60)
+    return resp
+
+
+@auth_bp.route("/language/<code>", endpoint="lang_view_alias")
+def lang_view_alias(code: str):
+    """Alias for /auth/lang/<code>."""
+    return lang_view(code)

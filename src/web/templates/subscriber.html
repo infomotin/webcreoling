@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('সাবস্ক্রাইবার পোর্টাল', 'Subscriber Portal') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}
+    💎 {{ tr('সাবস্ক্রাইবার পোর্টাল ও রিডার্স ক্লাব', 'Subscriber Portal & Readers Club') }}
+{% endblock %}
+
+{% block content %}
+<style>
+    .sub-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-bottom: 1.5rem; }
+    .sub-stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.2rem; }
+    .sub-stat-card h4 { font-size: 0.9rem; color: #94a3b8; margin: 0 0 6px; }
+    .sub-stat-card .val { font-size: 1.6rem; font-weight: 800; color: #38bdf8; }
+    .plan-card-mini { background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; }
+</style>
+
+<div class="sub-grid-3">
+    <!-- Active Membership Status -->
+    <div class="sub-stat-card" style="border-left: 4px solid #10b981;">
+        <h4>{{ tr('মেম্বারশিপ স্ট্যাটাস', 'Membership Status') }}</h4>
+        {% if active_sub %}
+            <div class="val" style="color: #10b981;">VIP PRO</div>
+            <p style="font-size: 0.82rem; color: #cbd5e1; margin-top: 4px;">
+                {{ tr('মেয়াদ শেষ:', 'Valid Until:') }} <strong>{{ active_sub.ends_at.strftime('%d %b %Y') if active_sub.ends_at else 'Active' }}</strong>
+            </p>
+        {% else %}
+            <div class="val" style="color: #f59e0b;">FREE READER</div>
+            <p style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+                {{ tr('ফ্রি সংস্করণ ব্যবহার করছেন।', 'Using Free Edition.') }}
+            </p>
+            <a href="{{ url_for('billing.plans_view') }}" class="btn btn-primary" style="font-size: 0.8rem; padding: 4px 12px; margin-top: 6px;">
+                ⚡ {{ tr('প্রো সাবস্ক্রাইব করুন', 'Upgrade to Pro') }}
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- AI Neural Tokens -->
+    <div class="sub-stat-card" style="border-left: 4px solid #38bdf8;">
+        <h4>{{ tr('এআই নিউরাল অ্যাসিস্ট্যান্ট ক্রেডিট', 'AI Neural Assistant Credits') }}</h4>
+        <div class="val">5,000 TOKENS</div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+            {{ tr('নিউজ কিউঅ্যান্ডএ ও চ্যাটবটে ব্যবহারযোগ্য', 'Usable in Neural News Chat & RAG') }}
+        </p>
+        <a href="{{ url_for('chat.index_view') }}" class="btn btn-secondary" style="font-size: 0.8rem; padding: 4px 12px; margin-top: 6px;">
+            💬 {{ tr('এআই চ্যাট খুলুন', 'Launch AI Chat') }}
+        </a>
+    </div>
+
+    <!-- 2FA Security -->
+    <div class="sub-stat-card" style="border-left: 4px solid #a855f7;">
+        <h4>{{ tr('অ্যাকাউন্ট সিকিউরিটি (2FA / OTP)', 'Account Security (2FA / OTP)') }}</h4>
+        <div class="val" style="color: #a855f7;">{{ tr('সুরক্ষিত', 'PROTECTED') }}</div>
+        <p style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+            Mailtrap OTP & SMS {{ tr('ভেরিফিকেশন সক্রিয়', 'Verification Active') }}
+        </p>
+    </div>
+</div>
+
+<!-- Recommended Personalized News Feed -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>📰 {{ tr('আপনার জন্য বাছাইকৃত সেরা সংবাদ', 'Recommended For You') }}</strong>
+        <a href="{{ url_for('portal.newspaper_home') }}" target="_blank" style="color: #38bdf8; font-size: 0.82rem; text-decoration:none;">
+            {{ tr('লাইভ পোর্টাল দেখুন ↗', 'View Live Portal ↗') }}
+        </a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; padding: 1.2rem;">
+        {% for a in recommended_articles %}
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px;">
+            <span class="chip chip-info" style="font-size:0.68rem; margin-bottom: 6px;">{{ a.category or 'General' }}</span>
+            <h5 style="font-size: 0.95rem; margin: 6px 0 8px; line-height: 1.4;">
+                <a href="{{ url_for('portal.article_reader_view', article_id=a.id) }}" target="_blank" style="color:#e2e8f0; text-decoration:none;">
+                    {{ a.title }}
+                </a>
+            </h5>
+            <p style="font-size: 0.78rem; color: #94a3b8; line-height: 1.4; margin-bottom: 8px;">
+                {{ (a.summary or a.content_text or '')[:100] }}...
+            </p>
+            <div style="font-size: 0.72rem; color: #64748b;">
+                {{ a.published_at[:10] if a.published_at else 'Recent' }} · {{ a.source }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Billing & Invoices History -->
+<div class="card">
+    <div class="card-header">
+        <strong>💳 {{ tr('পেমেন্ট ইতিহাস ও ইনভয়েস', 'Payment History & Invoices') }}</strong>
+    </div>
+    <div style="overflow-x: auto; padding: 0.5rem 1rem;">
+        <table class="nr-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>{{ tr('ট্রানজেকশন আইডি', 'Transaction ID') }}</th>
+                    <th>{{ tr('পরিমাণ', 'Amount') }}</th>
+                    <th>{{ tr('পদ্ধতি', 'Method') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th>{{ tr('তারিখ', 'Date') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td style="font-family: monospace; font-weight: 700; color: #38bdf8;">{{ tx.tran_id }}</td>
+                    <td>{{ tx.amount }} {{ tx.currency }}</td>
+                    <td>{{ tx.payment_method or 'bKash / Card' }}</td>
+                    <td>
+                        <span class="chip {{ 'chip-ok' if tx.status == 'VALID' else 'chip-warn' }}">{{ tx.status }}</span>
+                    </td>
+                    <td style="font-size: 0.76rem; color: #94a3b8;">{{ tx.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 1.2rem;">
+                        {{ tr('কোনো পূর্ববর্তী পেমেন্ট রেকর্ড পাওয়া যায়নি।', 'No prior payment transactions found.') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

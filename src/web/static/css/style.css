@@ -725,12 +725,6 @@ body.sidebar-collapsed .sidebar-menu-link[data-tooltip]:hover::after {
   pointer-events: none;
   animation: fadeIn 0.15s ease;
 }
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  z-index: 10000;
-  pointer-events: none;
-  animation: fadeIn 0.15s ease;
-}
 
 /* Mobile Off-canvas Drawer (<992px) */
 .sidebar-backdrop {

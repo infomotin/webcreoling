@@ -42,8 +42,16 @@
             </button>
         </div>
 
+        <!-- Quick Menu Search -->
+        <div style="padding: 0.65rem 0.85rem 0.25rem 0.85rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 7px; padding: 0.4rem 0.65rem;">
+                <span style="font-size: 0.85rem; color: #64748b;">🔍</span>
+                <input type="text" id="nrSidebarSearchInput" placeholder="মেনু খুঁজুন..." oninput="filterNrSidebar(this.value)" style="background: transparent; border: none; outline: none; color: #fff; font-size: 0.82rem; width: 100%; font-family: inherit;">
+            </div>
+        </div>
+
         <!-- Navigation Links -->
-        <nav class="nr-sidebar-nav">
+        <nav class="nr-sidebar-nav" id="nrSidebarNav">
             <div class="nr-nav-heading">সম্পাদকীয় নিয়ন্ত্রণ</div>
 
             <a href="{{ url_for('admin.newspaper_management_view') }}" class="nr-nav-item {% if not status_filter and not request.args.get('tab') and request.endpoint == 'admin.newspaper_management_view' %}active{% endif %}" data-tooltip="সকল সংবাদ ফিড">
@@ -289,6 +297,24 @@
 </div>
 
 <script>
+    function filterNrSidebar(searchTerm) {
+        const query = (searchTerm || '').toLowerCase().trim();
+        const nav = document.getElementById('nrSidebarNav');
+        if (!nav) return;
+        const items = nav.querySelectorAll('.nr-nav-item');
+        const headings = nav.querySelectorAll('.nr-nav-heading');
+
+        items.forEach(item => {
+            const text = (item.textContent || '').toLowerCase();
+            item.style.display = (query === '' || text.includes(query)) ? '' : 'none';
+        });
+
+        // Hide headings if no following items visible
+        headings.forEach(heading => {
+            heading.style.display = query === '' ? '' : 'block';
+        });
+    }
+
     function toggleNrSidebar() {
         const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
         localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');

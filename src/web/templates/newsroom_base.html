@@ -158,6 +158,16 @@
 
             <div class="nr-nav-heading">সেটিংস ও সিস্টেম</div>
 
+            {% if current_user and current_user.role == 'admin' %}
+            <a href="{{ url_for('integrations.index_view') }}" class="nr-nav-item {% if request.path.startswith('/admin/integrations') %}active{% endif %}" data-tooltip="Mail · SMS · Payment">
+                <div class="nr-nav-left">
+                    <span>📨</span>
+                    <span>{{ tr('মেইল, এসএমএস ও পেমেন্ট', 'Mail, SMS & Payments') }}</span>
+                </div>
+                <span class="nr-nav-badge" style="background: #10b981; color: #fff;">{{ tr('ইন্টিগ্রেশন', 'INTEGRATION') }}</span>
+            </a>
+            {% endif %}
+
             <a href="{{ url_for('admin.newspaper_management_view', tab='settings') }}" class="nr-nav-item {% if active_tab == 'settings' or request.args.get('tab') == 'settings' %}active{% endif %}" data-tooltip="পোর্টাল সেটিংস">
                 <div class="nr-nav-left">
                     <span>⚙️</span>
@@ -251,6 +261,14 @@
             </div>
 
             <div class="nr-topbar-right">
+                <!-- Bn / En Interface Language Toggle -->
+                <div style="display:flex; align-items:center; gap:2px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:2rem; padding:0.15rem;" title="ভাষা পরিবর্তন / Switch Language">
+                    <a href="{{ url_for('auth.lang_view', code='bn', next=request.path) }}"
+                       style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; color:#334155; {% if lang != 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#64748b;{% endif %}">বাং</a>
+                    <a href="{{ url_for('auth.lang_view', code='en', next=request.path) }}"
+                       style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; color:#334155; {% if lang == 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#64748b;{% endif %}">En</a>
+                </div>
+
                 <!-- Write New Article Modal Trigger Button -->
                 <button type="button" class="nr-btn-new-article" onclick="openNewArticleModal()">
                     <span>✍️</span> নতুন সংবাদ প্রকাশ

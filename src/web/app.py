@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from flask import Flask, send_from_directory, render_template
+from flask import Flask, send_from_directory, render_template, session as flask_session
 from config.settings import settings
 from src.storage.database import init_db, get_db_session
 from src.storage.repositories import UserRepository
@@ -30,6 +30,18 @@ def create_app(test_config: dict = None) -> Flask:
     app.config.from_mapping(
         SECRET_KEY="webcreoling-production-secret-key-bangla-ai-pipeline",
         MAX_CONTENT_LENGTH=32 * 1024 * 1024,
+        # ---- Default Mail Server Configuration (Mailtrap sandbox) ----
+        MAIL_SERVER=getattr(settings, "MAIL_SERVER", "sandbox.smtp.mailtrap.io"),
+        MAIL_PORT=getattr(settings, "MAIL_PORT", 2525),
+        MAIL_USERNAME=getattr(settings, "MAIL_USERNAME", "6056bdc6c17f23"),
+        MAIL_PASSWORD=getattr(settings, "MAIL_PASSWORD", "4e1119bb236ac7"),
+        MAIL_USE_TLS=getattr(settings, "MAIL_USE_TLS", True),
+        MAIL_USE_SSL=getattr(settings, "MAIL_USE_SSL", False),
+        MAIL_DEFAULT_SENDER=getattr(settings, "MAIL_DEFAULT_SENDER", "no-reply@daily-ai-alo.com"),
+        # ---- SSLCommerz Payment Gateway (Sandbox) ----
+        SSLCOMMERZ_STORE_ID=getattr(settings, "SSLCOMMERZ_STORE_ID", "arobw6a3cf7767fa7c"),
+        SSLCOMMERZ_STORE_PASSWORD=getattr(settings, "SSLCOMMERZ_STORE_PASSWORD", "arobw6a3cf7767fa7c@ssl"),
+        SSLCOMMERZ_IS_LIVE=getattr(settings, "SSLCOMMERZ_IS_LIVE", False),
     )
 
     if test_config:
@@ -40,7 +52,7 @@ def create_app(test_config: dict = None) -> Flask:
     with get_db_session() as session:
         user_repo = UserRepository(session)
         user_repo.seed_default_users()
-        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository, DataCenterRepository, SiteConfigRepository
+        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository, DataCenterRepository, SiteConfigRepository, SubscriptionPlanRepository
         sec_repo = SecurityRepository(session)
         sec_repo.seed_default_security_rules()
         ledger_repo = BlockchainLedgerRepository(session)
@@ -50,6 +62,8 @@ def create_app(test_config: dict = None) -> Flask:
         dc_repo.seed_default_replica_nodes()
         cfg_repo = SiteConfigRepository(session)
         cfg_repo.seed_default_configs()
+        plan_repo = SubscriptionPlanRepository(session)
+        plan_repo.ensure_default_plans()
 
     # Enterprise WAF Security & Threat Defense Guard
     from src.web.security import run_security_firewall
@@ -88,12 +102,22 @@ def create_app(test_config: dict = None) -> Flask:
     @app.context_processor
     def inject_user_and_roles():
         user = get_current_user()
+        lang = flask_session.get("lang", "bn")
+
+        def tr(bn_text, en_text=None):
+            """Bilingual label helper: returns English text when lang == 'en'."""
+            if lang == "en":
+                return en_text if en_text is not None else bn_text
+            return bn_text
+
         return {
             "current_user": user,
             "is_admin": user.role == "admin" if user else False,
             "is_editor": user.role in ["admin", "editor"] if user else False,
             "is_analyst": user.role in ["admin", "editor", "analyst"] if user else False,
             "is_viewer": user is not None,
+            "lang": lang,
+            "tr": tr,
         }
 
     # Route to serve downloaded article images safely
@@ -112,16 +136,20 @@ def create_app(test_config: dict = None) -> Flask:
     from src.web.routes.chat_bp import chat_bp
     from src.web.routes.admin_bp import admin_bp
     from src.web.routes.datacenter_bp import datacenter_bp
+    from src.web.routes.integrations_bp import integrations_bp
+    from src.web.routes.billing_bp import billing_bp
 
-    app.register_blueprint(portal_bp, url_prefix="/news")
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(dashboard_bp, url_prefix="")
-    app.register_blueprint(scraper_bp, url_prefix="/scraper")
-    app.register_blueprint(article_bp, url_prefix="/articles")
+    app.register_blueprint(portal_bp,   url_prefix="/news")
+    app.register_blueprint(auth_bp,    url_prefix="/auth")
+    app.register_blueprint(dashboard_bp, url_prefix="")     # serves "/"
+    app.register_blueprint(scraper_bp,  url_prefix="/scraper")
+    app.register_blueprint(article_bp,  url_prefix="/articles")
     app.register_blueprint(training_bp, url_prefix="/training")
-    app.register_blueprint(chat_bp, url_prefix="/chat")
-    app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(chat_bp,     url_prefix="/chat")
+    app.register_blueprint(admin_bp,    url_prefix="/admin")
     app.register_blueprint(datacenter_bp, url_prefix="/admin/datacenter")
+    app.register_blueprint(integrations_bp, url_prefix="/admin/integrations")
+    app.register_blueprint(billing_bp,  url_prefix="/billing")
 
     @app.errorhandler(404)
     def page_not_found(e):

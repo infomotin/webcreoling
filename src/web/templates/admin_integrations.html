@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tr('মেইল, এসএমএস ও পেমেন্ট ইন্টিগ্রেশন', 'Mail, SMS & Payment Integrations') }} - WebCreoling{% endblock %}
+
+{% block page_heading %}
+    📨 {{ tr('মেইল সার্ভার, এসএমএস গেটওয়ে ও পেমেন্ট', 'Mail Server, SMS Gateway & Payments') }}
+{% endblock %}
+
+{% block content %}
+<style>
+    .int-tabbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .int-tab { padding: 0.55rem 1.1rem; border-radius: 2rem; font-size: 0.85rem; font-weight: 700;
+               text-decoration: none; color: #94a3b8; background: rgba(255,255,255,0.04);
+               border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.4rem; }
+    .int-tab.active { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: #fff; border-color: transparent; }
+    .int-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    .int-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 12px; padding: 1rem 1.1rem; }
+    .int-stat .val { font-size: 1.35rem; font-weight: 800; color: #38bdf8; }
+    .int-stat .lbl { font-size: 0.78rem; color: #94a3b8; margin-top: 0.2rem; }
+    .int-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+    .int-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .int-table th, .int-table td { padding: 0.55rem 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.07); text-align: left; }
+    .int-table th { color: #94a3b8; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .chip { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 1rem; font-size: 0.72rem; font-weight: 700; }
+    .chip-ok { background: rgba(16,185,129,0.18); color: #34d399; }
+    .chip-warn { background: rgba(245,158,11,0.18); color: #fbbf24; }
+    .chip-err { background: rgba(239,68,68,0.18); color: #f87171; }
+    .muted-note { font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; }
+</style>
+
+<div class="int-tabbar">
+    <a class="int-tab {% if active_tab == 'mail' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='mail') }}">📧 {{ tr('মেইল সার্ভার', 'Mail Server') }}</a>
+    <a class="int-tab {% if active_tab == 'sms' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='sms') }}">📱 {{ tr('এসএমএস গেটওয়ে', 'SMS Gateway') }}</a>
+    <a class="int-tab {% if active_tab == 'payment' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='payment') }}">💳 {{ tr('পেমেন্ট (SSLCommerz)', 'Payments (SSLCommerz)') }}</a>
+    <a class="int-tab {% if active_tab == 'otp' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='otp') }}">🔐 {{ tr('OTP ও সিকিউরিটি', 'OTP & Security') }}</a>
+    <a class="int-tab {% if active_tab == 'plans' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='plans') }}">⭐ {{ tr('সাবস্ক্রিপশন প্ল্যান', 'Subscription Plans') }}</a>
+    <a class="int-tab {% if active_tab == 'logs' %}active{% endif %}" href="{{ url_for('integrations.index_view', tab='logs') }}">📜 {{ tr('পাঠানো মেইল/এসএমএস লগ', 'Outbound Message Logs') }}</a>
+</div>
+
+{# ============================ MAIL ============================ #}
+{% if active_tab == 'mail' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>📧 {{ tr('ডিফল্ট মেইল কনফিগারেশন', 'Default Mail Configuration') }}</strong>
+        <span class="chip {{ 'chip-ok' if mail_cfg.enabled else 'chip-err' }}">{{ tr('চালু' if mail_cfg.enabled else 'বন্ধ', 'ON' if mail_cfg.enabled else 'OFF') }}</span>
+    </div>
+    <form method="POST" action="{{ url_for('integrations.mail_save') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('SMTP সার্ভার', 'Mail Server') }}</label>
+                <input type="text" name="mail_server" class="form-control" value="{{ mail_cfg.mail_server }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('পোর্ট', 'Mail Port') }}</label>
+                <input type="number" name="mail_port" class="form-control" value="{{ mail_cfg.mail_port }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ইউজারনেম', 'Mail Username') }}</label>
+                <input type="text" name="mail_username" class="form-control" value="{{ mail_cfg.mail_username }}" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('পাসওয়ার্ড', 'Mail Password') }}</label>
+                <input type="password" name="mail_password" class="form-control" value="{{ mail_cfg.mail_password }}" autocomplete="new-password">
+                <div class="muted-note">{{ tr('সংরক্ষিত সিক্রেট', 'Stored secret') }}: {{ masked_mail_password or '—' }}</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('প্রেরক ইমেইল', 'Default Sender') }}</label>
+                <input type="email" name="mail_default_sender" class="form-control" value="{{ mail_cfg.mail_default_sender }}">
+            </div>
+            <div class="form-group" style="display:flex; flex-direction:column; gap:0.6rem; justify-content:center;">
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="enabled" {% if mail_cfg.enabled %}checked{% endif %}> {{ tr('মেইল সার্ভার চালু', 'Enable mail server') }}
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="mail_use_tls" {% if mail_cfg.mail_use_tls %}checked{% endif %}> MAIL_USE_TLS
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="mail_use_ssl" {% if mail_cfg.mail_use_ssl %}checked{% endif %}> MAIL_USE_SSL
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">💾 {{ tr('মেইল কনফিগ সেভ', 'Save Mail Config') }}</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>🧪 {{ tr('টেস্ট মেইল পাঠান', 'Send Test Mail') }}</strong></div>
+    <form method="POST" action="{{ url_for('integrations.mail_test') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('প্রাপক ইমেইল', 'Recipient Email') }}</label>
+                <input type="email" name="to" class="form-control" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('বিষয়', 'Subject') }}</label>
+                <input type="text" name="subject" class="form-control" value="{{ tr('টেস্ট মেইল — দি ডেইলি এআই আলো', 'Test Mail — The Daily AI Alo') }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-secondary" style="margin-top:1rem;">📨 {{ tr('পাঠান', 'Send') }}</button>
+    </form>
+    <p class="muted-note">{{ tr('SMTP না থাকলে ডেলিভারি সিমুলেটেড হিসেবে লগ হবে (স্যান্ডবক্স নিরাপদ)।', 'If SMTP is unreachable the delivery is logged as SIMULATED (sandbox-safe).') }}</p>
+</div>
+{% endif %}
+
+{# ============================ SMS ============================ #}
+{% if active_tab == 'sms' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>📱 {{ tr('জেনেরিক HTTP এসএমএস গেটওয়ে', 'Generic HTTP SMS Gateway') }}</strong>
+        <span class="chip {{ 'chip-ok' if sms_cfg.enabled else 'chip-err' }}">{{ tr('চালু' if sms_cfg.enabled else 'বন্ধ', 'ON' if sms_cfg.enabled else 'OFF') }}</span>
+        {% if sms_cfg.test_mode %}<span class="chip chip-warn">TEST MODE</span>{% endif %}
+    </div>
+    <form method="POST" action="{{ url_for('integrations.sms_save') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('প্রোভাইডার', 'Provider') }}</label>
+                <input type="text" name="provider" class="form-control" value="{{ sms_cfg.provider }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">API URL</label>
+                <input type="text" name="api_url" class="form-control" value="{{ sms_cfg.api_url }}" placeholder="https://provider.api/sms/send">
+            </div>
+            <div class="form-group">
+                <label class="form-label">API Key</label>
+                <input type="password" name="api_key" class="form-control" value="{{ sms_cfg.api_key }}" autocomplete="new-password">
+                <div class="muted-note">{{ tr('সংরক্ষিত সিক্রেট', 'Stored secret') }}: {{ masked_sms_key or '—' }}</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('সেন্ডার আইডি', 'Sender ID') }}</label>
+                <input type="text" name="sender_id" class="form-control" value="{{ sms_cfg.sender_id }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মেথড', 'HTTP Method') }}</label>
+                <select name="method" class="form-control">
+                    <option value="GET" {% if sms_cfg.method == 'GET' %}selected{% endif %}>GET</option>
+                    <option value="POST" {% if sms_cfg.method == 'POST' %}selected{% endif %}>POST</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('প্রাপক প্যারামিটার', 'Recipient Param') }}</label>
+                <input type="text" name="param_to" class="form-control" value="{{ sms_cfg.param_to }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মেসেজ প্যারামিটার', 'Message Param') }}</label>
+                <input type="text" name="param_text" class="form-control" value="{{ sms_cfg.param_text }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('অতিরিক্ত প্যারাম (key=val&...)', 'Extra Params (key=val&...)') }}</label>
+                <input type="text" name="extra_params" class="form-control" value="{{ sms_cfg.extra_params }}">
+            </div>
+            <div class="form-group" style="display:flex; flex-direction:column; gap:0.6rem; justify-content:center;">
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="enabled" {% if sms_cfg.enabled %}checked{% endif %}> {{ tr('এসএমএস চালু', 'Enable SMS') }}
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="test_mode" {% if sms_cfg.test_mode %}checked{% endif %}> {{ tr('টেস্ট মোড (লাইভ পাঠাবে না)', 'Test mode (no live delivery)') }}
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">💾 {{ tr('এসএমএস কনফিগ সেভ', 'Save SMS Config') }}</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>🧪 {{ tr('টেস্ট এসএমএস পাঠান', 'Send Test SMS') }}</strong></div>
+    <form method="POST" action="{{ url_for('integrations.sms_test') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('ফোন নম্বর', 'Phone Number') }}</label>
+                <input type="text" name="phone" class="form-control" placeholder="+88017XXXXXXXX" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মেসেজ', 'Message') }}</label>
+                <input type="text" name="message" class="form-control" value="{{ tr('টেস্ট এসএমএস — দি ডেইলি এআই আলো', 'Test SMS — The Daily AI Alo') }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-secondary" style="margin-top:1rem;">📱 {{ tr('পাঠান', 'Send') }}</button>
+    </form>
+</div>
+{% endif %}
+
+{# ============================ PAYMENT ============================ #}
+{% if active_tab == 'payment' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header">
+        <strong>💳 {{ tr('SSLCommerz পেমেন্ট গেটওয়ে', 'SSLCommerz Payment Gateway') }}</strong>
+        <span class="chip {{ 'chip-warn' if not payment_cfg.is_live else 'chip-ok' }}">
+            {{ tr('স্যান্ডবক্স' if not payment_cfg.is_live else 'লাইভ', 'SANDBOX' if not payment_cfg.is_live else 'LIVE') }}
+        </span>
+    </div>
+    <form method="POST" action="{{ url_for('integrations.payment_save') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('প্রোভাইডার', 'Provider') }}</label>
+                <input type="text" name="provider" class="form-control" value="{{ payment_cfg.provider }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Store ID</label>
+                <input type="text" name="store_id" class="form-control" value="{{ payment_cfg.store_id }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('স্টোর পাসওয়ার্ড (API/Secret Key)', 'Store Password (API/Secret Key)') }}</label>
+                <input type="password" name="store_password" class="form-control" value="{{ payment_cfg.store_password }}" autocomplete="new-password">
+                <div class="muted-note">{{ tr('সংরক্ষিত সিক্রেট', 'Stored secret') }}: {{ masked_store_password or '—' }}</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('কারেন্সি', 'Currency') }}</label>
+                <input type="text" name="currency" class="form-control" value="{{ payment_cfg.currency }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sandbox Base URL</label>
+                <input type="text" name="sandbox_base_url" class="form-control" value="{{ payment_cfg.sandbox_base_url }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Live Base URL</label>
+                <input type="text" name="live_base_url" class="form-control" value="{{ payment_cfg.live_base_url }}">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center;">
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="is_live" {% if payment_cfg.is_live %}checked{% endif %}> {{ tr('লাইভ মোড (SSLCommerz live)', 'Live mode (SSLCommerz live)') }}
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">💾 {{ tr('পেমেন্ট কনফিগ সেভ', 'Save Payment Config') }}</button>
+    </form>
+    <p class="muted-note">
+        {{ tr('মার্চেন্ট প্যানেল', 'Merchant Panel') }}: <a href="https://sandbox.sslcommerz.com/manage/" target="_blank" style="color:#38bdf8;">https://sandbox.sslcommerz.com/manage/</a>
+    </p>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>🧾 {{ tr('সাম্প্রতিক লেনদেন', 'Recent Transactions') }}</strong></div>
+    <div style="overflow-x:auto;">
+        <table class="int-table">
+            <thead>
+                <tr>
+                    <th>Tran ID</th>
+                    <th>{{ tr('পরিমাণ', 'Amount') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th>{{ tr('মাধ্যম', 'Method') }}</th>
+                    <th>{{ tr('তারিখ', 'Date') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td>{{ tx.tran_id }}</td>
+                    <td>{{ '%.2f'|format(tx.amount) }} {{ tx.currency }}</td>
+                    <td>
+                        <span class="chip {{ 'chip-ok' if tx.status == 'VALID' else ('chip-warn' if tx.status == 'PENDING' else 'chip-err') }}">{{ tx.status }}</span>
+                    </td>
+                    <td>{{ tx.payment_method or '—' }}</td>
+                    <td>{{ tx.created_at.strftime('%Y-%m-%d %H:%M') if tx.created_at else '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="color:#94a3b8;">{{ tr('কোনো লেনদেন নেই', 'No transactions yet') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{# ============================ OTP ============================ #}
+{% if active_tab == 'otp' %}
+<div class="card">
+    <div class="card-header"><strong>🔐 {{ tr('OTP ও সিকিউরিটি ডিফল্ট সেটিংস', 'OTP & Security Default Settings') }}</strong></div>
+    <form method="POST" action="{{ url_for('integrations.otp_save') }}">
+        <div class="int-form-grid">
+            <div class="form-group" style="display:flex; flex-direction:column; gap:0.6rem; justify-content:center;">
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="register_email_otp" {% if otp_cfg.register_email_otp %}checked{% endif %}>
+                    {{ tr('রেজিস্ট্রেশনে ইমেইল OTP ভেরিফিকেশন', 'Email OTP on registration') }}
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="login_2fa" {% if otp_cfg.login_2fa %}checked{% endif %}>
+                    {{ tr('লগইনে টু-ফ্যাক্টর OTP (2FA)', 'Login two-factor OTP (2FA)') }}
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="password_reset_otp" {% if otp_cfg.password_reset_otp %}checked{% endif %}>
+                    {{ tr('পাসওয়ার্ড রিসেট OTP', 'Password reset OTP') }}
+                </label>
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="sms_otp" {% if otp_cfg.sms_otp %}checked{% endif %}>
+                    {{ tr('এসএমএস OTP (ফোন থাকলে)', 'SMS OTP (when phone available)') }}
+                </label>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('কোডের দৈর্ঘ্য', 'OTP Length') }}</label>
+                <input type="number" name="otp_length" class="form-control" value="{{ otp_cfg.otp_length }}" min="4" max="12">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মেয়াদ (মিনিট)', 'Expiry (minutes)') }}</label>
+                <input type="number" name="otp_ttl_minutes" class="form-control" value="{{ otp_cfg.otp_ttl_minutes }}" min="1" max="120">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('সর্বোচ্চ ভুল চেষ্টা', 'Max Attempts') }}</label>
+                <input type="number" name="otp_max_attempts" class="form-control" value="{{ otp_cfg.otp_max_attempts }}" min="1" max="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('রিসেন্ড কুলডাউন (সেকেন্ড)', 'Resend Cooldown (seconds)') }}</label>
+                <input type="number" name="otp_resend_cooldown_seconds" class="form-control" value="{{ otp_cfg.otp_resend_cooldown_seconds }}" min="0" max="600">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">💾 {{ tr('OTP সেটিংস সেভ', 'Save OTP Settings') }}</button>
+    </form>
+</div>
+{% endif %}
+
+{# ============================ PLANS ============================ #}
+{% if active_tab == 'plans' %}
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-header"><strong>⭐ {{ tr('সাবস্ক্রিপশন প্ল্যান', 'Subscription Plans') }}</strong></div>
+    <div style="overflow-x:auto;">
+        <table class="int-table">
+            <thead>
+                <tr>
+                    <th>{{ tr('কোড', 'Code') }}</th>
+                    <th>{{ tr('নাম', 'Name') }}</th>
+                    <th>{{ tr('মূল্য', 'Price') }}</th>
+                    <th>{{ tr('মেয়াদ', 'Duration') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                <tr>
+                    <td>{{ plan.code }}</td>
+                    <td>{{ plan.name }} <small style="color:#94a3b8;">/ {{ plan.name_en or '' }}</small></td>
+                    <td>{{ '%.2f'|format(plan.price) }} {{ plan.currency }}</td>
+                    <td>{{ plan.duration_days }} {{ tr('দিন', 'days') }}</td>
+                    <td><span class="chip {{ 'chip-ok' if plan.is_active else 'chip-err' }}">{{ tr('চালু' if plan.is_active else 'বন্ধ', 'ACTIVE' if plan.is_active else 'OFF') }}</span></td>
+                    <td style="white-space:nowrap;">
+                        <form method="POST" action="{{ url_for('integrations.plan_toggle', plan_id=plan.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-secondary" style="padding:0.3rem 0.7rem; font-size:0.75rem;">{{ tr('টগল', 'Toggle') }}</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('integrations.plan_delete', plan_id=plan.id) }}" style="display:inline;"
+                              onsubmit="return confirm('{{ tr('প্ল্যান মুছবেন?', 'Delete this plan?') }}');">
+                            <button type="submit" class="btn btn-secondary" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:#f87171;">{{ tr('মুছুন', 'Delete') }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="color:#94a3b8;">{{ tr('কোনো প্ল্যান নেই', 'No plans yet') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>➕ {{ tr('নতুন প্ল্যান তৈরি', 'Create New Plan') }}</strong></div>
+    <form method="POST" action="{{ url_for('integrations.plan_create') }}">
+        <div class="int-form-grid">
+            <div class="form-group">
+                <label class="form-label">{{ tr('কোড (ইংরেজি)', 'Code (English)') }}</label>
+                <input type="text" name="code" class="form-control" placeholder="premium" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('নাম (বাংলা)', 'Name (Bangla)') }}</label>
+                <input type="text" name="name" class="form-control" placeholder="প্রিমিয়াম প্ল্যান" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('নাম (ইংরেজি)', 'Name (English)') }}</label>
+                <input type="text" name="name_en" class="form-control" placeholder="Premium Plan">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মূল্য (BDT)', 'Price (BDT)') }}</label>
+                <input type="number" step="0.01" name="price" class="form-control" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('মেয়াদ (দিন)', 'Duration (days)') }}</label>
+                <input type="number" name="duration_days" class="form-control" value="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('সর্বোচ্চ অর্ডার', 'Sort Order') }}</label>
+                <input type="number" name="sort_order" class="form-control" value="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ tr('ফিচার (প্রতি লাইনে একটি)', 'Features (one per line)') }}</label>
+                <textarea name="features" class="form-control" rows="3" placeholder="আনলিমিটেড আর্টিকেল&#10;AI চ্যাট"></textarea>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center;">
+                <label style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem;">
+                    <input type="checkbox" name="is_active" checked> {{ tr('সক্রিয়', 'Active') }}
+                </label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">➕ {{ tr('তৈরি করুন', 'Create Plan') }}</button>
+    </form>
+</div>
+{% endif %}
+
+{# ============================ LOGS ============================ #}
+{% if active_tab == 'logs' %}
+<div class="int-grid" style="margin-bottom: 1.25rem;">
+    <div class="int-stat">
+        <div class="val">{{ logs|selectattr('channel', 'equalto', 'mail')|list|length }}</div>
+        <div class="lbl">📧 {{ tr('মোট মেইল', 'Total Mails') }}</div>
+    </div>
+    <div class="int-stat">
+        <div class="val">{{ logs|selectattr('channel', 'equalto', 'sms')|list|length }}</div>
+        <div class="lbl">📱 {{ tr('মোট এসএমএস', 'Total SMS') }}</div>
+    </div>
+    <div class="int-stat">
+        <div class="val">{{ logs|selectattr('status', 'equalto', 'SENT')|list|length }}</div>
+        <div class="lbl">✅ {{ tr('ডেলিভারড', 'Delivered') }}</div>
+    </div>
+    <div class="int-stat">
+        <div class="val">{{ logs|selectattr('status', 'equalto', 'FAILED')|list|length }}</div>
+        <div class="lbl">❌ {{ tr('ব্যর্থ', 'Failed') }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>📜 {{ tr('সিস্টেম-জেনারেটেড মেইল ও এসএমএস লগ', 'System-Generated Mail & SMS Logs') }}</strong></div>
+    <div style="overflow-x:auto;">
+        <table class="int-table">
+            <thead>
+                <tr>
+                    <th>{{ tr('চ্যানেল', 'Channel') }}</th>
+                    <th>{{ tr('প্রাপক', 'Recipient') }}</th>
+                    <th>{{ tr('বিষয় / মেসেজ', 'Subject / Message') }}</th>
+                    <th>{{ tr('উদ্দেশ্য', 'Purpose') }}</th>
+                    <th>{{ tr('স্ট্যাটাস', 'Status') }}</th>
+                    <th>{{ tr('সময়', 'Time') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ '📧' if log.channel == 'mail' else '📱' }} {{ log.channel|upper }}</td>
+                    <td>{{ log.recipient }}</td>
+                    <td>{{ (log.subject or log.body or '')[:80] }}</td>
+                    <td>{{ log.purpose or '—' }}</td>
+                    <td><span class="chip {{ 'chip-ok' if log.status == 'SENT' else ('chip-warn' if log.status == 'SIMULATED' else 'chip-err') }}">{{ log.status }}</span></td>
+                    <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="color:#94a3b8;">{{ tr('এখনো কিছু পাঠানো হয়নি', 'Nothing sent yet') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

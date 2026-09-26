@@ -398,9 +398,9 @@
                     <!-- Bn / En Interface Language Toggle -->
                     <div class="lang-toggle-pill" style="display:flex; align-items:center; gap:2px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:2rem; padding:0.2rem;" title="ভাষা পরিবর্তন / Switch Language">
                         <a href="{{ url_for('auth.lang_view', code='bn', next=request.path) }}"
-                           style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang != 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#94a3b8;{% endif %}">বাং</a>
+                           style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang != 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#94a3b8;{% endif %}">{{ tr('বাং', 'Bangla') }}</a>
                         <a href="{{ url_for('auth.lang_view', code='en', next=request.path) }}"
-                           style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang == 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#94a3b8;{% endif %}">En</a>
+                           style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang == 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#94a3b8;{% endif %}">{{ tr('En', 'English') }}</a>
                     </div>
 
                     <a href="{{ url_for('portal.index_view') }}" target="_blank" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.45rem 1rem; background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">

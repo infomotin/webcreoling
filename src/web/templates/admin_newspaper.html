@@ -499,6 +499,17 @@
                 {% else %}
                 <span class="nr-badge" style="background: #64748b; color: #fff;">ম্যানুয়াল মোড</span>
                 {% endif %}
+                {% if vault_state and not vault_state.is_locked %}
+                <form method="POST" action="{{ url_for('admin.update_vault_settings') }}" style="margin-left: 1rem;" onsubmit="return confirm('অটো-ডিফেন্স সক্রিয় কর want to enable auto-defense?');">
+                    <input type="hidden" name="auto_lockdown_enabled" value="1">
+                    <button type="submit" class="nr-btn" style="font-size: 0.65rem; padding: 2px 6px; background: #0284c7; color: #fff;">অটো কর</button>
+                </form>
+                {% endif %}
+                {% if vault_state and vault_state.is_locked %}
+                <form method="POST" action="{{ url_for('admin.force_restore_all_news_route') }}" style="margin-left: 1rem;" onsubmit="return confirm('Are you sure you want to force restore all articles and unlock the system? This will remove all encrypted data markers.');">
+                    <button type="submit" class="nr-btn" style="font-size: 0.65rem; padding: 2px 6px; background: #dc2626; color: #fff;">ফোর্স রিস্টোর</button>
+                </form>
+                {% endif %}
             </div>
         </div>
 

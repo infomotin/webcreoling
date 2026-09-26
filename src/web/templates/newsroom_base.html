@@ -248,9 +248,9 @@
             <div class="nr-topbar-right">
                 <!-- Bn / En Interface Language Toggle -->
                 <div style="display:flex; align-items:center; gap:2px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:2rem; padding:0.15rem;" title="{{ tr('ভাষা পরিবর্তন / Switch Language', 'Switch Language') }}">
-                    <a href="{{ url_for('set_language_global', lang_code='bn', next=request.full_path) }}"
+                    <a href="{{ url_for('auth.lang_view', code='bn', next=request.full_path) }}"
                        style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang != 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#64748b;{% endif %}">বাং</a>
-                    <a href="{{ url_for('set_language_global', lang_code='en', next=request.full_path) }}"
+                    <a href="{{ url_for('auth.lang_view', code='en', next=request.full_path) }}"
                        style="padding:0.3rem 0.7rem; border-radius:2rem; font-size:0.78rem; font-weight:700; text-decoration:none; {% if lang == 'en' %}background:#0ea5e9; color:#fff;{% else %}color:#64748b;{% endif %}">En</a>
                 </div>
 

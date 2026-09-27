@@ -16,6 +16,8 @@ from src.storage.repositories import (
     SiteConfigRepository,
     AdvertisementRepository,
     BlockchainLedgerRepository,
+    apply_public_content_filter,
+    is_public_article,
 )
 
 portal_bp = Blueprint("portal", __name__)
@@ -89,16 +91,18 @@ def index_view():
         entertainment_news = article_repo.get_articles_by_category("entertainment", limit=4, exclude_id=exclude_id)
         multimedia_news = article_repo.get_highlighted_articles(limit=4, exclude_id=exclude_id)
         latest_news = (
-            session.query(Article)
-            .options(joinedload(Article.images))
-            .filter(Article.scrape_status == "completed")
+            apply_public_content_filter(
+                session.query(Article)
+                .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
+            )
             .order_by(Article.published_at.desc(), Article.id.desc())
             .limit(6)
             .all()
         )
 
         # Live infinite-scroll stream (date-time wise, newest first)
-        feed_query = (
+        feed_query = apply_public_content_filter(
             session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.scrape_status == "completed")
@@ -172,7 +176,7 @@ def feed_stream_api():
             return None
 
     with get_db_session() as session:
-        query = (
+        query = apply_public_content_filter(
             session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.scrape_status == "completed")
@@ -300,12 +304,18 @@ def article_reader_view(article_id: int):
             ad_repo.record_impression(mid_ad.id)
 
         # Increment view count
-        article_repo.increment_views(article_id)
         article = article_repo.get_by_id(article_id)
 
         if not article:
             flash("নিবন্ধটি পাওয়া যায়নি বা মুছে ফেলা হয়েছে।", "warning")
             return redirect(url_for("portal.index_view"))
+
+        # System-encrypted / placeholder rows must never be readable publicly
+        if not is_public_article(article):
+            flash("এই নিবন্ধটি আর পাবলিকভাবে উপলব্ধ নয়। / This article is no longer publicly available.", "warning")
+            return redirect(url_for("portal.index_view"))
+
+        article_repo.increment_views(article_id)
 
         related = article_repo.get_related_articles(article_id, category=article.category, limit=3)
         breaking_news = article_repo.get_breaking_news(limit=5)

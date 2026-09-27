@@ -46,6 +46,44 @@ from src.common.blockchain import BlockchainLedgerEngine
 
 logger = get_logger("webcreoling.storage.repositories")
 
+# ---------------------------------------------------------------------------
+# Public content filter
+# System-encrypted / lock-placeholder / empty-title articles (Emergency Vault
+# leftovers and failed ingest rows) must never surface on the public portal,
+# ticker, feed, search or article reader.
+# ---------------------------------------------------------------------------
+SYSTEM_ENCRYPTED_TITLE_PATTERN = "%SYSTEM ENCRYPTED DATA%"
+LOCKED_TITLE_MARKER = "\U0001f512"  # 🔒
+LOCKED_TITLE_PATTERN = LOCKED_TITLE_MARKER + "%"
+LOCKED_CONTENT_MARKER = LOCKED_TITLE_MARKER + " এই সংবাদের"
+LOCKED_CONTENT_PATTERN = LOCKED_CONTENT_MARKER + "%"
+
+
+def apply_public_content_filter(query):
+    """Drop system-encrypted, lock-placeholder and empty-title articles from an Article query."""
+    title = func.coalesce(Article.title, "")
+    content = func.coalesce(Article.content_text, "")
+    return query.filter(
+        func.length(func.trim(title)) > 0,
+        title.notlike(SYSTEM_ENCRYPTED_TITLE_PATTERN),
+        title.notlike(LOCKED_TITLE_PATTERN),
+        content.notlike(LOCKED_CONTENT_PATTERN),
+    )
+
+
+def is_public_article(article: Optional[Article]) -> bool:
+    """True when a single article is safe to render on the public portal."""
+    if article is None:
+        return False
+    title = (article.title or "").strip()
+    if not title:
+        return False
+    if "SYSTEM ENCRYPTED DATA" in title or title.startswith(LOCKED_TITLE_MARKER):
+        return False
+    if (article.content_text or "").startswith(LOCKED_CONTENT_MARKER):
+        return False
+    return True
+
 
 class ArticleRepository:
     """Repository handling Article and ArticleImage CRUD and queries."""
@@ -267,19 +305,30 @@ class ArticleRepository:
                         "url": row[6],
                         "score": float(row[7]) if row[7] is not None else 0.0,
                     })
+                if records:
+                    ids = [r["id"] for r in records]
+                    allowed = {
+                        row[0]
+                        for row in apply_public_content_filter(
+                            self.session.query(Article.id).filter(Article.id.in_(ids))
+                        ).all()
+                    }
+                    records = [r for r in records if r["id"] in allowed]
                 return records
             except Exception as e:
                 logger.debug(f"FTS5 search error (falling back to LIKE): {e}")
 
         # MySQL / Generic database query
         like_pattern = f"%{cleaned_query}%"
-        fallback_res = (
+        fallback_query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(
                 (Article.title.like(like_pattern)) | (Article.content_text.like(like_pattern))
             )
-            .order_by(Article.published_at.desc())
+        )
+        fallback_res = (
+            fallback_query.order_by(Article.published_at.desc())
             .limit(top_k)
             .all()
         )
@@ -288,7 +337,7 @@ class ArticleRepository:
     def get_lead_hero_article(self) -> Optional[Article]:
         """Fetch the primary highlighted lead/hero story for the newspaper frontpage."""
         # 1. Explicit LEAD placement or featured with pinned priority
-        hero = (
+        hero = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(
@@ -296,38 +345,35 @@ class ArticleRepository:
                 Article.scrape_status == "completed"
             )
             .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
-            .first()
-        )
+        ).first()
         if not hero:
             # Fallback to the latest article with images
-            hero = (
+            hero = apply_public_content_filter(
                 self.session.query(Article)
                 .options(joinedload(Article.images))
                 .filter(Article.scrape_status == "completed")
                 .join(ArticleImage)
                 .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
-                .first()
-            )
+            ).first()
         if not hero:
-            hero = (
+            hero = apply_public_content_filter(
                 self.session.query(Article)
                 .options(joinedload(Article.images))
                 .filter(Article.scrape_status == "completed")
-                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.id.desc())
-                .first()
-            )
+                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
+            ).first()
         if not hero:
-            hero = (
+            hero = apply_public_content_filter(
                 self.session.query(Article)
                 .options(joinedload(Article.images))
                 .order_by(Article.id.desc())
-                .first()
-            )
+            ).first()
         return hero
+
 
     def get_highlighted_articles(self, limit: int = 6, exclude_id: Optional[int] = None) -> List[Article]:
         """Fetch top auto-highlighted articles with related images for newspaper grid."""
-        query = (
+        query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(func.length(Article.content_text) > 40)
@@ -378,10 +424,12 @@ class ArticleRepository:
             return unique
 
         breaking = (
-            self.session.query(Article)
-            .filter((Article.is_breaking == True) | (Article.position_placement == "BREAKING"))
-            .filter(Article.scrape_status == "completed")
-            .filter(not_test)
+            apply_public_content_filter(
+                self.session.query(Article)
+                .filter((Article.is_breaking == True) | (Article.position_placement == "BREAKING"))
+                .filter(Article.scrape_status == "completed")
+                .filter(not_test)
+            )
             .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
             .limit(limit * 3)
             .all()
@@ -391,7 +439,7 @@ class ArticleRepository:
         # Backfill with newest real articles so the ticker stays live and full
         if len(items) < limit:
             used_ids = [a.id for a in items]
-            backfill_q = (
+            backfill_q = apply_public_content_filter(
                 self.session.query(Article)
                 .filter(Article.scrape_status == "completed")
                 .filter(not_test)
@@ -410,9 +458,11 @@ class ArticleRepository:
     def get_trending_articles(self, limit: int = 5) -> List[Article]:
         """Fetch most read / most trending articles."""
         return (
-            self.session.query(Article)
-            .options(joinedload(Article.images))
-            .filter(Article.scrape_status == "completed")
+            apply_public_content_filter(
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
+            )
             .order_by((Article.views_count * 2 + Article.likes_count * 5).desc(), Article.id.desc())
             .limit(limit)
             .all()
@@ -434,7 +484,7 @@ class ArticleRepository:
             "entertainment": ["entertainment", "বিনোদন", "সংস্কৃতি", "তারকা"],
         }
         cats_to_match = synonym_map.get(cat_lower, [cat_lower])
-        query = (
+        query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.category.in_(cats_to_match))
@@ -455,10 +505,12 @@ class ArticleRepository:
             if exclude_id:
                 existing_ids.append(exclude_id)
             filler_query = (
-                self.session.query(Article)
-                .options(joinedload(Article.images))
-                .filter(Article.scrape_status == "completed")
-                .filter(~Article.id.in_(existing_ids))
+                apply_public_content_filter(
+                    self.session.query(Article)
+                    .options(joinedload(Article.images))
+                    .filter(Article.scrape_status == "completed")
+                    .filter(~Article.id.in_(existing_ids))
+                )
                 .order_by(Article.id.desc())
                 .limit(limit - len(results))
             )
@@ -469,7 +521,7 @@ class ArticleRepository:
 
     def get_related_articles(self, article_id: int, category: Optional[str] = None, limit: int = 3) -> List[Article]:
         """Fetch related articles based on category and recency."""
-        query = (
+        query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.id != article_id)
@@ -985,7 +1037,7 @@ class ArticleRepository:
 
     def get_section_page_data(self, category: str, page: int = 1, page_size: int = 12) -> Dict[str, Any]:
         """Fetch section articles, lead hero for the category, and trending in that section."""
-        query = (
+        query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.category == category)
@@ -1157,7 +1209,9 @@ class ArticleRepository:
         available_dates = self.get_available_archive_dates()
         target_date = date_str or (available_dates[0] if available_dates else datetime.utcnow().strftime("%Y-%m-%d"))
 
-        query = self.session.query(Article).options(joinedload(Article.images))
+        query = apply_public_content_filter(
+            self.session.query(Article).options(joinedload(Article.images))
+        )
 
         # Date filter
         query = query.filter(

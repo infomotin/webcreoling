@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, abort
 from sqlalchemy import func
 from src.storage.database import get_db_session
 from src.storage.models import Article
-from src.storage.repositories import ArticleRepository
+from src.storage.repositories import ArticleRepository, apply_public_content_filter, is_public_article
 from src.web.auth import login_required
 
 article_bp = Blueprint("article", __name__)
@@ -34,7 +34,7 @@ def list_articles_view():
             start_idx = (page - 1) * per_page
             articles_data = search_results[start_idx : start_idx + per_page]
         else:
-            db_query = session.query(Article)
+            db_query = apply_public_content_filter(session.query(Article))
             if category:
                 db_query = db_query.filter(Article.category == category)
             total = db_query.count()
@@ -48,7 +48,8 @@ def list_articles_view():
 
         # Get category breakdown for filter pills
         category_counts = dict(
-            session.query(Article.category, func.count(Article.id))
+            apply_public_content_filter(session.query(Article))
+            .with_entities(Article.category, func.count(Article.id))
             .group_by(Article.category)
             .all()
         )
@@ -74,7 +75,7 @@ def article_detail_view(article_id: int):
     with get_db_session() as session:
         repo = ArticleRepository(session)
         article = repo.get_by_id(article_id)
-        if not article:
+        if not article or not is_public_article(article):
             abort(404)
         article_data = article.to_dict()
 

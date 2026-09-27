@@ -1,13 +1,13 @@
 {% extends "portal_base.html" %}
 
 {% block title %}
-{% if category == 'politics' %}রাজনীতি — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% elif category == 'bangladesh' %}বাংলাদেশ — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% elif category == 'business' %}অর্থনীতি ও বাণিজ্য — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% elif category == 'international' %}বিশ্ব সংবাদ — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% elif category == 'sports' %}খেলাধুলা — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% elif category == 'technology' %}বিজ্ঞান ও প্রযুক্তি — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
-{% else %}{{ category|capitalize }} — {{ site_branding.site_title or 'দি ডেইলি এআই আলো' }}
+{% if category == 'politics' %}রাজনীতি — {{ site_branding.site_title or site_identity.title }}
+{% elif category == 'bangladesh' %}বাংলাদেশ — {{ site_branding.site_title or site_identity.title }}
+{% elif category == 'business' %}অর্থনীতি ও বাণিজ্য — {{ site_branding.site_title or site_identity.title }}
+{% elif category == 'international' %}বিশ্ব সংবাদ — {{ site_branding.site_title or site_identity.title }}
+{% elif category == 'sports' %}খেলাধুলা — {{ site_branding.site_title or site_identity.title }}
+{% elif category == 'technology' %}বিজ্ঞান ও প্রযুক্তি — {{ site_branding.site_title or site_identity.title }}
+{% else %}{{ category|capitalize }} — {{ site_branding.site_title or site_identity.title }}
 {% endif %}
 {% endblock %}
 
@@ -20,7 +20,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
             <div>
                 <span style="font-size: 0.82rem; color: var(--palo-red); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                    প্রথম আলো বিভাগ
+                    {{ site_identity.title }} বিভাগ
                 </span>
                 <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 2.2rem; font-weight: 900; color: var(--palo-heading); margin: 0.2rem 0 0 0;">
                     {% if category == 'politics' %}🏛️ রাজনীতি ও সরকার
@@ -61,7 +61,7 @@
                         প্রধান প্রতিবেদন
                     </span>
                     <span>•</span>
-                    <span style="font-weight: 600; color: var(--palo-heading);">প্রতিবেদক: {{ section_hero.author or 'দি ডেইলি এআই আলো' }}</span>
+                    <span style="font-weight: 600; color: var(--palo-heading);">প্রতিবেদক: {{ section_hero.author or site_identity.title }}</span>
                     <span>•</span>
                     <span>{{ section_hero.published_at or 'আজ' }}</span>
                 </div>
@@ -201,7 +201,7 @@
 
             <!-- Newsletter Box -->
             <div class="palo-newsletter-card">
-                <h4 class="palo-newsletter-title">📩 প্রথম আলো ই-বুলেটিন</h4>
+                <h4 class="palo-newsletter-title">📩 {{ site_identity.newsletter_name }}</h4>
                 <p class="palo-newsletter-desc">প্রতিদিনের গুরুত্বপূর্ণ সব খবর সরাসরি আপনার ইমেইলে পেতে সাবস্ক্রাইব করুন।</p>
                 <form onsubmit="submitNewsletter(event)">
                     <input type="email" id="subscriberEmail" class="palo-input-newsletter" placeholder="আপনার ইমেইল দিন" required>

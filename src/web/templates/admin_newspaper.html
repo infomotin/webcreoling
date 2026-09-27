@@ -73,7 +73,7 @@
                 <div class="nr-form-grid-2">
                     <div class="nr-form-group">
                         <label class="nr-form-label">পোর্টালের নাম / ব্র্যান্ড শিরোনাম *</label>
-                        <input type="text" name="site_title" class="nr-form-control" value="{{ b.site_title or 'প্রথম আলো' }}" required>
+                        <input type="text" name="site_title" class="nr-form-control" value="{{ b.site_title or site_identity.title }}" required>
                     </div>
 
                     <div class="nr-form-group">
@@ -90,7 +90,7 @@
                 <div class="nr-form-grid-2">
                     <div class="nr-form-group">
                         <label class="nr-form-label">লোগো টেক্সট (Fallback Text)</label>
-                        <input type="text" name="logo_text" class="nr-form-control" value="{{ b.logo_text or 'প্রথম আলো' }}">
+                        <input type="text" name="logo_text" class="nr-form-control" value="{{ b.logo_text or site_identity.title }}">
                     </div>
 
                     <div class="nr-form-group">
@@ -161,7 +161,7 @@
                 <div class="nr-form-grid-2">
                     <div class="nr-form-group">
                         <label class="nr-form-label">সম্পাদক ও প্রকাশক লাইন</label>
-                        <input type="text" name="editor_in_chief" class="nr-form-control" value="{{ f.editor_in_chief or 'সম্পাদক ও প্রকাশক: মোঃ মতিউর রহমান (ভারপ্রাপ্ত)' }}" required>
+                        <input type="text" name="editor_in_chief" class="nr-form-control" value="{{ f.editor_in_chief or site_identity.editor_in_chief }}" required>
                     </div>
 
                     <div class="nr-form-group">
@@ -189,7 +189,7 @@
 
                 <div class="nr-form-group">
                     <label class="nr-form-label">কপিরাইট নোটিশ</label>
-                    <input type="text" name="copyright_text" class="nr-form-control" value="{{ f.copyright_text or '© ২০২৬ প্রথম আলো অনলাইন সংস্করণ। সর্বস্বত্ব সংরক্ষিত।' }}">
+                    <input type="text" name="copyright_text" class="nr-form-control" value="{{ f.copyright_text or site_identity.copyright }}">
                 </div>
 
                 <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--nr-text-dark); margin: 1.5rem 0 1rem 0; border-bottom: 1px solid var(--nr-border); padding-bottom: 0.5rem;">
@@ -453,194 +453,6 @@
     <!-- TAB: ENTERPRISE SECURITY OPERATIONS CENTER (SOC) & BLOCKCHAIN LEDGER  -->
     <!-- ===================================================================== -->
 
-    <!-- 0. AUTONOMOUS AI BRAIN SELF-ENCRYPTION VAULT & KILL-SWITCH -->
-    {% if vault_state and vault_state.is_locked %}
-    <div style="background: linear-gradient(135deg, #7f1d1d, #991b1b); border: 2px solid #ef4444; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; color: #fff; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <span style="font-size: 2.5rem;">🚨</span>
-                <div>
-                    <h3 style="font-size: 1.3rem; font-weight: 900; margin: 0; color: #fee2e2;">
-                        জরুরি অ্যালার্ট: এআই ব্রেন সিকিউরিটি ভল্ট লকডাউন ও AES-256 এনক্রিপশনে রয়েছে!
-                    </h3>
-                    <p style="font-size: 0.88rem; color: #fecaca; margin-top: 4px;">
-                        ট্রিগার: <strong>{{ vault_state.lockdown_trigger }}</strong> &bull; এনক্রিপ্টকৃত আর্টিকেল: <strong>{{ vault_state.encrypted_articles_count }} টি</strong> &bull; মাস্টার কোড পাঠানো হয়েছে: <strong>{{ vault_state.recipient_email }}</strong>
-                    </p>
-                </div>
-            </div>
-            
-            <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}" style="display: flex; gap: 8px;">
-                <input type="text" name="unlock_code" placeholder="মাস্টার ডিক্রিপশন কোড (ALO-SEC-...)" style="background: #450a0a; border: 1px solid #fca5a5; color: #fff; padding: 8px 14px; border-radius: 6px; font-family: monospace; font-weight: 700; width: 280px;" required>
-                <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; font-weight: 800; padding: 8px 16px;">
-                    🔓 ডিক্রিপ্ট ও আনলক
-                </button>
-            </form>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="nr-card" style="margin-bottom: 1.5rem; border: 1px solid #38bdf8; box-shadow: 0 4px 20px rgba(56, 189, 248, 0.08);">
-        <div class="nr-card-header" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 1.5rem;">🧠</span>
-                <div>
-                    <h3 class="nr-card-title" style="color: #38bdf8; font-size: 1.15rem; margin: 0;">
-                        অভ্যন্তরীণ এআই ব্রেন স্বয়ংক্রিয় থ্রেট ডিফেন্স ও জরুরি সেলফ-এনক্রিপশন ভল্ট
-                    </h3>
-                    <div style="font-size: 0.78rem; color: #94a3b8;">
-                        Autonomous AI Brain Anti-Hack Threat Defense & Emergency AES-256 Self-Encryption Vault
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 10px;">
-                {% if vault_state and vault_state.auto_lockdown_enabled %}
-                <span class="nr-badge" style="background: #0284c7; color: #fff; font-weight: 700;">⚡ অটো-ডিফেন্স সক্রিয়</span>
-                {% else %}
-                <span class="nr-badge" style="background: #64748b; color: #fff;">ম্যানুয়াল মোড</span>
-                {% endif %}
-                {% if vault_state and not vault_state.is_locked %}
-                <form method="POST" action="{{ url_for('admin.update_vault_settings') }}" style="margin-left: 1rem;" onsubmit="return confirm('অটো-ডিফেন্স সক্রিয় কর want to enable auto-defense?');">
-                    <input type="hidden" name="auto_lockdown_enabled" value="1">
-                    <button type="submit" class="nr-btn" style="font-size: 0.65rem; padding: 2px 6px; background: #0284c7; color: #fff;">অটো কর</button>
-                </form>
-                {% endif %}
-                {% if vault_state and vault_state.is_locked %}
-                <form method="POST" action="{{ url_for('admin.force_restore_all_news_route') }}" style="margin-left: 1rem;" onsubmit="return confirm('Are you sure you want to force restore all articles and unlock the system? This will remove all encrypted data markers.');">
-                    <button type="submit" class="nr-btn" style="font-size: 0.65rem; padding: 2px 6px; background: #dc2626; color: #fff;">ফোর্স রিস্টোর</button>
-                </form>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="nr-card-body" style="background: #fafafa; padding: 1.5rem;">
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem;">
-                
-                <!-- Left: AI Threat Meter & Auto Defense Config -->
-                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <span style="font-size: 0.95rem; font-weight: 800; color: #1e293b;">📊 লাইভ এআই সাইবার থ্রেট রিস্ক গেজ</span>
-                        <span class="nr-badge" style="background: {{ threat_assessment.threat_color if threat_assessment else '#10b981' }}; color: #fff; font-weight: 800;">
-                            {{ threat_assessment.threat_status if threat_assessment else 'NORMAL' }} ({{ threat_assessment.threat_score if threat_assessment else 12 }}/100)
-                        </span>
-                    </div>
-
-                    <!-- Threat Gauge Bar -->
-                    <div style="background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 0.75rem;">
-                        <div style="background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); width: {{ threat_assessment.threat_score if threat_assessment else 12 }}%; height: 100%; transition: width 0.5s ease;"></div>
-                    </div>
-
-                    <div style="font-size: 0.82rem; color: #475569; margin-bottom: 1.2rem; line-height: 1.5;">
-                        {{ threat_assessment.threat_desc if threat_assessment else 'স্বাভাবিক: এআই ব্রেন ও ফায়ারওয়াল সম্পূর্ণ সুরক্ষিত।' }}
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.2rem; font-size: 0.78rem; text-align: center;">
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
-                            <div style="color: #ef4444; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.sqli_1h if threat_assessment else 0 }}</div>
-                            <div style="color: #64748b;">SQLi (1h)</div>
-                        </div>
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
-                            <div style="color: #f59e0b; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.rce_1h if threat_assessment else 0 }}</div>
-                            <div style="color: #64748b;">RCE (1h)</div>
-                        </div>
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 4px; border-radius: 6px;">
-                            <div style="color: #3b82f6; font-weight: 800; font-size: 1.05rem;">{{ threat_assessment.threats_24h if threat_assessment else 0 }}</div>
-                            <div style="color: #64748b;">মোট (24h)</div>
-                        </div>
-                    </div>
-
-                    <!-- Auto Lockdown Config Form -->
-                    <form method="POST" action="{{ url_for('admin.update_vault_settings') }}" style="border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.86rem; font-weight: 700; color: #1e293b; cursor: pointer;">
-                                <input type="checkbox" name="auto_lockdown_enabled" value="1" {% if vault_state and vault_state.auto_lockdown_enabled %}checked{% endif %}>
-                                <span>হ্যাক বা সাইবার ঝুঁকি সনাক্তে স্বয়ংক্রিয় সেলফ-এনক্রিপশন ও লকডাউন সক্রিয় রাখুন</span>
-                            </label>
-                        </div>
-
-                        <div class="nr-form-grid-2" style="margin-bottom: 10px;">
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 700; color: #64748b;">লকডাউন থ্রেশহোল্ড স্কোর (২০-১০০)</label>
-                                <input type="number" name="threat_threshold_score" value="{{ vault_state.threat_threshold_score if vault_state else 75 }}" min="20" max="100" class="nr-form-control" style="font-size: 0.85rem; padding: 6px 10px;">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.78rem; font-weight: 700; color: #64748b;">মাস্টার কোড প্রেরণের সিকিউরিটি ইমেইল</label>
-                                <input type="email" name="recipient_email" value="{{ vault_state.recipient_email if vault_state else 'security-officer@daily-ai-alo.com' }}" class="nr-form-control" style="font-size: 0.85rem; padding: 6px 10px;" required>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <button type="submit" class="nr-btn" style="background: #0284c7; color: #fff; font-size: 0.82rem; padding: 6px 14px;">
-                                💾 পলিসি সংরক্ষণ
-                            </button>
-                            
-                            <!-- Attack Simulation Button -->
-                            <button type="button" onclick="document.getElementById('sim-attack-form').submit();" class="nr-btn" style="background: #fff; border: 1px solid #f59e0b; color: #d97706; font-size: 0.82rem; padding: 6px 12px;" title="সিমুলেটেড আক্রমণ চালিয়ে এআই ব্রেন অটো-ডিফেন্স পরীক্ষা করুন">
-                                ⚡ সিমুলেটেড টেস্ট রান
-                            </button>
-                        </div>
-                    </form>
-
-                    <form id="sim-attack-form" method="POST" action="{{ url_for('admin.simulate_attack_route') }}" style="display: none;">
-                        <input type="hidden" name="attack_type" value="SQL_INJECTION_CLUSTER">
-                    </form>
-                </div>
-
-                <!-- Right: Emergency Kill-Switch & Decryption Console -->
-                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-                    <div>
-                        <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
-                            <span>🚨</span> ইমার্জেন্সি কিল-সুইচ ও রিকভারি কনসোল
-                        </h4>
-                        <p style="font-size: 0.82rem; color: #64748b; line-height: 1.5; margin-bottom: 1rem;">
-                            যেকোনো তাৎক্ষণিক সাইবার জরুরি অবস্থায় সমস্ত ডাটাবেস সামরিক-গ্রেড AES-256 এ এনক্রিপ্ট করুন। ডিক্রিপশন মাস্টার কোড স্বয়ংক্রিয়ভাবে সিকিউরিটি ইমেইলে চলে যাবে।
-                        </p>
-
-                        <!-- Manual Emergency Lockdown Button -->
-                        <form method="POST" action="{{ url_for('admin.trigger_emergency_lockdown_route') }}" onsubmit="return confirm('⚠️ সতর্কতা: আপনি কি নিশ্চিত যে পুরো পোর্টাল ডাটাবেস এনক্রিপ্ট ও লকডাউন করতে চান? মাস্টার কোড আপনার ইমেইলে পাঠানো হবে।');" style="margin-bottom: 1.2rem;">
-                            <input type="hidden" name="reason" value="Manual Administrator Emergency Vault Lockdown Activated">
-                            <input type="hidden" name="recipient_email" value="{{ vault_state.recipient_email if vault_state else 'security-officer@daily-ai-alo.com' }}">
-                            <button type="submit" class="nr-btn" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; font-weight: 800; width: 100%; padding: 10px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
-                                🔒 জরুরি এনক্রিপশন ও লকডাউন সক্রিয় করুন (Kill-Switch)
-                            </button>
-                        </form>
-
-                        <!-- Decrypt & Restore Input Form -->
-                        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
-                            <label style="font-size: 0.82rem; font-weight: 800; color: #1e293b; display: block; margin-bottom: 6px;">
-                                🔑 {{ tr('মাস্টার কোড দিয়ে ডিক্রিপ্ট ও রিস্টোর', 'Decrypt & Restore with Master Code') }}
-                            </label>
-                            <form method="POST" action="{{ url_for('admin.decrypt_and_restore_vault_route') }}">
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="text" name="unlock_code" class="nr-form-control" placeholder="ALO-SEC-XXXX-XXXX-XXXX" style="font-family: monospace; font-size: 0.88rem; font-weight: 700; text-transform: uppercase;" required>
-                                    <button type="submit" class="nr-btn" style="background: #10b981; color: #fff; font-weight: 800; white-space: nowrap; font-size: 0.82rem; padding: 6px 14px;">
-                                        🔓 {{ tr('ডিক্রিপ্ট', 'Decrypt') }}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Direct 1-Click Master Unencrypt & Force Restore -->
-                        <form method="POST" action="{{ url_for('admin.force_restore_all_news_route') }}" onsubmit="return confirm('{{ tr('আপনি কি নিশ্চিত যে সকল সংবাদ ডিক্রিপ্ট ও আনলক করতে চান?', 'Are you sure you want to force restore and unlock all news?') }}');">
-                            <button type="submit" class="nr-btn" style="background: #047857; color: #fff; font-weight: 700; width: 100%; font-size: 0.82rem; padding: 8px;" title="ম্যানুয়াল মোড নিশ্চিত করুন এবং সমস্ত সংবাদ স্বাভাবিক অবস্থায় আনলক করুন">
-                                🔄 {{ tr('ম্যানুয়াল মোড ও সকল সংবাদ আনলক (Force Restore All News)', 'Manual Mode & Force Restore All News') }}
-                            </button>
-                        </form>
-                    </div>
-
-                    <div style="font-size: 0.76rem; color: #64748b; margin-top: 1rem; border-top: 1px solid #f1f5f9; padding-top: 8px;">
-                        <span>📩 {{ tr('সর্বশেষ ইমেইল নোটিফিকেশন স্ট্যাটাস:', 'Last Email Dispatch Status:') }}</span>
-                        <strong style="color: #0284c7;">{{ vault_state.email_dispatch_status if vault_state else 'IDLE' }}</strong>
-                        {% if vault_state and vault_state.emergency_unlock_code_hint %}
-                        | <span>{{ tr('কোড হিন্ট:', 'Code Hint:') }} <code>{{ vault_state.emergency_unlock_code_hint }}</code></span>
-                        {% endif %}
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
     <!-- Threat Meter & Defense Telemetry Header -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem;">
         <div class="nr-telemetry-card" style="border-left: 4px solid {{ sec_metrics.threat_color }};">
@@ -703,7 +515,7 @@
                 <span style="font-size: 1.4rem;">⛓️</span>
                 <div>
                     <h3 class="nr-card-title" style="color: #166534; font-size: 1.1rem; margin: 0;">
-                        প্রথম আলো ক্রিপ্টোগ্রাফিক আর্টিকেল লেজার (Blockchain Explorer)
+                        {{ site_identity.title }} ক্রিপ্টোগ্রাফিক আর্টিকেল লেজার (Blockchain Explorer)
                     </h3>
                     <div style="font-size: 0.78rem; color: #15803d;">
                         প্রতিটি সংবাদের শিরোনাম ও বডি টেক্সট অপরিবর্তনীয় SHA-256 মারকেল রুটে সিলকৃত
@@ -1653,7 +1465,7 @@
     <!-- ===================================================================== -->
     <div class="nr-card">
         <div class="nr-card-header">
-            <h3 class="nr-card-title">📩 প্রথম আলো ই-বুলেটিন গ্রাহক তালিকা</h3>
+            <h3 class="nr-card-title">📩 {{ site_identity.newsletter_name }} গ্রাহক তালিকা</h3>
             <span class="nr-badge nr-badge-category">মোট সাবস্ক্রাইবার: {{ subscribers|length }} জন</span>
         </div>
         <div class="nr-card-body" style="padding: 0;">

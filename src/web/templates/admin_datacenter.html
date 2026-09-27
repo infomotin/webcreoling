@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি হাব — {{ branding.site_title or 'দি ডেইলি এআই আলো' }}{% endblock %}
+{% block title %}ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি হাব — {{ branding.site_title or site_identity.title }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -215,7 +215,7 @@
                 </span>
             </div>
             <h1 style="font-size: 2.1rem; font-weight: 800; margin: 0.3rem 0; color: #ffffff;">
-                {{ branding.site_title or 'দি ডেইলি এআই আলো' }} — ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি
+                {{ branding.site_title or site_identity.title }} — ওয়েবসাইট ডেটাসেন্টার ও ক্লাউড সিকিউরিটি
             </h1>
             <p style="color: #94a3b8; font-size: 1rem; margin: 0; max-width: 780px;">
                 <strong>{{ branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }}</strong> • 

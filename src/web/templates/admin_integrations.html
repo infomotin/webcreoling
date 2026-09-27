@@ -94,7 +94,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">{{ tr('বিষয়', 'Subject') }}</label>
-                <input type="text" name="subject" class="form-control" value="{{ tr('টেস্ট মেইল — দি ডেইলি এআই আলো', 'Test Mail — The Daily AI Alo') }}">
+                <input type="text" name="subject" class="form-control" value="{{ tr('টেস্ট মেইল — ' ~ site_identity.title, 'Test Mail — ' ~ site_identity.title_en) }}">
             </div>
         </div>
         <button type="submit" class="btn btn-secondary" style="margin-top:1rem;">📨 {{ tr('পাঠান', 'Send') }}</button>
@@ -172,7 +172,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">{{ tr('মেসেজ', 'Message') }}</label>
-                <input type="text" name="message" class="form-control" value="{{ tr('টেস্ট এসএমএস — দি ডেইলি এআই আলো', 'Test SMS — The Daily AI Alo') }}">
+                <input type="text" name="message" class="form-control" value="{{ tr('টেস্ট এসএমএস — ' ~ site_identity.title, 'Test SMS — ' ~ site_identity.title_en) }}">
             </div>
         </div>
         <button type="submit" class="btn btn-secondary" style="margin-top:1rem;">📱 {{ tr('পাঠান', 'Send') }}</button>

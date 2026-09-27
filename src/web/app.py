@@ -37,7 +37,7 @@ def create_app(test_config: dict = None) -> Flask:
         MAIL_PASSWORD=getattr(settings, "MAIL_PASSWORD", "4e1119bb236ac7"),
         MAIL_USE_TLS=getattr(settings, "MAIL_USE_TLS", True),
         MAIL_USE_SSL=getattr(settings, "MAIL_USE_SSL", False),
-        MAIL_DEFAULT_SENDER=getattr(settings, "MAIL_DEFAULT_SENDER", "no-reply@daily-ai-alo.com"),
+        MAIL_DEFAULT_SENDER=settings.MAIL_DEFAULT_SENDER,
         # ---- SSLCommerz Payment Gateway (Sandbox) ----
         SSLCOMMERZ_STORE_ID=getattr(settings, "SSLCOMMERZ_STORE_ID", "arobw6a3cf7767fa7c"),
         SSLCOMMERZ_STORE_PASSWORD=getattr(settings, "SSLCOMMERZ_STORE_PASSWORD", "arobw6a3cf7767fa7c@ssl"),
@@ -71,33 +71,6 @@ def create_app(test_config: dict = None) -> Flask:
     def security_firewall_hook():
         return run_security_firewall()
 
-    # Autonomous AI Brain Emergency Vault & Self-Encryption Lockdown Guard
-    @app.before_request
-    def emergency_vault_lockdown_hook():
-        from flask import request
-        path = request.path
-        if path.startswith("/static/") or path.startswith("/data/images/") or path == "/favicon.ico":
-            return None
-        # Whitelisted endpoints during emergency lockdown (decryption console & auth)
-        if path in [
-            "/admin/newspaper/security/vault/decrypt",
-            "/admin/newspaper/security/vault/status",
-            "/auth/login",
-            "/auth/logout",
-        ]:
-            return None
-
-        try:
-            with get_db_session() as session:
-                from src.storage.repositories import EmergencyVaultRepository
-                vault_repo = EmergencyVaultRepository(session)
-                state = vault_repo.get_vault_state()
-                if state.is_locked:
-                    return render_template("lockdown.html", vault_state=state.to_dict()), 503
-        except Exception:
-            pass
-        return None
-
     # Global Language Switcher Hook
     @app.before_request
     def language_handler_hook():
@@ -115,6 +88,7 @@ def create_app(test_config: dict = None) -> Flask:
     @app.context_processor
     def inject_user_and_roles():
         from src.common.i18n import t, tr, get_current_language
+        from src.common.site_identity import get_site_identity, get_security_recipient_email
         user = get_current_user()
         lang = get_current_language()
 
@@ -132,6 +106,8 @@ def create_app(test_config: dict = None) -> Flask:
             "t": t,
             "_t": t,
             "tr": tr,
+            "site_identity": get_site_identity(),
+            "security_recipient_email": get_security_recipient_email(),
         }
 
     # Global direct language toggle route

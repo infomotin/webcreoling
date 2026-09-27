@@ -10,6 +10,7 @@ from src.common.logger import get_logger
 from src.storage.database import get_db_session
 from src.storage.repositories import MessageLog, MessageLogRepository
 from src.integrations.config_service import get_mail_config
+from config.settings import settings
 
 logger = get_logger("webcreoling.integrations.mail")
 
@@ -42,7 +43,7 @@ def build_message(cfg: Dict[str, Any], to: str, subject: str,
                   html_body: str, text_body: Optional[str] = None) -> MIMEMultipart:
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = cfg.get("mail_default_sender") or "no-reply@daily-ai-alo.com"
+    msg["From"] = cfg.get("mail_default_sender") or settings.MAIL_DEFAULT_SENDER
     msg["To"] = to
     msg.attach(MIMEText(text_body or html_body, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))

@@ -30,9 +30,7 @@ from src.storage.repositories import (
     AIPilotHelper,
     SecurityRepository,
     BlockchainLedgerRepository,
-    EmergencyVaultRepository,
 )
-from src.security.emergency_cipher_vault import get_emergency_vault
 from src.datacenter.heavy_data_manager import get_heavy_data_manager
 from src.web.auth import login_required, roles_required
 
@@ -241,13 +239,8 @@ def newspaper_management_view():
         ledger_blocks_data = ledger_repo.get_ledger_blocks(limit=25, page=1)
         chain_audit = ledger_repo.audit_full_chain()
 
-        # 6. Autonomous AI Brain Security Vault & Heavy Data Capacity Metrics
-        vault_repo = EmergencyVaultRepository(session)
-        vault_engine = get_emergency_vault()
+        # 6. Heavy Data Capacity Metrics
         heavy_mgr = get_heavy_data_manager()
-
-        vault_state = vault_repo.get_vault_state()
-        threat_assessment = vault_engine.assess_threat_status(session)
         heavy_metrics = heavy_mgr.get_heavy_data_metrics(session)
 
         # Available unique categories in database
@@ -283,8 +276,6 @@ def newspaper_management_view():
             blockchain_stats=blockchain_stats,
             ledger_blocks=[b.to_dict() for b in ledger_blocks_data["blocks"]],
             chain_audit=chain_audit,
-            vault_state=vault_state.to_dict(),
-            threat_assessment=threat_assessment,
             heavy_metrics=heavy_metrics,
         )
 
@@ -1337,188 +1328,6 @@ def blockchain_verify_article_endpoint(article_id: int):
             "message": message,
             "details": details,
         })
-
-
-# ==============================================================================
-# Autonomous AI Brain Emergency Encryption Vault Endpoints
-# ==============================================================================
-
-@admin_bp.route("/newspaper/security/vault/settings", methods=["POST"])
-@login_required
-@roles_required("admin")
-def update_vault_settings():
-    """Update AI Brain Auto-Lockdown thresholds and security notification email."""
-    auto_lockdown = bool(request.form.get("auto_lockdown_enabled"))
-    threshold = int(request.form.get("threat_threshold_score", 75) or 75)
-    email = request.form.get("recipient_email", "").strip()
-
-    with get_db_session() as session:
-        repo = EmergencyVaultRepository(session)
-        audit_repo = AuditLogRepository(session)
-        current_username = flask_session.get("username", "admin")
-
-        repo.update_settings(
-            auto_lockdown_enabled=auto_lockdown,
-            threat_threshold_score=threshold,
-            recipient_email=email,
-        )
-        audit_repo.log_action(
-            username=current_username,
-            action="VAULT_SETTINGS_UPDATED",
-            resource_type="EMERGENCY_VAULT",
-            details={"auto_lockdown": auto_lockdown, "threshold": threshold, "email": email},
-            ip_address=request.remote_addr,
-        )
-        flash("এআই ব্রেন অটোনোমাস ডিফেন্স ও সিকিউরিটি ইমেইল কনফিগারেশন সংরক্ষিত হয়েছে।", "success")
-
-    return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-
-@admin_bp.route("/newspaper/security/vault/lockdown", methods=["POST"])
-@login_required
-@roles_required("admin")
-def trigger_emergency_lockdown_route():
-    """Manually activate the Emergency Self-Encryption Kill-Switch."""
-    custom_reason = request.form.get("reason", "Manual Admin Emergency Lockdown Activated").strip()
-    target_email = request.form.get("recipient_email", "").strip()
-
-    with get_db_session() as session:
-        vault_engine = get_emergency_vault()
-        current_username = flask_session.get("username", "admin")
-
-        res = vault_engine.trigger_lockdown(
-            session=session,
-            trigger_type="MANUAL_ADMIN_KILLSWITCH",
-            actor=current_username,
-            custom_reason=custom_reason,
-            recipient_email=target_email or None,
-        )
-
-        if res.get("success"):
-            flash(
-                f"🚨 জরুরি ভল্ট লকডাউন ও AES-256 এনক্রিপশন সক্রিয় হয়েছে! {res.get('encrypted_articles_count')}টি আর্টিকেল এনক্রিপ্ট করা হয়েছে। আপনার মাস্টার রিকভারি কোড [{res.get('unlock_code')}] ইমেইল ({res.get('recipient_email')}) ঠিকানায় পাঠানো হয়েছে।",
-                "danger",
-            )
-        else:
-            flash(res.get("message", "লকডাউন সক্রিয় করা যায়নি।"), "warning")
-
-    return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-
-@admin_bp.route("/newspaper/security/vault/simulate-attack", methods=["POST"])
-@login_required
-@roles_required("admin", "editor")
-def simulate_attack_route():
-    """Simulate a cyberattack vector to test the AI Brain's automated defense response."""
-    attack_type = request.form.get("attack_type", "SQL_INJECTION_CLUSTER").strip()
-
-    with get_db_session() as session:
-        vault_engine = get_emergency_vault()
-        res = vault_engine.simulate_ai_hack_attempt(session, attack_type=attack_type)
-        assessment = res.get("threat_assessment", {})
-
-        if assessment.get("auto_lockdown_triggered"):
-            flash(
-                f"🚨 এআই ব্রেন স্বয়ংক্রিয় প্রতিরক্ষা সক্রিয়! থ্রেট লেভেল ছিল {assessment.get('threat_score')}/100। সিস্টেম স্বয়ংক্রিয়ভাবে লকডাউন ও এনক্রিপ্ট হয়েছে এবং ইমেইলে মাস্টার কি পাঠানো হয়েছে।",
-                "danger",
-            )
-        else:
-            flash(
-                f"🛡️ সিমুলেটেড আক্রমণ প্রতিহত হয়েছে ({res.get('simulated_attack_type')})। বর্তমান থ্রেট স্কোর: {assessment.get('threat_score')}/100 ({assessment.get('threat_status')})।",
-                "warning" if assessment.get("threat_score", 0) >= 50 else "info",
-            )
-
-    return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-
-@admin_bp.route("/newspaper/security/vault/decrypt", methods=["POST"])
-@login_required
-@roles_required("admin", "editor")
-def decrypt_and_restore_vault_route():
-    """Enter the secret recovery key to decrypt data and reactivate the news portal."""
-    unlock_code = request.form.get("unlock_code", "").strip()
-
-    if not unlock_code:
-        flash("অনুগ্রহ করে জরুরি রিকভারি কোড প্রদান করুন।", "warning")
-        return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-    with get_db_session() as session:
-        vault_engine = get_emergency_vault()
-        current_username = flask_session.get("username", "admin")
-        res = vault_engine.unlock_and_restore(session, unlock_code=unlock_code, actor=current_username)
-
-        if res.get("success"):
-            flash(f"✅ {res.get('message')}", "success")
-        else:
-            flash(f"❌ {res.get('message')}", "danger")
-
-    return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-
-@admin_bp.route("/newspaper/security/vault/force-restore-all", methods=["POST"])
-@login_required
-@roles_required("admin")
-def force_restore_all_news_route():
-    """Emergency master reset: remove all encrypted news markers and restore clean database."""
-    current_username = flask_session.get("username", "admin")
-    with get_db_session() as session:
-        vault = get_emergency_vault()
-        result = vault.force_restore_and_unencrypt_all(session, actor=current_username)
-        flash(result.get("message", "সকল সংবাদ সফলভাবে রিস্টোর ও আনলক করা হয়েছে।"), "success")
-
-    return redirect(url_for("admin.newspaper_management_view", tab="security"))
-
-
-@admin_bp.route("/update_vault_settings", methods=["POST"], endpoint="update_vault_settings_alias")
-@login_required
-@roles_required("admin")
-def update_vault_settings_alias():
-    return update_vault_settings()
-
-
-@admin_bp.route("/trigger_emergency_lockdown_route", methods=["POST"], endpoint="trigger_emergency_lockdown_alias")
-@login_required
-@roles_required("admin")
-def trigger_emergency_lockdown_alias():
-    return trigger_emergency_lockdown_route()
-
-
-@admin_bp.route("/decrypt_and_restore_vault_route", methods=["POST"], endpoint="decrypt_and_restore_vault_alias")
-@login_required
-@roles_required("admin", "editor")
-def decrypt_and_restore_vault_alias():
-    return decrypt_and_restore_vault_route()
-
-
-@admin_bp.route("/force_restore_all_news_route", methods=["POST"], endpoint="force_restore_all_news_alias")
-@login_required
-@roles_required("admin")
-def force_restore_all_news_alias():
-    return force_restore_all_news_route()
-
-
-@admin_bp.route("/simulate_attack_route", methods=["POST"], endpoint="simulate_attack_alias")
-@login_required
-@roles_required("admin")
-def simulate_attack_alias():
-    return simulate_attack_route()
-
-
-@admin_bp.route("/newspaper/security/vault/status", methods=["GET"])
-@login_required
-def vault_status_json():
-    """JSON endpoint for live threat gauge & emergency vault telemetry."""
-    with get_db_session() as session:
-        vault_repo = EmergencyVaultRepository(session)
-        vault_engine = get_emergency_vault()
-        state = vault_repo.get_vault_state()
-        assessment = vault_engine.assess_threat_status(session)
-
-        return jsonify({
-            "vault_state": state.to_dict(),
-            "threat_assessment": assessment,
-        })
-
 
 
 # ==============================================================================

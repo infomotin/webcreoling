@@ -18,6 +18,7 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
+from config.settings import settings
 from src.common.logger import get_logger
 from src.storage.database import get_db_session
 from src.storage.models import (
@@ -57,10 +58,10 @@ DEFAULT_POLICY: Dict[str, Any] = {
     "max_escalation_level": 1,     # initial assigned role -> admin
     "notify_on_create": True,
     "role_recipients": {
-        "editorial_lead": "editorial-lead@daily-ai-alo.com",
-        "ad_manager": "ad-manager@daily-ai-alo.com",
-        "onboarding_officer": "onboarding@daily-ai-alo.com",
-        "admin": "admin@daily-ai-alo.com",
+        "editorial_lead": settings.AGENT_EMAIL_EDITORIAL_LEAD,
+        "ad_manager": settings.AGENT_EMAIL_AD_MANAGER,
+        "onboarding_officer": settings.AGENT_EMAIL_ONBOARDING_OFFICER,
+        "admin": settings.AGENT_EMAIL_ADMIN,
     },
     "updated_at": None,
 }

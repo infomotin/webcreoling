@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block title %}ক্রিপ্টোগ্রাফিক ভেরিফিকেশন সার্টিফিকেট — {{ article.title }} | প্রথম আলো{% endblock %}
+{% block title %}ক্রিপ্টোগ্রাফিক ভেরিফিকেশন সার্টিফিকেট — {{ article.title }} | {{ site_identity.title }}{% endblock %}
 
 {% block portal_content %}
 <div style="background: #f8fafc; padding: 40px 0 60px 0; min-height: 80vh;">
@@ -24,7 +24,7 @@
                     {% if is_valid %}🛡️{% else %}⚠️{% endif %}
                 </div>
                 <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;">
-                    প্রথম আলো এন্টারপ্রাইজ ক্রিপ্টোগ্রাফিক লেজার সনদ
+                    {{ site_identity.title }} এন্টারপ্রাইজ ক্রিপ্টোগ্রাফিক লেজার সনদ
                 </h1>
                 <p style="font-size: 14px; opacity: 0.9; max-width: 600px; margin: 0 auto;">
                     SHA-256 মারকেল ট্রি হ্যাশ ও ডিজিটাল এইচম্যাক স্বাক্ষরে সংরক্ষিত অপরিবর্তনীয় প্রমাণ
@@ -49,7 +49,7 @@
                         {{ article.title }}
                     </h2>
                     <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #64748b;">
-                        <div><strong>প্রতিবেদক:</strong> {{ article.author or 'প্রথম আলো নিজস্ব প্রতিবেদক' }}</div>
+                        <div><strong>প্রতিবেদক:</strong> {{ article.author or site_identity.title ~ ' নিজস্ব প্রতিবেদক' }}</div>
                         <div><strong>ক্যাটাগরি:</strong> {{ article.category }}</div>
                         <div><strong>প্রকাশকাল:</strong> {{ article.published_at.strftime('%d %B %Y, %I:%M %p') if article.published_at else 'সরাসরি প্রকাশ' }}</div>
                         <div><strong>আর্টিকেল আইডি:</strong> #{{ article.id }}</div>

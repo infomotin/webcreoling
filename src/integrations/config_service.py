@@ -19,7 +19,7 @@ DEFAULT_MAIL_CONFIG: Dict[str, Any] = {
     "mail_password": getattr(settings, "MAIL_PASSWORD", "4e1119bb236ac7"),
     "mail_use_tls": getattr(settings, "MAIL_USE_TLS", True),
     "mail_use_ssl": getattr(settings, "MAIL_USE_SSL", False),
-    "mail_default_sender": getattr(settings, "MAIL_DEFAULT_SENDER", "no-reply@daily-ai-alo.com"),
+    "mail_default_sender": settings.MAIL_DEFAULT_SENDER,
     "mail_timeout": 10,
 }
 

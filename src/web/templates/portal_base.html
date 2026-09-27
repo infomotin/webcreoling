@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>{% block title %}{{ site_branding.site_title or 'প্রথম আলো' }} - অনলাইন ডিজিটাল সংস্করণ{% endblock %}</title>
+    <title>{% block title %}{{ site_branding.site_title or site_identity.title }} - অনলাইন ডিজিটাল সংস্করণ{% endblock %}</title>
     
     <!-- Google Fonts for Bengali Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,8 +56,8 @@
                     <div class="palo-logo-emblem">আলো</div>
                     <div class="palo-logo-text">
                         <div style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
-                            <h1 class="palo-brand-title" style="margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.5px;">{{ site_branding.logo_text or site_branding.site_title or 'দি ডেইলি এআই আলো' }}</h1>
-                            <span style="font-size: 1rem; font-weight: 700; color: #64748b; font-family: 'Inter', sans-serif;">The Daily AI Alo</span>
+                            <h1 class="palo-brand-title" style="margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.5px;">{{ site_branding.logo_text or site_branding.site_title or site_identity.title }}</h1>
+                            <span style="font-size: 1rem; font-weight: 700; color: #64748b; font-family: 'Inter', sans-serif;">{{ site_identity.title_en }}</span>
                         </div>
                         <span class="palo-brand-tagline" style="display: block; font-weight: 600; color: #0284c7;">
                             {{ site_branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }} — <em>{{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}</em>
@@ -214,13 +214,13 @@
         <div class="palo-container">
             <div class="palo-footer-grid">
                 <div class="palo-footer-brand">
-                    <h3>{{ site_branding.site_title or 'প্রথম আলো' }}</h3>
+                    <h3>{{ site_branding.site_title or site_identity.title }}</h3>
                     <p class="palo-footer-desc">
                         {{ site_branding.site_tagline or 'সত্যের সন্ধানে নির্ভীক। কৃত্রিম বুদ্ধিমত্তা ও রিয়েল-টাইম স্ক্র্যাপিং দ্বারা পরিচালিত ডিজিটাল প্ল্যাটফর্ম।' }}
                     </p>
                     <p class="palo-footer-contact">
-                        <strong>{{ site_footer.editor_in_chief or 'ভারপ্রাপ্ত সম্পাদক ও প্রকাশক: মোঃ মতিউর রহমান' }}</strong><br>
-                        {{ site_footer.office_address or 'প্রগতি ইনস্যুরেন্স ভবন, ২০–২১ কারওয়ান বাজার, ঢাকা ১২১৫।' }}<br>
+                        <strong>{{ site_footer.editor_in_chief or site_identity.editor_in_chief }}</strong><br>
+                        {{ site_footer.office_address or site_identity.office_address }}<br>
                         {% if site_footer.contact_email %}ইমেইল: {{ site_footer.contact_email }} | {% endif %}
                         {% if site_footer.contact_phone %}ফোন: {{ site_footer.contact_phone }}{% endif %}
                     </p>

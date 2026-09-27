@@ -36,7 +36,7 @@
                         <span class="brand-pulse-beacon"></span>
                     </div>
                     <div class="brand-title-wrap">
-                        <div class="brand-main-title">{{ tr('দি ডেইলি এআই আলো', 'The Daily AI Alo') }}</div>
+                        <div class="brand-main-title">{{ tr(site_identity.title, site_identity.title_en) }}</div>
                         <div class="brand-sub-badge">
                             <span class="pulse-online-dot"></span>
                             <span class="brand-tag-text">{{ tr('AI NEWSROOM CMS • v2.5', 'AI NEWSROOM CMS • v2.5') }}</span>
@@ -329,11 +329,6 @@
                                     </a>
                                 </li>
                                 <li class="submenu-item">
-                                    <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}#vault" class="submenu-link">
-                                        <span class="sub-dot"></span> সেলফ-এনক্রিপশন ভল্ট
-                                    </a>
-                                </li>
-                                <li class="submenu-item">
                                     <a href="{{ url_for('admin.newspaper_management_view', tab='monitor') }}" class="submenu-link {% if request.args.get('tab') == 'monitor' %}active{% endif %}">
                                         <span class="sub-dot"></span> সার্ভার হেলথ ও রিসোর্স মনিটর
                                     </a>
@@ -439,7 +434,7 @@
 
             <!-- Footer -->
             <footer style="padding: 1.5rem 2rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; color: var(--text-muted); font-size: 0.85rem; background: rgba(0,0,0,0.2);">
-                <p style="margin: 0;">দি ডেইলি এআই আলো (The Daily AI Alo) &copy; 2026 • সার্বক্ষণিক এআই চালিত সংবাদ মাধ্যম ও এন্টারপ্রাইজ ক্লাউড হাব</p>
+                <p style="margin: 0;">{{ site_identity.title }} ({{ site_identity.title_en }}) &copy; 2026 • সার্বক্ষণিক এআই চালিত সংবাদ মাধ্যম ও এন্টারপ্রাইজ ক্লাউড হাব</p>
             </footer>
         </div>
     </div>
@@ -450,7 +445,7 @@
     <!-- ========================================================================= -->
     <nav class="navbar">
         <a href="{{ url_for('portal.index_view') }}" class="nav-brand">
-            <span>⚡ দি ডেইলি এআই আলো <small style="font-size: 0.75rem; color: #94a3b8;">(The Daily AI Alo)</small></span>
+            <span>⚡ {{ site_identity.title }} <small style="font-size: 0.75rem; color: #94a3b8;">({{ site_identity.title_en }})</small></span>
         </a>
 
         <div style="display: flex; gap: 0.75rem;">
@@ -480,7 +475,7 @@
     </div>
 
     <footer style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-        <p>দি ডেইলি এআই আলো (The Daily AI Alo) &copy; 2026 • Enterprise AI & Cloud Newsroom</p>
+        <p>{{ site_identity.title }} ({{ site_identity.title_en }}) &copy; 2026 • Enterprise AI & Cloud Newsroom</p>
     </footer>
     {% endif %}
 

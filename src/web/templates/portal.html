@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block title %}{{ site_branding.site_title or 'দি ডেইলি এআই আলো' }} (The Daily AI Alo) — {{ site_branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }} | {{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}{% endblock %}
+{% block title %}{{ site_branding.site_title or site_identity.title }} ({{ site_identity.title_en }}) — {{ site_branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }} | {{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}{% endblock %}
 
 {% block portal_content %}
 
@@ -917,5 +917,105 @@ async function submitNewsletter(event) {
         statusEl.style.color = '#b91c1c';
     }
 }
+
+// 5. Live Feed — infinite scroll (older) + continuous new-post prepend (newest first)
+(function () {
+    const section = document.getElementById('liveFeedSection');
+    if (!section) return;
+
+    const list = document.getElementById('liveFeedList');
+    const sentinel = document.getElementById('feedSentinel');
+    const loader = document.getElementById('feedLoader');
+    const endMsg = document.getElementById('feedEnd');
+    const newBadge = document.getElementById('feedNewBadge');
+
+    let hasMore = section.dataset.hasMore === '1';
+    let newest = section.dataset.newest || '';
+    let anchor = null; // cursor = oldest loaded item (published, id)
+    let busy = false;
+    let observer = null;
+    const loadedIds = new Set();
+
+    function refreshAnchor() {
+        const items = list.querySelectorAll('.palo-feed-item');
+        const last = items[items.length - 1];
+        if (last && last.dataset.published) {
+            anchor = { before: last.dataset.published, before_id: last.dataset.articleId };
+        }
+    }
+
+    list.querySelectorAll('.palo-feed-item').forEach(el => loadedIds.add(el.dataset.articleId));
+    refreshAnchor();
+
+    async function fetchFeed(params) {
+        const res = await fetch('/news/api/feed?' + new URLSearchParams(params).toString());
+        if (!res.ok) throw new Error('feed HTTP ' + res.status);
+        return res.json();
+    }
+
+    function insertItems(items, position) {
+        let added = 0;
+        for (const it of items) {
+            const id = String(it.id);
+            if (loadedIds.has(id)) continue;
+            loadedIds.add(id);
+            list.insertAdjacentHTML(position, it.html);
+            added++;
+            if (position === 'afterbegin') {
+                const el = list.querySelector('.palo-feed-item[data-article-id="' + id + '"]');
+                if (el) el.classList.add('palo-feed-new');
+            }
+        }
+        return added;
+    }
+
+    async function loadMore() {
+        if (busy || !hasMore || !anchor) return;
+        busy = true;
+        if (loader) loader.hidden = false;
+        try {
+            const data = await fetchFeed({ before: anchor.before, before_id: anchor.before_id });
+            const items = data.items || [];
+            const added = insertItems(items, 'beforeend');
+            hasMore = !!data.has_more && items.length > 0 && added > 0;
+            refreshAnchor();
+        } catch (e) {
+            console.error('Live feed load failed:', e);
+        } finally {
+            busy = false;
+            if (loader) loader.hidden = true;
+            if (!hasMore && endMsg) {
+                endMsg.hidden = false;
+                if (observer) observer.disconnect();
+            }
+        }
+    }
+
+    if (sentinel && 'IntersectionObserver' in window) {
+        observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (e) { return e.isIntersecting; })) loadMore();
+        }, { rootMargin: '500px 0px' });
+        observer.observe(sentinel);
+    }
+
+    // Continuous new-post detection (every 30s, only while tab visible)
+    if (newest) {
+        setInterval(async function () {
+            if (document.hidden) return;
+            try {
+                const data = await fetchFeed({ since: newest });
+                const items = data.items || [];
+                if (items.length && insertItems(items, 'afterbegin') > 0) {
+                    if (data.newest) newest = data.newest;
+                    if (newBadge && window.scrollY > 400) newBadge.hidden = false;
+                }
+            } catch (e) { /* transient network error — retry next tick */ }
+        }, 30000);
+        if (newBadge) {
+            const btn = newBadge.querySelector('button');
+            if (btn) btn.addEventListener('click', function () { newBadge.hidden = true; });
+        }
+    }
+})();
 </script>
 {% endblock %}

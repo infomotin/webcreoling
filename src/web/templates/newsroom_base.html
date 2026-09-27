@@ -34,7 +34,7 @@
                 <div class="nr-brand-badge">আলো</div>
                 <div>
                     <div class="nr-brand-title">দি ডেইলি<span>এআই আলো</span></div>
-                    <span class="nr-brand-sub">The Daily AI Alo CMS</span>
+                    <span class="nr-brand-sub">{{ site_identity.title_en }} CMS</span>
                 </div>
             </a>
             <button type="button" class="nr-sidebar-toggle-btn" id="nrSidebarToggleBtn" onclick="toggleNrSidebar()" title="সাইডবার সংকোচন / প্রসারণ (Ctrl+B)">
@@ -175,16 +175,12 @@
                 </div>
             </a>
 
-            <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}" data-tooltip="{{ tr('এআই সিকিউরিটি ও ভল্ট', 'Security & Vault') }}">
+            <a href="{{ url_for('admin.newspaper_management_view', tab='security') }}" class="nr-nav-item {% if active_tab == 'security' or request.args.get('tab') == 'security' %}active{% endif %}" data-tooltip="{{ tr('সিকিউরিটি ও লেজার', 'Security & Ledger') }}">
                 <div class="nr-nav-left">
                     <span>🛡️</span>
-                    <span>{{ tr('এআই সিকিউরিটি ও ভল্ট', 'Security & Vault') }}</span>
+                    <span>{{ tr('সিকিউরিটি অপারেশনস সেন্টার', 'Security Operations Center') }}</span>
                 </div>
-                {% if vault_state and vault_state.is_locked %}
-                <span class="nr-nav-badge" style="background: #ef4444; color: #fff;">LOCKED</span>
-                {% else %}
-                <span class="nr-nav-badge" style="background: #10b981; color: #fff;">VAULT</span>
-                {% endif %}
+                <span class="nr-nav-badge" style="background: #10b981; color: #fff;">SOC</span>
             </a>
 
             <a href="{{ url_for('admin.newspaper_management_view', tab='blockchain') }}" class="nr-nav-item {% if active_tab == 'blockchain' or request.args.get('tab') == 'blockchain' %}active{% endif %}" data-tooltip="{{ tr('ব্লকচেইন লেজার', 'Blockchain Ledger') }}">

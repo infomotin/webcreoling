@@ -5,7 +5,9 @@ Provides high-performance batch retrieval for model training, FTS5 full-text sea
 
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
-from sqlalchemy import func, text, desc
+from sqlalchemy import func, text, desc, and_
+
+from config.settings import settings
 from sqlalchemy.orm import Session, joinedload
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
@@ -33,8 +35,6 @@ from src.storage.models import (
     DatabaseReplicaNode,
     DataCenterBackupArchive,
     DataCenterSecurityLog,
-    EmergencyVaultState,
-    EncryptedVaultBackupRecord,
     OtpCode,
     MessageLog,
     SubscriptionPlan,
@@ -348,32 +348,64 @@ class ArticleRepository:
 
         return query.all()
 
+    # Test/fixture headlines that must never surface in the public breaking ticker
+    _TEST_TICKER_PATTERNS = (
+        "%পরীক্ষামূলক ড্রাফট%",
+        "%টেস্ট খসড়া%",
+        "%টেস্ট আর্টিকেল%",
+        "%টেস্ট সংবাদ%",
+        "%টেস্ট বুলেটিন%",
+        "%সংবাদ #%",
+        "%Test Draft%",
+        "%test article%",
+        "%test-vault-story%",
+    )
+
     def get_breaking_news(self, limit: int = 5) -> List[Article]:
-        """Fetch breaking news items for ticker."""
+        """Fetch breaking news items for ticker (dynamic, de-duplicated, test-junk filtered)."""
+        not_test = and_(
+            *[Article.title.notlike(pat) for pat in self._TEST_TICKER_PATTERNS]
+        )
+
+        def dedupe(articles: List[Article]) -> List[Article]:
+            seen, unique = set(), []
+            for art in articles:
+                key = (art.title or "").strip()
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                unique.append(art)
+            return unique
+
         breaking = (
             self.session.query(Article)
             .filter((Article.is_breaking == True) | (Article.position_placement == "BREAKING"))
             .filter(Article.scrape_status == "completed")
+            .filter(not_test)
             .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.published_at.desc(), Article.id.desc())
-            .limit(limit)
+            .limit(limit * 3)
             .all()
         )
-        if not breaking:
-            breaking = (
+        items = dedupe(breaking)[:limit]
+
+        # Backfill with newest real articles so the ticker stays live and full
+        if len(items) < limit:
+            used_ids = [a.id for a in items]
+            backfill_q = (
                 self.session.query(Article)
                 .filter(Article.scrape_status == "completed")
-                .order_by(Article.is_pinned.desc(), Article.display_order.asc(), Article.id.desc())
-                .limit(limit)
+                .filter(not_test)
+                .options(joinedload(Article.images))
+            )
+            if used_ids:
+                backfill_q = backfill_q.filter(Article.id.notin_(used_ids))
+            backfill = (
+                backfill_q.order_by(Article.published_at.desc(), Article.id.desc())
+                .limit(limit - len(items))
                 .all()
             )
-        if not breaking:
-            breaking = (
-                self.session.query(Article)
-                .order_by(Article.id.desc())
-                .limit(limit)
-                .all()
-            )
-        return breaking
+            items = dedupe(items + backfill)[:limit]
+        return items
 
     def get_trending_articles(self, limit: int = 5) -> List[Article]:
         """Fetch most read / most trending articles."""
@@ -1522,12 +1554,12 @@ class SiteConfigRepository:
     def seed_default_configs(self, force: bool = False) -> None:
         defaults = {
             "branding": {
-                "site_title": "দি ডেইলি এআই আলো",
-                "site_title_en": "The Daily AI Alo",
+                "site_title": settings.SITE_TITLE,
+                "site_title_en": settings.SITE_TITLE_EN,
                 "site_tagline": "পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল",
                 "site_motto": "বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়",
-                "logo_text": "দি ডেইলি এআই আলো",
-                "logo_subtitle": "The Daily AI Alo — বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়",
+                "logo_text": settings.SITE_TITLE,
+                "logo_subtitle": f"{settings.SITE_TITLE_EN} — বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়",
                 "logo_image": "",
                 "edition": "গ্লোবাল ও বাংলাদেশ সংস্করণ",
                 "usd_rate": "১২১.৫০",
@@ -1537,15 +1569,15 @@ class SiteConfigRepository:
                 "weather_desc": "আংশিক মেঘলা",
             },
             "footer": {
-                "publisher": "The Daily AI Alo Media & Tech Labs",
-                "editor_in_chief": "প্রধান সম্পাদক ও প্রধান এআই প্রযুক্তিবিদ: ড. এআই টিম",
-                "office_address": "সিলিকন টাওয়ার, লেভেল ১২, গুলশান-২, ঢাকা ১২১২।",
-                "contact_email": "editorial@daily-ai-alo.com",
-                "contact_phone": "+৮৮০ ২ ৮১৮০০৭৮",
-                "copyright_text": "© ২০২৬ দি ডেইলি এআই আলো (The Daily AI Alo)। বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়।",
-                "facebook_url": "https://facebook.com/TheDailyAIAlo",
-                "youtube_url": "https://youtube.com/c/TheDailyAIAlo",
-                "twitter_url": "https://twitter.com/TheDailyAIAlo",
+                "publisher": settings.SITE_PUBLISHER,
+                "editor_in_chief": settings.SITE_EDITOR_IN_CHIEF,
+                "office_address": settings.SITE_OFFICE_ADDRESS,
+                "contact_email": settings.SITE_CONTACT_EMAIL or f"editorial@{settings.SEED_EMAIL_DOMAIN}",
+                "contact_phone": settings.SITE_CONTACT_PHONE,
+                "copyright_text": settings.SITE_COPYRIGHT,
+                "facebook_url": settings.SITE_FACEBOOK_URL,
+                "youtube_url": settings.SITE_YOUTUBE_URL,
+                "twitter_url": settings.SITE_TWITTER_URL,
                 "android_app_url": "https://play.google.com",
                 "ios_app_url": "https://apple.com/app-store",
             },
@@ -1565,7 +1597,7 @@ class SiteConfigRepository:
                 "mail_password": "4e1119bb236ac7",
                 "mail_use_tls": True,
                 "mail_use_ssl": False,
-                "mail_default_sender": "no-reply@daily-ai-alo.com",
+                "mail_default_sender": settings.MAIL_DEFAULT_SENDER,
                 "mail_timeout": 10,
             },
             "integrations_sms": {
@@ -1644,10 +1676,10 @@ class SiteConfigRepository:
                 "max_escalation_level": 1,
                 "notify_on_create": True,
                 "role_recipients": {
-                    "editorial_lead": "editorial-lead@daily-ai-alo.com",
-                    "ad_manager": "ad-manager@daily-ai-alo.com",
-                    "onboarding_officer": "onboarding@daily-ai-alo.com",
-                    "admin": "admin@daily-ai-alo.com",
+                    "editorial_lead": settings.AGENT_EMAIL_EDITORIAL_LEAD,
+                    "ad_manager": settings.AGENT_EMAIL_AD_MANAGER,
+                    "onboarding_officer": settings.AGENT_EMAIL_ONBOARDING_OFFICER,
+                    "admin": settings.AGENT_EMAIL_ADMIN,
                 },
             },
             "fact_check_policy": {
@@ -3024,7 +3056,7 @@ class DataCenterRepository:
                 "client_id": "982347102938-apps.googleusercontent.com",
                 "folder_id": "1A2B3C4D5E6F7G8H9I_GoogleDriveMediaRoot",
                 "api_key": "AIzaSyD_EXAMPLE_GDRIVE_API_KEY_2026",
-                "service_account_email": "media-sa@the-daily-ai-alo.iam.gserviceaccount.com",
+                "service_account_email": settings.CLOUD_SERVICE_ACCOUNT_EMAIL,
             },
             cdn_base_url="https://drive.google.com/uc?export=view&id=",
             capacity_total_bytes=100 * (1024 ** 3),
@@ -3038,9 +3070,9 @@ class DataCenterRepository:
             provider_type="mega",
             name="Mega.nz Ultra Cloud Store (Encrypted Mirror)",
             credentials_json={
-                "user_email": "datacenter@the-daily-ai-alo.com",
+                "user_email": settings.CLOUD_BACKUP_USER_EMAIL,
                 "api_key": "mega_key_sec_819283746",
-                "vault_folder": "TheDailyAIAlo_MediaVault",
+                "vault_folder": f"{settings.SITE_TITLE_EN.replace(' ', '')}_MediaVault",
             },
             cdn_base_url="https://mega.nz/file/",
             capacity_total_bytes=50 * (1024 ** 3),
@@ -3375,50 +3407,6 @@ class DataCenterRepository:
             "security_logs_count": self.session.query(func.count(DataCenterSecurityLog.id)).scalar() or 0,
             "ha_mode": "ACTIVE_AUTO_FAILOVER",
         }
-
-
-# ==============================================================================
-# Autonomous AI Brain Security Vault Repository
-# ==============================================================================
-
-class EmergencyVaultRepository:
-    """Repository handling AI Brain Emergency Encryption Vault state and recovery."""
-
-    def __init__(self, session: Session):
-        self.session = session
-
-    def get_vault_state(self) -> EmergencyVaultState:
-        """Fetch or initialize singleton EmergencyVaultState record."""
-        state = self.session.query(EmergencyVaultState).first()
-        if not state:
-            state = EmergencyVaultState(
-                is_locked=False,
-                auto_lockdown_enabled=True,
-                threat_threshold_score=75,
-                current_threat_score=12,
-                threat_status="NORMAL",
-                recipient_email="security-officer@daily-ai-alo.com",
-                encryption_algorithm="AES-256-GCM / Fernet",
-                email_dispatch_status="IDLE",
-            )
-            self.session.add(state)
-            self.session.flush()
-        return state
-
-    def update_settings(
-        self,
-        auto_lockdown_enabled: bool,
-        threat_threshold_score: int,
-        recipient_email: str,
-    ) -> EmergencyVaultState:
-        """Update automated AI threat defense parameters and notification email."""
-        state = self.get_vault_state()
-        state.auto_lockdown_enabled = auto_lockdown_enabled
-        state.threat_threshold_score = max(20, min(100, threat_threshold_score))
-        if recipient_email and "@" in recipient_email:
-            state.recipient_email = recipient_email.strip()
-        self.session.flush()
-        return state
 
 
 class OtpRepository:

@@ -871,7 +871,7 @@ class EmergencyVaultState(Base):
     encrypted_configs_count = Column(Integer, default=0)
 
     # Emergency Email Dispatch
-    recipient_email = Column(String(255), default="security-officer@daily-ai-alo.com")
+    recipient_email = Column(String(255), nullable=True)
     email_dispatch_status = Column(String(50), default="IDLE")       # 'SENT', 'SIMULATED_SUCCESS', 'FAILED'
     email_dispatch_log = Column(Text, nullable=True)
 

@@ -447,9 +447,34 @@ body.palo-body-canvas {
 
 .palo-ticker-content {
     overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
     flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+}
+
+.palo-ticker-track {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    width: max-content;
+    will-change: transform;
+    animation-name: paloTickerScroll;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes paloTickerScroll {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.palo-breaking-ticker:hover .palo-ticker-track,
+.palo-ticker-track:hover {
+    animation-play-state: paused;
 }
 
 .palo-ticker-link {
@@ -464,6 +489,12 @@ body.palo-body-canvas {
 .palo-ticker-link:hover {
     color: var(--palo-red);
     text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .palo-ticker-track {
+        animation: none;
+    }
 }
 
 /* Flash Alerts */

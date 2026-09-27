@@ -19,6 +19,7 @@ from src.storage.repositories import (
     apply_public_content_filter,
     is_public_article,
 )
+from src.integrations.live_data_service import get_topbar_data
 
 portal_bp = Blueprint("portal", __name__)
 
@@ -41,13 +42,23 @@ def inject_portal_globals():
                 "site_branding": branding,
                 "site_footer": footer,
                 "active_ads": ads,
+                "live_topbar": _safe_topbar(branding),
             }
     except Exception:
         return {
             "site_branding": {},
             "site_footer": {},
             "active_ads": {},
+            "live_topbar": _safe_topbar({}),
         }
+
+
+def _safe_topbar(branding: dict) -> dict:
+    """Live date/weather/FX payload for the top utility bar (never raises)."""
+    try:
+        return get_topbar_data(branding)
+    except Exception:
+        return {}
 
 
 @portal_bp.route("")

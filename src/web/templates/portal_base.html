@@ -23,15 +23,21 @@
         <div class="palo-topbar-band">
             <div class="palo-container palo-topbar-inner">
                 <div class="palo-topbar-left">
-                    <span>📅 মঙ্গলবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩</span>
+                    <span>📅 {{ live_topbar.date_text or 'আজকের তারিখ' }}</span>
                     <span class="palo-dot-sep">•</span>
                     <span class="palo-edition-tag">{{ site_branding.edition or 'বাংলাদেশ সংস্করণ' }}</span>
                     <span class="palo-dot-sep">•</span>
-                    <span>⛅ {{ site_branding.weather_city or 'ঢাকা' }} {{ site_branding.weather_temp or '২৮° সে.' }} ({{ site_branding.weather_desc or 'আংশিক মেঘলা' }})</span>
+                    <span title="{{ 'সূত্র: ' ~ (live_topbar.weather.source or 'CMS') if live_topbar and live_topbar.weather else '' }}">
+                        {{ (live_topbar.weather.icon if live_topbar and live_topbar.weather else '⛅') }}
+                        {{ (live_topbar.weather.city if live_topbar and live_topbar.weather else (site_branding.weather_city or 'ঢাকা')) }}
+                        {{ (live_topbar.weather.temp if live_topbar and live_topbar.weather and live_topbar.weather.temp else (site_branding.weather_temp or '২৮° সে.')) }}
+                        ({{ (live_topbar.weather.desc if live_topbar and live_topbar.weather else (site_branding.weather_desc or 'আংশিক মেঘলা')) }})
+                    </span>
                 </div>
                 <div class="palo-topbar-right">
-                    <span class="palo-rate-item">ডলার ৳{{ site_branding.usd_rate or '১২১.৫০' }}</span>
-                    <span class="palo-rate-item">ইউরো ৳{{ site_branding.eur_rate or '১৩২.২০' }}</span>
+                    {% set fx = live_topbar.fx if live_topbar else none %}
+                    <span class="palo-rate-item" title="{{ 'সূত্র: ' ~ (fx.usd_source or '') if fx else '' }}">ডলার ৳{{ (fx and fx.usd) or site_branding.usd_rate or '১২১.৫০' }}</span>
+                    <span class="palo-rate-item" title="{{ 'সূত্র: ' ~ (fx.eur_source or '') if fx else '' }}">ইউরো ৳{{ (fx and fx.eur) or site_branding.eur_rate or '১৩২.২০' }}</span>
                     <a href="{{ url_for('portal.archive_view') }}" class="palo-top-link">📅 আর্কাইভ</a>
                     <a href="{{ url_for('portal.index_view') }}#poll-box" class="palo-top-link">📊 জনমত জরিপ</a>
                     <a href="{{ url_for('datacenter.index_view') }}" class="palo-top-link" style="color: #0284c7; font-weight: 700;">
@@ -176,12 +182,17 @@
             <div class="palo-breaking-badge">
                 <span class="palo-pulse-dot"></span> ব্রেকিং
             </div>
-            <div class="palo-ticker-content">
-                {% for bn in breaking_news %}
-                <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" class="palo-ticker-link">
-                    ⚡ {{ bn.title }}
-                </a>
-                {% endfor %}
+            <div class="palo-ticker-content" aria-label="ব্রেকিং নিউজ স্ক্রলার">
+                {% set ticker_text = breaking_news | map(attribute='title') | join(' ') %}
+                <div class="palo-ticker-track" style="animation-duration: {{ ([((ticker_text | length) * 0.09), 18] | max) | round(0, 'ceil') | int }}s;">
+                    {% for pass in range(2) %}
+                    {% for bn in breaking_news %}
+                    <a href="{{ url_for('portal.article_reader_view', article_id=bn.id) }}" class="palo-ticker-link"{% if pass %} aria-hidden="true" tabindex="-1"{% endif %}>
+                        ⚡ {{ bn.title }}
+                    </a>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

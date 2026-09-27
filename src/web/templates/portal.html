@@ -375,13 +375,14 @@
                     <span>CASPI</span>
                     <span class="palo-market-up">▲ ১৮,২৪০.৮ (+০.৫৮%)</span>
                 </div>
-                <div class="palo-market-pill">
+                {% set fx = live_topbar.fx if live_topbar else none %}
+                <div class="palo-market-pill" title="{{ 'সূত্র: ' ~ (fx.usd_source or '') if fx else '' }}">
                     <span>ডলার (USD)</span>
-                    <span class="palo-market-down">৳ ১২১.৫০</span>
+                    <span class="palo-market-down">৳ {{ (fx and fx.usd) or site_branding.usd_rate or '১২১.৫০' }}</span>
                 </div>
-                <div class="palo-market-pill">
+                <div class="palo-market-pill" title="{{ 'সূত্র: ' ~ (fx.eur_source or '') if fx else '' }}">
                     <span>ইউরো (EUR)</span>
-                    <span class="palo-market-up">৳ ১৩২.২০</span>
+                    <span class="palo-market-up">৳ {{ (fx and fx.eur) or site_branding.eur_rate or '১৩২.২০' }}</span>
                 </div>
                 <div class="palo-market-pill">
                     <span>স্বর্ণ (২২ ক্যারেট)</span>

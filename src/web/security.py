@@ -205,7 +205,7 @@ def record_strike_and_check_autoban(ip: str, threat_type: str, payload_sample: s
     if is_ip_whitelisted(ip):
         return False
 
-    now = datetime.utcnow()
+    now = datetime.now(datetime.UTC)
     if ip not in STRIKE_TRACKER:
         STRIKE_TRACKER[ip] = {"strikes": 1, "first_seen": now}
     else:
@@ -277,8 +277,8 @@ def run_security_firewall():
                 reason="IP Address is Blacklisted on Server",
                 ip=client_ip,
                 country=client_country,
-                timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.utcnow().timestamp()),
+                timestamp=datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                incident_id=int(datetime.now(datetime.UTC).timestamp()),
             )
             return html, 403
 
@@ -300,8 +300,8 @@ def run_security_firewall():
                 reason=f"Geographic Region ({client_country}) Blocked by Administrator Policy",
                 ip=client_ip,
                 country=client_country,
-                timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.utcnow().timestamp()),
+                timestamp=datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                incident_id=int(datetime.now(datetime.UTC).timestamp()),
             )
             return html, 403
 
@@ -330,8 +330,8 @@ def run_security_firewall():
                 reason=f"Malicious Payload Violation Detected ({threat_type})",
                 ip=client_ip,
                 country=client_country,
-                timestamp=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.utcnow().timestamp()),
+                timestamp=datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                incident_id=int(datetime.now(datetime.UTC).timestamp()),
             )
             return html, 403
 

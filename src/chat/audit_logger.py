@@ -27,7 +27,7 @@ class ChatAuditLogger:
     ) -> None:
         """Append an interaction entry to the JSONL log file."""
         entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "mode": mode,  # 'rag_qa' or 'explicit_task'
             "user_input": user_input,
             "response": response_text,

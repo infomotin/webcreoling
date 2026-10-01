@@ -117,7 +117,7 @@ class HeavyDataCapacityManager:
         """
         Executes database defragmentation, vacuuming, and index optimization.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(datetime.UTC)
         is_sqlite = "sqlite" in settings.DATABASE_URL
         reclaimed_mb = 0.0
 
@@ -147,7 +147,7 @@ class HeavyDataCapacityManager:
                 "success": True,
                 "message": f"ডাটাবেস সফলভাবে অপ্টিমাইজ ও ভ্যাকুয়াম সম্পন্ন হয়েছে। আনুমানিক {reclaimed_mb} MB মেমোরি মুক্ত হয়েছে।",
                 "reclaimed_mb": reclaimed_mb,
-                "duration_ms": round((datetime.utcnow() - start_time).total_seconds() * 1000, 2),
+                "duration_ms": round((datetime.now(datetime.UTC) - start_time).total_seconds() * 1000, 2),
             }
         except Exception as e:
             logger.error(f"Database optimization failed: {e}")
@@ -162,7 +162,7 @@ class HeavyDataCapacityManager:
         """
         Bulk archives older non-pinned/non-featured articles to streamline high-volume active tables.
         """
-        cutoff = datetime.utcnow() - timedelta(days=days_old)
+        cutoff = datetime.now(datetime.UTC) - timedelta(days=days_old)
         stale_articles = (
             session.query(Article)
             .filter(

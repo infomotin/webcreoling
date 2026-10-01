@@ -845,7 +845,7 @@ class YouTubePublicNewsIngester:
                     thumb_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
 
                 # Parse published datetime
-                pub_dt = datetime.utcnow()
+                pub_dt = datetime.now(datetime.UTC)
                 if published_elem is not None and published_elem.text:
                     try:
                         pub_dt = datetime.fromisoformat(published_elem.text.replace("Z", "+00:00")).replace(tzinfo=None)
@@ -884,7 +884,7 @@ class YouTubePublicNewsIngester:
 
         # If RSS feed is unavailable, provide public video wire items
         if not results:
-            now = datetime.utcnow()
+            now = datetime.now(datetime.UTC)
             ch_info = next((v for v in cls.DEFAULT_CHANNELS.values() if v["channel_id"] == channel_id), {"name": "YouTube News", "category": "bangladesh"})
             ch_name = ch_info["name"]
             category = ch_info.get("category", "bangladesh")
@@ -1168,7 +1168,7 @@ class WorldNewsMultiLingualIngester:
                     img_url = fallback_images.get(cat, "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=80")
 
                 # Parse date
-                pub_dt = datetime.utcnow()
+                pub_dt = datetime.now(datetime.UTC)
                 if pubdate_elem is not None and pubdate_elem.text:
                     try:
                         from email.utils import parsedate_to_datetime
@@ -1213,7 +1213,7 @@ class WorldNewsMultiLingualIngester:
 
         # Provide high quality fallback articles if network/feed blocked
         if not results:
-            now = datetime.utcnow()
+            now = datetime.now(datetime.UTC)
             src_name = feed_info["name"]
             cat = feed_info["category"]
             synth_items = [
@@ -1309,7 +1309,7 @@ class FacebookPublicNewsIngester:
         Connects public headlines with social engagement context.
         """
         results = []
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         
         # Social news wire templates for real-time aggregation
         samples = [

@@ -107,7 +107,7 @@ class BlockchainLedgerEngine:
         nonce: int = 0,
     ) -> Dict[str, Any]:
         """Mint a new verified cryptographic block for a published article."""
-        ts = timestamp or datetime.utcnow()
+        ts = timestamp or datetime.now(datetime.UTC)
         if isinstance(ts, datetime):
             ts = ts.replace(microsecond=0)
             ts_iso = ts.isoformat()

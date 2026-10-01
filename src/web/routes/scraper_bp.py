@@ -194,7 +194,7 @@ def synthesize_existing_article(article_id: int):
         if synth["is_truth_verified"]:
             article.scrape_status = "completed"
 
-        article.updated_at = datetime.utcnow()
+        article.updated_at = datetime.now(datetime.UTC)
         session.flush()
 
         # Re-seal cryptographic ledger so verification reflects the synthesized content

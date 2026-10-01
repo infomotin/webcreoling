@@ -791,7 +791,7 @@ class AIPilotBrain:
             "fake_verdict": fact_check_report["verdict"],
             "is_publishable": fact_check_report["is_publishable"],
             "meaning_retention_score": synth_report["meaning_retention_score"],
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(datetime.UTC).isoformat(),
         }
 
         # Step 5: Autonomous Decision Gate (with 70% Truth Threshold Gate & Fake Tolerance)
@@ -833,7 +833,7 @@ class AIPilotBrain:
             "source": raw_source,
             "title": bn_title,
             "author": raw_author,
-            "published_at": raw_article.get("published_at") or datetime.utcnow(),
+            "published_at": raw_article.get("published_at") or datetime.now(datetime.UTC),
             "category": assigned_category,
             "content_text": bn_content,
             "summary": generated_summary,
@@ -996,6 +996,6 @@ class AIPilotBrain:
             "social_broadcasts": social_broadcast_count,
             "rejected_or_archived": rejected_count,
             "decisions": decisions_summary[:20],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
         }
 

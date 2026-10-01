@@ -132,7 +132,7 @@ def test_storage_connection(provider_id: int):
         result = CloudStorageManager.test_provider_connection(provider.to_dict())
         if result.get("success"):
             provider.status = "ONLINE"
-            provider.last_health_check = datetime.utcnow()
+            provider.last_health_check = datetime.now(datetime.UTC)
             session.flush()
 
         return jsonify(result)
@@ -471,5 +471,5 @@ def get_status_api():
             "summary": summary,
             "nodes": nodes,
             "providers": providers,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
         })

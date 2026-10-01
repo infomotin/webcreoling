@@ -101,7 +101,7 @@ class DatabaseFailoverManager:
                 "latency_ms": latency,
                 "message": msg,
                 "status": "SYNCED" if is_primary else "STANDBY_READY",
-                "audited_at": datetime.utcnow().isoformat(),
+                "audited_at": datetime.now(datetime.UTC).isoformat(),
             })
 
         cluster_status = "HEALTHY" if primary_healthy else ("FAILOVER_NEEDED" if active_standbys > 0 else "CRITICAL_DOWN")
@@ -112,7 +112,7 @@ class DatabaseFailoverManager:
             "total_nodes": len(replica_nodes),
             "active_standbys": active_standbys,
             "nodes": results,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
         }
 
     @classmethod
@@ -143,7 +143,7 @@ class DatabaseFailoverManager:
             "new_primary_host": f"{target_host}:{target_port}",
             "previous_primary_name": prev_name,
             "reason": reason,
-            "failover_executed_at": datetime.utcnow().isoformat(),
+            "failover_executed_at": datetime.now(datetime.UTC).isoformat(),
             "replication_state": "SYNCHRONIZED_ACTIVE",
             "message": f"সফলভাবে ডাটাবেস নোড '{target_name}'-কে প্রাইমারি মাস্টার হিসেবে সক্রিয় করা হয়েছে।",
         }

@@ -314,7 +314,7 @@ def _handle_video_upload():
             return "NONE", "", "", f"ভিডিও খুব বড় ({mb} MB). সর্বোচ্চ {limit_mb} MB ছোট ভিডিও সরাসরি আপলোড করা যাবে.", raw_select
 
         settings.VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
-        filename = f"post_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}{ext}"
+        filename = f"post_{datetime.now(datetime.UTC).strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}{ext}"
         destination = settings.VIDEOS_DIR / filename
         destination.write_bytes(data)
         video_path = f"data/videos/{filename}"
@@ -1653,14 +1653,14 @@ def automation_article_override(article_id: int):
 
         if action == "publish":
             article.scrape_status = "completed"
-            article.updated_at = datetime.utcnow()
+            article.updated_at = datetime.now(datetime.UTC)
             ledger_repo.mint_block_for_article(article.id)
             session.flush()
             art_dict = article.to_dict()
             flash(f"সংবাদ #{article.id} সফলভাবে লাইভ পোর্টালে প্রকাশিত এবং সোশ্যাল মিডিয়ায় ব্রডকাস্ট করা হয়েছে!", "success")
         elif action == "quarantine":
             article.scrape_status = "archived"
-            article.updated_at = datetime.utcnow()
+            article.updated_at = datetime.now(datetime.UTC)
             session.flush()
             flash(f"সংবাদ #{article.id} স্থগিত ও কোয়ারেন্টাইন করা হয়েছে।", "warning")
 
@@ -1699,7 +1699,7 @@ def automation_api_live_status():
         "kpis": kpis,
         "recent_tasks": task_manager.list_tasks(limit=10),
         "live_feed": feed,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(datetime.UTC).isoformat(),
     })
 
 

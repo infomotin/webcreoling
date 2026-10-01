@@ -88,7 +88,7 @@ class FactCheckService:
         if isinstance(stored, dict):
             policy.update(stored)
         policy.update(data)
-        policy["updated_at"] = datetime.utcnow().isoformat()
+        policy["updated_at"] = datetime.now(datetime.UTC).isoformat()
         repo.set_config("fact_check_policy", policy)
         return policy
 
@@ -156,7 +156,7 @@ class FactCheckService:
                 "best_similarity": round(best_score, 4),
                 "confidence": confidence,
                 "corroborating": corroborating[:8],
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(datetime.UTC).isoformat(),
             }
         except Exception as exc:
             logger.warning(f"Cross-source fact-check failed (graceful): {exc}")
@@ -231,7 +231,7 @@ class FactCheckService:
                 "provider": provider,
                 "verdict": str(verdict) if verdict else None,
                 "confidence": round(min(95.0, max(0.0, confidence)), 1),
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(datetime.UTC).isoformat(),
             }
         except Exception as exc:
             logger.warning(f"External fact-check API unavailable (graceful): {exc}")
@@ -278,7 +278,7 @@ class FactCheckService:
                 "low_confidence_threshold": low_thr,
                 "flags": flags,
                 "strategy": "dual" if external.get("available") else "cross_source_only",
-                "checked_at": datetime.utcnow().isoformat(),
+                "checked_at": datetime.now(datetime.UTC).isoformat(),
             }
         except Exception as exc:
             logger.error(f"Full fact-check failed: {exc}")

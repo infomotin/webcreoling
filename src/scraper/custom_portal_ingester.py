@@ -261,7 +261,7 @@ class CustomPortalIngester:
                     img_meta = media_mgr.download_and_store_image(
                         image_url=lead_img_url,
                         source=raw_data["default_source_name"],
-                        pub_date=datetime.utcnow(),
+                        pub_date=datetime.now(datetime.UTC),
                     )
                     if img_meta and img_meta.get("local_path"):
                         file_hash = hashlib.sha256(img_meta["local_path"].encode("utf-8")).hexdigest()[:16]
@@ -296,7 +296,7 @@ class CustomPortalIngester:
                 },
                 "fake_news_analysis": synthesis["fact_check_report"],
                 "custom_portal_ingestion": {
-                    "ingested_at": datetime.utcnow().isoformat(),
+                    "ingested_at": datetime.now(datetime.UTC).isoformat(),
                     "source_domain": raw_data["domain"],
                     "target_placement": target_placement,
                     "published_live": publish_now,
@@ -333,7 +333,7 @@ class CustomPortalIngester:
             "lead_image_url": lead_image_display,
             "portal_article_url": portal_view_url,
             "discovered_links": raw_data["discovered_links"],
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(datetime.UTC).isoformat(),
         }
 
     @classmethod
@@ -380,7 +380,7 @@ class CustomPortalIngester:
             if position_placement == "LEAD":
                 article.is_pinned = True
                 article.display_order = 1
-            article.published_at = datetime.utcnow()
+            article.published_at = datetime.now(datetime.UTC)
 
             # Ensure ledger minting
             try:

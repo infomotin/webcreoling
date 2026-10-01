@@ -178,7 +178,7 @@ class MultiSourceScraper:
         if isinstance(stored, dict):
             cfg.update(stored)
         cfg.update(data)
-        cfg["updated_at"] = datetime.utcnow().isoformat()
+        cfg["updated_at"] = datetime.now(datetime.UTC).isoformat()
         repo.set_config("news_sources", cfg)
         return cfg
 
@@ -391,7 +391,7 @@ class MultiSourceScraper:
             "failed": 0,
             "skipped_sources": [],
             "errors": [],
-            "ran_at": datetime.utcnow().isoformat(),
+            "ran_at": datetime.now(datetime.UTC).isoformat(),
         }
 
         if ingest is None:

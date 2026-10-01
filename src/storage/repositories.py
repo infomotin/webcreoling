@@ -243,7 +243,7 @@ class ArticleRepository:
             existing.missing_fields = article_data.get("missing_fields", existing.missing_fields)
             existing.retry_count = article_data.get("retry_count", existing.retry_count)
             existing.js_rendered = article_data.get("js_rendered", existing.js_rendered)
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(datetime.UTC)
             article = existing
         else:
             # Create new article
@@ -678,10 +678,10 @@ class ArticleRepository:
 
         # Determine published_at vs scheduled_at
         pub_at = None
-        if scheduled_at and scheduled_at > datetime.utcnow():
+        if scheduled_at and scheduled_at > datetime.now(datetime.UTC):
             status = "scheduled"
         elif status == "completed":
-            pub_at = datetime.utcnow()
+            pub_at = datetime.now(datetime.UTC)
 
         # Map placement to flags if specified
         if position_placement in ["LEAD", "FEATURED"]:
@@ -814,13 +814,13 @@ class ArticleRepository:
             article.is_pinned = is_pinned
         if scheduled_at is not None:
             article.scheduled_at = scheduled_at
-            if scheduled_at > datetime.utcnow():
+            if scheduled_at > datetime.now(datetime.UTC):
                 article.scrape_status = "scheduled"
                 article.published_at = None
         if status is not None:
             article.scrape_status = status
             if status == "completed" and not article.published_at:
-                article.published_at = datetime.utcnow()
+                article.published_at = datetime.now(datetime.UTC)
                 article.scheduled_at = None
 
         if image_path and image_path.strip():
@@ -866,7 +866,7 @@ class ArticleRepository:
         if title is not None:
             article.slug = build_post_slug(article.id, article.title)
 
-        article.updated_at = datetime.utcnow()
+        article.updated_at = datetime.now(datetime.UTC)
         self.session.flush()
 
         # Re-mint cryptographic block to seal updated content in ledger
@@ -911,7 +911,7 @@ class ArticleRepository:
             article.source_status = source_status
         if source_removed_notice is not None:
             article.source_removed_notice = source_removed_notice
-        article.updated_at = datetime.utcnow()
+        article.updated_at = datetime.now(datetime.UTC)
         self.session.flush()
         return article
 
@@ -954,7 +954,7 @@ class ArticleRepository:
                 article.source_status = "ACTIVE"
                 status_label = "ACTIVE"
 
-            article.source_last_checked_at = datetime.utcnow()
+            article.source_last_checked_at = datetime.now(datetime.UTC)
             self.session.flush()
             return {
                 "success": True,
@@ -967,7 +967,7 @@ class ArticleRepository:
             }
         except Exception as e:
             logger.warning(f"Error checking source status for article #{article_id} ({target_url}): {e}")
-            article.source_last_checked_at = datetime.utcnow()
+            article.source_last_checked_at = datetime.now(datetime.UTC)
             self.session.flush()
             return {
                 "success": True,
@@ -991,7 +991,7 @@ class ArticleRepository:
 
     def process_scheduled_publishing(self) -> int:
         """Scan and automatically publish articles whose scheduled release time has arrived."""
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         pending = (
             self.session.query(Article)
             .filter(Article.scrape_status == "scheduled", Article.scheduled_at <= now)
@@ -1022,8 +1022,8 @@ class ArticleRepository:
         if article:
             article.scrape_status = "completed"
             if not article.published_at:
-                article.published_at = datetime.utcnow()
-            article.updated_at = datetime.utcnow()
+                article.published_at = datetime.now(datetime.UTC)
+            article.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return True
         return False
@@ -1035,7 +1035,7 @@ class ArticleRepository:
             article.scrape_status = "archived"
             article.is_featured = False
             article.is_breaking = False
-            article.updated_at = datetime.utcnow()
+            article.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return True
         return False
@@ -1045,7 +1045,7 @@ class ArticleRepository:
         article = self.session.query(Article).filter(Article.id == article_id).first()
         if article:
             article.scrape_status = "completed"
-            article.updated_at = datetime.utcnow()
+            article.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return True
         return False
@@ -1309,9 +1309,9 @@ class ArticleRepository:
                     .all()
                 )
                 date_list = [d[0] for d in dates_c if d[0]]
-            return date_list or [datetime.utcnow().strftime("%Y-%m-%d")]
+            return date_list or [datetime.now(datetime.UTC).strftime("%Y-%m-%d")]
         except Exception:
-            return [datetime.utcnow().strftime("%Y-%m-%d")]
+            return [datetime.now(datetime.UTC).strftime("%Y-%m-%d")]
 
     def get_archive_articles(
         self,
@@ -1322,7 +1322,7 @@ class ArticleRepository:
     ) -> Dict[str, Any]:
         """Fetch articles for the selected archive date with optional category filtering and pagination."""
         available_dates = self.get_available_archive_dates()
-        target_date = date_str or (available_dates[0] if available_dates else datetime.utcnow().strftime("%Y-%m-%d"))
+        target_date = date_str or (available_dates[0] if available_dates else datetime.now(datetime.UTC).strftime("%Y-%m-%d"))
 
         query = apply_public_content_filter(
             self.session.query(Article).options(joinedload(Article.images))
@@ -1422,7 +1422,7 @@ class ScrapeLogRepository:
         """Complete a scrape log."""
         log = self.session.query(ScrapeLog).filter(ScrapeLog.id == log_id).first()
         if log:
-            log.end_time = datetime.utcnow()
+            log.end_time = datetime.now(datetime.UTC)
             log.articles_found = articles_found
             log.articles_saved = articles_saved
             log.images_downloaded = images_downloaded
@@ -1662,7 +1662,7 @@ class SiteConfigRepository:
         record = self.session.query(SiteConfig).filter(SiteConfig.key == key).first()
         if record:
             record.value = value
-            record.updated_at = datetime.utcnow()
+            record.updated_at = datetime.now(datetime.UTC)
         else:
             record = SiteConfig(key=key, value=value)
             self.session.add(record)
@@ -1685,7 +1685,7 @@ class SiteConfigRepository:
             "social_dispatch_enabled": True,
             "strict_mode": False,
             "policy_name": "স্ট্যান্ডার্ড সহনশীলতা গেট (<= ৫০% ফেক অনুমোদিত)",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(datetime.UTC).isoformat(),
         }
         return self.get_config("automation_fake_news_policy", default_policy)
 
@@ -1693,7 +1693,7 @@ class SiteConfigRepository:
         """Update and persist AI Fake News & Fact-Checking tolerance policy."""
         current = self.get_fake_news_policy()
         current.update(policy_data)
-        current["updated_at"] = datetime.utcnow().isoformat()
+        current["updated_at"] = datetime.now(datetime.UTC).isoformat()
         self.set_config("automation_fake_news_policy", current)
         return current
 
@@ -1708,14 +1708,14 @@ class SiteConfigRepository:
             "translate_to_bangla": True,
             "max_items_per_cycle": 10,
             "category": "general",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(datetime.UTC).isoformat(),
         }
         return self.get_config("auto_scroller", default_cfg)
 
     def update_auto_scroller_config(self, data: Dict[str, Any]) -> Dict[str, Any]:
         current = self.get_auto_scroller_config()
         current.update(data)
-        current["updated_at"] = datetime.utcnow().isoformat()
+        current["updated_at"] = datetime.now(datetime.UTC).isoformat()
         self.set_config("auto_scroller", current)
         return current
 
@@ -2310,7 +2310,7 @@ class SecurityRepository:
         """Add or update an IP address on the blacklist with optional expiration."""
         ip_clean = ip_address.strip()
         from datetime import timedelta
-        expires_at = datetime.utcnow() + timedelta(hours=duration_hours) if duration_hours else None
+        expires_at = datetime.now(datetime.UTC) + timedelta(hours=duration_hours) if duration_hours else None
 
         existing = self.session.query(BlockedIP).filter(BlockedIP.ip_address == ip_clean).first()
         if existing:
@@ -2347,7 +2347,7 @@ class SecurityRepository:
         if not record:
             return False
 
-        if record.expires_at and record.expires_at <= datetime.utcnow():
+        if record.expires_at and record.expires_at <= datetime.now(datetime.UTC):
             self.session.delete(record)
             self.session.flush()
             return False
@@ -2356,7 +2356,7 @@ class SecurityRepository:
 
     def prune_expired_blocks(self) -> int:
         """Remove expired IP blacklist records from the database."""
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         expired = self.session.query(BlockedIP).filter(BlockedIP.expires_at != None, BlockedIP.expires_at <= now).all()
         count = len(expired)
         for r in expired:
@@ -2545,7 +2545,7 @@ class BlockchainLedgerRepository:
             content_text=article.content_text,
             author=article.author,
             prev_block_hash=prev_hash,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(datetime.UTC),
         )
 
         if existing_block:
@@ -2601,7 +2601,7 @@ class BlockchainLedgerRepository:
             else:
                 blk.prev_block_hash = prev_hash
 
-            ts_str = blk.timestamp.isoformat() if blk.timestamp else datetime.utcnow().isoformat()
+            ts_str = blk.timestamp.isoformat() if blk.timestamp else datetime.now(datetime.UTC).isoformat()
             blk.block_hash = BlockchainLedgerEngine.calculate_block_hash(
                 block_number=idx,
                 article_id=blk.article_id or 0,
@@ -2778,7 +2778,7 @@ class AIBrainRuleRepository:
         rule.auto_broadcast_social = bool(auto_broadcast_social)
         rule.custom_prompt_rules = custom_prompt_rules.strip() if custom_prompt_rules else ""
         rule.is_active = bool(is_active)
-        rule.updated_at = datetime.utcnow()
+        rule.updated_at = datetime.now(datetime.UTC)
 
         self.session.flush()
         return rule
@@ -2788,7 +2788,7 @@ class AIBrainRuleRepository:
         rule = self.get_rule_by_id(rule_id)
         if rule:
             rule.is_active = not bool(rule.is_active)
-            rule.updated_at = datetime.utcnow()
+            rule.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return rule.is_active
         return False
@@ -2912,7 +2912,7 @@ class SocialChannelRepository:
         channel.is_primary = bool(is_primary)
         channel.failover_account_id = failover_account_id if failover_account_id else None
         channel.status = "HEALTHY"
-        channel.updated_at = datetime.utcnow()
+        channel.updated_at = datetime.now(datetime.UTC)
 
         self.session.flush()
         return channel
@@ -2922,7 +2922,7 @@ class SocialChannelRepository:
         channel = self.get_channel_by_id(channel_id)
         if channel:
             channel.is_active = not bool(channel.is_active)
-            channel.updated_at = datetime.utcnow()
+            channel.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return channel.is_active
         return False
@@ -2944,7 +2944,7 @@ class SocialChannelRepository:
 
         channel.status = "RESTRICTED"
         channel.last_error_message = error_message
-        channel.updated_at = datetime.utcnow()
+        channel.updated_at = datetime.now(datetime.UTC)
         self.session.flush()
 
         logger.warning(f"Social channel #{channel.id} ({channel.account_name}) marked as RESTRICTED. Error: {error_message}")
@@ -2967,7 +2967,7 @@ class SocialChannelRepository:
             channel.status = "HEALTHY"
             channel.last_error_message = None
             channel.is_active = True
-            channel.updated_at = datetime.utcnow()
+            channel.updated_at = datetime.now(datetime.UTC)
             self.session.flush()
             return channel
         return None
@@ -2977,7 +2977,7 @@ class SocialChannelRepository:
         channel = self.get_channel_by_id(channel_id)
         if channel:
             channel.total_posts_dispatched = (channel.total_posts_dispatched or 0) + 1
-            channel.last_post_at = datetime.utcnow()
+            channel.last_post_at = datetime.now(datetime.UTC)
             if channel.status != "BACKUP_ACTIVE":
                 channel.status = "HEALTHY"
             self.session.flush()
@@ -3005,7 +3005,7 @@ class SocialChannelRepository:
             dispatch_status=dispatch_status,
             response_data=response_data or {},
             error_message=error_message,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(datetime.UTC),
         )
         self.session.add(log)
         self.session.flush()
@@ -3177,8 +3177,8 @@ class DataCenterRepository:
         provider.sync_mode = sync_mode.strip().upper()
         provider.is_active = bool(is_active)
         provider.is_primary = bool(is_primary)
-        provider.last_health_check = datetime.utcnow()
-        provider.updated_at = datetime.utcnow()
+        provider.last_health_check = datetime.now(datetime.UTC)
+        provider.updated_at = datetime.now(datetime.UTC)
 
         self.session.flush()
         return provider
@@ -3343,8 +3343,8 @@ class DataCenterRepository:
         node.is_active = bool(is_active)
         node.is_current_primary = bool(is_current_primary)
         node.auto_failover_priority = int(auto_failover_priority)
-        node.last_heartbeat = datetime.utcnow()
-        node.updated_at = datetime.utcnow()
+        node.last_heartbeat = datetime.now(datetime.UTC)
+        node.updated_at = datetime.now(datetime.UTC)
 
         self.session.flush()
         return node
@@ -3378,7 +3378,7 @@ class DataCenterRepository:
             node.is_current_primary = True
             node.is_active = True
             node.replication_status = "SYNCED"
-            node.last_heartbeat = datetime.utcnow()
+            node.last_heartbeat = datetime.now(datetime.UTC)
             self.session.flush()
             return True
         return False
@@ -3389,7 +3389,7 @@ class DataCenterRepository:
         if node:
             node.replication_status = status
             node.latency_ms = round(latency_ms, 2)
-            node.last_heartbeat = datetime.utcnow()
+            node.last_heartbeat = datetime.now(datetime.UTC)
             self.session.flush()
             return node
         return None
@@ -3484,7 +3484,7 @@ class DataCenterRepository:
             is_encrypted=is_encrypted,
             encryption_algorithm=encryption_algorithm,
             status=status,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(datetime.UTC),
         )
         self.session.add(rec)
         self.session.flush()
@@ -3525,7 +3525,7 @@ class DataCenterRepository:
             actor=actor,
             metadata_json=metadata_json or {},
             ip_address=ip_address,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(datetime.UTC),
         )
         self.session.add(log)
         self.session.flush()
@@ -3603,7 +3603,7 @@ class OtpRepository:
         return otp
 
     def purge_expired(self) -> int:
-        cutoff = datetime.utcnow()
+        cutoff = datetime.now(datetime.UTC)
         deleted = (
             self.session.query(OtpCode)
             .filter(OtpCode.expires_at < cutoff)
@@ -3744,7 +3744,7 @@ class PaymentRepository:
     ) -> UserSubscription:
         from datetime import timedelta
 
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         days = duration_days or plan.duration_days or 30
         sub = UserSubscription(
             user_id=user_id,
@@ -3764,7 +3764,7 @@ class PaymentRepository:
             .filter(
                 UserSubscription.user_id == user_id,
                 UserSubscription.status == "active",
-                UserSubscription.expires_at > datetime.utcnow(),
+                UserSubscription.expires_at > datetime.now(datetime.UTC),
             )
             .order_by(UserSubscription.expires_at.desc())
             .first()

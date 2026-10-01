@@ -113,7 +113,7 @@ class TopicModelOptimizer:
         if not self.routing_manifest_path.exists():
             default_manifest = {
                 "version": "2.5",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(datetime.UTC).isoformat(),
                 "default_topic": "politics",
                 "submodels": {},
             }
@@ -130,7 +130,7 @@ class TopicModelOptimizer:
                     "latency_ms": 14.2,
                     "bleu_score": 38.4,
                     "is_active": (topic_id == "politics"),
-                    "updated_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.now(datetime.UTC).isoformat(),
                 }
             safe_write_json(self.routing_manifest_path, default_manifest)
 
@@ -158,7 +158,7 @@ class TopicModelOptimizer:
                 "latency_ms": meta.get("latency_ms", 14.2),
                 "bleu_score": meta.get("bleu_score", 38.4),
                 "is_active": meta.get("is_active", False),
-                "updated_at": meta.get("updated_at", datetime.utcnow().isoformat()),
+                "updated_at": meta.get("updated_at", datetime.now(datetime.UTC).isoformat()),
             }
             result.append(merged)
         return result
@@ -206,7 +206,7 @@ class TopicModelOptimizer:
             "topic_specialization": topic_id,
             "topic_name_bn": defn["name_bn"],
             "keywords": defn["keywords"],
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(datetime.UTC).isoformat(),
         }
         safe_write_json(target_dir / "adapter_config.json", adapter_config)
 
@@ -222,7 +222,7 @@ class TopicModelOptimizer:
             "latency_ms": round(12.5 + (rank * 0.25), 1),
             "bleu_score": round(37.5 + (rank * 0.3), 1),
             "status": "ready",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(datetime.UTC).isoformat(),
         }
         safe_write_json(target_dir / "topic_metadata.json", topic_meta)
 
@@ -242,7 +242,7 @@ class TopicModelOptimizer:
             "latency_ms": topic_meta["latency_ms"],
             "bleu_score": topic_meta["bleu_score"],
             "is_active": manifest["submodels"].get(topic_id, {}).get("is_active", False),
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(datetime.UTC).isoformat(),
         }
         safe_write_json(self.routing_manifest_path, manifest)
 
@@ -333,7 +333,7 @@ class TopicModelOptimizer:
             "accuracy_retention_percent": retention_score,
             "bangla_bleu_score": round(39.2 * (retention_score / 100.0), 1),
             "output_directory": str(out_dir),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
         }
 
         # Save manifest inside the optimized directory
@@ -363,7 +363,7 @@ class TopicModelOptimizer:
             "system_ram_mb": 420.0,
             "bangla_perplexity": 5.82,
             "bangla_bleu": 38.6,
-            "evaluated_at": datetime.utcnow().isoformat(),
+            "evaluated_at": datetime.now(datetime.UTC).isoformat(),
         }
 
     def deploy_to_newsroom(self, model_id: str, model_type: str = "topic_submodel") -> Dict[str, Any]:
@@ -373,7 +373,7 @@ class TopicModelOptimizer:
         manifest = {
             "active_model_id": model_id,
             "model_type": model_type,
-            "deployed_at": datetime.utcnow().isoformat(),
+            "deployed_at": datetime.now(datetime.UTC).isoformat(),
             "status": "online",
             "engine": "WebCreoling AI Newsroom Core v2.5",
         }

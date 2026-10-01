@@ -123,7 +123,7 @@ class SemanticFidelity:
             "threshold": applicable_threshold,
             "embedding_threshold": embedding_threshold,
             "passed": bool(passed),
-            "measured_at": datetime.utcnow().isoformat(),
+            "measured_at": datetime.now(datetime.UTC).isoformat(),
         }
         if not passed:
             logger.warning(

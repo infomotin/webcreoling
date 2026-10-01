@@ -45,7 +45,7 @@ class TrainingJobManager:
         """
         Launch an asynchronous training job and return the job_id.
         """
-        job_id = f"job_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+        job_id = f"job_{datetime.now(datetime.UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
         total_steps = epochs * 10  # 10 progress step checkpoints per epoch
 
         job_state = {
@@ -70,13 +70,13 @@ class TrainingJobManager:
             "learning_rate": learning_rate,
             "selected_tasks": selected_tasks or ["categorize", "headline", "summarize", "ner"],
             "use_scraped_knowledge": use_scraped_knowledge,
-            "start_time": datetime.utcnow().isoformat(),
+            "start_time": datetime.now(datetime.UTC).isoformat(),
             "end_time": None,
             "step_history": [],
             "logs": [
-                f"[{datetime.utcnow().strftime('%H:%M:%S')}] 🚀 Training worker initialized (Job ID: {job_id})",
-                f"[{datetime.utcnow().strftime('%H:%M:%S')}] 🎯 Target Domain: {topic or 'Multi-Task News'} | Epochs: {epochs} | Rank: {lora_r}",
-                f"[{datetime.utcnow().strftime('%H:%M:%S')}] 🧠 Base Model: {base_model or settings.BASE_MODEL_NAME} (PyTorch CPU Engine)",
+                f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 🚀 Training worker initialized (Job ID: {job_id})",
+                f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 🎯 Target Domain: {topic or 'Multi-Task News'} | Epochs: {epochs} | Rank: {lora_r}",
+                f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 🧠 Base Model: {base_model or settings.BASE_MODEL_NAME} (PyTorch CPU Engine)",
             ],
         }
 
@@ -111,7 +111,7 @@ class TrainingJobManager:
             if job_id in cls._active_jobs:
                 cls._active_jobs[job_id]["status"] = "cancelled"
                 cls._active_jobs[job_id]["logs"].append(
-                    f"[{datetime.utcnow().strftime('%H:%M:%S')}] 🛑 Job cancelled by operator request."
+                    f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 🛑 Job cancelled by operator request."
                 )
                 logger.info(f"Training job '{job_id}' marked as cancelled.")
                 return True
@@ -150,8 +150,8 @@ class TrainingJobManager:
             initial_val_loss = 3.65
             current_lr = job["learning_rate"]
 
-            job["logs"].append(f"[{datetime.utcnow().strftime('%H:%M:%S')}] 📂 Loading tokenized dataset & applying padding masks...")
-            job["logs"].append(f"[{datetime.utcnow().strftime('%H:%M:%S')}] ⚡ LoRA low-rank adapter injected (Trainable params: ~1.2M, 98.1% memory reduction)...")
+            job["logs"].append(f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 📂 Loading tokenized dataset & applying padding masks...")
+            job["logs"].append(f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] ⚡ LoRA low-rank adapter injected (Trainable params: ~1.2M, 98.1% memory reduction)...")
 
             for step in range(1, total_steps + 1):
                 # Check cancellation
@@ -201,7 +201,7 @@ class TrainingJobManager:
                     # Periodic step logs
                     if step == 1 or step % 5 == 0 or step == total_steps:
                         job["logs"].append(
-                            f"[{datetime.utcnow().strftime('%H:%M:%S')}] 📊 Epoch {current_epoch}/{epochs} (Step {step}/{total_steps}) | "
+                            f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 📊 Epoch {current_epoch}/{epochs} (Step {step}/{total_steps}) | "
                             f"Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Acc: {accuracy}% | Speed: {tokens_per_sec} tok/s"
                         )
 
@@ -210,9 +210,9 @@ class TrainingJobManager:
                 job["status"] = "completed"
                 job["percent"] = 100.0
                 job["eta_seconds"] = 0
-                job["end_time"] = datetime.utcnow().isoformat()
-                job["logs"].append(f"[{datetime.utcnow().strftime('%H:%M:%S')}] 💾 Final specialized LoRA weights serialized & saved to disk.")
-                job["logs"].append(f"[{datetime.utcnow().strftime('%H:%M:%S')}] ✅ Multi-task fine-tuning completed successfully! (Final Loss: {train_loss:.4f})")
+                job["end_time"] = datetime.now(datetime.UTC).isoformat()
+                job["logs"].append(f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] 💾 Final specialized LoRA weights serialized & saved to disk.")
+                job["logs"].append(f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] ✅ Multi-task fine-tuning completed successfully! (Final Loss: {train_loss:.4f})")
 
             cls._persist_job(job)
             logger.info(f"Training job '{job_id}' finished successfully with Loss: {train_loss:.4f}.")
@@ -222,7 +222,7 @@ class TrainingJobManager:
             with cls._lock:
                 if job_id in cls._active_jobs:
                     cls._active_jobs[job_id]["status"] = "failed"
-                    cls._active_jobs[job_id]["logs"].append(f"[{datetime.utcnow().strftime('%H:%M:%S')}] ❌ Training error: {e}")
+                    cls._active_jobs[job_id]["logs"].append(f"[{datetime.now(datetime.UTC).strftime('%H:%M:%S')}] ❌ Training error: {e}")
                     cls._persist_job(cls._active_jobs[job_id])
 
     @classmethod

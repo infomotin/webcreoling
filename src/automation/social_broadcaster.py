@@ -86,7 +86,7 @@ class FacebookPagePublisher:
                 "id": simulated_post_id,
                 "status": "published",
                 "simulated": True,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(datetime.UTC).isoformat(),
             }
 
         url = f"{cls.GRAPH_API_URL}/{page_id}/feed"

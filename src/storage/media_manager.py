@@ -36,7 +36,7 @@ class MediaManager:
         data/images/<source>/<YYYY-MM>/<sha256_hash>.<ext>
         """
         source_clean = sanitize_filename(source.lower(), max_length=30)
-        date_folder = (pub_date or datetime.utcnow()).strftime("%Y-%m")
+        date_folder = (pub_date or datetime.now(datetime.UTC)).strftime("%Y-%m")
         target_dir = self.base_dir / source_clean / date_folder
         target_dir.mkdir(parents=True, exist_ok=True)
 

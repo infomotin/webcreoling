@@ -25,7 +25,7 @@ class AsyncTask:
         self.description = description
         self.status = "QUEUED"  # 'QUEUED', 'RUNNING', 'SUCCESS', 'FAILED'
         self.progress_pct = 0
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(datetime.UTC)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
         self.log_lines: List[str] = []
@@ -37,7 +37,7 @@ class AsyncTask:
     def add_log(self, text: str) -> None:
         """Add timestamped log entry."""
         with self._lock:
-            ts = datetime.utcnow().strftime("%H:%M:%S")
+            ts = datetime.now(datetime.UTC).strftime("%H:%M:%S")
             self.log_lines.append(f"[{ts}] {text}")
             if len(self.log_lines) > 200:
                 self.log_lines = self.log_lines[-200:]
@@ -54,7 +54,7 @@ class AsyncTask:
         with self._lock:
             elapsed = 0.0
             if self.started_at:
-                end_time = self.completed_at or datetime.utcnow()
+                end_time = self.completed_at or datetime.now(datetime.UTC)
                 elapsed = (end_time - self.started_at).total_seconds()
 
             return {
@@ -110,7 +110,7 @@ class AsyncTaskManager:
             self.tasks[task_id] = task
 
         def _runner():
-            task.started_at = datetime.utcnow()
+            task.started_at = datetime.now(datetime.UTC)
             task.status = "RUNNING"
             task.add_log(f"Started job: {title}")
             logger.info(f"[Task {task_id}] Running: {title}")
@@ -128,7 +128,7 @@ class AsyncTaskManager:
                 task.add_log(f"Task encountered error: {e}")
                 logger.error(f"[Task {task_id}] Failed: {e}", exc_info=True)
             finally:
-                task.completed_at = datetime.utcnow()
+                task.completed_at = datetime.now(datetime.UTC)
 
         self.executor.submit(_runner)
         return task

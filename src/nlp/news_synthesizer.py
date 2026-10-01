@@ -530,5 +530,5 @@ class AINewsSynthesizerAndParaphraser:
             "key_takeaways": key_takeaways,
             "core_facts": core_facts,
             "fact_check_report": fact_check,
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(datetime.UTC).isoformat(),
         }

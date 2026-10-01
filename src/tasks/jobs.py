@@ -66,7 +66,7 @@ def fact_check_reaudit_task(limit: int = 20) -> str:
                         "combined_confidence": result.get("combined_confidence"),
                         "strategy": result.get("strategy"),
                         "flags": result.get("flags"),
-                        "at": datetime.utcnow().isoformat(),
+                        "at": datetime.now(datetime.UTC).isoformat(),
                     }
                     art.extracted_entities = entities
                     audited += 1

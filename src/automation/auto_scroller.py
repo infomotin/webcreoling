@@ -306,7 +306,7 @@ class AutoScroller:
             "extracted_entities": processed.get("extracted_entities"),
             "is_breaking": processed.get("is_breaking", False),
             "is_featured": processed.get("is_featured", False),
-            "processed_at": datetime.utcnow().isoformat(),
+            "processed_at": datetime.now(datetime.UTC).isoformat(),
         }
         session.flush()
 
@@ -380,7 +380,7 @@ class AutoScroller:
                 img_meta = MediaManager().download_and_store_image(
                     image_url=item.image_url,
                     source=item.source_name or "auto_scroller",
-                    pub_date=datetime.utcnow(),
+                    pub_date=datetime.now(datetime.UTC),
                 )
                 if img_meta and img_meta.get("local_path"):
                     image_path = img_meta["local_path"]
@@ -432,7 +432,7 @@ class AutoScroller:
                 "original_source_url": item.source_url,
                 "related_article_ids": related_ids,
                 "publisher": "The Daily AI Alo (publisher credit; original byline/source preserved)",
-                "published_at": datetime.utcnow().isoformat(),
+                "published_at": datetime.now(datetime.UTC).isoformat(),
             },
         }
         item.article_id = article.id

@@ -65,6 +65,16 @@ class Article(Base):
     display_order = Column(Integer, default=0, index=True)  # Priority: 1 = Top, 2, 3...
     is_pinned = Column(Boolean, default=False, index=True)
 
+    # SEO friendly public permalink slug (e.g. "1602-dhaka-fire-incident")
+    slug = Column(String(250), unique=True, nullable=True, index=True)
+
+    # Attached video: external embed (YouTube/vimeo link) or a small uploaded file
+    video_type = Column(String(20), default="NONE", index=True)  # 'NONE' | 'EMBED' | 'UPLOAD'
+    video_url = Column(String(1000), nullable=True)   # YouTube / Vimeo / embed URL
+    video_path = Column(String(1000), nullable=True)  # relative path of an uploaded file
+    video_caption = Column(String(255), nullable=True)
+
+
     # Blockchain Cryptographic Ledger Verification
     block_number = Column(Integer, nullable=True, index=True)
     block_hash = Column(String(64), nullable=True, index=True)
@@ -120,6 +130,11 @@ class Article(Base):
             "position_placement": self.position_placement or "STANDARD",
             "display_order": self.display_order or 0,
             "is_pinned": self.is_pinned or False,
+            "slug": self.slug,
+            "video_type": self.video_type or "NONE",
+            "video_url": self.video_url,
+            "video_path": self.video_path,
+            "video_caption": self.video_caption,
             "title": self.title,
             "author": self.author,
             "published_at": self.published_at.isoformat() if self.published_at else None,
@@ -281,6 +296,30 @@ class ArticleLike(Base):
     article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False, index=True)
     voter_ip = Column(String(100), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ArticleComment(Base):
+    """Reader comments on a published post. Only registered users may comment."""
+    __tablename__ = "article_comments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    author_name = Column(String(120), nullable=False)
+    body = Column(Text, nullable=False)
+    status = Column(String(20), default="visible", index=True)  # 'visible' | 'hidden' | 'spam'
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "article_id": self.article_id,
+            "user_id": self.user_id,
+            "author_name": self.author_name,
+            "body": self.body,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
 
 class ScrapeLog(Base):

@@ -6,6 +6,8 @@ Security Audit Logs, Server & Health Monitoring, AI Pilot Mode).
 """
 
 from datetime import datetime
+import os
+import uuid
 from typing import Optional
 from flask import (
     Blueprint,
@@ -17,6 +19,7 @@ from flask import (
     jsonify,
     session as flask_session,
 )
+from config.settings import settings
 from src.storage.database import get_db_session
 from src.storage.models import Article
 from src.storage.repositories import (
@@ -280,6 +283,50 @@ def newspaper_management_view():
         )
 
 
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".ogg", ".mov", ".m4v"}
+MAX_VIDEO_BYTES = 24 * 1024 * 1024  # keep uploads small (24 MB)
+
+
+def _handle_video_upload():
+    """
+    Read the post-video part of the editor form.
+    Returns (video_type, video_url, video_path, error_message, raw_select).
+    """
+    raw_select = (request.form.get("video_type") or "NONE").strip().upper()
+    video_type = raw_select
+    video_url = (request.form.get("video_url") or "").strip()
+    video_path = ""
+
+    upload = request.files.get("video_file")
+    if upload and upload.filename:
+        ext = os.path.splitext(upload.filename)[1].lower()
+        if ext not in ALLOWED_VIDEO_EXTENSIONS:
+            return "NONE", "", "", f"ভিডিও ফরম্যাট অনুমোদিত নয় ({ext}). চলুক: mp4, webm, ogg, mov", raw_select
+        try:
+            data = upload.read()
+        except Exception:
+            return "NONE", "", "", "ভিডিও ফাইল পড়া যায়নি / Could not read the video file.", raw_select
+        if not data:
+            return "NONE", "", "", "ভিডিও ফাইল খালি / The video file is empty.", raw_select
+        if len(data) > MAX_VIDEO_BYTES:
+            mb = round(len(data) / (1024 * 1024), 1)
+            limit_mb = MAX_VIDEO_BYTES // (1024 * 1024)
+            return "NONE", "", "", f"ভিডিও খুব বড় ({mb} MB). সর্বোচ্চ {limit_mb} MB ছোট ভিডিও সরাসরি আপলোড করা যাবে.", raw_select
+
+        settings.VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+        filename = f"post_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}{ext}"
+        destination = settings.VIDEOS_DIR / filename
+        destination.write_bytes(data)
+        video_path = f"data/videos/{filename}"
+        return "UPLOAD", "", video_path, None, raw_select
+
+    if video_url:
+        video_type = "EMBED"
+    elif raw_select != "UPLOAD":
+        video_type = "NONE"
+    return video_type, video_url, "", None, raw_select
+
+
 @admin_bp.route("/newspaper/article/create", methods=["POST"])
 @login_required
 @roles_required("admin", "editor")
@@ -304,7 +351,12 @@ def create_article():
     scheduled_at = parse_iso_datetime(scheduled_at_raw)
 
     if not title or not content_text:
-        flash("সংবাদের শিরোনাম এবং বিস্তারিত বিবরণ দেওয়া আবশ্যক।", "warning")
+        flash("সংবাদের শিরোনাম এবং বিস্তারিত বিবরণ দেওয়া আবশ্যক।", "warning")
+        return redirect(url_for("admin.newspaper_management_view"))
+
+    video_type, video_url, video_path, video_error, _raw_select = _handle_video_upload()
+    if video_error:
+        flash(video_error, "warning")
         return redirect(url_for("admin.newspaper_management_view"))
 
     with get_db_session() as session:
@@ -329,6 +381,10 @@ def create_article():
             position_placement=position_placement,
             display_order=display_order,
             is_pinned=is_pinned,
+            video_type=video_type,
+            video_url=video_url,
+            video_path=video_path,
+            video_caption=(request.form.get("video_caption") or "").strip() or None,
         )
 
         audit_repo.log_action(
@@ -384,6 +440,20 @@ def edit_article(article_id: int):
     scheduled_at_raw = request.form.get("scheduled_at", "").strip()
     scheduled_at = parse_iso_datetime(scheduled_at_raw)
 
+    video_type, video_url, video_path, video_error, raw_select = _handle_video_upload()
+    if video_error:
+        flash(video_error, "warning")
+        return redirect(url_for("admin.newspaper_management_view"))
+
+    if video_path:
+        edit_video_type, edit_video_url, edit_video_path = "UPLOAD", "", video_path
+    elif video_url:
+        edit_video_type, edit_video_url, edit_video_path = "EMBED", video_url, ""
+    elif raw_select == "UPLOAD":
+        edit_video_type = edit_video_url = edit_video_path = None  # keep stored upload
+    else:
+        edit_video_type, edit_video_url, edit_video_path = "NONE", "", ""
+
     with get_db_session() as session:
         repo = ArticleRepository(session)
         audit_repo = AuditLogRepository(session)
@@ -402,12 +472,16 @@ def edit_article(article_id: int):
             status=status,
             scheduled_at=scheduled_at,
             original_source_url=original_source_url if original_source_url is not None else None,
-            source_status=source_status if source_status else None,
+            source_status=source_status if source_status is not None else None,
             source_removed_notice=source_removed_notice if source_removed_notice is not None else None,
-            creation_origin=creation_origin if creation_origin else None,
-            position_placement=position_placement if position_placement else None,
+            creation_origin=creation_origin if creation_origin is not None else None,
+            position_placement=position_placement if position_placement is not None else None,
             display_order=display_order,
             is_pinned=is_pinned,
+            video_type=edit_video_type,
+            video_url=edit_video_url,
+            video_path=edit_video_path,
+            video_caption=(request.form.get("video_caption") or "").strip() or None,
         )
         if updated:
             audit_repo.log_action(

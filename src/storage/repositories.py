@@ -11,9 +11,11 @@ from config.settings import settings
 from sqlalchemy.orm import Session, joinedload
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
+from src.common.seo import build_post_slug, embeddable_video_url, parse_post_slug, slugify
 from src.storage.models import (
     Article,
     ArticleImage,
+    ArticleComment,
     ScrapeLog,
     Poll,
     PollOption,
@@ -109,6 +111,77 @@ class ArticleRepository:
             .first()
         )
 
+    def get_by_slug(self, post_slug: str) -> Optional[Article]:
+        """Fetch article by its canonical SEO slug (accepts a bare id too)."""
+        if not post_slug:
+            return None
+        article = (
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.slug == post_slug.strip())
+            .first()
+        )
+        if article:
+            return article
+        article_id = parse_post_slug(post_slug)
+        return self.get_by_id(article_id) if article_id else None
+
+    def ensure_slug(self, article: Article) -> str:
+        """Backfill the SEO permalink slug for rows created before slugs existed."""
+        if not article:
+            return ""
+        if not article.slug:
+            article.slug = build_post_slug(article.id, article.title)
+            self.session.flush()
+        return article.slug
+
+    # ------------------------------------------------------------------
+    # Reader comments (registered users only)
+    # ------------------------------------------------------------------
+    def add_comment(self, article_id: int, user_id: Optional[int], author_name: str, body: str) -> ArticleComment:
+        """Store a reader comment on a post."""
+        comment = ArticleComment(
+            article_id=article_id,
+            user_id=user_id,
+            author_name=(author_name or "পাঠক").strip()[:120],
+            body=(body or "").strip(),
+            status="visible",
+        )
+        self.session.add(comment)
+        self.session.flush()
+        return comment
+
+    def list_comments(
+        self,
+        article_id: int,
+        limit: int = 100,
+        include_hidden: bool = False,
+    ) -> List[ArticleComment]:
+        """Comments for a post, oldest first."""
+        query = self.session.query(ArticleComment).filter(ArticleComment.article_id == article_id)
+        if not include_hidden:
+            query = query.filter(ArticleComment.status == "visible")
+        return query.order_by(ArticleComment.created_at.asc(), ArticleComment.id.asc()).limit(limit).all()
+
+    def count_comments(self, article_id: int) -> int:
+        return (
+            self.session.query(func.count(ArticleComment.id))
+            .filter(ArticleComment.article_id == article_id, ArticleComment.status == "visible")
+            .scalar()
+            or 0
+        )
+
+    def delete_comment(self, comment_id: int, user_id: Optional[int] = None, force: bool = False) -> bool:
+        """Delete own comment (or any comment when force=True for moderators)."""
+        comment = self.session.query(ArticleComment).filter(ArticleComment.id == comment_id).first()
+        if not comment:
+            return False
+        if not force and (user_id is None or comment.user_id != user_id):
+            return False
+        self.session.delete(comment)
+        self.session.flush()
+        return True
+
     def get_all(
         self,
         status: Optional[str] = None,
@@ -191,6 +264,10 @@ class ArticleRepository:
             )
             self.session.add(article)
             self.session.flush()  # populate article.id
+
+        # SEO friendly permalink slug
+        if not article.slug:
+            article.slug = build_post_slug(article.id, article.title)
 
         # Attach images
         if image_records:
@@ -584,6 +661,10 @@ class ArticleRepository:
         position_placement: str = "STANDARD",
         display_order: int = 0,
         is_pinned: bool = False,
+        video_type: str = "NONE",
+        video_url: Optional[str] = None,
+        video_path: Optional[str] = None,
+        video_caption: Optional[str] = None,
     ) -> Article:
         """Create and publish a new article directly from the editorial desk."""
         import uuid
@@ -633,9 +714,14 @@ class ArticleRepository:
             views_count=0,
             likes_count=0,
             shares_count=0,
+            video_type=(video_type or "NONE").upper() if (video_type or "NONE").upper() in ("NONE", "EMBED", "UPLOAD") else "NONE",
+            video_url=(video_url or "").strip() or None,
+            video_path=(video_path or "").strip().lstrip("/") or None,
+            video_caption=(video_caption or "").strip() or None,
         )
         self.session.add(article)
         self.session.flush()
+        article.slug = build_post_slug(article.id, article.title)
 
         if image_path and image_path.strip():
             clean_path = image_path.strip().lstrip("/")
@@ -681,6 +767,10 @@ class ArticleRepository:
         position_placement: Optional[str] = None,
         display_order: Optional[int] = None,
         is_pinned: Optional[bool] = None,
+        video_type: Optional[str] = None,
+        video_url: Optional[str] = None,
+        video_path: Optional[str] = None,
+        video_caption: Optional[str] = None,
     ) -> Optional[Article]:
         """Update an existing article from the editorial desk."""
         import hashlib
@@ -750,6 +840,31 @@ class ArticleRepository:
                     download_status="downloaded",
                 )
                 self.session.add(img_obj)
+
+        # --- attached video (external embed link or a small uploaded file) ---
+        if video_type is not None:
+            normalised = (video_type or "NONE").strip().upper()
+            article.video_type = normalised if normalised in ("NONE", "EMBED", "UPLOAD") else "NONE"
+        if video_url is not None:
+            clean_url = video_url.strip()
+            article.video_url = clean_url or None
+            if clean_url:
+                article.video_type = "EMBED"
+            elif article.video_type == "EMBED" and not article.video_path:
+                article.video_type = "NONE"
+        if video_path is not None:
+            clean_vpath = video_path.strip().lstrip("/")
+            article.video_path = clean_vpath or None
+            if clean_vpath:
+                article.video_type = "UPLOAD"
+            elif article.video_type == "UPLOAD" and not article.video_url:
+                article.video_type = "NONE"
+        if video_caption is not None:
+            article.video_caption = video_caption.strip() or None
+
+        # Keep the SEO permalink in sync with the headline (id prefix never changes)
+        if title is not None:
+            article.slug = build_post_slug(article.id, article.title)
 
         article.updated_at = datetime.utcnow()
         self.session.flush()

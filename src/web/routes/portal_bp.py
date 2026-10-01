@@ -6,10 +6,12 @@ lead hero banners, auto-highlighted articles, opinion polls, likes, social share
 
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from sqlalchemy.orm import joinedload
 from src.storage.database import get_db_session
-from src.storage.models import Article
+from src.storage.models import Article, ArticleComment
+from src.common.seo import build_meta_description, parse_post_slug
+from src.web.auth import login_required, get_current_user
 from src.storage.repositories import (
     ArticleRepository,
     PortalRepository,
@@ -22,6 +24,23 @@ from src.storage.repositories import (
 from src.integrations.live_data_service import get_topbar_data
 
 portal_bp = Blueprint("portal", __name__)
+
+
+def post_url(article) -> str:
+    """SEO friendly permalink for a post (accepts Article, dict or plain id)."""
+    if article is None:
+        return url_for("portal.index_view")
+    if isinstance(article, dict):
+        slug, article_id = article.get("slug"), article.get("id")
+    elif isinstance(article, int):
+        slug, article_id = None, article
+    else:
+        slug, article_id = getattr(article, "slug", None), getattr(article, "id", None)
+    if slug:
+        return url_for("portal.post_view", post_slug=slug)
+    if article_id:
+        return url_for("portal.article_reader_view", article_id=article_id)
+    return url_for("portal.index_view")
 
 
 @portal_bp.context_processor
@@ -43,6 +62,7 @@ def inject_portal_globals():
                 "site_footer": footer,
                 "active_ads": ads,
                 "live_topbar": _safe_topbar(branding),
+                "post_url": post_url,
             }
     except Exception:
         return {
@@ -50,6 +70,7 @@ def inject_portal_globals():
             "site_footer": {},
             "active_ads": {},
             "live_topbar": _safe_topbar({}),
+            "post_url": post_url,
         }
 
 
@@ -303,7 +324,23 @@ def archive_view():
 @portal_bp.route("/article/<int:article_id>")
 @portal_bp.route("/<int:article_id>")
 def article_reader_view(article_id: int):
-    """Render full professional article reader view."""
+    """Render full professional article reader view (legacy /news/<id> permalink)."""
+    return _render_article_view(article_id)
+
+
+@portal_bp.route("/<string:post_slug>")
+def post_view(post_slug: str):
+    """SEO friendly public permalink, e.g. /news/1602-dhaka-fire-incident."""
+    with get_db_session() as session:
+        article = ArticleRepository(session).get_by_slug(post_slug)
+        if not article or not is_public_article(article):
+            abort(404)
+        article_id = article.id
+    return _render_article_view(article_id)
+
+
+def _render_article_view(article_id: int):
+    """Shared article reader renderer (used by both permalink styles)."""
     with get_db_session() as session:
         article_repo = ArticleRepository(session)
         portal_repo = PortalRepository(session)
@@ -326,11 +363,16 @@ def article_reader_view(article_id: int):
             flash("এই নিবন্ধটি আর পাবলিকভাবে উপলব্ধ নয়। / This article is no longer publicly available.", "warning")
             return redirect(url_for("portal.index_view"))
 
+        # SEO permalink backfill for rows created before slugs existed
+        article_repo.ensure_slug(article)
+
         article_repo.increment_views(article_id)
 
         related = article_repo.get_related_articles(article_id, category=article.category, limit=3)
         breaking_news = article_repo.get_breaking_news(limit=5)
         active_poll = portal_repo.get_active_poll()
+        comments = article_repo.list_comments(article_id, limit=100)
+        comment_count = article_repo.count_comments(article_id)
 
         # Cryptographic Blockchain Verification Details
         ledger_repo = BlockchainLedgerRepository(session)
@@ -344,6 +386,10 @@ def article_reader_view(article_id: int):
             active_poll=active_poll.to_dict() if active_poll else None,
             ledger_info=ledger_info,
             is_ledger_verified=is_valid,
+            comments=comments,
+            comment_count=comment_count,
+            canonical_url=url_for("portal.post_view", post_slug=article.slug, _external=True),
+            meta_description=build_meta_description(article.summary, article.content_text),
         )
 
 
@@ -403,6 +449,54 @@ def toggle_like_api(article_id: int):
         repo = ArticleRepository(session)
         result = repo.toggle_like(article_id, voter_ip)
         return jsonify(result)
+
+
+@portal_bp.route("/<int:article_id>/comment", methods=["POST"])
+@login_required
+def add_comment_view(article_id: int):
+    """Post a reader comment — only registered, signed-in users may comment."""
+    body = (request.form.get("body") or "").strip()
+    user = get_current_user()
+
+    if not body:
+        flash("মন্তব্য খালি রাখা যাবে না / Comment cannot be empty.", "warning")
+    elif len(body) > 2000:
+        flash("মন্তব্য ২০০০ অক্ষরের বেশি হতে পারবে না / Comment is limited to 2000 characters.", "warning")
+    else:
+        with get_db_session() as session:
+            repo = ArticleRepository(session)
+            article = repo.get_by_id(article_id)
+            if not article or not is_public_article(article):
+                abort(404)
+            repo.add_comment(
+                article_id=article_id,
+                user_id=getattr(user, "id", None),
+                author_name=getattr(user, "username", None) or "পাঠক",
+                body=body,
+            )
+        flash("আপনার মন্তব্য প্রকাশিত হয়েছে / Your comment has been published.", "success")
+
+    return redirect(url_for("portal.article_reader_view", article_id=article_id) + "#comments")
+
+
+@portal_bp.route("/comment/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def delete_comment_view(comment_id: int):
+    """Delete a comment (own comment, or any comment for editors/admins)."""
+    user = get_current_user()
+    force = bool(user and getattr(user, "role", "") in ("admin", "editor"))
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        comment = repo.session.query(ArticleComment).filter_by(id=comment_id).first()
+        article_id = comment.article_id if comment else None
+        ok = repo.delete_comment(comment_id, user_id=getattr(user, "id", None), force=force)
+    if not ok:
+        flash("মন্তব্যটি মুছে ফেলা যায়নি / Comment could not be deleted.", "warning")
+    else:
+        flash("মন্তব্য মুছে ফেলা হয়েছে / Comment deleted.", "success")
+    if article_id:
+        return redirect(url_for("portal.article_reader_view", article_id=article_id) + "#comments")
+    return redirect(url_for("portal.index_view"))
 
 
 @portal_bp.route("/api/poll/vote", methods=["POST"])

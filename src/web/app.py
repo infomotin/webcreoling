@@ -89,11 +89,13 @@ def create_app(test_config: dict = None) -> Flask:
     def inject_user_and_roles():
         from src.common.i18n import t, tr, get_current_language
         from src.common.site_identity import get_site_identity, get_security_recipient_email
+        from src.web.routes.portal_bp import post_url
         user = get_current_user()
         lang = get_current_language()
 
         return {
             "current_user": user,
+            "post_url": post_url,
             "is_admin": user.role == "admin" if user else False,
             "is_editor": user.role in ["admin", "editor"] if user else False,
             "is_reporter": user.role in ["reporter", "editor", "admin"] if user else False,
@@ -128,6 +130,16 @@ def create_app(test_config: dict = None) -> Flask:
     @app.route("/data/images/<path:filename>")
     def serve_media_images(filename: str):
         return send_from_directory(str(settings.IMAGES_DIR), filename)
+
+    # Route to serve small editor-uploaded post videos (mp4/webm)
+    @app.route("/media/videos/<path:filename>")
+    @app.route("/data/videos/<path:filename>")
+    def serve_media_videos(filename: str):
+        try:
+            settings.VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return send_from_directory(str(settings.VIDEOS_DIR), filename)
 
     # Register Blueprints
     from src.web.routes.auth_bp import auth_bp

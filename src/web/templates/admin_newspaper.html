@@ -1708,7 +1708,7 @@
                                 </form>
                                 {% endif %}
 
-                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}', '{{ art.scheduled_at or "" }}', '{{ (art.original_source_url or art.url) | replace("'", "\\'") }}', '{{ art.creation_origin or "MANUAL" }}', '{{ art.position_placement or "STANDARD" }}', {{ art.display_order or 0 }}, {{ 'true' if art.is_pinned else 'false' }}, '{{ art.source_status or "ACTIVE" }}')" title="সম্পাদনা করুন">
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ art.title | replace("'", "\\'") }}', '{{ art.category }}', '{{ art.author | replace("'", "\\'") }}', '{{ (art.summary or "") | replace("'", "\\'") }}', '{{ (art.content_text or "") | replace("'", "\\'") | replace("\n", "\\n") }}', '{{ art.images[0].local_path if art.images else "" }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ art.scrape_status }}', '{{ art.scheduled_at or "" }}', '{{ (art.original_source_url or art.url) | replace("'", "\\'") }}', '{{ art.creation_origin or "MANUAL" }}', '{{ art.position_placement or "STANDARD" }}', {{ art.display_order or 0 }}, {{ 'true' if art.is_pinned else 'false' }}, '{{ art.source_status or "ACTIVE" }}', '{{ art.video_type or "NONE" }}', '{{ (art.video_url or "") | replace("'", "\\'") }}', '{{ (art.video_caption or "") | replace("'", "\\'") }}')" title="সম্পাদনা করুন">
                                     ✏️ এডিট
                                 </button>
 
@@ -1804,7 +1804,7 @@
                 <button type="button" onclick="closeNewArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
             </div>
             
-            <form method="POST" action="{{ url_for('admin.create_article') }}">
+            <form method="POST" action="{{ url_for('admin.create_article') }}" enctype="multipart/form-data">
                 <div class="nr-modal-body">
                     <div class="nr-form-group">
                         <label class="nr-form-label">সংবাদের শিরোনাম (Headline) *</label>
@@ -1892,6 +1892,33 @@
                             <input type="datetime-local" name="scheduled_at" class="nr-form-control">
                         </div>
                     </div>
+
+                    <!-- 🎬 Post Video: YouTube link or small direct upload -->
+                    <div style="background: #eef2ff; border: 1px dashed #a5b4fc; border-radius: 8px; padding: 1rem; margin-bottom: 0.5rem;">
+                        <span style="font-weight: 800; font-size: 0.88rem; color: #1e1b4b; display: block; margin-bottom: 0.6rem;">
+                            🎬 পোস্ট ভিডিও (Video) — ঐচ্ছিক
+                        </span>
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">ভিডিও টাইপ</label>
+                            <select name="video_type" id="newVideoType" class="nr-form-control" onchange="toggleVideoFields('new')">
+                                <option value="NONE" selected>🚫 কোনো ভিডিও নেই</option>
+                                <option value="EMBED">🔗 YouTube / ভিডিও লিঙ্ক (Embed)</option>
+                                <option value="UPLOAD">📤 সরাসরি আপলোড (ছোট ভিডিও)</option>
+                            </select>
+                        </div>
+                        <div class="nr-form-group" id="newVideoUrlWrap" style="display: none;">
+                            <label class="nr-form-label">YouTube / ভিডিও লিঙ্ক</label>
+                            <input type="url" name="video_url" id="newVideoUrl" class="nr-form-control" placeholder="https://www.youtube.com/watch?v=XXXXXXXXXXX">
+                        </div>
+                        <div class="nr-form-group" id="newVideoFileWrap" style="display: none;">
+                            <label class="nr-form-label">ভিডিও ফাইল (mp4 / webm / ogg / mov — সর্বোচ্চ 24 MB)</label>
+                            <input type="file" name="video_file" id="newVideoFile" class="nr-form-control" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+                        </div>
+                        <div class="nr-form-group" style="margin-bottom: 0;">
+                            <label class="nr-form-label">ভিডিও ক্যাপশন</label>
+                            <input type="text" name="video_caption" class="nr-form-control" placeholder="ভিডিওর নিচে দেখানো ছোট ক্যাপশন (ঐচ্ছিক)">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="nr-modal-footer">
@@ -1920,7 +1947,7 @@
                 <button type="button" onclick="closeEditArticleModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--nr-text-muted);">✕</button>
             </div>
             
-            <form id="editArticleForm" method="POST" action="">
+            <form id="editArticleForm" method="POST" action="" enctype="multipart/form-data">
                 <div class="nr-modal-body">
                     <div class="nr-form-group">
                         <label class="nr-form-label">সংবাদের শিরোনাম</label>
@@ -2006,6 +2033,34 @@
                         <div class="nr-form-group">
                             <label class="nr-form-label">⏱️ নির্ধারিত প্রকাশের সময়সূচী</label>
                             <input type="datetime-local" id="editScheduledAt" name="scheduled_at" class="nr-form-control">
+                        </div>
+                    </div>
+
+                    <!-- 🎬 Post Video: YouTube link or small direct upload -->
+                    <div style="background: #eef2ff; border: 1px dashed #a5b4fc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <span style="font-weight: 800; font-size: 0.88rem; color: #1e1b4b; display: block; margin-bottom: 0.6rem;">
+                            🎬 পোস্ট ভিডিও (Video) — ঐচ্ছিক
+                        </span>
+                        <div class="nr-form-group">
+                            <label class="nr-form-label">ভিডিও টাইপ</label>
+                            <select name="video_type" id="editVideoType" class="nr-form-control" onchange="toggleVideoFields('edit')">
+                                <option value="NONE">🚫 কোনো ভিডিও নেই</option>
+                                <option value="EMBED">🔗 YouTube / ভিডিও লিঙ্ক (Embed)</option>
+                                <option value="UPLOAD">📤 সরাসরি আপলোড (ছোট ভিডিও)</option>
+                            </select>
+                        </div>
+                        <div class="nr-form-group" id="editVideoUrlWrap" style="display: none;">
+                            <label class="nr-form-label">YouTube / ভিডিও লিঙ্ক</label>
+                            <input type="url" name="video_url" id="editVideoUrl" class="nr-form-control" placeholder="https://www.youtube.com/watch?v=XXXXXXXXXXX">
+                        </div>
+                        <div class="nr-form-group" id="editVideoFileWrap" style="display: none;">
+                            <label class="nr-form-label">নতুন ভিডিও ফাইল (mp4 / webm / ogg / mov — সর্বোচ্চ 24 MB)</label>
+                            <input type="file" name="video_file" id="editVideoFile" class="nr-form-control" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+                            <small style="color: #64748b;">ফাইল না দিলে আগের আপলোড করা ভিডিও অক্ষত থাকবে।</small>
+                        </div>
+                        <div class="nr-form-group" style="margin-bottom: 0;">
+                            <label class="nr-form-label">ভিডিও ক্যাপশন</label>
+                            <input type="text" name="video_caption" id="editVideoCaption" class="nr-form-control" placeholder="ভিডিওর নিচে দেখানো ছোট ক্যাপশন (ঐচ্ছিক)">
                         </div>
                     </div>
 
@@ -2114,7 +2169,17 @@ function closeNewArticleModal() {
     document.getElementById('newArticleModal').classList.remove('show');
 }
 
-function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt, originalUrl, origin, placement, displayOrder, isPinned, sourceStatus) {
+function toggleVideoFields(scope) {
+    const sel = document.getElementById(scope + 'VideoType');
+    if (!sel) return;
+    const type = sel.value;
+    const urlWrap = document.getElementById(scope + 'VideoUrlWrap');
+    const fileWrap = document.getElementById(scope + 'VideoFileWrap');
+    if (urlWrap) urlWrap.style.display = (type === 'EMBED') ? '' : 'none';
+    if (fileWrap) fileWrap.style.display = (type === 'UPLOAD') ? '' : 'none';
+}
+
+function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt, originalUrl, origin, placement, displayOrder, isPinned, sourceStatus, videoType, videoUrl, videoCaption) {
     const form = document.getElementById('editArticleForm');
     form.action = `/admin/newspaper/article/edit/${id}`;
 
@@ -2143,6 +2208,14 @@ function openEditArticleModal(id, title, category, author, summary, content, ima
     }
     if (document.getElementById('editSourceStatus')) {
         document.getElementById('editSourceStatus').value = sourceStatus || 'ACTIVE';
+    }
+
+    if (document.getElementById('editVideoType')) {
+        document.getElementById('editVideoType').value = videoType || 'NONE';
+        document.getElementById('editVideoUrl').value = videoUrl || '';
+        document.getElementById('editVideoCaption').value = videoCaption || '';
+        document.getElementById('editVideoFile').value = '';
+        toggleVideoFields('edit');
     }
 
     if (scheduledAt && scheduledAt.length >= 16) {

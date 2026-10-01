@@ -106,6 +106,11 @@ def init_db() -> None:
         "position_placement VARCHAR(50) DEFAULT 'STANDARD'",
         "display_order INTEGER DEFAULT 0",
         "is_pinned BOOLEAN DEFAULT 0",
+        "slug VARCHAR(250)",
+        "video_type VARCHAR(20) DEFAULT 'NONE'",
+        "video_url VARCHAR(1000)",
+        "video_path VARCHAR(1000)",
+        "video_caption VARCHAR(255)",
     ]
     try:
         from sqlalchemy import inspect
@@ -123,6 +128,14 @@ def init_db() -> None:
                             pass
     except Exception as e:
         logger.debug(f"Column migration check note: {e}")
+
+    # Public permalink slug lookup speed-up (safe to run repeatedly)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles (slug);"))
+            conn.commit()
+    except Exception:
+        pass
 
     # Users table column migration (OTP / SMS support)
     try:

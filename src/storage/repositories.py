@@ -11,6 +11,7 @@ from config.settings import settings
 from sqlalchemy.orm import Session, joinedload
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
+from src.common.utils import ensure_utc
 from src.common.seo import build_post_slug, embeddable_video_url, parse_post_slug, slugify
 from src.storage.models import (
     Article,
@@ -670,6 +671,10 @@ class ArticleRepository:
         import uuid
         import hashlib
 
+        # Form-supplied datetimes arrive naive — normalize to aware UTC before
+        # comparing against datetime.now(timezone.utc).
+        scheduled_at = ensure_utc(scheduled_at)
+
         normalized_title = BanglaTextNormalizer.normalize_article_text(title.strip())
         normalized_content = BanglaTextNormalizer.normalize_article_text(content_text.strip())
         slug = uuid.uuid4().hex[:12]
@@ -813,6 +818,7 @@ class ArticleRepository:
         if is_pinned is not None:
             article.is_pinned = is_pinned
         if scheduled_at is not None:
+            scheduled_at = ensure_utc(scheduled_at)
             article.scheduled_at = scheduled_at
             if scheduled_at > datetime.now(timezone.utc):
                 article.scrape_status = "scheduled"

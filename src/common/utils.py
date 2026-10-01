@@ -6,10 +6,31 @@ Image SHA-256 calculation, date parsing (ISO & Bangla), filesystem helpers, and 
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional, Dict
 from src.common.normalizer import BanglaTextNormalizer
+
+
+def utcnow() -> datetime:
+    """Single source of truth for 'now': timezone-aware UTC."""
+    return datetime.now(timezone.utc)
+
+
+def ensure_utc(value: Optional[datetime]) -> Optional[datetime]:
+    """Normalize a datetime to timezone-aware UTC.
+
+    Naive values are interpreted as UTC (the storage convention used for
+    MySQL DATETIME columns and form inputs), aware values are converted.
+    Prevents ``TypeError: can't compare offset-naive and offset-aware
+    datetimes`` at input/DB boundaries. Returns ``None`` unchanged.
+    """
+    if value is None or not isinstance(value, datetime):
+        return value
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
 
 
 def compute_sha256(data: bytes) -> str:

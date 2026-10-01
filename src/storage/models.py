@@ -3,14 +3,14 @@ Database Models for SQLite / SQLAlchemy 2.0.
 Includes Articles, ArticleImages, ScrapeLogs, and SiteConfigs.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy import (
     Column,
     Integer,
     String,
     Text,
-    DateTime,
+    DateTime as SqlaDateTime,
     Boolean,
     ForeignKey,
     JSON,
@@ -18,8 +18,45 @@ from sqlalchemy import (
     Float,
 )
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.types import TypeDecorator
 
 Base = declarative_base()
+
+
+def utcnow() -> datetime:
+    """Timezone-aware UTC "now" used for column defaults and onupdate hooks."""
+    return datetime.now(timezone.utc)
+
+
+class DateTime(TypeDecorator):
+    """Timezone-aware DateTime column backed by a naive-UTC MySQL DATETIME.
+
+    MySQL ``DATETIME`` stores no UTC offset, so values are persisted as naive
+    UTC and re-hydrated as timezone-aware UTC on load. This keeps every
+    Python-side comparison against ``datetime.now(timezone.utc)`` valid and
+    preserves the exact instant across the round-trip (e.g. blockchain block
+    timestamp ISO strings are byte-identical before and after persistence).
+    """
+
+    impl = SqlaDateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        """Store aware datetimes as naive UTC; naive values are already UTC."""
+        if value is None:
+            return None
+        if isinstance(value, datetime) and value.tzinfo is not None:
+            return value.astimezone(timezone.utc).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        """Return loaded datetimes as timezone-aware UTC."""
+        if value is None:
+            return None
+        if isinstance(value, datetime) and value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
+
 
 
 class Article(Base):
@@ -83,8 +120,8 @@ class Article(Base):
     is_ledger_verified = Column(Boolean, default=True)
 
     # Audit timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     # Relationships
     images = relationship("ArticleImage", back_populates="article", cascade="all, delete-orphan")
@@ -176,7 +213,7 @@ class ArticleImage(Base):
     caption = Column(Text, nullable=True)
     is_lead_image = Column(Boolean, default=False, index=True)
     download_status = Column(String(50), default="downloaded")  # 'downloaded', 'failed', 'cached'
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     # Relationships
     article = relationship("Article", back_populates="images")
@@ -219,7 +256,7 @@ class Poll(Base):
     category = Column(String(100), default="national")
     is_active = Column(Boolean, default=True, index=True)
     total_votes = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     # Relationships
     options = relationship("PollOption", back_populates="poll", cascade="all, delete-orphan")
@@ -267,7 +304,7 @@ class PollVote(Base):
     poll_id = Column(Integer, ForeignKey("polls.id", ondelete="CASCADE"), nullable=False, index=True)
     option_id = Column(Integer, ForeignKey("poll_options.id", ondelete="CASCADE"), nullable=False)
     voter_ip = Column(String(100), nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
 
 class NewsletterSubscriber(Base):
@@ -277,7 +314,7 @@ class NewsletterSubscriber(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(150), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True)
-    subscribed_at = Column(DateTime, default=datetime.utcnow)
+    subscribed_at = Column(DateTime, default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -295,7 +332,7 @@ class ArticleLike(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     article_id = Column(Integer, ForeignKey("articles.id", ondelete="CASCADE"), nullable=False, index=True)
     voter_ip = Column(String(100), nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
 
 class ArticleComment(Base):
@@ -308,7 +345,7 @@ class ArticleComment(Base):
     author_name = Column(String(120), nullable=False)
     body = Column(Text, nullable=False)
     status = Column(String(20), default="visible", index=True)  # 'visible' | 'hidden' | 'spam'
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -329,7 +366,7 @@ class ScrapeLog(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     source = Column(String(100), nullable=False, index=True)
     job_type = Column(String(50), default="crawl")
-    start_time = Column(DateTime, default=datetime.utcnow)
+    start_time = Column(DateTime, default=utcnow)
     end_time = Column(DateTime, nullable=True)
     articles_found = Column(Integer, default=0)
     articles_saved = Column(Integer, default=0)
@@ -369,7 +406,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     phone = Column(String(30), nullable=True)  # optional, enables SMS OTP
     is_verified = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     def set_password(self, password: str) -> None:
         """Hash and set user password."""
@@ -411,7 +448,7 @@ class SiteConfig(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     key = Column(String(100), unique=True, nullable=False, index=True)
     value = Column(JSON, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -436,7 +473,7 @@ class Advertisement(Base):
     clicks_count = Column(Integer, default=0)
     start_date = Column(DateTime, nullable=True)
     end_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         ctr = (self.clicks_count / self.views_count * 100) if self.views_count > 0 else 0.0
@@ -468,7 +505,7 @@ class EditorialAuditLog(Base):
     resource_id = Column(String(100), nullable=True)
     details = Column(JSON, nullable=True)
     ip_address = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -498,7 +535,7 @@ class BlockedIP(Base):
     blocked_by = Column(String(80), default="WAF_AUTO")  # 'WAF_AUTO' or admin username
     threat_score = Column(Integer, default=100)
     expires_at = Column(DateTime, nullable=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -521,7 +558,7 @@ class BlockedCountry(Base):
     country_name = Column(String(100), nullable=False)
     reason = Column(String(255), default="Geographic firewall policy")
     is_active = Column(Boolean, default=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -547,7 +584,7 @@ class SecurityThreatLog(Base):
     country_code = Column(String(10), nullable=True)
     user_agent = Column(String(500), nullable=True)
     action_taken = Column(String(50), default="BLOCKED_403")  # 'BLOCKED_403', 'LOGGED_ONLY', 'AUTO_BANNED_IP'
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -578,9 +615,9 @@ class ArticleBlockLedger(Base):
     block_hash = Column(String(64), unique=True, nullable=False, index=True)
     digital_signature = Column(String(128), nullable=False)
     nonce = Column(Integer, default=0)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=utcnow)
     verification_status = Column(String(50), default="VALID")  # 'VALID', 'TAMPERED', 'ORPHANED'
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -623,8 +660,8 @@ class AIBrainCustomRule(Base):
     auto_publish = Column(Boolean, default=True)
     auto_broadcast_social = Column(Boolean, default=True)
     custom_prompt_rules = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -667,8 +704,8 @@ class SocialChannelConfig(Base):
     total_posts_dispatched = Column(Integer, default=0)
     last_post_at = Column(DateTime, nullable=True)
     last_error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     # Self-referential relationship for failover
     failover_account = relationship("SocialChannelConfig", remote_side=[id], foreign_keys=[failover_account_id])
@@ -712,7 +749,7 @@ class SocialBroadcastLog(Base):
     dispatch_status = Column(String(50), default="SUCCESS", index=True)  # 'SUCCESS', 'FAILED', 'FALLBACK_SWITCHED'
     response_data = Column(JSON, nullable=True)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -749,9 +786,9 @@ class DataCenterStorageProvider(Base):
     capacity_used_bytes = Column(Float, default=1073741824.0)   # default 1GB
     status = Column(String(50), default="ONLINE", index=True)   # 'ONLINE', 'SYNCING', 'DEGRADED', 'OFFLINE'
     sync_mode = Column(String(50), default="PRIMARY_CDN")       # 'PRIMARY_CDN', 'AUTO_MIRROR', 'BACKUP_ONLY'
-    last_health_check = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_health_check = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         creds = self.credentials_json or {}
@@ -800,9 +837,9 @@ class DatabaseReplicaNode(Base):
     replication_status = Column(String(50), default="SYNCED", index=True)  # 'SYNCED', 'REPLICATING', 'STANDBY_READY', 'FAILOVER_ACTIVE', 'DISCONNECTED'
     latency_ms = Column(Float, default=1.2)
     auto_failover_priority = Column(Integer, default=1)
-    last_heartbeat = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_heartbeat = Column(DateTime, default=utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -837,7 +874,7 @@ class DataCenterBackupArchive(Base):
     is_encrypted = Column(Boolean, default=True)
     encryption_algorithm = Column(String(50), default="AES-256-GCM")
     status = Column(String(50), default="COMPLETED", index=True)  # 'COMPLETED', 'IN_PROGRESS', 'FAILED'
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         size_mb = round(self.file_size_bytes / (1024 ** 2), 2)
@@ -868,7 +905,7 @@ class DataCenterSecurityLog(Base):
     description = Column(Text, nullable=False)
     metadata_json = Column(JSON, nullable=True)
     ip_address = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -919,8 +956,8 @@ class EmergencyVaultState(Base):
     locked_at = Column(DateTime, nullable=True)
     unlocked_at = Column(DateTime, nullable=True)
     unlocked_by = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -959,7 +996,7 @@ class EncryptedVaultBackupRecord(Base):
     encrypted_payload = Column(Text, nullable=False)
     iv_nonce = Column(String(64), nullable=False)
     auth_tag = Column(String(64), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
 
 class OtpCode(Base):
@@ -976,7 +1013,7 @@ class OtpCode(Base):
     user_id = Column(Integer, nullable=True, index=True)
     is_used = Column(Boolean, default=False, nullable=False)
     expires_at = Column(DateTime, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1004,7 +1041,7 @@ class MessageLog(Base):
     purpose = Column(String(50), nullable=True, default="general")
     status = Column(String(30), nullable=False, default="SENT")  # SENT | SIMULATED | FAILED
     error = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1033,7 +1070,7 @@ class SubscriptionPlan(Base):
     features = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     sort_order = Column(Integer, default=0, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1066,8 +1103,8 @@ class PaymentTransaction(Base):
     bank_tran_id = Column(String(80), nullable=True)
     risk_level = Column(String(20), nullable=True)
     raw_response = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1093,9 +1130,9 @@ class UserSubscription(Base):
     plan_id = Column(Integer, nullable=False, index=True)
     transaction_id = Column(Integer, nullable=True)
     status = Column(String(30), nullable=False, default="active")  # active | expired | cancelled
-    started_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, default=utcnow)
     expires_at = Column(DateTime, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1150,8 +1187,8 @@ class RawNewsItem(Base):
 
     article_id = Column(Integer, nullable=True, index=True)
     meta = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1190,7 +1227,7 @@ class ArticleRelation(Base):
     similarity_score = Column(Float, nullable=False, default=0.0)
     relation_type = Column(String(30), nullable=False, default="near_duplicate")  # 'duplicate' | 'near_duplicate'
     source_metadata = Column(JSON, nullable=True)  # {source_a, url_a, source_b, url_b, method, byline...}
-    detected_at = Column(DateTime, default=datetime.utcnow, index=True)
+    detected_at = Column(DateTime, default=utcnow, index=True)
 
     article = relationship("Article", back_populates="related_articles", foreign_keys=[article_id])
     related_article = relationship("Article", foreign_keys=[related_article_id])
@@ -1217,7 +1254,7 @@ class RawItemRelation(Base):
     similarity_score = Column(Float, nullable=False, default=0.0)
     relation_type = Column(String(30), nullable=False, default="duplicate")
     source_metadata = Column(JSON, nullable=True)
-    detected_at = Column(DateTime, default=datetime.utcnow, index=True)
+    detected_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1266,7 +1303,7 @@ class ApprovalRequest(Base):
     escalation_level = Column(Integer, nullable=False, default=0)
     max_escalation_level = Column(Integer, nullable=False, default=1)
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
     due_at = Column(DateTime, nullable=True, index=True)               # escalation deadline
     auto_approve_at = Column(DateTime, nullable=True)                  # approval-by-silence deadline
     escalated_at = Column(DateTime, nullable=True)
@@ -1318,7 +1355,7 @@ class AgentAuditLog(Base):
     approval_request_id = Column(Integer, nullable=True, index=True)
     message = Column(Text, nullable=True)
     details = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utcnow, index=True)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1357,8 +1394,8 @@ class AdInquiry(Base):
     approval_request_id = Column(Integer, nullable=True, index=True)
     sent_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1394,8 +1431,8 @@ class NewsSubmission(Base):
     approval_request_id = Column(Integer, nullable=True, index=True)
     article_id = Column(Integer, nullable=True, index=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -1428,8 +1465,8 @@ class ReporterApplication(Base):
     approval_request_id = Column(Integer, nullable=True, index=True)
     user_id = Column(Integer, nullable=True)  # created reporter account after approval
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, index=True)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def to_dict(self) -> Dict[str, Any]:
         return {

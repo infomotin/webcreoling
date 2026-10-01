@@ -20,6 +20,7 @@ from flask import (
     session as flask_session,
 )
 from config.settings import settings
+from src.common.ttl_cache import cached
 from src.storage.database import get_db_session
 from src.storage.models import Article
 from src.storage.repositories import (
@@ -199,15 +200,19 @@ def newspaper_management_view():
         sec_repo = SecurityRepository(session)
         ledger_repo = BlockchainLedgerRepository(session)
 
-        # 0. Process any pending scheduled article releases
-        article_repo.process_scheduled_publishing()
+        # 0. Process any pending scheduled article releases + re-seed defaults.
+        # Both are throttled (shared cache ticks) so the heavy newsroom page no
+        # longer performs SELECT-then-maybe-UPDATE seed checks on every hit.
+        cached("portal.scheduled_publish_tick", 30.0, article_repo.process_scheduled_publishing)
 
-        # Seed defaults
-        cfg_repo.seed_default_configs()
-        ad_repo.seed_default_ads()
-        portal_repo.seed_default_poll()
-        sec_repo.seed_default_security_rules()
-        ledger_repo.ensure_genesis_block()
+        def _seed_newsroom_defaults():
+            cfg_repo.seed_default_configs()
+            ad_repo.seed_default_ads()
+            portal_repo.seed_default_poll()
+            sec_repo.seed_default_security_rules()
+            ledger_repo.ensure_genesis_block()
+
+        cached("admin.seed_defaults", 300.0, _seed_newsroom_defaults)
 
         # 1. Real-time Editorial KPI Metrics
         kpis = article_repo.get_editorial_kpis()
@@ -231,7 +236,8 @@ def newspaper_management_view():
         site_configs = cfg_repo.get_all_configs()
         ads = ad_repo.get_all_ads()
         audit_logs = audit_repo.get_audit_logs(limit=40)
-        server_telemetry = monitor_repo.get_telemetry()
+        # psutil + filesystem walk + 8 COUNTs — refreshed at most every 10 s
+        server_telemetry = cached("admin.telemetry", 10.0, monitor_repo.get_telemetry)
 
         # 5. Security Operations Center (SOC) & Cryptographic Ledger Data
         sec_metrics = sec_repo.get_security_metrics()
@@ -240,7 +246,9 @@ def newspaper_management_view():
         threat_logs = sec_repo.get_threat_logs(limit=40)
         blockchain_stats = ledger_repo.get_blockchain_stats()
         ledger_blocks_data = ledger_repo.get_ledger_blocks(limit=25, page=1)
-        chain_audit = ledger_repo.audit_full_chain()
+        # Full-chain audit re-verifies every block (O(n) HMAC checks); cached
+        # for 60 s and invalidated whenever a new block is minted.
+        chain_audit = cached("admin.chain_audit", 60.0, ledger_repo.audit_full_chain)
 
         # 6. Heavy Data Capacity Metrics
         heavy_mgr = get_heavy_data_manager()

@@ -89,6 +89,27 @@ def is_public_article(article: Optional[Article]) -> bool:
     return True
 
 
+# Human-facing section name -> stored ``Article.category`` values.
+CATEGORY_SYNONYMS = {
+    "politics": ["politics", "রাজনীতি", "national"],
+    "bangladesh": ["bangladesh", "national", "বাংলাদেশ", "জাতীয়"],
+    "national": ["national", "bangladesh", "বাংলাদেশ", "জাতীয়"],
+    "international": ["international", "world", "আন্তর্জাতিক", "বিশ্ব"],
+    "world": ["world", "international", "আন্তর্জাতিক", "বিশ্ব"],
+    "business": ["business", "economy", "বাণিজ্য", "অর্থনীতি", "শেয়ারবাজার"],
+    "technology": ["technology", "tech", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি", "বিজ্ঞান"],
+    "tech": ["tech", "technology", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি"],
+    "sports": ["sports", "খেলাধুলা", "খেলা", "ক্রিকেট", "ফুটবল"],
+    "entertainment": ["entertainment", "বিনোদন", "সংস্কৃতি", "তারকা"],
+}
+
+
+def _expand_category(category: str) -> List[str]:
+    """Map a human section name to the stored category values it matches."""
+    cat_lower = (category or "").lower().strip()
+    return CATEGORY_SYNONYMS.get(cat_lower, [cat_lower])
+
+
 class ArticleRepository:
     """Repository handling Article and ArticleImage CRUD and queries."""
 
@@ -549,20 +570,8 @@ class ArticleRepository:
 
     def get_articles_by_category(self, category: str, limit: int = 4, exclude_id: Optional[int] = None) -> List[Article]:
         """Fetch articles belonging to a specific news category with synonym support and fallback."""
-        cat_lower = (category or "").lower().strip()
-        synonym_map = {
-            "politics": ["politics", "রাজনীতি", "national"],
-            "bangladesh": ["bangladesh", "national", "বাংলাদেশ", "জাতীয়"],
-            "national": ["national", "bangladesh", "বাংলাদেশ", "জাতীয়"],
-            "international": ["international", "world", "আন্তর্জাতিক", "বিশ্ব"],
-            "world": ["world", "international", "আন্তর্জাতিক", "বিশ্ব"],
-            "business": ["business", "economy", "বাণিজ্য", "অর্থনীতি", "শেয়ারবাজার"],
-            "technology": ["technology", "tech", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি", "বিজ্ঞান"],
-            "tech": ["tech", "technology", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি"],
-            "sports": ["sports", "খেলাধুলা", "খেলা", "ক্রিকেট", "ফুটবল"],
-            "entertainment": ["entertainment", "বিনোদন", "সংস্কৃতি", "তারকা"],
-        }
-        cats_to_match = synonym_map.get(cat_lower, [cat_lower])
+        cats_to_match = _expand_category(category)
+
         query = apply_public_content_filter(
             self.session.query(Article)
             .options(joinedload(Article.images))
@@ -598,6 +607,59 @@ class ArticleRepository:
 
         return results
 
+    def get_articles_by_categories(
+        self,
+        categories: List[str],
+        limit_per_category: int = 4,
+        exclude_id: Optional[int] = None,
+    ) -> Dict[str, List[Article]]:
+        """Fetch several category blocks with ONE query instead of one query per block.
+
+        Ordering (pinned -> display order -> published_at desc -> id desc) is
+        applied globally, then rows are partitioned per requested section —
+        which yields exactly the same rows as running
+        ``get_articles_by_category`` for each section independently. Sections
+        that come back short (sparse data / heavy overlap) fall back to the
+        per-section query so backfill semantics are preserved.
+        """
+        if not categories:
+            return {}
+
+        synonym_lookup = {cat: _expand_category(cat) for cat in categories}
+        all_values = sorted({v for values in synonym_lookup.values() for v in values})
+
+        query = apply_public_content_filter(
+            self.session.query(Article)
+            .options(joinedload(Article.images))
+            .filter(Article.category.in_(all_values))
+            .filter(Article.scrape_status == "completed")
+        )
+        if exclude_id:
+            query = query.filter(Article.id != exclude_id)
+
+        rows = (
+            query.order_by(
+                Article.is_pinned.desc(),
+                Article.display_order.asc(),
+                Article.published_at.desc(),
+                Article.id.desc(),
+            )
+            # Generous ceiling: enough rows to fill every block in normal data.
+            .limit(max(len(categories) * limit_per_category * 3, limit_per_category))
+            .all()
+        )
+
+        results: Dict[str, List[Article]] = {}
+        for cat in categories:
+            wanted = set(synonym_lookup[cat])
+            matched = [a for a in rows if (a.category or "").lower() in wanted]
+            if len(matched) >= limit_per_category:
+                results[cat] = matched[:limit_per_category]
+            else:
+                # Sparse block: keep exact per-section semantics (incl. backfill).
+                results[cat] = self.get_articles_by_category(cat, limit=limit_per_category, exclude_id=exclude_id)
+        return results
+
     def get_related_articles(self, article_id: int, category: Optional[str] = None, limit: int = 3) -> List[Article]:
         """Fetch related articles based on category and recency."""
         query = apply_public_content_filter(
@@ -610,13 +672,23 @@ class ArticleRepository:
         return query.order_by(Article.id.desc()).limit(limit).all()
 
     def increment_views(self, article_id: int) -> int:
-        """Increment view count for an article."""
-        article = self.session.query(Article).filter(Article.id == article_id).first()
-        if article:
-            article.views_count = (article.views_count or 0) + 1
-            self.session.flush()
-            return article.views_count
-        return 0
+        """Increment view count for an article and return the new total.
+
+        Loads only the counter column (never the multi-kilobyte
+        ``content_text``) when the row is not already in the identity map, and
+        keeps the in-memory instance consistent so the rendered page shows the
+        incremented value without an extra refresh query.
+        """
+        from sqlalchemy.orm import load_only
+
+        article = self.session.get(
+            Article, article_id, options=(load_only(Article.views_count),)
+        )
+        if article is None:
+            return 0
+        article.views_count = (article.views_count or 0) + 1
+        self.session.flush()
+        return article.views_count
 
     def toggle_like(self, article_id: int, voter_ip: str) -> Dict[str, Any]:
         """Toggle reader like on an article."""
@@ -1674,6 +1746,8 @@ class SiteConfigRepository:
             record = SiteConfig(key=key, value=value)
             self.session.add(record)
         self.session.flush()
+        # Publish edits to every rendered page immediately (portal context cache).
+        invalidate_cache("portal.globals")
         return record
 
     def get_all_configs(self) -> Dict[str, Any]:
@@ -1930,6 +2004,7 @@ class AdvertisementRepository:
         )
         self.session.add(ad)
         self.session.flush()
+        invalidate_cache("portal.globals")
         return ad
 
     def update_ad(
@@ -1955,6 +2030,7 @@ class AdvertisementRepository:
         if is_active is not None:
             ad.is_active = is_active
         self.session.flush()
+        invalidate_cache("portal.globals")
         return ad
 
     def toggle_ad_status(self, ad_id: int) -> bool:
@@ -1962,6 +2038,7 @@ class AdvertisementRepository:
         if ad:
             ad.is_active = not bool(ad.is_active)
             self.session.flush()
+            invalidate_cache("portal.globals")
             return ad.is_active
         return False
 
@@ -1970,6 +2047,7 @@ class AdvertisementRepository:
         if ad:
             self.session.delete(ad)
             self.session.flush()
+            invalidate_cache("portal.globals")
             return True
         return False
 
@@ -2579,6 +2657,8 @@ class BlockchainLedgerRepository:
         article.is_ledger_verified = True
 
         self.session.flush()
+        # New block invalidates the cached full-chain audit shown on the newsroom.
+        invalidate_cache("admin.chain_audit")
         logger.info(f"Minted cryptographic block #{block_record.block_number} for Article #{article.id} ({block_record.block_hash[:16]}...)")
         return block_record
 
@@ -2641,18 +2721,25 @@ class BlockchainLedgerRepository:
         self.session.flush()
         return len(blocks)
 
-    def verify_article_ledger(self, article_id: int) -> Tuple[bool, str, Dict[str, Any]]:
-        """Verify an article's cryptographic validity against its ledger block."""
-        article = self.session.query(Article).filter(Article.id == article_id).first()
+    def verify_article_ledger(self, article_id: int, article: Optional[Article] = None) -> Tuple[bool, str, Dict[str, Any]]:
+        """Verify an article's cryptographic validity against its ledger block.
+
+        ``article`` may be supplied by callers that already loaded the row to
+        avoid a duplicate SELECT. The verification verdict is only persisted
+        when it *changes*, so public page views do not generate an
+        UPDATE + COMMIT on every request.
+        """
+        if article is None:
+            article = self.session.query(Article).filter(Article.id == article_id).first()
         if not article:
-            return False, "আর্টিকেল পাওয়া যায়নি।", {}
+            return False, "আর্টিকেল পাওয়া যায়নি।", {}
 
         block = self.get_block_by_article_id(article_id)
         if not block:
             # Try minting on the fly if unmined
             block = self.mint_block_for_article(article_id)
             if not block:
-                return False, "এই আর্টিকেলের জন্য কোনো ব্লকচেইন লেজার ব্লক পাওয়া যায়নি।", {}
+                return False, "এই আর্টিকেলের জন্য কোনো ব্লকচেইন লেজার ব্লক পাওয়া যায়নি।", {}
 
         is_valid, reason, details = BlockchainLedgerEngine.verify_article_block(
             block=block.to_dict(),
@@ -2661,10 +2748,19 @@ class BlockchainLedgerRepository:
             author=article.author,
         )
 
-        # Update verification flag
-        article.is_ledger_verified = is_valid
-        block.verification_status = "VALID" if is_valid else "TAMPERED"
-        self.session.flush()
+        # Update verification flag only when the verdict flipped (read-mostly
+        # article pages stay write-free).
+        expected_status = "VALID" if is_valid else "TAMPERED"
+        changed = False
+        if article.is_ledger_verified != is_valid:
+            article.is_ledger_verified = is_valid
+            changed = True
+        if block.verification_status != expected_status:
+            block.verification_status = expected_status
+            changed = True
+        if changed:
+            self.session.flush()
+
 
         details["article_id"] = article.id
         details["title"] = article.title

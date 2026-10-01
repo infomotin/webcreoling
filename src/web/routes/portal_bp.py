@@ -11,6 +11,7 @@ from sqlalchemy.orm import joinedload
 from src.storage.database import get_db_session
 from src.storage.models import Article, ArticleComment
 from src.common.seo import build_meta_description, parse_post_slug
+from src.common.ttl_cache import cached
 from src.web.auth import login_required, get_current_user
 from src.storage.repositories import (
     ArticleRepository,
@@ -43,27 +44,37 @@ def post_url(article) -> str:
     return url_for("portal.index_view")
 
 
+def _load_portal_globals() -> dict:
+    """Load branding/footer/active ads in one round-trip (used as the cache producer)."""
+    with get_db_session() as session:
+        cfg_repo = SiteConfigRepository(session)
+        ad_repo = AdvertisementRepository(session)
+        return {
+            "branding": cfg_repo.get_config("branding", {}),
+            "footer": cfg_repo.get_config("footer", {}),
+            "ads": ad_repo.get_active_ads_dict(),
+        }
+
+
 @portal_bp.context_processor
 def inject_portal_globals():
-    """Inject dynamic site branding, dynamic footer, and active ad banners into all portal views."""
+    """Inject dynamic site branding, dynamic footer, and active ad banners into all portal views.
+
+    The payload is read-mostly, so it is served from a 30 s process cache
+    (~22 SELECTs -> 0 after the first request per window). Writers
+    (SiteConfigRepository.set_config / AdvertisementRepository CRUD) call
+    ``ttl_cache.invalidate("portal.globals")`` so edits show up immediately.
+    Seeding itself happens once at application startup (``create_app``).
+    """
     try:
-        with get_db_session() as session:
-            cfg_repo = SiteConfigRepository(session)
-            ad_repo = AdvertisementRepository(session)
-            cfg_repo.seed_default_configs()
-            ad_repo.seed_default_ads()
-
-            branding = cfg_repo.get_config("branding", {})
-            footer = cfg_repo.get_config("footer", {})
-            ads = ad_repo.get_active_ads_dict()
-
-            return {
-                "site_branding": branding,
-                "site_footer": footer,
-                "active_ads": ads,
-                "live_topbar": _safe_topbar(branding),
-                "post_url": post_url,
-            }
+        data = cached("portal.globals", 30.0, _load_portal_globals)
+        return {
+            "site_branding": data["branding"],
+            "site_footer": data["footer"],
+            "active_ads": data["ads"],
+            "live_topbar": _safe_topbar(data["branding"]),
+            "post_url": post_url,
+        }
     except Exception:
         return {
             "site_branding": {},
@@ -94,11 +105,13 @@ def index_view():
         portal_repo = PortalRepository(session)
         ad_repo = AdvertisementRepository(session)
 
-        # Process any pending scheduled releases
-        article_repo.process_scheduled_publishing()
+        # Process any pending scheduled releases — the background scheduler runs
+        # this every 60 s anyway, so the homepage only triggers it at most once
+        # per 30 s per process instead of on every single hit.
+        cached("portal.scheduled_publish_tick", 30.0, article_repo.process_scheduled_publishing)
 
-        # Seed default poll if none exists
-        portal_repo.seed_default_poll()
+        # Seed default poll if none exists (throttled the same way)
+        cached("portal.poll_seed_tick", 300.0, portal_repo.seed_default_poll)
 
         # Track impression on header ad
         active_header = ad_repo.get_active_ad_by_slot("header_top")
@@ -113,14 +126,27 @@ def index_view():
         trending = article_repo.get_trending_articles(limit=5)
         active_poll = portal_repo.get_active_poll()
 
-        # Category Blocks
-        national_news = article_repo.get_articles_by_category("bangladesh", limit=4, exclude_id=exclude_id)
-        politics_news = article_repo.get_articles_by_category("politics", limit=4, exclude_id=exclude_id)
-        international_news = article_repo.get_articles_by_category("international", limit=4, exclude_id=exclude_id)
-        business_news = article_repo.get_articles_by_category("business", limit=4, exclude_id=exclude_id)
-        tech_news = article_repo.get_articles_by_category("technology", limit=4, exclude_id=exclude_id)
-        sports_news = article_repo.get_articles_by_category("sports", limit=4, exclude_id=exclude_id)
-        entertainment_news = article_repo.get_articles_by_category("entertainment", limit=4, exclude_id=exclude_id)
+        # Category Blocks — fetched with a SINGLE query instead of one per block.
+        category_blocks = article_repo.get_articles_by_categories(
+            [
+                "bangladesh",
+                "politics",
+                "international",
+                "business",
+                "technology",
+                "sports",
+                "entertainment",
+            ],
+            limit_per_category=4,
+            exclude_id=exclude_id,
+        )
+        national_news = category_blocks["bangladesh"]
+        politics_news = category_blocks["politics"]
+        international_news = category_blocks["international"]
+        business_news = category_blocks["business"]
+        tech_news = category_blocks["technology"]
+        sports_news = category_blocks["sports"]
+        entertainment_news = category_blocks["entertainment"]
         multimedia_news = article_repo.get_highlighted_articles(limit=4, exclude_id=exclude_id)
         latest_news = (
             apply_public_content_filter(
@@ -133,20 +159,22 @@ def index_view():
             .all()
         )
 
-        # Live infinite-scroll stream (date-time wise, newest first)
+        # Live infinite-scroll stream (date-time wise, newest first).
+        # Fetching limit+1 rows replaces the previous full-table COUNT(*)
+        # (a non-sargable scan that cost ~15 ms per homepage hit).
         feed_query = apply_public_content_filter(
             session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.scrape_status == "completed")
         )
-        feed_total = feed_query.count()
         feed_limit = 12
-        feed_items = (
+        feed_rows = (
             feed_query.order_by(Article.published_at.desc(), Article.id.desc())
-            .limit(feed_limit)
+            .limit(feed_limit + 1)
             .all()
         )
-        feed_has_more = feed_total > len(feed_items)
+        feed_has_more = len(feed_rows) > feed_limit
+        feed_items = feed_rows[:feed_limit]
         feed_newest = (
             feed_items[0].published_at.strftime("%Y-%m-%d %H:%M:%S")
             if feed_items and feed_items[0].published_at
@@ -371,12 +399,12 @@ def _render_article_view(article_id: int):
         related = article_repo.get_related_articles(article_id, category=article.category, limit=3)
         breaking_news = article_repo.get_breaking_news(limit=5)
         active_poll = portal_repo.get_active_poll()
-        comments = article_repo.list_comments(article_id, limit=100)
-        comment_count = article_repo.count_comments(article_id)
 
         # Cryptographic Blockchain Verification Details
+        # (pass the already-loaded article to skip a duplicate SELECT; the repo
+        # only persists the verdict when it changes)
         ledger_repo = BlockchainLedgerRepository(session)
-        is_valid, msg, ledger_info = ledger_repo.verify_article_ledger(article_id)
+        is_valid, msg, ledger_info = ledger_repo.verify_article_ledger(article_id, article=article)
 
         return render_template(
             "portal_article.html",
@@ -386,8 +414,6 @@ def _render_article_view(article_id: int):
             active_poll=active_poll.to_dict() if active_poll else None,
             ledger_info=ledger_info,
             is_ledger_verified=is_valid,
-            comments=comments,
-            comment_count=comment_count,
             canonical_url=url_for("portal.post_view", post_slug=article.slug, _external=True),
             meta_description=build_meta_description(article.summary, article.content_text),
         )

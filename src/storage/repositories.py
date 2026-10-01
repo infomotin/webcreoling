@@ -11,6 +11,7 @@ from config.settings import settings
 from sqlalchemy.orm import Session, joinedload
 from src.common.logger import get_logger
 from src.common.normalizer import BanglaTextNormalizer
+from src.common.ttl_cache import invalidate as invalidate_cache
 from src.common.utils import ensure_utc
 from src.common.seo import build_post_slug, embeddable_video_url, parse_post_slug, slugify
 from src.storage.models import (
@@ -2335,6 +2336,7 @@ class SecurityRepository:
             )
             self.session.add(record)
         self.session.flush()
+        invalidate_cache("security.blocked_ips")
         return record
 
     def unblock_ip(self, ip_id: int) -> bool:
@@ -2343,6 +2345,7 @@ class SecurityRepository:
         if record:
             self.session.delete(record)
             self.session.flush()
+            invalidate_cache("security.blocked_ips")
             return True
         return False
 
@@ -2368,6 +2371,8 @@ class SecurityRepository:
         for r in expired:
             self.session.delete(r)
         self.session.flush()
+        if count:
+            invalidate_cache("security.blocked_ips")
         return count
 
     def get_blocked_countries(self) -> List[BlockedCountry]:
@@ -2389,6 +2394,7 @@ class SecurityRepository:
             existing.reason = reason
             existing.is_active = True
             self.session.flush()
+            invalidate_cache("security.blocked_countries")
             return existing
 
         record = BlockedCountry(
@@ -2399,6 +2405,7 @@ class SecurityRepository:
         )
         self.session.add(record)
         self.session.flush()
+        invalidate_cache("security.blocked_countries")
         return record
 
     def toggle_country(self, country_id: int) -> bool:
@@ -2407,6 +2414,7 @@ class SecurityRepository:
         if record:
             record.is_active = not bool(record.is_active)
             self.session.flush()
+            invalidate_cache("security.blocked_countries")
             return record.is_active
         return False
 
@@ -2416,6 +2424,7 @@ class SecurityRepository:
         if record:
             self.session.delete(record)
             self.session.flush()
+            invalidate_cache("security.blocked_countries")
             return True
         return False
 

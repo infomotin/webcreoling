@@ -232,6 +232,29 @@ def record_strike_and_check_autoban(ip: str, threat_type: str, payload_sample: s
     return False
 
 
+def _load_blocked_ips() -> frozenset:
+    """Load the active IP blacklist (expired bans excluded) from the database."""
+    from src.storage.database import get_db_session
+    from src.storage.repositories import SecurityRepository
+
+    now = datetime.now(timezone.utc)
+    with get_db_session() as sess:
+        rows = SecurityRepository(sess).get_blocked_ips()
+        return frozenset(
+            r.ip_address for r in rows if not (r.expires_at and r.expires_at <= now)
+        )
+
+
+def _load_blocked_countries() -> frozenset:
+    """Load the active geo-firewall country codes (upper-case) from the database."""
+    from src.storage.database import get_db_session
+    from src.storage.repositories import SecurityRepository
+
+    with get_db_session() as sess:
+        rows = SecurityRepository(sess).get_blocked_countries()
+        return frozenset(r.country_code.strip().upper() for r in rows if r.is_active)
+
+
 def run_security_firewall():
     """
     Middleware function executed on every incoming HTTP request.
@@ -252,17 +275,19 @@ def run_security_firewall():
     client_ip = get_client_ip()
     client_country = get_client_country()
 
+    from src.common.ttl_cache import cached
     from src.storage.database import get_db_session
     from src.storage.repositories import SecurityRepository
 
-    with get_db_session() as sess:
-        sec_repo = SecurityRepository(sess)
-
-        # 1. Check IP Blacklist
-        if sec_repo.is_ip_blocked(client_ip):
-            logger.warning(f"🛑 Dropped request from Blacklisted IP: {client_ip} to {path}")
-            # Log threat
-            sec_repo.log_threat(
+    # 1. Check IP Blacklist.
+    # The blocklist is read-mostly, so it is served from a 30 s process cache
+    # instead of opening a DB session (+ COMMIT) on every single request.
+    # Every repository write calls ttl_cache.invalidate() so admin/WAF bans
+    # take effect immediately.
+    if client_ip in cached("security.blocked_ips", 30.0, _load_blocked_ips):
+        logger.warning(f"🛑 Dropped request from Blacklisted IP: {client_ip} to {path}")
+        with get_db_session() as sess:
+            SecurityRepository(sess).log_threat(
                 threat_type="IP_BLACKLIST",
                 ip_address=client_ip,
                 request_path=path,
@@ -272,20 +297,23 @@ def run_security_firewall():
                 user_agent=request.headers.get("User-Agent", "")[:450],
                 action_taken="BLOCKED_403",
             )
-            html = render_template_string(
-                BLOCKED_PAGE_TEMPLATE,
-                reason="IP Address is Blacklisted on Server",
-                ip=client_ip,
-                country=client_country,
-                timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.now(timezone.utc).timestamp()),
-            )
-            return html, 403
+        html = render_template_string(
+            BLOCKED_PAGE_TEMPLATE,
+            reason="IP Address is Blacklisted on Server",
+            ip=client_ip,
+            country=client_country,
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            incident_id=int(datetime.now(timezone.utc).timestamp()),
+        )
+        return html, 403
 
-        # 2. Check Country / Geo-Firewall (ignore whitelisted local development IPs)
-        if not is_ip_whitelisted(client_ip) and sec_repo.is_country_blocked(client_country):
-            logger.warning(f"🛑 Dropped request from Geo-Blocked Country: {client_country} (IP: {client_ip}) to {path}")
-            sec_repo.log_threat(
+    # 2. Check Country / Geo-Firewall (ignore whitelisted local development IPs)
+    if not is_ip_whitelisted(client_ip) and client_country in cached(
+        "security.blocked_countries", 30.0, _load_blocked_countries
+    ):
+        logger.warning(f"🛑 Dropped request from Geo-Blocked Country: {client_country} (IP: {client_ip}) to {path}")
+        with get_db_session() as sess:
+            SecurityRepository(sess).log_threat(
                 threat_type="GEO_BLOCKED",
                 ip_address=client_ip,
                 request_path=path,
@@ -295,26 +323,29 @@ def run_security_firewall():
                 user_agent=request.headers.get("User-Agent", "")[:450],
                 action_taken="BLOCKED_403",
             )
-            html = render_template_string(
-                BLOCKED_PAGE_TEMPLATE,
-                reason=f"Geographic Region ({client_country}) Blocked by Administrator Policy",
-                ip=client_ip,
-                country=client_country,
-                timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.now(timezone.utc).timestamp()),
-            )
-            return html, 403
+        html = render_template_string(
+            BLOCKED_PAGE_TEMPLATE,
+            reason=f"Geographic Region ({client_country}) Blocked by Administrator Policy",
+            ip=client_ip,
+            country=client_country,
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            incident_id=int(datetime.now(timezone.utc).timestamp()),
+        )
+        return html, 403
 
-        # 3. WAF Payload Deep Inspection (SQLi, XSS, Path Traversal, RCE)
-        threat = inspect_request_payloads()
-        if threat:
-            threat_type, sample = threat
-            logger.error(f"🚨 WAF DETECTED THREAT [{threat_type}] from {client_ip} on {path}: {sample}")
+    # 3. WAF Payload Deep Inspection (SQLi, XSS, Path Traversal, RCE)
+    # Signature scan is pure regex (no I/O); only a *detected* threat opens a
+    # DB session to persist the audit record.
+    threat = inspect_request_payloads()
+    if threat:
+        threat_type, sample = threat
+        logger.error(f"🚨 WAF DETECTED THREAT [{threat_type}] from {client_ip} on {path}: {sample}")
 
-            auto_banned = record_strike_and_check_autoban(client_ip, threat_type, sample)
-            action_taken = "AUTO_BANNED_IP" if auto_banned else "BLOCKED_403"
+        auto_banned = record_strike_and_check_autoban(client_ip, threat_type, sample)
+        action_taken = "AUTO_BANNED_IP" if auto_banned else "BLOCKED_403"
 
-            sec_repo.log_threat(
+        with get_db_session() as sess:
+            SecurityRepository(sess).log_threat(
                 threat_type=threat_type,
                 ip_address=client_ip,
                 request_path=path,
@@ -325,14 +356,14 @@ def run_security_firewall():
                 action_taken=action_taken,
             )
 
-            html = render_template_string(
-                BLOCKED_PAGE_TEMPLATE,
-                reason=f"Malicious Payload Violation Detected ({threat_type})",
-                ip=client_ip,
-                country=client_country,
-                timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                incident_id=int(datetime.now(timezone.utc).timestamp()),
-            )
-            return html, 403
+        html = render_template_string(
+            BLOCKED_PAGE_TEMPLATE,
+            reason=f"Malicious Payload Violation Detected ({threat_type})",
+            ip=client_ip,
+            country=client_country,
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            incident_id=int(datetime.now(timezone.utc).timestamp()),
+        )
+        return html, 403
 
     return None

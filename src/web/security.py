@@ -44,13 +44,23 @@ WHITELIST_IPS = {"127.0.0.1", "::1", "localhost", "0.0.0.0"}
 
 
 def get_client_ip() -> str:
-    """Extract real client IP address from proxy headers or remote address."""
+    """Extract real client IP address from proxy headers or remote address.
+
+    Security note: Only trust forwarded headers from known proxy infrastructure.
+    Validate that extracted IPs are syntactically valid to prevent header injection.
+    """
     for header in ["CF-Connecting-IP", "X-Forwarded-For", "X-Real-IP"]:
         val = request.headers.get(header)
         if val:
             ip = val.split(",")[0].strip()
             if ip:
-                return ip
+                # Validate the IP is a real address before trusting it
+                try:
+                    ipaddress.ip_address(ip)
+                    return ip
+                except ValueError:
+                    # Malformed header — fall through to next header/fallback
+                    continue
     return request.remote_addr or "127.0.0.1"
 
 
@@ -229,8 +239,14 @@ def run_security_firewall():
     """
     path = request.path
 
-    # Allow static assets and favicon to pass quickly
-    if path.startswith("/static/") or path.startswith("/data/images/") or path == "/favicon.ico":
+    # Allow static assets, media files and favicon to pass quickly without scanning
+    if (
+        path.startswith("/static/")
+        or path.startswith("/data/images/")
+        or path.startswith("/media/images/")
+        or path.startswith("/media/videos/")
+        or path == "/favicon.ico"
+    ):
         return None
 
     client_ip = get_client_ip()

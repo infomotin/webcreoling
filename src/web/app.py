@@ -27,20 +27,30 @@ def create_app(test_config: dict = None) -> Flask:
         static_url_path="/static",
     )
 
+    # Load SECRET_KEY from environment — never use a hardcoded fallback in production.
+    # Generate a secure key with: python -c "import secrets; print(secrets.token_hex(32))"
+    flask_secret = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SECRET_KEY")
+    if not flask_secret:
+        # Derive a deterministic key from the DB credentials so dev environments work
+        # out-of-the-box without an explicit env var while production always sets one.
+        import hashlib
+        seed = f"webcreoling-{settings.DB_NAME}-{settings.DB_HOST}-{settings.DB_USER}"
+        flask_secret = hashlib.sha256(seed.encode()).hexdigest()
+
     app.config.from_mapping(
-        SECRET_KEY="webcreoling-production-secret-key-bangla-ai-pipeline",
+        SECRET_KEY=flask_secret,
         MAX_CONTENT_LENGTH=32 * 1024 * 1024,
         # ---- Default Mail Server Configuration (Mailtrap sandbox) ----
         MAIL_SERVER=getattr(settings, "MAIL_SERVER", "sandbox.smtp.mailtrap.io"),
         MAIL_PORT=getattr(settings, "MAIL_PORT", 2525),
-        MAIL_USERNAME=getattr(settings, "MAIL_USERNAME", "6056bdc6c17f23"),
-        MAIL_PASSWORD=getattr(settings, "MAIL_PASSWORD", "4e1119bb236ac7"),
+        MAIL_USERNAME=getattr(settings, "MAIL_USERNAME", ""),
+        MAIL_PASSWORD=getattr(settings, "MAIL_PASSWORD", ""),
         MAIL_USE_TLS=getattr(settings, "MAIL_USE_TLS", True),
         MAIL_USE_SSL=getattr(settings, "MAIL_USE_SSL", False),
         MAIL_DEFAULT_SENDER=settings.MAIL_DEFAULT_SENDER,
         # ---- SSLCommerz Payment Gateway (Sandbox) ----
-        SSLCOMMERZ_STORE_ID=getattr(settings, "SSLCOMMERZ_STORE_ID", "arobw6a3cf7767fa7c"),
-        SSLCOMMERZ_STORE_PASSWORD=getattr(settings, "SSLCOMMERZ_STORE_PASSWORD", "arobw6a3cf7767fa7c@ssl"),
+        SSLCOMMERZ_STORE_ID=getattr(settings, "SSLCOMMERZ_STORE_ID", ""),
+        SSLCOMMERZ_STORE_PASSWORD=getattr(settings, "SSLCOMMERZ_STORE_PASS", ""),
         SSLCOMMERZ_IS_LIVE=getattr(settings, "SSLCOMMERZ_IS_LIVE", False),
     )
 

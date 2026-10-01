@@ -51,11 +51,15 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 8080
 
     # SSLCommerz Payment Gateway (Sandbox) Defaults
-    SSLCOMMERZ_STORE_ID: str = "arobw6a3cf7767fa7c"
+    SSLCOMMERZ_STORE_ID: str = "webcreoling_sandbox_store"
     SSLCOMMERZ_STORE_PASSWORD: str = "arobw6a3cf7767fa7c@ssl"
     SSLCOMMERZ_SANDBOX_URL: str = "https://sandbox.sslcommerz.com"
     SSLCOMMERZ_LIVE_URL: str = "https://securepay.sslcommerz.com"
     SSLCOMMERZ_IS_LIVE: bool = False
+
+    # Flask secret key — override via FLASK_SECRET_KEY env var in production.
+    # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+    FLASK_SECRET_KEY: str = ""
 
     # Scraper Configuration
     USER_AGENT: str = (
@@ -161,10 +165,10 @@ class Settings(BaseSettings):
     BKASH_MERCHANT_NUMBER: str = "01700000000"
     NAGAD_MERCHANT_ID: str = "sandbox_nagad_merchant_123"
     NAGAD_PUBLIC_KEY: str = "sandbox_nagad_pub_key"
-    SSLCOMMERZ_STORE_ID: str = "webcreoling_sandbox_store"
     SSLCOMMERZ_STORE_PASS: str = "webcreoling_sandbox_pass@123"
     STRIPE_PUBLIC_KEY: str = "pk_test_sample_51O..."
     STRIPE_SECRET_KEY: str = "sk_test_sample_51O..."
+
 
     # Self-Hosted Local LLM (Ollama / Hugging Face inference server) — used for AI agent tasks
     LLM_PROVIDER: str = "ollama"  # 'ollama' | 'openai_compat' | 'none'

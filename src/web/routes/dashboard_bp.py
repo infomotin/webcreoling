@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from config.settings import settings
 from sqlalchemy.orm import selectinload
+from src.common.ttl_cache import cached
 from src.storage.database import get_db_session
 from src.storage.models import Article, ScrapeLog, User, NewsletterSubscriber, Poll
 from src.storage.repositories import ArticleRepository
@@ -36,7 +37,8 @@ def index_view():
     # 2. Database Stats & Recent Ingestion
     with get_db_session() as session:
         repo = ArticleRepository(session)
-        stats = repo.get_database_stats()
+        # Derived counters (7 aggregate queries) — 30 s cache, invalidated on writes
+        stats = cached("dashboard.stats", 30.0, repo.get_database_stats)
         
         user_count = session.query(User).count()
         subscriber_count = session.query(NewsletterSubscriber).count()

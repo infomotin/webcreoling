@@ -215,7 +215,8 @@ def newspaper_management_view():
         cached("admin.seed_defaults", 300.0, _seed_newsroom_defaults)
 
         # 1. Real-time Editorial KPI Metrics
-        kpis = article_repo.get_editorial_kpis()
+        # 7 COUNT aggregates — cached 30 s, invalidated by article writes
+        kpis = cached("newsroom.kpis", 30.0, article_repo.get_editorial_kpis)
 
         # 2. Paginated & Filtered Articles Feed
         articles_data = article_repo.list_editorial_articles(
@@ -240,7 +241,7 @@ def newspaper_management_view():
         server_telemetry = cached("admin.telemetry", 10.0, monitor_repo.get_telemetry)
 
         # 5. Security Operations Center (SOC) & Cryptographic Ledger Data
-        sec_metrics = sec_repo.get_security_metrics()
+        sec_metrics = cached("newsroom.sec_metrics", 30.0, sec_repo.get_security_metrics)
         blocked_ips = sec_repo.get_blocked_ips()
         blocked_countries = sec_repo.get_blocked_countries()
         threat_logs = sec_repo.get_threat_logs(limit=40)
@@ -255,7 +256,7 @@ def newspaper_management_view():
         heavy_metrics = heavy_mgr.get_heavy_data_metrics(session)
 
         # Available unique categories in database
-        stats = article_repo.get_database_stats()
+        stats = cached("newsroom.stats", 30.0, article_repo.get_database_stats)
         categories = list(stats.get("by_category", {}).keys())
         if not categories:
             categories = ["politics", "bangladesh", "business", "international", "sports", "technology", "news"]

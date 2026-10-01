@@ -166,6 +166,10 @@ def init_db() -> None:
             "ix_articles_status_published": ("scrape_status", "published_at"),
             "ix_articles_category_status_pubdate": ("category", "scrape_status", "published_at"),
             "ix_articles_status_scheduled": ("scrape_status", "scheduled_at"),
+            "ix_articles_highlight_order": (
+                "scrape_status", "is_pinned", "display_order", "is_featured",
+                "likes_count", "views_count", "id",
+            ),
         },
     )
 

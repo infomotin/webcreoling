@@ -6,19 +6,19 @@
       "status": 200,
       "queries": 19,
       "cold_queries": 29,
-      "median_ms": 108.65,
-      "p95_ms": 111.06,
-      "min_ms": 107.29
+      "median_ms": 121.51,
+      "p95_ms": 160.41,
+      "min_ms": 116.1
     },
     {
       "name": "portal_section",
       "url": "/news/section/politics",
       "status": 200,
-      "queries": 8,
+      "queries": 7,
       "cold_queries": 15,
-      "median_ms": 23.37,
-      "p95_ms": 26.2,
-      "min_ms": 22.27
+      "median_ms": 24.41,
+      "p95_ms": 25.31,
+      "min_ms": 22.02
     },
     {
       "name": "portal_search",
@@ -26,29 +26,29 @@
       "status": 200,
       "queries": 20,
       "cold_queries": 29,
-      "median_ms": 119.55,
-      "p95_ms": 125.74,
-      "min_ms": 116.78
+      "median_ms": 135.58,
+      "p95_ms": 378.4,
+      "min_ms": 127.68
     },
     {
       "name": "article_detail",
-      "url": "/news/article/2401",
+      "url": "/news/article/2427",
       "status": 200,
       "queries": 11,
       "cold_queries": 18,
-      "median_ms": 21.44,
-      "p95_ms": 23.01,
-      "min_ms": 19.81
+      "median_ms": 25.84,
+      "p95_ms": 27.74,
+      "min_ms": 21.8
     },
     {
       "name": "articles_archive",
       "url": "/articles",
       "status": 200,
-      "queries": 5,
+      "queries": 4,
       "cold_queries": 6,
-      "median_ms": 20.22,
-      "p95_ms": 21.87,
-      "min_ms": 19.36
+      "median_ms": 14.89,
+      "p95_ms": 18.42,
+      "min_ms": 13.93
     },
     {
       "name": "dashboard",
@@ -56,9 +56,9 @@
       "status": 200,
       "queries": 17,
       "cold_queries": 18,
-      "median_ms": 36.53,
-      "p95_ms": 37.52,
-      "min_ms": 35.55
+      "median_ms": 42.86,
+      "p95_ms": 49.85,
+      "min_ms": 38.41
     },
     {
       "name": "newsroom_admin",
@@ -66,9 +66,9 @@
       "status": 200,
       "queries": 51,
       "cold_queries": 83,
-      "median_ms": 65.08,
-      "p95_ms": 82.48,
-      "min_ms": 62.77
+      "median_ms": 77.99,
+      "p95_ms": 88.15,
+      "min_ms": 71.26
     },
     {
       "name": "login_page",
@@ -76,46 +76,46 @@
       "status": 302,
       "queries": 1,
       "cold_queries": 2,
-      "median_ms": 1.6,
-      "p95_ms": 2.54,
-      "min_ms": 1.44
+      "median_ms": 2.18,
+      "p95_ms": 3.43,
+      "min_ms": 1.74
     }
   ],
   "db": [
     {
       "name": "feed_page (public filter + status + limit)",
-      "median_ms": 0.518,
-      "p95_ms": 0.746,
+      "median_ms": 0.592,
+      "p95_ms": 0.959,
       "rows": 12
     },
     {
       "name": "category_list (no public filter)",
-      "median_ms": 0.372,
-      "p95_ms": 0.577,
+      "median_ms": 0.394,
+      "p95_ms": 0.514,
       "rows": 12
     },
     {
       "name": "feed_count (COUNT with public filter)",
-      "median_ms": 15.366,
-      "p95_ms": 15.661,
+      "median_ms": 16.006,
+      "p95_ms": 16.739,
       "rows": 1
     },
     {
       "name": "breaking_ticker",
-      "median_ms": 0.393,
-      "p95_ms": 0.538,
+      "median_ms": 0.398,
+      "p95_ms": 0.919,
       "rows": 9
     },
     {
       "name": "site_configs bulk fetch",
-      "median_ms": 0.467,
-      "p95_ms": 0.634,
+      "median_ms": 0.413,
+      "p95_ms": 0.576,
       "rows": 14
     },
     {
       "name": "article detail by id",
-      "median_ms": 0.491,
-      "p95_ms": 0.899,
+      "median_ms": 0.522,
+      "p95_ms": 0.613,
       "rows": 1
     }
   ]

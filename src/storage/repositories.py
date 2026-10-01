@@ -63,6 +63,27 @@ LOCKED_CONTENT_MARKER = LOCKED_TITLE_MARKER + " এই সংবাদের"
 LOCKED_CONTENT_PATTERN = LOCKED_CONTENT_MARKER + "%"
 
 
+# Aggregate caches that only change when articles / security state change.
+AGGREGATE_CACHE_PREFIXES = (
+    "articles.public_count*",
+    "dashboard.stats*",
+    "newsroom.kpis*",
+    "newsroom.stats*",
+    "newsroom.sec_metrics*",
+)
+
+
+def invalidate_article_aggregates() -> None:
+    """Drop cached aggregate counters after any article (or SOC) write.
+
+    Page totals, dashboard statistics, newsroom KPIs and SOC metrics are all
+    derived counts; they are cached for a short window and invalidated here so
+    admin edits are visible on the very next request.
+    """
+    for prefix in AGGREGATE_CACHE_PREFIXES:
+        invalidate_cache(prefix)
+
+
 def apply_public_content_filter(query):
     """Drop system-encrypted, lock-placeholder and empty-title articles from an Article query."""
     title = func.coalesce(Article.title, "")
@@ -319,6 +340,7 @@ class ArticleRepository:
                     self.session.add(image_obj)
 
         self.session.flush()
+        invalidate_article_aggregates()
         return article
 
     def count_articles(
@@ -822,6 +844,7 @@ class ArticleRepository:
         except Exception as e:
             logger.warning(f"Could not auto-mint block for new article #{article.id}: {e}")
 
+        invalidate_article_aggregates()
         return article
 
     def update_editorial_article(
@@ -947,6 +970,7 @@ class ArticleRepository:
 
         article.updated_at = datetime.now(timezone.utc)
         self.session.flush()
+        invalidate_article_aggregates()
 
         # Re-mint cryptographic block to seal updated content in ledger
         try:
@@ -992,6 +1016,7 @@ class ArticleRepository:
             article.source_removed_notice = source_removed_notice
         article.updated_at = datetime.now(timezone.utc)
         self.session.flush()
+        invalidate_article_aggregates()
         return article
 
     def check_source_url_status(self, article_id: int) -> Dict[str, Any]:
@@ -1083,6 +1108,7 @@ class ArticleRepository:
             published_count += 1
         if published_count > 0:
             self.session.flush()
+            invalidate_article_aggregates()
             logger.info(f"Auto-published {published_count} scheduled articles at {now.isoformat()}")
         return published_count
 
@@ -1092,6 +1118,7 @@ class ArticleRepository:
         if article:
             self.session.delete(article)
             self.session.flush()
+            invalidate_article_aggregates()
             return True
         return False
 
@@ -1104,6 +1131,7 @@ class ArticleRepository:
                 article.published_at = datetime.now(timezone.utc)
             article.updated_at = datetime.now(timezone.utc)
             self.session.flush()
+            invalidate_article_aggregates()
             return True
         return False
 
@@ -1116,6 +1144,7 @@ class ArticleRepository:
             article.is_breaking = False
             article.updated_at = datetime.now(timezone.utc)
             self.session.flush()
+            invalidate_article_aggregates()
             return True
         return False
 
@@ -1126,6 +1155,7 @@ class ArticleRepository:
             article.scrape_status = "completed"
             article.updated_at = datetime.now(timezone.utc)
             self.session.flush()
+            invalidate_article_aggregates()
             return True
         return False
 
@@ -1205,6 +1235,7 @@ class ArticleRepository:
         if article:
             article.is_featured = not bool(article.is_featured)
             self.session.flush()
+            invalidate_article_aggregates()
             return article.is_featured
         return False
 
@@ -1214,6 +1245,7 @@ class ArticleRepository:
         if article:
             article.is_breaking = not bool(article.is_breaking)
             self.session.flush()
+            invalidate_article_aggregates()
             return article.is_breaking
         return False
 
@@ -1223,8 +1255,11 @@ class ArticleRepository:
             self.session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.category == category)
+            # Same visibility rule as the homepage blocks: scheduled / pending /
+            # archived rows must not leak onto public section pages.
+            .filter(Article.scrape_status == "completed")
         )
-        total_count = query.count()
+        total_count = self.public_feed_count(category)
 
         # Lead hero in section: first article with image or first article
         section_hero = query.filter(Article.images.any()).order_by(Article.id.desc()).first()
@@ -1423,6 +1458,31 @@ class ArticleRepository:
             "total_pages": total_pages,
             "category": category,
         }
+
+    def public_feed_count(self, category: Optional[str] = None) -> int:
+        """Exact total of publicly visible articles, cached for 60 seconds.
+
+        The public-content filter is deliberately non-sargable (LENGTH/TRIM and
+        NOT LIKE over TEXT columns), so COUNT(*) costs ~15 ms on a 1.9k article
+        corpus. Totals feed pagination only, so a short-lived cache is the
+        right trade-off; every article write invalidates the whole family.
+        """
+        from src.common.ttl_cache import cached
+
+        key = f"articles.public_count:{category or '*'}"
+        return int(
+            cached(
+                key,
+                60.0,
+                lambda: apply_public_content_filter(
+                    self.session.query(func.count(Article.id))
+                )
+                .filter(Article.scrape_status == "completed")
+                .filter(Article.category == category if category else True)
+                .scalar()
+                or 0,
+            )
+        )
 
     def get_database_stats(self) -> Dict[str, Any]:
         """Aggregate statistical summary of database records."""
@@ -2366,6 +2426,7 @@ class SecurityRepository:
         )
         self.session.add(log)
         self.session.flush()
+        invalidate_cache("newsroom.sec_metrics")
         return log
 
     def get_blocked_ips(self) -> List[BlockedIP]:
@@ -2403,6 +2464,7 @@ class SecurityRepository:
             self.session.add(record)
         self.session.flush()
         invalidate_cache("security.blocked_ips")
+        invalidate_cache("newsroom.sec_metrics")
         return record
 
     def unblock_ip(self, ip_id: int) -> bool:
@@ -2412,6 +2474,7 @@ class SecurityRepository:
             self.session.delete(record)
             self.session.flush()
             invalidate_cache("security.blocked_ips")
+            invalidate_cache("newsroom.sec_metrics")
             return True
         return False
 
@@ -2439,6 +2502,7 @@ class SecurityRepository:
         self.session.flush()
         if count:
             invalidate_cache("security.blocked_ips")
+            invalidate_cache("newsroom.sec_metrics")
         return count
 
     def get_blocked_countries(self) -> List[BlockedCountry]:
@@ -2461,6 +2525,7 @@ class SecurityRepository:
             existing.is_active = True
             self.session.flush()
             invalidate_cache("security.blocked_countries")
+            invalidate_cache("newsroom.sec_metrics")
             return existing
 
         record = BlockedCountry(
@@ -2472,6 +2537,7 @@ class SecurityRepository:
         self.session.add(record)
         self.session.flush()
         invalidate_cache("security.blocked_countries")
+        invalidate_cache("newsroom.sec_metrics")
         return record
 
     def toggle_country(self, country_id: int) -> bool:
@@ -2481,6 +2547,7 @@ class SecurityRepository:
             record.is_active = not bool(record.is_active)
             self.session.flush()
             invalidate_cache("security.blocked_countries")
+            invalidate_cache("newsroom.sec_metrics")
             return record.is_active
         return False
 
@@ -2491,6 +2558,7 @@ class SecurityRepository:
             self.session.delete(record)
             self.session.flush()
             invalidate_cache("security.blocked_countries")
+            invalidate_cache("newsroom.sec_metrics")
             return True
         return False
 

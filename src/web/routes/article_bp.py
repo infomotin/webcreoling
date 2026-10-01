@@ -35,10 +35,12 @@ def list_articles_view():
             start_idx = (page - 1) * per_page
             articles_data = search_results[start_idx : start_idx + per_page]
         else:
-            db_query = apply_public_content_filter(session.query(Article))
+            db_query = apply_public_content_filter(session.query(Article)).filter(
+                Article.scrape_status == "completed"
+            )
             if category:
                 db_query = db_query.filter(Article.category == category)
-            total = db_query.count()
+            total = repo.public_feed_count(category or None)
             articles = (
                 db_query.options(selectinload(Article.images))
                 .order_by(Article.id.desc())
@@ -51,6 +53,7 @@ def list_articles_view():
         # Get category breakdown for filter pills
         category_counts = dict(
             apply_public_content_filter(session.query(Article))
+            .filter(Article.scrape_status == "completed")
             .with_entities(Article.category, func.count(Article.id))
             .group_by(Article.category)
             .all()

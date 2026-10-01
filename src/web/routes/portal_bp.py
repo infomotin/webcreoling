@@ -147,17 +147,9 @@ def index_view():
         tech_news = category_blocks["technology"]
         sports_news = category_blocks["sports"]
         entertainment_news = category_blocks["entertainment"]
-        multimedia_news = article_repo.get_highlighted_articles(limit=4, exclude_id=exclude_id)
-        latest_news = (
-            apply_public_content_filter(
-                session.query(Article)
-                .options(joinedload(Article.images))
-                .filter(Article.scrape_status == "completed")
-            )
-            .order_by(Article.published_at.desc(), Article.id.desc())
-            .limit(6)
-            .all()
-        )
+        # Multimedia slot reuses the top of the highlight list: one query instead
+        # of two identical ORDER BY ... LIMIT scans (identical rows, same ordering).
+        multimedia_news = highlighted[:4]
 
         # Live infinite-scroll stream (date-time wise, newest first).
         # Fetching limit+1 rows replaces the previous full-table COUNT(*)
@@ -175,6 +167,9 @@ def index_view():
         )
         feed_has_more = len(feed_rows) > feed_limit
         feed_items = feed_rows[:feed_limit]
+        # "Latest news" is simply the head of the same newest-first stream
+        # (identical ordering & filters), so it needs no query of its own.
+        latest_news = feed_items[:6]
         feed_newest = (
             feed_items[0].published_at.strftime("%Y-%m-%d %H:%M:%S")
             if feed_items and feed_items[0].published_at

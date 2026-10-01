@@ -7,7 +7,7 @@ Allows users to upload custom local model checkpoints, prune weights, quantize
 import os
 import shutil
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from werkzeug.utils import secure_filename
@@ -43,7 +43,7 @@ class LocalModelManager:
                 "version": "2.5",
                 "models": [],
                 "active_model": None,
-                "updated_at": datetime.now(datetime.UTC).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             }
             safe_write_json(self.manifest_path, default_manifest)
 
@@ -66,7 +66,7 @@ class LocalModelManager:
                 "is_active": True,
                 "latency_ms": 14.8,
                 "bleu_score": 38.9,
-                "uploaded_at": datetime.now(datetime.UTC).isoformat(),
+                "uploaded_at": datetime.now(timezone.utc).isoformat(),
                 "optimized_variants": [
                     {"type": "INT8", "size_mb": 69.2, "latency_ms": 8.4, "speedup": "1.8x"},
                     {"type": "NF4 / INT4", "size_mb": 38.7, "latency_ms": 6.7, "speedup": "2.2x"},
@@ -95,7 +95,7 @@ class LocalModelManager:
             if custom_name
             else Path(clean_name).stem.replace(" ", "_").lower()
         )
-        model_id = f"local_{model_id}_{datetime.now(datetime.UTC).strftime('%Y%m%d_%H%M%S')}"
+        model_id = f"local_{model_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
 
         target_dir = self.uploaded_dir / model_id
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -134,14 +134,14 @@ class LocalModelManager:
             "is_active": False,
             "latency_ms": round(24.5 + (file_size_mb * 0.05), 1),
             "bleu_score": 38.2,
-            "uploaded_at": datetime.now(datetime.UTC).isoformat(),
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
             "optimized_variants": [],
             "local_path": str(dest_file),
         }
 
         manifest = safe_read_json(self.manifest_path) or {"models": []}
         manifest["models"].insert(0, model_record)
-        manifest["updated_at"] = datetime.now(datetime.UTC).isoformat()
+        manifest["updated_at"] = datetime.now(timezone.utc).isoformat()
         safe_write_json(self.manifest_path, manifest)
 
         logger.info(f"Uploaded local model saved: '{model_id}' ({file_size_mb} MB, format {format_label}).")
@@ -185,7 +185,7 @@ class LocalModelManager:
             "latency_ms": report["optimized_latency_ms"],
             "speedup": report["speedup_factor"],
             "reduction_percent": report["size_reduction_percent"],
-            "created_at": datetime.now(datetime.UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
         if "optimized_variants" not in target_model:
@@ -218,7 +218,7 @@ class LocalModelManager:
             return self.optimizer.deploy_to_newsroom(model_id, model_type="topic_submodel")
 
         manifest["active_model"] = model_id
-        manifest["updated_at"] = datetime.now(datetime.UTC).isoformat()
+        manifest["updated_at"] = datetime.now(timezone.utc).isoformat()
         safe_write_json(self.manifest_path, manifest)
 
         # Also write active newsroom manifest
@@ -229,7 +229,7 @@ class LocalModelManager:
             "quantization": target_model.get("quantization"),
             "latency_ms": target_model.get("latency_ms"),
             "bleu_score": target_model.get("bleu_score"),
-            "deployed_at": datetime.now(datetime.UTC).isoformat(),
+            "deployed_at": datetime.now(timezone.utc).isoformat(),
             "status": "online",
         }
         safe_write_json(self.active_model_dir / "active_model_manifest.json", newsroom_manifest)

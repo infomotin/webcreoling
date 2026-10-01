@@ -10,7 +10,7 @@ Enables autonomous cross-posting of published Bengali news to:
 import json
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from src.common.logger import get_logger
 from src.storage.database import get_db_session
@@ -86,7 +86,7 @@ class FacebookPagePublisher:
                 "id": simulated_post_id,
                 "status": "published",
                 "simulated": True,
-                "timestamp": datetime.now(datetime.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         url = f"{cls.GRAPH_API_URL}/{page_id}/feed"

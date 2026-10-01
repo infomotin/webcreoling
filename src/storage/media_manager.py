@@ -4,7 +4,7 @@ Downloads, verifies, deduplicates using SHA-256, and organizes images in a struc
 """
 
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 import httpx
@@ -36,7 +36,7 @@ class MediaManager:
         data/images/<source>/<YYYY-MM>/<sha256_hash>.<ext>
         """
         source_clean = sanitize_filename(source.lower(), max_length=30)
-        date_folder = (pub_date or datetime.now(datetime.UTC)).strftime("%Y-%m")
+        date_folder = (pub_date or datetime.now(timezone.utc)).strftime("%Y-%m")
         target_dir = self.base_dir / source_clean / date_folder
         target_dir.mkdir(parents=True, exist_ok=True)
 

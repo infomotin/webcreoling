@@ -4,7 +4,7 @@ Enables Admins and Editors to trigger portal crawls, ingest YouTube/Social news,
 run Worldwide multi-lingual scrapers, and control the Autonomous AI Pilot Brain.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from src.common.logger import get_logger
@@ -194,7 +194,7 @@ def synthesize_existing_article(article_id: int):
         if synth["is_truth_verified"]:
             article.scrape_status = "completed"
 
-        article.updated_at = datetime.now(datetime.UTC)
+        article.updated_at = datetime.now(timezone.utc)
         session.flush()
 
         # Re-seal cryptographic ledger so verification reflects the synthesized content

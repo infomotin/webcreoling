@@ -6,7 +6,7 @@ and chain audit validation to ensure 100% tamper-evident integrity.
 
 import hashlib
 import hmac
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple, Optional
 from config.settings import settings
 from src.common.logger import get_logger
@@ -107,7 +107,7 @@ class BlockchainLedgerEngine:
         nonce: int = 0,
     ) -> Dict[str, Any]:
         """Mint a new verified cryptographic block for a published article."""
-        ts = timestamp or datetime.now(datetime.UTC)
+        ts = timestamp or datetime.now(timezone.utc)
         if isinstance(ts, datetime):
             ts = ts.replace(microsecond=0)
             ts_iso = ts.isoformat()

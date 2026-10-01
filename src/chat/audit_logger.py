@@ -4,7 +4,7 @@ Persists conversational Q&A queries, retrieved context IDs, commands, and model 
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 from config.settings import settings
@@ -27,7 +27,7 @@ class ChatAuditLogger:
     ) -> None:
         """Append an interaction entry to the JSONL log file."""
         entry = {
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "mode": mode,  # 'rag_qa' or 'explicit_task'
             "user_input": user_input,
             "response": response_text,

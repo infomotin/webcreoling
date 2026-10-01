@@ -12,7 +12,7 @@ quality can be audited per article.
 
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from src.common.logger import get_logger
@@ -123,7 +123,7 @@ class SemanticFidelity:
             "threshold": applicable_threshold,
             "embedding_threshold": embedding_threshold,
             "passed": bool(passed),
-            "measured_at": datetime.now(datetime.UTC).isoformat(),
+            "measured_at": datetime.now(timezone.utc).isoformat(),
         }
         if not passed:
             logger.warning(

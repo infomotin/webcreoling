@@ -11,7 +11,7 @@ revised 2019):
 """
 
 import calendar
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Dict, Union
 
 from src.common.normalizer import BanglaTextNormalizer
@@ -118,5 +118,5 @@ def format_gregorian_bangla(value: Union[datetime, date]) -> str:
 
 def format_topbar_date(value: Union[datetime, date, None] = None) -> str:
     """Full top-bar date line combining the Gregorian and Bangla calendars."""
-    day = value or datetime.now(datetime.UTC)
+    day = value or datetime.now(timezone.utc)
     return f"{format_gregorian_bangla(day)} • {format_bangla_calendar(day)}"

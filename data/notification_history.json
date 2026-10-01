@@ -1,25 +1,5 @@
 [
   {
-    "id": "notif_init",
-    "title": "এআই নিউজ মনিটরিং সক্রিয় হয়েছে",
-    "message": "প্রথম আলো, বিবিসি বাংলা ও ডেইলি স্টার সহ ১০টি সংবাদপত্র সরাসরি মনিটর করা হচ্ছে।",
-    "source": "System Monitor",
-    "category": "সিস্টেম",
-    "timestamp": "10:13:56 (24 Sep)",
-    "url": "/news/",
-    "is_read": true
-  },
-  {
-    "id": "notif_1790244836893",
-    "title": "নতুন সংবাদপত্র সংযুক্ত: দ্য নিউ ইয়র্ক টাইমস",
-    "message": "মনিটরিং ওয়াচলিস্টে 'The New York Times' সফলভাবে যুক্ত করা হয়েছে। ব্যবধান: 45 মিনিট।",
-    "source": "Watchlist Manager",
-    "category": "মনিটরিং",
-    "timestamp": "10:13:56 (24 Sep)",
-    "url": "https://www.nytimes.com",
-    "is_read": true
-  },
-  {
     "id": "notif_1790244837345",
     "title": "🔔 টেস্ট ব্রেকিং নিউজ নোটিফিকেশন",
     "message": "প্রথম আলো ও ডেইলি স্টারে নতুন গুরুত্বপূর্ণ জাতীয় সংবাদ প্রকাশিত হয়েছে। এআই পাইলট তাৎক্ষণিক বিশ্লেষণ শুরু করেছে।",
@@ -476,6 +456,46 @@
     "source": "Prothom Alo Live Feed",
     "category": "ব্রেকিং নিউজ",
     "timestamp": "03:43:21 (01 Oct)",
+    "url": "/news/",
+    "is_read": true
+  },
+  {
+    "id": "notif_1790826856938",
+    "title": "নতুন সংবাদপত্র সংযুক্ত: দ্য নিউ ইয়র্ক টাইমস",
+    "message": "মনিটরিং ওয়াচলিস্টে 'The New York Times' সফলভাবে যুক্ত করা হয়েছে। ব্যবধান: 45 মিনিট।",
+    "source": "Watchlist Manager",
+    "category": "মনিটরিং",
+    "timestamp": "03:54:16 (01 Oct)",
+    "url": "https://www.nytimes.com",
+    "is_read": true
+  },
+  {
+    "id": "notif_1790826857362",
+    "title": "🔔 টেস্ট ব্রেকিং নিউজ নোটিফিকেশন",
+    "message": "প্রথম আলো ও ডেইলি স্টারে নতুন গুরুত্বপূর্ণ জাতীয় সংবাদ প্রকাশিত হয়েছে। এআই পাইলট তাৎক্ষণিক বিশ্লেষণ শুরু করেছে।",
+    "source": "Prothom Alo Live Feed",
+    "category": "ব্রেকিং নিউজ",
+    "timestamp": "03:54:17 (01 Oct)",
+    "url": "/news/",
+    "is_read": true
+  },
+  {
+    "id": "notif_1790827127416",
+    "title": "নতুন সংবাদপত্র সংযুক্ত: দ্য নিউ ইয়র্ক টাইমস",
+    "message": "মনিটরিং ওয়াচলিস্টে 'The New York Times' সফলভাবে যুক্ত করা হয়েছে। ব্যবধান: 45 মিনিট।",
+    "source": "Watchlist Manager",
+    "category": "মনিটরিং",
+    "timestamp": "03:58:47 (01 Oct)",
+    "url": "https://www.nytimes.com",
+    "is_read": true
+  },
+  {
+    "id": "notif_1790827127861",
+    "title": "🔔 টেস্ট ব্রেকিং নিউজ নোটিফিকেশন",
+    "message": "প্রথম আলো ও ডেইলি স্টারে নতুন গুরুত্বপূর্ণ জাতীয় সংবাদ প্রকাশিত হয়েছে। এআই পাইলট তাৎক্ষণিক বিশ্লেষণ শুরু করেছে।",
+    "source": "Prothom Alo Live Feed",
+    "category": "ব্রেকিং নিউজ",
+    "timestamp": "03:58:47 (01 Oct)",
     "url": "/news/",
     "is_read": true
   }

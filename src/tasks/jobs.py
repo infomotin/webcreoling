@@ -5,7 +5,7 @@ gracefully on external failures, and returns a human-readable status message
 (the scheduler records it into the job telemetry).
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from src.common.logger import get_logger
@@ -66,7 +66,7 @@ def fact_check_reaudit_task(limit: int = 20) -> str:
                         "combined_confidence": result.get("combined_confidence"),
                         "strategy": result.get("strategy"),
                         "flags": result.get("flags"),
-                        "at": datetime.now(datetime.UTC).isoformat(),
+                        "at": datetime.now(timezone.utc).isoformat(),
                     }
                     art.extracted_entities = entities
                     audited += 1

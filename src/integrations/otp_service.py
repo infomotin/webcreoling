@@ -3,7 +3,7 @@
 import hashlib
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from config.settings import settings
@@ -42,7 +42,7 @@ def issue_code(destination: str, purpose: str, channel: str = "email",
             repo.purge_expired()
             latest = repo.latest_for(destination, purpose)
             if latest and not latest.is_used:
-                elapsed = (datetime.now(datetime.UTC) - (latest.created_at or datetime.now(datetime.UTC))).total_seconds()
+                elapsed = (datetime.now(timezone.utc) - (latest.created_at or datetime.now(timezone.utc))).total_seconds()
                 if elapsed < cooldown:
                     wait = int(cooldown - elapsed)
                     return None, f"cooldown:{wait}"
@@ -56,7 +56,7 @@ def issue_code(destination: str, purpose: str, channel: str = "email",
                 max_attempts=int(cfg.get("otp_max_attempts") or 5),
                 user_id=user_id,
                 is_used=False,
-                expires_at=datetime.now(datetime.UTC) + timedelta(minutes=ttl_minutes),
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=ttl_minutes),
             )
             repo.add(otp)
             return code, None
@@ -81,7 +81,7 @@ def verify_code(destination: str, purpose: str, code: str,
                 return False, "not_found"
             if otp.is_used:
                 return False, "already_used"
-            if otp.expires_at and otp.expires_at < datetime.now(datetime.UTC):
+            if otp.expires_at and otp.expires_at < datetime.now(timezone.utc):
                 return False, "expired"
             if otp.attempts >= otp.max_attempts:
                 return False, "too_many_attempts"

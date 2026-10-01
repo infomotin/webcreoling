@@ -1,7 +1,7 @@
 """Regression tests: system-encrypted / locked placeholder articles must never surface publicly."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.web.app import create_app
 from src.storage.database import init_db, get_db_session
@@ -36,7 +36,7 @@ def _login(client, username="admin", password="admin123"):
 def _insert_raw_article(title, content_text="লক্ষ্যযোগ্য সংবাদের বিষয়বস্তু।", category="politics"):
     """Insert a raw row bypassing editorial normalisation so marker titles survive."""
     art = Article(
-        url=f"https://daily-ai-alo.news/test/{abs(hash((title, content_text, datetime.now(datetime.UTC)))) % 10**12}",
+        url=f"https://daily-ai-alo.news/test/{abs(hash((title, content_text, datetime.now(timezone.utc)))) % 10**12}",
         original_source_url="https://daily-ai-alo.news/test",
         source="পরীক্ষা সূত্র",
         source_status="ACTIVE",
@@ -49,7 +49,7 @@ def _insert_raw_article(title, content_text="লক্ষ্যযোগ্য �
         category=category,
         author="টেস্ট",
         scrape_status="completed",
-        published_at=datetime.now(datetime.UTC),
+        published_at=datetime.now(timezone.utc),
     )
     return art
 

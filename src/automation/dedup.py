@@ -9,7 +9,7 @@ Applied at two layers:
   * published articles -> ArticleRelation  (table `related_articles`)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from src.common.logger import get_logger
@@ -77,9 +77,9 @@ def link_related_articles(
                 "byline_b": other.author,
                 "origin_b": other.creation_origin,
                 "method": "sequence+shingle similarity",
-                "detected_at": datetime.now(datetime.UTC).isoformat(),
+                "detected_at": datetime.now(timezone.utc).isoformat(),
             },
-            detected_at=datetime.now(datetime.UTC),
+            detected_at=datetime.now(timezone.utc),
         )
         session.add(rel)
         created.append(rel)
@@ -153,9 +153,9 @@ def link_raw_items(
             "url_b": dup_url,
             "source_b": related.source_name if related else None,
             "related_article": not related,
-            "detected_at": datetime.now(datetime.UTC).isoformat(),
+            "detected_at": datetime.now(timezone.utc).isoformat(),
         },
-        detected_at=datetime.now(datetime.UTC),
+        detected_at=datetime.now(timezone.utc),
     )
     session.add(rel)
     session.flush()

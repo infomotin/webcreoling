@@ -1,7 +1,7 @@
 """Tests for the dynamic top utility bar (date / weather / FX) and the breaking-news scroller."""
 
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -44,8 +44,8 @@ def test_gregorian_and_topbar_date_strings():
     assert format_gregorian_bangla(d) == "সোমবার, ২২ সেপ্টেম্বর ২০২৬"
     assert format_topbar_date(d) == "সোমবার, ২২ সেপ্টেম্বর ২০২৬ • ৭ আশ্বিন ১৪৩৩"
     # generated for "today" by default
-    assert format_topbar_date() == format_gregorian_bangla(datetime.now(datetime.UTC)) + " • " + format_bangla_calendar(
-        datetime.now(datetime.UTC)
+    assert format_topbar_date() == format_gregorian_bangla(datetime.now(timezone.utc)) + " • " + format_bangla_calendar(
+        datetime.now(timezone.utc)
     )
 
 
@@ -87,7 +87,7 @@ def test_frontpage_topbar_is_dynamic_not_hardcoded(client):
     # The old frozen date stamp must be gone
     assert "২২ সেপ্টেম্বর ২০২৬" not in html
 
-    today = format_gregorian_bangla(datetime.now(datetime.UTC))
+    today = format_gregorian_bangla(datetime.now(timezone.utc))
     assert today in html
 
     # Weather + rates come from the live payload (source annotations present)

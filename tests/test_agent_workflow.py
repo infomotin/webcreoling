@@ -9,7 +9,7 @@ Tests for the Agentic AI Operation Controller:
 """
 
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -324,7 +324,7 @@ def test_sweep_escalates_overdue_request_to_next_senior_role():
     with get_db_session() as session:
         req = session.query(ApprovalRequest).filter(
             ApprovalRequest.id == res["approval_request_id"]).first()
-        req.due_at = datetime.now(datetime.UTC) - timedelta(hours=1)  # overdue
+        req.due_at = datetime.now(timezone.utc) - timedelta(hours=1)  # overdue
         session.commit()
 
     summary = AgenticController.sweep_timeouts()
@@ -362,8 +362,8 @@ def test_sweep_auto_approves_by_silence_when_configured():
             # deadlines passed with nobody acting:
             req.assigned_role = "admin"
             req.escalation_level = req.max_escalation_level
-            req.due_at = datetime.now(datetime.UTC) - timedelta(hours=2)
-            req.auto_approve_at = datetime.now(datetime.UTC) - timedelta(hours=1)
+            req.due_at = datetime.now(timezone.utc) - timedelta(hours=2)
+            req.auto_approve_at = datetime.now(timezone.utc) - timedelta(hours=1)
             session.commit()
 
         summary = AgenticController.sweep_timeouts()

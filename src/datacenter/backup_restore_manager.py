@@ -11,7 +11,7 @@ import zipfile
 import hashlib
 import time
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple, Union
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -54,7 +54,7 @@ class BackupRestoreManager:
         Generate complete SQL dump of all database tables (articles, users, polls, rules, config, blockchain ledger).
         """
         cls.ensure_backup_dir()
-        ts = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         name = backup_name or f"ai_news_db_dump_{ts}.sql"
         if not name.endswith(".sql"):
             name += ".sql"
@@ -93,7 +93,7 @@ class BackupRestoreManager:
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(f"-- ==========================================================\n")
             f.write(f"-- The Daily AI Alo (দি ডেইলি এআই আলো) Enterprise Database Dump\n")
-            f.write(f"-- Export Date: {datetime.now(datetime.UTC).isoformat()}\n")
+            f.write(f"-- Export Date: {datetime.now(timezone.utc).isoformat()}\n")
             f.write(f"-- Generator: BackupRestoreManager v2.0\n")
             f.write(f"-- ==========================================================\n\n")
 
@@ -120,7 +120,7 @@ class BackupRestoreManager:
             "file_size_bytes": float(file_size),
             "sha256_checksum": sha256,
             "total_records": total_rows,
-            "created_at": datetime.now(datetime.UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @classmethod
@@ -132,7 +132,7 @@ class BackupRestoreManager:
         Package all downloaded portal media assets and images into a compressed ZIP archive.
         """
         cls.ensure_backup_dir()
-        ts = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         name = backup_name or f"ai_news_media_assets_{ts}.zip"
         if not name.endswith(".zip"):
             name += ".zip"
@@ -160,7 +160,7 @@ class BackupRestoreManager:
             "file_size_bytes": float(file_size),
             "sha256_checksum": sha256,
             "total_files": file_count,
-            "created_at": datetime.now(datetime.UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @classmethod
@@ -173,7 +173,7 @@ class BackupRestoreManager:
         Generate consolidated full system backup archive (SQL Dump + Media Assets + Blockchain Ledger).
         """
         cls.ensure_backup_dir()
-        ts = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         name = backup_name or f"the_daily_ai_alo_full_system_{ts}.zip"
         if not name.endswith(".zip"):
             name += ".zip"
@@ -201,7 +201,7 @@ class BackupRestoreManager:
             manifest = {
                 "system": "The Daily AI Alo (দি ডেইলি এআই আলো)",
                 "backup_type": "FULL_SYSTEM",
-                "timestamp": datetime.now(datetime.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "db_records": db_dump_res["total_records"],
                 "encryption": "AES-256-GCM Enterprise",
             }
@@ -225,7 +225,7 @@ class BackupRestoreManager:
             "file_path": str(out_path),
             "file_size_bytes": float(file_size),
             "sha256_checksum": sha256,
-            "created_at": datetime.now(datetime.UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     @classmethod
@@ -281,7 +281,7 @@ class BackupRestoreManager:
                 "sha256_checksum": sha256,
                 "restored_records": restored_records,
                 "message": f"সফলভাবে {restored_records} টি ডাটাবেস রেকর্ড ব্যাকআপ থেকে পুনরুদ্ধার করা হয়েছে।",
-                "restored_at": datetime.now(datetime.UTC).isoformat(),
+                "restored_at": datetime.now(timezone.utc).isoformat(),
             }
 
         # Case 2: ZIP / Full System Restore
@@ -309,7 +309,7 @@ class BackupRestoreManager:
                 "restored_records": max(restored_records, 15),
                 "restored_images": restored_images,
                 "message": f"সফলভাবে সিস্টেম ও মিডিয়া ব্যাকআপ পুনরুদ্ধার করা হয়েছে ({restored_images} মিডিয়া ফাইল, ডাটাবেস টেবিল সিঙ্কড)।",
-                "restored_at": datetime.now(datetime.UTC).isoformat(),
+                "restored_at": datetime.now(timezone.utc).isoformat(),
             }
 
         return {

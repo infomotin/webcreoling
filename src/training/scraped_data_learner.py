@@ -7,7 +7,7 @@ and constructs high-quality Bengali Supervised Fine-Tuning (SFT) reasoning pairs
 import os
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
@@ -40,7 +40,7 @@ class ScrapedDataLearner:
         if not self.manifest_path.exists():
             default_meta = {
                 "version": "2.5",
-                "last_scan_time": datetime.now(datetime.UTC).isoformat(),
+                "last_scan_time": datetime.now(timezone.utc).isoformat(),
                 "total_articles_scanned": 0,
                 "total_sft_pairs_generated": 0,
                 "domain_vocabulary_count": 0,
@@ -125,7 +125,7 @@ class ScrapedDataLearner:
             sft_records.append(synthesis_triplet)
 
         # Save to JSONL
-        timestamp_str = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         cat_tag = categories[0] if (categories and len(categories) == 1) else "multi_topic"
         filename = f"knowledge_{cat_tag}_{timestamp_str}.jsonl"
         file_path = self.data_root / filename
@@ -136,7 +136,7 @@ class ScrapedDataLearner:
 
         # Update metadata manifest
         manifest = safe_read_json(self.manifest_path) or {}
-        manifest["last_scan_time"] = datetime.now(datetime.UTC).isoformat()
+        manifest["last_scan_time"] = datetime.now(timezone.utc).isoformat()
         manifest["total_articles_scanned"] = manifest.get("total_articles_scanned", 0) + len(articles)
         manifest["total_sft_pairs_generated"] = manifest.get("total_sft_pairs_generated", 0) + len(sft_records)
         manifest["domain_vocabulary_count"] = manifest.get("domain_vocabulary_count", 0) + len(unique_tokens)
@@ -152,7 +152,7 @@ class ScrapedDataLearner:
             "articles_count": len(articles),
             "sft_pairs_count": len(sft_records),
             "topics": list(topic_counts.keys()),
-            "created_at": datetime.now(datetime.UTC).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "size_kb": round(file_path.stat().st_size / 1024, 2),
         }
         if "datasets" not in manifest:

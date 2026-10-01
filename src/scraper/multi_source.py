@@ -10,7 +10,7 @@ publish/queue) with normalized raw items.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 import requests
@@ -178,7 +178,7 @@ class MultiSourceScraper:
         if isinstance(stored, dict):
             cfg.update(stored)
         cfg.update(data)
-        cfg["updated_at"] = datetime.now(datetime.UTC).isoformat()
+        cfg["updated_at"] = datetime.now(timezone.utc).isoformat()
         repo.set_config("news_sources", cfg)
         return cfg
 
@@ -391,7 +391,7 @@ class MultiSourceScraper:
             "failed": 0,
             "skipped_sources": [],
             "errors": [],
-            "ran_at": datetime.now(datetime.UTC).isoformat(),
+            "ran_at": datetime.now(timezone.utc).isoformat(),
         }
 
         if ingest is None:

@@ -10,7 +10,7 @@ import time
 import hashlib
 import mimetypes
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple, Union
 
 from src.common.logger import get_logger
@@ -212,7 +212,7 @@ class CloudStorageManager:
                     "status": "MIRRORED_SYNCED",
                     "cdn_url": p_cdn,
                     "bytes_written": file_size,
-                    "timestamp": datetime.now(datetime.UTC).isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
         else:
             mirror_receipts[ptype] = {
@@ -220,7 +220,7 @@ class CloudStorageManager:
                 "status": "UPLOADED",
                 "cdn_url": cdn_url,
                 "bytes_written": file_size,
-                "timestamp": datetime.now(datetime.UTC).isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         logger.info(f"Cloud media stored: '{unique_name}' ({round(file_size/1024, 1)} KB). Primary CDN: {cdn_url}")
@@ -236,5 +236,5 @@ class CloudStorageManager:
             "local_relative_url": f"/media/images/{unique_name}",
             "primary_cdn_url": cdn_url,
             "mirror_receipts": mirror_receipts,
-            "uploaded_at": datetime.now(datetime.UTC).isoformat(),
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
         }

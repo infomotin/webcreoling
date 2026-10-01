@@ -15,7 +15,7 @@ AI decision and human intervention (AgentAuditLog + inline audit_trail).
 """
 
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
 from config.settings import settings
@@ -137,7 +137,7 @@ class AgenticController:
         with get_db_session() as session:
             policy = cls.get_policy(session)
             policy.update(data)
-            policy["updated_at"] = datetime.now(datetime.UTC).isoformat()
+            policy["updated_at"] = datetime.now(timezone.utc).isoformat()
             SiteConfigRepository(session).set_config("agent_policy", policy)
             return policy
 
@@ -180,7 +180,7 @@ class AgenticController:
             "event": event_type,
             "message": message,
             "actor": actor,
-            "at": datetime.now(datetime.UTC).isoformat(),
+            "at": datetime.now(timezone.utc).isoformat(),
         })
         req.audit_trail = trail
 
@@ -244,7 +244,7 @@ class AgenticController:
         flags: Optional[List[str]] = None,
     ) -> ApprovalRequest:
         required_role = REQUEST_ROUTES.get(request_type, "editorial_lead")
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
         escalation_hours = max(1, int(policy.get("escalation_hours", 6)))
         flags = flags or []
 
@@ -541,7 +541,7 @@ class AgenticController:
             "checks": checks,
             "quality_score": quality,
             "concerns": concerns,
-            "verified_at": datetime.now(datetime.UTC).isoformat(),
+            "verified_at": datetime.now(timezone.utc).isoformat(),
             "verdict": "flagged" if concerns else "verified",
         }
 
@@ -639,7 +639,7 @@ class AgenticController:
                 )
                 if sent:
                     inquiry.status = "sent"
-                    inquiry.sent_at = datetime.now(datetime.UTC)
+                    inquiry.sent_at = datetime.now(timezone.utc)
                     cls._audit(session, "EMAIL_SENT", actor="user",
                                request_type=req.request_type, subject_id=inquiry.id,
                                approval_request_id=req.id,
@@ -682,7 +682,7 @@ class AgenticController:
                         "source_url": submission.source_url,
                         "fact_check": submission.fact_check,
                         "publisher": "The Daily AI Alo (publisher credit; original byline/source preserved)",
-                        "published_at": datetime.now(datetime.UTC).isoformat(),
+                        "published_at": datetime.now(timezone.utc).isoformat(),
                     },
                 }
                 submission.status = "published"
@@ -840,7 +840,7 @@ class AgenticController:
                         "assigned_role": req.required_role,
                         "message": f"Flagged for {req.required_role} final judgment"}
 
-            now = datetime.now(datetime.UTC)
+            now = datetime.now(timezone.utc)
             effects: Dict[str, Any] = {}
             if decision == "approve":
                 req.status = ApprovalRequest.STATUS_APPROVED
@@ -930,7 +930,7 @@ class AgenticController:
             if req.escalation_level >= req.max_escalation_level and current_role == "admin":
                 return {"success": False, "error": "Already at highest escalation level"}
 
-            now = datetime.now(datetime.UTC)
+            now = datetime.now(timezone.utc)
             req.escalation_level += 1
             req.assigned_role = next_role
             req.status = ApprovalRequest.STATUS_ESCALATED
@@ -970,7 +970,7 @@ class AgenticController:
     def sweep_timeouts(cls, now: Optional[datetime] = None, session=None) -> Dict[str, Any]:
         """Hourly sweep: escalate overdue requests (next senior role) or auto-approve
         (if configured — approval by silence). Every action is audited."""
-        now = now or datetime.now(datetime.UTC)
+        now = now or datetime.now(timezone.utc)
         summary = {"checked": 0, "escalated": 0, "auto_approved": 0, "waiting": 0,
                    "swept_at": now.isoformat()}
         owns = session is None

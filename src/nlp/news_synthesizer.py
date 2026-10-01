@@ -8,7 +8,7 @@ Enforces a 70% Truth / Factuality Threshold Gate for autonomous portal publishin
 
 import re
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 from src.common.logger import get_logger
@@ -530,5 +530,5 @@ class AINewsSynthesizerAndParaphraser:
             "key_takeaways": key_takeaways,
             "core_facts": core_facts,
             "fact_check_report": fact_check,
-            "processed_at": datetime.now(datetime.UTC).isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
         }

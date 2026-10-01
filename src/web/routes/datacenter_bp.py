@@ -7,7 +7,7 @@ and one-click disaster recovery controls for The Daily AI Alo (দি ডেই�
 
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import (
     Blueprint,
     render_template,
@@ -132,7 +132,7 @@ def test_storage_connection(provider_id: int):
         result = CloudStorageManager.test_provider_connection(provider.to_dict())
         if result.get("success"):
             provider.status = "ONLINE"
-            provider.last_health_check = datetime.now(datetime.UTC)
+            provider.last_health_check = datetime.now(timezone.utc)
             session.flush()
 
         return jsonify(result)
@@ -471,5 +471,5 @@ def get_status_api():
             "summary": summary,
             "nodes": nodes,
             "providers": providers,
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })

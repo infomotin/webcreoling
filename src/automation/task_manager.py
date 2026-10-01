@@ -6,7 +6,7 @@ Executes and tracks long-running AI training, scraping, evaluation, and pipeline
 import uuid
 import time
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List, Optional, Callable
 from config.settings import settings
@@ -25,7 +25,7 @@ class AsyncTask:
         self.description = description
         self.status = "QUEUED"  # 'QUEUED', 'RUNNING', 'SUCCESS', 'FAILED'
         self.progress_pct = 0
-        self.created_at = datetime.now(datetime.UTC)
+        self.created_at = datetime.now(timezone.utc)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
         self.log_lines: List[str] = []
@@ -37,7 +37,7 @@ class AsyncTask:
     def add_log(self, text: str) -> None:
         """Add timestamped log entry."""
         with self._lock:
-            ts = datetime.now(datetime.UTC).strftime("%H:%M:%S")
+            ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
             self.log_lines.append(f"[{ts}] {text}")
             if len(self.log_lines) > 200:
                 self.log_lines = self.log_lines[-200:]
@@ -54,7 +54,7 @@ class AsyncTask:
         with self._lock:
             elapsed = 0.0
             if self.started_at:
-                end_time = self.completed_at or datetime.now(datetime.UTC)
+                end_time = self.completed_at or datetime.now(timezone.utc)
                 elapsed = (end_time - self.started_at).total_seconds()
 
             return {
@@ -110,7 +110,7 @@ class AsyncTaskManager:
             self.tasks[task_id] = task
 
         def _runner():
-            task.started_at = datetime.now(datetime.UTC)
+            task.started_at = datetime.now(timezone.utc)
             task.status = "RUNNING"
             task.add_log(f"Started job: {title}")
             logger.info(f"[Task {task_id}] Running: {title}")
@@ -128,7 +128,7 @@ class AsyncTaskManager:
                 task.add_log(f"Task encountered error: {e}")
                 logger.error(f"[Task {task_id}] Failed: {e}", exc_info=True)
             finally:
-                task.completed_at = datetime.now(datetime.UTC)
+                task.completed_at = datetime.now(timezone.utc)
 
         self.executor.submit(_runner)
         return task

@@ -63,8 +63,8 @@ def save_llm_config(data: Dict[str, Any]) -> Dict[str, Any]:
     from src.storage.repositories import SiteConfigRepository
     current = get_llm_config()
     current.update(data)
-    from datetime import datetime
-    current["updated_at"] = datetime.now(datetime.UTC).isoformat()
+    from datetime import datetime, timezone
+    current["updated_at"] = datetime.now(timezone.utc).isoformat()
     with get_db_session() as session:
         SiteConfigRepository(session).set_config("llm_config", current)
     return current

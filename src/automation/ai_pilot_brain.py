@@ -6,7 +6,7 @@ automated categorization, summarization, entity extraction, and autonomous publi
 
 import re
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 from config.settings import settings
@@ -791,7 +791,7 @@ class AIPilotBrain:
             "fake_verdict": fact_check_report["verdict"],
             "is_publishable": fact_check_report["is_publishable"],
             "meaning_retention_score": synth_report["meaning_retention_score"],
-            "processed_at": datetime.now(datetime.UTC).isoformat(),
+            "processed_at": datetime.now(timezone.utc).isoformat(),
         }
 
         # Step 5: Autonomous Decision Gate (with 70% Truth Threshold Gate & Fake Tolerance)
@@ -833,7 +833,7 @@ class AIPilotBrain:
             "source": raw_source,
             "title": bn_title,
             "author": raw_author,
-            "published_at": raw_article.get("published_at") or datetime.now(datetime.UTC),
+            "published_at": raw_article.get("published_at") or datetime.now(timezone.utc),
             "category": assigned_category,
             "content_text": bn_content,
             "summary": generated_summary,
@@ -996,6 +996,6 @@ class AIPilotBrain:
             "social_broadcasts": social_broadcast_count,
             "rejected_or_archived": rejected_count,
             "decisions": decisions_summary[:20],
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 

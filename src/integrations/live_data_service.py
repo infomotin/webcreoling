@@ -14,7 +14,7 @@ Failed refreshes keep serving the last good values, then the CMS branding values
 import re
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import requests
@@ -152,7 +152,7 @@ def fetch_weather(city: str = "ঢাকা") -> Dict[str, Any]:
         "humidity": current.get("relative_humidity_2m"),
         "wind": current.get("wind_speed_10m"),
         "source": "Open-Meteo",
-        "updated_at": datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M"),
+        "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
     }
     return _store(cache_key, payload)
 
@@ -239,7 +239,7 @@ def fetch_fx_rates() -> Dict[str, Any]:
 def get_topbar_data(branding: Optional[dict] = None) -> Dict[str, Any]:
     """Everything the portal top utility bar renders."""
     branding = branding or {}
-    now = datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
 
     weather_city = (branding.get("weather_city") or "ঢাকা").strip()
     weather: Dict[str, Any]

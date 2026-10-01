@@ -131,7 +131,7 @@ def test_ratelimit_window_unit():
 # ------------------------------------------------------- open redirect guard
 
 def test_safe_next_only_allows_relative_targets(app):
-    with app.app_context():
+    with app.test_request_context("/"):
         assert auth_bp._safe_next("/dashboard") == "/dashboard"
         assert auth_bp._safe_next("/articles?page=2") == "/articles?page=2"
         assert auth_bp._safe_next("https://evil.example/phish") != "https://evil.example/phish"
@@ -318,7 +318,7 @@ def test_js_escape_filter_blocks_attribute_breakout(app):
     # The raw payload must never reach the attribute verbatim; quotes come out
     # backslash-escaped (and then HTML-entity encoded by Jinja autoescaping).
     assert '"); alert(' not in rendered
-    assert "\&#34;" in rendered
+    assert r"\&#34;" in rendered
 
 
 def test_composite_indexes_created():

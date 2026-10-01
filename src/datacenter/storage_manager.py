@@ -184,8 +184,12 @@ class CloudStorageManager:
 
         file_size = len(content_bytes)
         file_hash = hashlib.sha256(content_bytes).hexdigest()
-        ext = Path(filename).suffix or ".jpg"
-        unique_name = f"{file_hash[:12]}_{filename}"
+        # Strip any directory components (../, ..\) so a hostile filename can
+        # never escape IMAGES_DIR.
+        safe_name = Path(str(filename).replace("\\", "/")).name.strip() or "upload"
+        safe_name = "".join(ch for ch in safe_name if ch.isalnum() or ch in "._- ") or "upload"
+        ext = Path(safe_name).suffix or ".jpg"
+        unique_name = f"{file_hash[:12]}_{safe_name}"
 
         # Save local copy in settings.IMAGES_DIR
         local_target_dir = settings.IMAGES_DIR

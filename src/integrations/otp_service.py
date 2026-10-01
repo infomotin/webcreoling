@@ -2,6 +2,7 @@
 
 import hashlib
 import random
+import secrets
 import string
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
@@ -24,7 +25,8 @@ def _hash(code: str) -> str:
 
 
 def generate_code(length: int = 6) -> str:
-    return "".join(random.choices(string.digits, k=length))
+    """Cryptographically secure numeric OTP (random.choices is predictable)."""
+    return "".join(secrets.choice(string.digits) for _ in range(length))
 
 
 def issue_code(destination: str, purpose: str, channel: str = "email",

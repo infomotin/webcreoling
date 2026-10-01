@@ -1585,16 +1585,27 @@ class UserRepository:
         self,
         username: str,
         email: str,
-        password: str,
+        password: Optional[str] = None,
         role: str = "viewer",
+        password_hash: Optional[str] = None,
     ) -> User:
-        """Create and persist a new user with hashed password."""
+        """Create and persist a new user.
+
+        Either ``password`` (hashed here) or a pre-computed ``password_hash``
+        must be supplied — the latter is used by the OTP registration flow so
+        plaintext passwords never sit in the signed session cookie.
+        """
+        if not password_hash and password is None:
+            raise ValueError("create_user requires a password or a password hash")
         user = User(
             username=username.strip(),
             email=email.strip().lower(),
             role=role.lower(),
         )
-        user.set_password(password)
+        if password_hash:
+            user.password_hash = password_hash
+        else:
+            user.set_password(password)
         self.session.add(user)
         self.session.flush()
         return user
@@ -1891,8 +1902,8 @@ class SiteConfigRepository:
                 "enabled": True,
                 "mail_server": "sandbox.smtp.mailtrap.io",
                 "mail_port": 2525,
-                "mail_username": "6056bdc6c17f23",
-                "mail_password": "4e1119bb236ac7",
+                "mail_username": settings.MAIL_USERNAME,
+                "mail_password": settings.MAIL_PASSWORD,
                 "mail_use_tls": True,
                 "mail_use_ssl": False,
                 "mail_default_sender": settings.MAIL_DEFAULT_SENDER,
@@ -1913,8 +1924,8 @@ class SiteConfigRepository:
             "integrations_payment": {
                 "provider": "SSLCommerz",
                 "is_live": False,
-                "store_id": "arobw6a3cf7767fa7c",
-                "store_password": "arobw6a3cf7767fa7c@ssl",
+                "store_id": settings.SSLCOMMERZ_STORE_ID,
+                "store_password": settings.SSLCOMMERZ_STORE_PASSWORD,
                 "sandbox_base_url": "https://sandbox.sslcommerz.com",
                 "live_base_url": "https://securepay.sslcommerz.com",
                 "currency": "BDT",

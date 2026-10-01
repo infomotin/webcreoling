@@ -3,6 +3,7 @@ Database Engine & Session Management for SQLite.
 Configures WAL mode, Foreign Keys, and FTS5 Full-Text Search indexing.
 """
 
+import urllib.parse
 from contextlib import contextmanager
 from typing import Generator
 from sqlalchemy import create_engine, text, event
@@ -40,6 +41,27 @@ from src.storage.models import (
 )
 
 logger = get_logger("webcreoling.storage.database")
+
+
+def _redact_url(url: str) -> str:
+    """Hide credentials before a database URL reaches the log."""
+    try:
+        parts = urllib.parse.urlsplit(url)
+        if parts.username or parts.password:
+            host = parts.hostname or ""
+            if parts.port:
+                host = f"{host}:{parts.port}"
+            netloc = f"{parts.username}:***@{host}" if parts.username else f"***@{host}"
+            return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+    except ValueError:
+        pass
+    return url
+
+if not settings.DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is not configured. Copy .env.example to .env (or export "
+        "DATABASE_URL) — credentials are intentionally not hardcoded."
+    )
 
 # Ensure DB directory exists if using SQLite
 if "sqlite" in settings.DATABASE_URL:
@@ -111,7 +133,7 @@ def _ensure_indexes(table_name: str, wanted: dict) -> None:
 
 def init_db() -> None:
     """Initialize relational tables and SQLite FTS5 Full-Text Search index."""
-    logger.info(f"Initializing database at {settings.DATABASE_URL}...")
+    logger.info(f"Initializing database at {_redact_url(settings.DATABASE_URL)}...")
     Base.metadata.create_all(bind=engine)
 
     # Database column migration check for articles table (SQLite & MySQL)

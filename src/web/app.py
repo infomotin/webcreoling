@@ -7,11 +7,50 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from flask import Flask, send_from_directory, render_template, session as flask_session
+import urllib.parse
+
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+    session as flask_session,
+)
 from config.settings import settings
 from src.storage.database import init_db, get_db_session
 from src.storage.repositories import UserRepository
 from src.web.auth import get_current_user
+
+
+def _load_or_create_secret_key() -> str:
+    """Persist a random Flask signing key under ``data/instance/``.
+
+    Replaces the previous deterministic fallback (sha256 of DB credentials),
+    which any attacker with repository access could recompute and use to forge
+    signed session cookies. The key file is created once with 0600 permissions
+    and reused across restarts; if the filesystem is read-only an ephemeral
+    key is generated for the lifetime of the process.
+    """
+    import secrets as _secrets
+
+    key_file = PROJECT_ROOT / "data" / "instance" / "secret_key"
+    try:
+        if key_file.exists():
+            existing = key_file.read_text(encoding="utf-8").strip()
+            if existing:
+                return existing
+        key_file.parent.mkdir(parents=True, exist_ok=True)
+        key = _secrets.token_hex(32)
+        key_file.write_text(key, encoding="utf-8")
+        try:
+            os.chmod(key_file, 0o600)
+        except OSError:  # pragma: no cover - platform dependent
+            pass
+        print(f"[security] Generated new Flask SECRET_KEY at {key_file}")
+        return key
+    except OSError:
+        return _secrets.token_hex(32)
 
 
 def create_app(test_config: dict = None) -> Flask:
@@ -27,19 +66,25 @@ def create_app(test_config: dict = None) -> Flask:
         static_url_path="/static",
     )
 
-    # Load SECRET_KEY from environment — never use a hardcoded fallback in production.
-    # Generate a secure key with: python -c "import secrets; print(secrets.token_hex(32))"
-    flask_secret = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SECRET_KEY")
-    if not flask_secret:
-        # Derive a deterministic key from the DB credentials so dev environments work
-        # out-of-the-box without an explicit env var while production always sets one.
-        import hashlib
-        seed = f"webcreoling-{settings.DB_NAME}-{settings.DB_HOST}-{settings.DB_USER}"
-        flask_secret = hashlib.sha256(seed.encode()).hexdigest()
+    # SECRET_KEY: env var first, otherwise a persisted random key (see
+    # _load_or_create_secret_key). Never derived from guessable inputs.
+    flask_secret = (
+        os.environ.get("FLASK_SECRET_KEY")
+        or os.environ.get("SECRET_KEY")
+        or getattr(settings, "FLASK_SECRET_KEY", "")
+        or _load_or_create_secret_key()
+    )
 
     app.config.from_mapping(
         SECRET_KEY=flask_secret,
         MAX_CONTENT_LENGTH=32 * 1024 * 1024,
+        # Session hardening: HttpOnly (default) + SameSite=Lax blocks
+        # cross-site POSTs from carrying the session cookie. Opt-in Secure
+        # flag for HTTPS deployments.
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "").lower()
+        in ("1", "true", "yes"),
         # ---- Default Mail Server Configuration (Mailtrap sandbox) ----
         MAIL_SERVER=getattr(settings, "MAIL_SERVER", "sandbox.smtp.mailtrap.io"),
         MAIL_PORT=getattr(settings, "MAIL_PORT", 2525),
@@ -83,6 +128,45 @@ def create_app(test_config: dict = None) -> Flask:
     def security_firewall_hook():
         return run_security_firewall()
 
+    # CSRF mitigation without token plumbing: reject state-changing requests
+    # that a browser attributes to another origin (Origin/Referer mismatch or
+    # Sec-Fetch-Site: cross-site). Requests without those headers (tests,
+    # curl, server-to-server) are unaffected.
+    @app.before_request
+    def csrf_origin_guard():
+        if request.method in ("GET", "HEAD", "OPTIONS", "TRACE"):
+            return None
+        if request.headers.get("Sec-Fetch-Site") == "cross-site":
+            return jsonify({"error": "CSRF check failed", "message": "Cross-site request rejected."}), 403
+        origin = request.headers.get("Origin") or request.headers.get("Referer")
+        if origin:
+            try:
+                host = urllib.parse.urlsplit(origin).netloc
+            except ValueError:
+                return jsonify({"error": "CSRF check failed", "message": "Malformed Origin."}), 403
+            if host and host.lower() not in {request.host.lower(), request.environ.get("HTTP_HOST", "").lower()}:
+                return jsonify({"error": "CSRF check failed", "message": "Origin mismatch."}), 403
+        return None
+
+    # Hardening headers on every response.
+    # NOTE: no Content-Security-Policy yet — templates rely on inline
+    # <script> and onclick handlers, so a strict CSP needs a nonce refactor
+    # across all templates first.
+    @app.after_request
+    def security_headers_hook(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        response.headers.setdefault(
+            "Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()"
+        )
+        if request.is_secure or request.headers.get("X-Forwarded-Proto", "").lower() == "https":
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return response
+
     # Global Language Switcher Hook
     @app.before_request
     def language_handler_hook():
@@ -95,6 +179,23 @@ def create_app(test_config: dict = None) -> Flask:
             cookie_lang = request.cookies.get("app_lang")
             g.lang = flask_session.get("lang") or cookie_lang or "bn"
             flask_session["lang"] = g.lang
+
+    # Jinja filter: escape a value for a single-quoted JS string literal that
+    # lives inside a double-quoted HTML attribute (inline onclick handlers).
+    # Blocks article titles/snippets like:  "); alert('xss'); //
+    def _js_escape(value) -> str:
+        text = "" if value is None else str(value)
+        return (
+            text.replace("\\", "\\\\")
+            .replace("'", "\\'")
+            .replace('"', '\\"')
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+        )
+
+    app.jinja_env.filters["js_escape"] = _js_escape
 
     # Context processor to make current_user available across all templates
     @app.context_processor

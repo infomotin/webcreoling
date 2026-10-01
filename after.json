@@ -4,11 +4,11 @@
       "name": "portal_home",
       "url": "/news/",
       "status": 200,
-      "queries": 19,
-      "cold_queries": 29,
-      "median_ms": 121.51,
-      "p95_ms": 160.41,
-      "min_ms": 116.1
+      "queries": 17,
+      "cold_queries": 27,
+      "median_ms": 99.51,
+      "p95_ms": 126.32,
+      "min_ms": 94.48
     },
     {
       "name": "portal_section",
@@ -16,29 +16,29 @@
       "status": 200,
       "queries": 7,
       "cold_queries": 15,
-      "median_ms": 24.41,
-      "p95_ms": 25.31,
-      "min_ms": 22.02
+      "median_ms": 23.16,
+      "p95_ms": 55.11,
+      "min_ms": 20.83
     },
     {
       "name": "portal_search",
       "url": "/news/?q=%E0%A6%B8%E0%A6%82%E0%A6%B8%E0%A6%A6",
       "status": 200,
-      "queries": 20,
-      "cold_queries": 29,
-      "median_ms": 135.58,
-      "p95_ms": 378.4,
-      "min_ms": 127.68
+      "queries": 18,
+      "cold_queries": 27,
+      "median_ms": 111.5,
+      "p95_ms": 160.2,
+      "min_ms": 101.67
     },
     {
       "name": "article_detail",
-      "url": "/news/article/2427",
+      "url": "/news/article/2479",
       "status": 200,
       "queries": 11,
       "cold_queries": 18,
-      "median_ms": 25.84,
-      "p95_ms": 27.74,
-      "min_ms": 21.8
+      "median_ms": 30.61,
+      "p95_ms": 34.19,
+      "min_ms": 21.5
     },
     {
       "name": "articles_archive",
@@ -46,29 +46,29 @@
       "status": 200,
       "queries": 4,
       "cold_queries": 6,
-      "median_ms": 14.89,
-      "p95_ms": 18.42,
-      "min_ms": 13.93
+      "median_ms": 13.62,
+      "p95_ms": 15.36,
+      "min_ms": 12.26
     },
     {
       "name": "dashboard",
       "url": "/",
       "status": 200,
-      "queries": 17,
+      "queries": 10,
       "cold_queries": 18,
-      "median_ms": 42.86,
-      "p95_ms": 49.85,
-      "min_ms": 38.41
+      "median_ms": 24.59,
+      "p95_ms": 45.33,
+      "min_ms": 22.61
     },
     {
       "name": "newsroom_admin",
       "url": "/admin/newspaper?tab=articles",
       "status": 200,
-      "queries": 51,
+      "queries": 28,
       "cold_queries": 83,
-      "median_ms": 77.99,
-      "p95_ms": 88.15,
-      "min_ms": 71.26
+      "median_ms": 43.46,
+      "p95_ms": 46.36,
+      "min_ms": 40.49
     },
     {
       "name": "login_page",
@@ -76,46 +76,46 @@
       "status": 302,
       "queries": 1,
       "cold_queries": 2,
-      "median_ms": 2.18,
-      "p95_ms": 3.43,
-      "min_ms": 1.74
+      "median_ms": 1.65,
+      "p95_ms": 2.02,
+      "min_ms": 1.48
     }
   ],
   "db": [
     {
       "name": "feed_page (public filter + status + limit)",
-      "median_ms": 0.592,
-      "p95_ms": 0.959,
+      "median_ms": 0.531,
+      "p95_ms": 0.782,
       "rows": 12
     },
     {
       "name": "category_list (no public filter)",
-      "median_ms": 0.394,
-      "p95_ms": 0.514,
+      "median_ms": 0.418,
+      "p95_ms": 0.76,
       "rows": 12
     },
     {
       "name": "feed_count (COUNT with public filter)",
-      "median_ms": 16.006,
-      "p95_ms": 16.739,
+      "median_ms": 16.418,
+      "p95_ms": 19.479,
       "rows": 1
     },
     {
       "name": "breaking_ticker",
-      "median_ms": 0.398,
-      "p95_ms": 0.919,
+      "median_ms": 0.381,
+      "p95_ms": 1.039,
       "rows": 9
     },
     {
       "name": "site_configs bulk fetch",
-      "median_ms": 0.413,
+      "median_ms": 0.383,
       "p95_ms": 0.576,
       "rows": 14
     },
     {
       "name": "article detail by id",
-      "median_ms": 0.522,
-      "p95_ms": 0.613,
+      "median_ms": 1.084,
+      "p95_ms": 1.76,
       "rows": 1
     }
   ]

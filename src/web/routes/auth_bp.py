@@ -4,17 +4,42 @@ Handles User Login, Registration, Logout, Profile Views,
 OTP verification (register / login 2FA / password reset) and language toggle.
 """
 
+import urllib.parse
+
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash, session,
+    Blueprint, current_app, render_template, request, redirect, url_for, flash, session,
 )
+from werkzeug.security import generate_password_hash
 
 from src.storage.database import get_db_session
 from src.storage.repositories import UserRepository
+from src.web import ratelimit
 from src.web.auth import login_user, logout_user, get_current_user, login_required
 from src.integrations.config_service import get_otp_config
 from src.integrations.otp_service import issue_code, verify_code, deliver_otp
+from src.common.logger import get_logger
+
+logger = get_logger("webcreoling.auth")
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _safe_next(raw) -> str:
+    """Only honour same-site relative redirect targets (open-redirect guard)."""
+    if not raw:
+        return url_for("dashboard.index_view")
+    target = str(raw)
+    if not target.startswith("/") or target.startswith("//"):
+        return url_for("dashboard.index_view")
+    if urllib.parse.urlsplit(target).netloc:
+        return url_for("dashboard.index_view")
+    return target
+
+
+def _client_key() -> str:
+    """Stable per-client identity for rate limiting."""
+    forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    return forwarded or (request.remote_addr or "unknown")
 
 
 def _mask_destination(value: str) -> str:
@@ -58,8 +83,13 @@ def _issue_and_deliver(destination: str, purpose: str, channel: str = "email",
     if result.get("ok"):
         extra = " (সিমুলেটেড / simulated)" if result.get("simulated") else ""
         return True, f"ভেরিফিকেশন কোড পাঠানো হয়েছে{extra} / Code sent to {_mask_destination(destination)}."
-    # Delivery failed — sandbox fallback so the user is never locked out
-    return True, f"SMTP অদৃশ্য — স্যান্ডবক্স কোড: {code} / SMTP unavailable, sandbox code: {code}"
+    # Delivery failed. The raw code may only be surfaced in debug mode —
+    # flashing it in production would hand the OTP to anyone able to read the
+    # page (the session cookie is signed, not encrypted).
+    if current_app.debug:
+        return True, f"SMTP অদৃশ্য — স্যান্ডবক্স কোড: {code} / SMTP unavailable, sandbox code: {code}"
+    logger.warning("OTP delivery failed for %s (%s); code withheld from client", destination, purpose)
+    return True, "ডেলিভারি ব্যর্থ — আবার চেষ্টা করুন / Delivery failed — please try again."
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -71,20 +101,28 @@ def login_view():
     if request.method == "POST":
         username_or_email = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        next_url = request.args.get("next") or url_for("dashboard.index_view")
+        next_url = _safe_next(request.args.get("next"))
 
         if not username_or_email or not password:
             flash("Please enter both username and password.", "danger")
             return render_template("login.html")
 
+        # Brute-force guard: only failed attempts consume the allowance and a
+        # successful login clears it for that client + account.
+        fail_key = f"{_client_key()}|{username_or_email.lower()}"
+        if ratelimit.blocked("auth.login.failures", fail_key):
+            flash("Too many failed attempts — try again in a few minutes.", "danger")
+            return render_template("login.html"), 429
+
         with get_db_session() as session_db:
             repo = UserRepository(session_db)
             user = repo.authenticate(username_or_email, password)
             if user:
+                ratelimit.reset("auth.login.failures", fail_key)
                 otp_cfg = get_otp_config()
                 if otp_cfg.get("login_2fa") and user.email:
                     session_db.expunge(user)
-                    session["pending_2fa"] = {"user_id": user.id, "email": user.email, "next": next_url}
+                    session["pending_2fa"] = {"user_id": user.id, "email": user.email, "next": _safe_next(next_url)}
                     ok, msg = _issue_and_deliver(user.email, "login_2fa", "email", user_id=user.id)
                     flash(msg, "info" if ok else "warning")
                     return redirect(url_for("auth.verify_view"))
@@ -94,6 +132,7 @@ def login_view():
                 flash(f"Welcome back, {user.username}! (Role: {user.role.capitalize()})", "success")
                 return redirect(next_url)
             else:
+                ratelimit.record("auth.login.failures", fail_key)
                 flash("Invalid username or password.", "danger")
 
     return render_template("login.html")
@@ -106,6 +145,9 @@ def register_view():
         return redirect(url_for("dashboard.index_view"))
 
     if request.method == "POST":
+        if not ratelimit.allow("auth.register.request", _client_key()):
+            flash("Too many attempts — please wait a few minutes.", "danger")
+            return render_template("register.html"), 429
         username = request.form.get("username", "").strip()
         email = request.form.get("email", "").strip()
         password = request.form.get("password", "").strip()
@@ -131,10 +173,13 @@ def register_view():
 
             otp_cfg = get_otp_config()
             if otp_cfg.get("register_email_otp"):
+                # The session cookie is signed, not encrypted: keep the PBKDF2
+                # hash (exactly what create_user would persist) instead of the
+                # plaintext password so it is never recoverable from the cookie.
                 session["pending_registration"] = {
                     "username": username,
                     "email": email,
-                    "password": password,
+                    "password_hash": generate_password_hash(password),
                     "phone": phone,
                     "role": requested_role,
                 }
@@ -170,6 +215,12 @@ def verify_view():
     if request.method == "POST":
         code = request.form.get("code", "").strip()
         ok, reason = verify_code(destination, purpose, code, cfg=cfg)
+        if not ok and reason == "not_found" and not ratelimit.allow(
+            "auth.otp.request", f"{_client_key()}|{destination}"
+        ):
+            flash("অনেকবার চেষ্টা — কিছুক্ষণ পরে আবার চেষ্টা করুন। / Too many attempts, please wait.", "danger")
+            return render_template("otp_verify.html", mode=mode,
+                                   destination=_mask_destination(destination), cfg=cfg), 429
         if not ok:
             messages = {
                 "expired": "কোডের মেয়াদ শেষ / Code expired.",
@@ -188,8 +239,9 @@ def verify_view():
                 new_user = repo.create_user(
                     username=data["username"],
                     email=data["email"],
-                    password=data["password"],
+                    password=None,
                     role=data.get("role") or "viewer",
+                    password_hash=data.get("password_hash"),
                 )
                 if hasattr(new_user, "phone"):
                     new_user.phone = data.get("phone") or None
@@ -241,6 +293,9 @@ def verify_resend_view():
 def forgot_view():
     """Request a password-reset OTP by email."""
     if request.method == "POST":
+        if not ratelimit.allow("auth.forgot.request", _client_key()):
+            flash("অনেকবার চেষ্টা হয়েছে — কিছুক্ষণ পরে আবার চেষ্টা করুন। / Too many attempts, please wait.", "danger")
+            return render_template("forgot_password.html"), 429
         email = request.form.get("email", "").strip()
         if not email:
             flash("ইমেইল দিন / Enter your email.", "danger")
@@ -312,7 +367,7 @@ def lang_view(code: str):
     clean_code = "en" if str(code).lower() == "en" else "bn"
     session["lang"] = clean_code
 
-    next_url = request.args.get("next") or request.referrer or "/"
+    next_url = _safe_next(request.args.get("next") or request.referrer or "/")
     if "/lang/" in next_url or "/set-language/" in next_url:
         next_url = "/"
 

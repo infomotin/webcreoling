@@ -8,6 +8,7 @@ import uuid
 import pytest
 
 from src.web.app import create_app
+from config.settings import settings
 from src.integrations.config_service import get_mail_config, get_sms_config, get_payment_config, get_otp_config
 from src.integrations import otp_service, payment_service
 from src.storage.database import get_db_session
@@ -47,8 +48,9 @@ def test_mail_config_defaults_are_seeded():
     cfg = get_mail_config()
     assert cfg["mail_server"] == "sandbox.smtp.mailtrap.io"
     assert int(cfg["mail_port"]) == 2525
-    assert cfg["mail_username"] == "6056bdc6c17f23"
-    assert cfg["mail_password"] == "4e1119bb236ac7"
+    # Credentials come from the environment (.env) — never asserted as literals.
+    assert cfg["mail_username"] == settings.MAIL_USERNAME
+    assert cfg["mail_password"] == settings.MAIL_PASSWORD
     assert cfg["mail_use_tls"] is True
     assert cfg["mail_use_ssl"] is False
 
@@ -56,8 +58,8 @@ def test_mail_config_defaults_are_seeded():
 def test_payment_config_defaults_are_seeded():
     cfg = get_payment_config()
     assert cfg["provider"] == "SSLCommerz"
-    assert cfg["store_id"] == "arobw6a3cf7767fa7c"
-    assert cfg["store_password"] == "arobw6a3cf7767fa7c@ssl"
+    assert cfg["store_id"] == settings.SSLCOMMERZ_STORE_ID
+    assert cfg["store_password"] == settings.SSLCOMMERZ_STORE_PASSWORD
     assert cfg["is_live"] is False
     assert "sandbox.sslcommerz.com" in cfg["sandbox_base_url"]
 

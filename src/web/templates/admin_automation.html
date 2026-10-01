@@ -507,7 +507,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-top: 0.6rem; border-top: 1px solid var(--auto-border);">
                 <div style="display: flex; gap: 4px;">
                     <!-- Edit button -->
-                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openEditJobModal('{{ job.job_id }}', '{{ job.name }}', '{{ job.name_bn }}', '{{ job.description }}', {{ job.interval_seconds }})">
+                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openEditJobModal('{{ job.job_id | js_escape }}', '{{ job.name | js_escape }}', '{{ job.name_bn | js_escape }}', '{{ job.description | js_escape }}', {{ job.interval_seconds }})">
                         ✏️ এডিট
                     </button>
                     <!-- History button -->

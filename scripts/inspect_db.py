@@ -1,5 +1,12 @@
 import sqlite3
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pymysql
+
+from config.settings import settings
 
 print('--- SQLITE TABLES & ROW COUNTS ---')
 s_conn = sqlite3.connect('data/db/news_pipeline.db')
@@ -15,7 +22,13 @@ for t in tables:
 s_conn.close()
 
 print('\n--- MYSQL ai_news TABLES ---')
-m_conn = pymysql.connect(host='localhost', user='root', password='toor', database='ai_news', port=3306)
+m_conn = pymysql.connect(
+    host=settings.DB_HOST,
+    user=settings.DB_USER,
+    password=settings.DB_PASSWORD,
+    database=settings.DB_NAME,
+    port=settings.DB_PORT,
+)
 m_cur = m_conn.cursor()
 m_cur.execute('SHOW TABLES;')
 m_tables = [r[0] for r in m_cur.fetchall()]

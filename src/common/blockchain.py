@@ -13,7 +13,47 @@ from src.common.logger import get_logger
 
 logger = get_logger("webcreoling.common.blockchain")
 
-LEDGER_SECRET = getattr(settings, "SECRET_KEY", "prothom_alo_enterprise_cryptographic_ledger_secret_2026")
+def _resolve_ledger_secret() -> str:
+    """Resolve the HMAC key that signs article-ledger blocks.
+
+    Priority: ``LEDGER_SECRET`` env var -> ``settings.LEDGER_SECRET`` ->
+    persisted key file -> legacy constant (kept only so ledgers signed before
+    this change still verify). Set ``LEDGER_SECRET`` in production and keep it
+    stable: rotating it makes previously signed blocks fail chain audit.
+    """
+    import os
+    from pathlib import Path
+
+    configured = os.environ.get("LEDGER_SECRET") or getattr(settings, "LEDGER_SECRET", "")
+    if configured:
+        return configured
+
+    key_file = Path(__file__).resolve().parents[2] / "data" / "instance" / "ledger_secret"
+    try:
+        if key_file.exists():
+            stored = key_file.read_text(encoding="utf-8").strip()
+            if stored:
+                return stored
+    except OSError:
+        pass
+
+    # Legacy deployments already have blocks signed with the historical key:
+    # reuse it (persisted) so the existing chain keeps verifying, and warn.
+    legacy = "prothom_alo_enterprise_cryptographic_ledger_secret_2026"
+    logger.warning(
+        "LEDGER_SECRET is not configured — reusing the historical signing key. "
+        "Set the LEDGER_SECRET environment variable for a unique key (rotating "
+        "it requires re-signing existing blocks)."
+    )
+    try:
+        key_file.parent.mkdir(parents=True, exist_ok=True)
+        key_file.write_text(legacy, encoding="utf-8")
+    except OSError:  # pragma: no cover - read-only filesystem
+        pass
+    return legacy
+
+
+LEDGER_SECRET = _resolve_ledger_secret()
 GENESIS_PREV_HASH = "0" * 64
 
 

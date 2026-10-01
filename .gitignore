@@ -59,3 +59,11 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database backups — dumps contain SMTP/payment credentials and OTP data.
+# They must never be committed (and history must be scrubbed if they were).
+data/backups/
+*.sql
+
+# Per-instance secrets generated at first run
+# data/instance/

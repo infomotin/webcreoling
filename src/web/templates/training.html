@@ -386,13 +386,13 @@
                 </div>
 
                 <div style="display: flex; gap: 0.4rem;">
-                    <button class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="triggerTopicSplitModal('{{ tm.id }}', '{{ tm.name_bn }}', {{ tm.rank }})">
+                    <button class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="triggerTopicSplitModal('{{ tm.id | js_escape }}', '{{ tm.name_bn | js_escape }}', {{ tm.rank }})">
                         ✂️ Split
                     </button>
-                    <button class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="benchmarkSpecificModel('{{ tm.id }}')">
+                    <button class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.75rem;" onclick="benchmarkSpecificModel('{{ tm.id | js_escape }}')">
                         ⏱ Test
                     </button>
-                    <button class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.75rem;" onclick="deploySpecificModel('{{ tm.id }}')">
+                    <button class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.75rem;" onclick="deploySpecificModel('{{ tm.id | js_escape }}')">
                         🚀 Deploy
                     </button>
                 </div>
@@ -862,10 +862,10 @@
                         </td>
                         <td style="padding: 0.7rem 0.6rem; text-align: right;">
                             <div style="display: flex; gap: 0.3rem; justify-content: flex-end;">
-                                <button class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 2px 8px;" onclick="optimizeUploadedModel('{{ m.model_id }}')">
+                                <button class="btn btn-sm btn-outline" style="font-size: 0.72rem; padding: 2px 8px;" onclick="optimizeUploadedModel('{{ m.model_id | js_escape }}')">
                                     ⚙️ অপ্টিমাইজ
                                 </button>
-                                <button class="btn btn-sm btn-primary" style="font-size: 0.72rem; padding: 2px 8px;" onclick="deployUploadedModel('{{ m.model_id }}')">
+                                <button class="btn btn-sm btn-primary" style="font-size: 0.72rem; padding: 2px 8px;" onclick="deployUploadedModel('{{ m.model_id | js_escape }}')">
                                     🚀 ডেপ্লয়
                                 </button>
                             </div>

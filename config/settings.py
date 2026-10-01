@@ -41,9 +41,9 @@ class Settings(BaseSettings):
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_USER: str = "root"
-    DB_PASSWORD: str = "toor"
+    DB_PASSWORD: str = ""  # required via .env / environment — no source default
     DB_NAME: str = "ai_news"
-    DATABASE_URL: str = "mysql+pymysql://root:toor@localhost:3306/ai_news?charset=utf8mb4"
+    DATABASE_URL: str = ""  # required via .env / environment — no source default
     SQL_ECHO: bool = False
 
     # Web Server Configuration
@@ -51,8 +51,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int = 8080
 
     # SSLCommerz Payment Gateway (Sandbox) Defaults
-    SSLCOMMERZ_STORE_ID: str = "webcreoling_sandbox_store"
-    SSLCOMMERZ_STORE_PASSWORD: str = "arobw6a3cf7767fa7c@ssl"
+    SSLCOMMERZ_STORE_ID: str = ""  # set in .env / environment
+    SSLCOMMERZ_STORE_PASSWORD: str = ""  # set in .env / environment
     SSLCOMMERZ_SANDBOX_URL: str = "https://sandbox.sslcommerz.com"
     SSLCOMMERZ_LIVE_URL: str = "https://securepay.sslcommerz.com"
     SSLCOMMERZ_IS_LIVE: bool = False
@@ -106,8 +106,8 @@ class Settings(BaseSettings):
     # Mail Server Configuration (Default: Mailtrap Sandbox)
     MAIL_SERVER: str = "sandbox.smtp.mailtrap.io"
     MAIL_PORT: int = 2525
-    MAIL_USERNAME: str = "6056bdc6c17f23"
-    MAIL_PASSWORD: str = "4e1119bb236ac7"
+    MAIL_USERNAME: str = ""  # set in .env / environment
+    MAIL_PASSWORD: str = ""  # set in .env / environment
     MAIL_USE_TLS: bool = True
     MAIL_USE_SSL: bool = False
     MAIL_DEFAULT_SENDER: str = "noreply@webcreoling.ai"
@@ -161,11 +161,11 @@ class Settings(BaseSettings):
     # Payment Gateway Configuration
     PAYMENT_GATEWAY_DEFAULT: str = "BKASH"  # BKASH, NAGAD, ROCKET, SSLCOMMERZ, STRIPE, SANDBOX
     BKASH_APP_KEY: str = "sandbox_bkash_app_key_88017"
-    BKASH_APP_SECRET: str = "sandbox_bkash_secret_secure_9901"
+    BKASH_APP_SECRET: str = ""  # set in .env / environment
     BKASH_MERCHANT_NUMBER: str = "01700000000"
     NAGAD_MERCHANT_ID: str = "sandbox_nagad_merchant_123"
     NAGAD_PUBLIC_KEY: str = "sandbox_nagad_pub_key"
-    SSLCOMMERZ_STORE_PASS: str = "webcreoling_sandbox_pass@123"
+    SSLCOMMERZ_STORE_PASS: str = ""  # set in .env / environment
     STRIPE_PUBLIC_KEY: str = "pk_test_sample_51O..."
     STRIPE_SECRET_KEY: str = "sk_test_sample_51O..."
 

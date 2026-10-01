@@ -357,18 +357,18 @@
                     <a href="{{ paper.url }}" target="_blank" class="btn btn-sm btn-outline" style="padding: 3px 7px; font-size: 0.72rem; border-color: #38bdf8; color: #38bdf8;">
                         👁️ লাইভ লিংক
                     </a>
-                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 3px 7px; font-size: 0.72rem;" onclick="pingNewspaperLive('{{ paper.id }}')">
+                    <button type="button" class="btn btn-sm btn-secondary" style="padding: 3px 7px; font-size: 0.72rem;" onclick="pingNewspaperLive('{{ paper.id | js_escape }}')">
                         ⚡ পিং
                     </button>
                 </div>
 
                 <!-- Notification Alert Toggle & Delete -->
                 <div style="display: flex; gap: 4px; align-items: center;">
-                    <button type="button" class="btn btn-sm {% if paper.notification_enabled %}btn-primary{% else %}btn-secondary{% endif %}" id="notifBtn-{{ paper.id }}" style="padding: 3px 7px; font-size: 0.72rem;" title="পাবলিশ নোটিফিকেশন টগল" onclick="togglePaperNotification('{{ paper.id }}')">
+                    <button type="button" class="btn btn-sm {% if paper.notification_enabled %}btn-primary{% else %}btn-secondary{% endif %}" id="notifBtn-{{ paper.id }}" style="padding: 3px 7px; font-size: 0.72rem;" title="পাবলিশ নোটিফিকেশন টগল" onclick="togglePaperNotification('{{ paper.id | js_escape }}')">
                         🔔 {{ "অন" if paper.notification_enabled else "অফ" }}
                     </button>
                     {% if not paper.is_system %}
-                    <button type="button" class="btn btn-sm btn-danger" style="padding: 3px 6px; font-size: 0.72rem;" onclick="deleteNewspaper('{{ paper.id }}')">
+                    <button type="button" class="btn btn-sm btn-danger" style="padding: 3px 6px; font-size: 0.72rem;" onclick="deleteNewspaper('{{ paper.id | js_escape }}')">
                         🗑️
                     </button>
                     {% endif %}
@@ -435,7 +435,7 @@
         <!-- Word Cloud Tags Grid -->
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
             {% for w in trending_words %}
-            <div class="trend-tag" onclick="filterArticlesByKeyword('{{ w.word }}')">
+            <div class="trend-tag" onclick="filterArticlesByKeyword('{{ w.word | js_escape }}')">
                 <span>🔥 {{ w.word }}</span>
                 <span style="color: #34d399; font-size: 0.72rem;">{{ w.trend_delta }}</span>
             </div>

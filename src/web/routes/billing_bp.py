@@ -194,10 +194,15 @@ def ipn_view():
 
     if val_id:
         val_result = payment_service.validate_payment(val_id)
-    elif status:
-        val_result = {"ok": status == "VALID", "status": status, "raw": dict(data)}
     else:
-        val_result = payment_service.ipn_validate(trans_id=tran_id, bank_tran_id=bank_tran_id, val_id=val_id)
+        # Always ask the gateway: a posted ``status`` is attacker-controllable
+        # and must never be able to mark a transaction VALID. The client may
+        # only downgrade (FAILED/CANCELLED) when the gateway is unreachable.
+        val_result = payment_service.ipn_validate(
+            trans_id=tran_id, bank_tran_id=bank_tran_id, val_id=val_id
+        )
+        if not val_result.get("ok") and status in ("FAILED", "CANCELLED", "EXPIRED"):
+            val_result = {"ok": False, "status": status, "raw": dict(data)}
 
     outcome = _finalize_payment(tran_id, val_result) if tran_id else {"ok": False, "error": "Missing tran_id"}
     return jsonify({"received": True, "result": outcome.get("ok"), "detail": outcome})

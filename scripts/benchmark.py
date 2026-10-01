@@ -96,7 +96,15 @@ def bench_routes(app, runs: int) -> List[Dict[str, Any]]:
         ("login_page", "/auth/login"),
     ]
 
+    from src.common import ttl_cache
+
     for name, url in routes:
+        # Cold path: purge the process-level TTL cache, then one request.
+        ttl_cache.invalidate()
+        with QueryCounter(engine) as qc_cold:
+            client.get(url)
+        cold_queries = qc_cold.count
+
         # Warm-up (Jinja compile, identity map, caches).
         for _ in range(2):
             client.get(url)
@@ -118,6 +126,7 @@ def bench_routes(app, runs: int) -> List[Dict[str, Any]]:
                 "url": url,
                 "status": status,
                 "queries": query_count,
+                "cold_queries": cold_queries,
                 "median_ms": round(statistics.median(times), 2),
                 "p95_ms": round(_percentile(times, 95), 2),
                 "min_ms": round(min(times), 2),
@@ -209,10 +218,10 @@ def bench_db(iterations: int) -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 def print_report(route_results: List[Dict[str, Any]], db_results: List[Dict[str, Any]]) -> None:
     print("\n=== Route benchmarks (Flask test client, warm) ===")
-    print(f"{'route':<24} {'status':>6} {'queries':>8} {'median ms':>10} {'p95 ms':>9} {'min ms':>9}")
+    print(f"{'route':<24} {'status':>6} {'cold q':>7} {'warm q':>7} {'median ms':>10} {'p95 ms':>9} {'min ms':>9}")
     for r in route_results:
         print(
-            f"{r['name']:<24} {r['status']:>6} {r['queries']:>8} "
+            f"{r['name']:<24} {r['status']:>6} {r.get('cold_queries', 0):>7} {r['queries']:>7} "
             f"{r['median_ms']:>10} {r['p95_ms']:>9} {r['min_ms']:>9}"
         )
 
@@ -229,7 +238,7 @@ def print_report(route_results: List[Dict[str, Any]], db_results: List[Dict[str,
 
 def print_comparison(before: Dict[str, Any], after: Dict[str, Any]) -> None:
     print("\n=== Comparison (before -> after) ===")
-    print(f"{'route':<24} {'queries':>16} {'median ms':>22}")
+    print(f"{'route':<24} {'warm queries':>26} {'median ms':>22}")
     before_routes = {r["name"]: r for r in before.get("routes", [])}
     for r in after.get("routes", []):
         b = before_routes.get(r["name"])
@@ -238,7 +247,7 @@ def print_comparison(before: Dict[str, Any], after: Dict[str, Any]) -> None:
         q_delta = r["queries"] - b["queries"]
         t_delta = r["median_ms"] - b["median_ms"]
         print(
-            f"{r['name']:<24} {b['queries']:>6} -> {r['queries']:<6} ({q_delta:+d}) "
+            f"{r['name']:<24} {b['queries']:>8} -> {r['queries']:<7} ({q_delta:+d}) "
             f"{b['median_ms']:>8} -> {r['median_ms']:<8} ({t_delta:+.2f} ms)"
         )
 

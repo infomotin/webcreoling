@@ -37,6 +37,9 @@ def cached(key: str, ttl: float, producer: Callable[[], Any]) -> Any:
     # Produce outside the lock so one slow query never blocks other keys.
     value = producer()
     with _LOCK:
+        if len(_STORE) >= MAX_ENTRIES:
+            for stale in sorted(_STORE, key=lambda k: _STORE[k][0])[: len(_STORE) // 2]:
+                _STORE.pop(stale, None)
         _STORE[key] = (time.monotonic(), value)
     return value
 
@@ -48,18 +51,31 @@ def get(key: str, default: Any = None) -> Any:
     return entry[1] if entry is not None else default
 
 
+MAX_ENTRIES = 512
+
+
 def set(key: str, value: Any) -> Any:
     """Seed the cache with a known value (skips the producer entirely)."""
     with _LOCK:
+        if len(_STORE) >= MAX_ENTRIES:
+            # Bounded store: drop the oldest entries so caller-supplied keys
+            # (e.g. per-search-term counts) cannot grow memory without limit.
+            for stale in sorted(_STORE, key=lambda k: _STORE[k][0])[: len(_STORE) // 2]:
+                _STORE.pop(stale, None)
         _STORE[key] = (time.monotonic(), value)
     return value
 
 
 def invalidate(key: Optional[str] = None) -> None:
-    """Drop one key, or the entire cache when ``key`` is None."""
+    """Drop one key, the whole cache (``key is None``), or every key matching
+    a ``prefix*`` pattern such as ``articles.public_count*``."""
     with _LOCK:
         if key is None:
             _STORE.clear()
+        elif key.endswith("*"):
+            prefix = key[:-1]
+            for stale in [k for k in _STORE if k.startswith(prefix)]:
+                _STORE.pop(stale, None)
         else:
             _STORE.pop(key, None)
 

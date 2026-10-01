@@ -5,6 +5,7 @@ Supports full-text FTS5 search, category filtering, and detailed article inspect
 
 from flask import Blueprint, render_template, request, abort
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from src.storage.database import get_db_session
 from src.storage.models import Article
 from src.storage.repositories import ArticleRepository, apply_public_content_filter, is_public_article
@@ -39,7 +40,8 @@ def list_articles_view():
                 db_query = db_query.filter(Article.category == category)
             total = db_query.count()
             articles = (
-                db_query.order_by(Article.id.desc())
+                db_query.options(selectinload(Article.images))
+                .order_by(Article.id.desc())
                 .offset((page - 1) * per_page)
                 .limit(per_page)
                 .all()

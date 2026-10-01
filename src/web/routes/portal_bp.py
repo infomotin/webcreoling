@@ -266,13 +266,15 @@ def feed_stream_api():
                             & (Article.id < (before_id or 0))
                         )
                     )
-            total = query.count()
-            items = (
+            # Fetch one extra row instead of running a COUNT(*) over the
+            # non-sargable public-content filter (~15 ms on 1.9k articles).
+            rows = (
                 query.order_by(Article.published_at.desc(), Article.id.desc())
-                .limit(limit)
+                .limit(limit + 1)
                 .all()
             )
-            has_more = len(items) == limit and len(items) < total
+            has_more = len(rows) > limit
+            items = rows[:limit]
 
         newest = None
         if items and items[0].published_at:

@@ -1199,18 +1199,6 @@ class ArticleRepository:
             "breaking_count": breaking_count,
         }
 
-    def get_database_stats(self) -> Dict[str, Any]:
-        """Fetch general article and database statistics."""
-        kpis = self.get_editorial_kpis()
-        return {
-            "total_articles": kpis.get("total_articles", 0),
-            "completed_articles": kpis.get("published_count", 0),
-            "pending_articles": kpis.get("pending_count", 0),
-            "archived_articles": kpis.get("archived_count", 0),
-            "featured_articles": kpis.get("featured_count", 0),
-            "breaking_articles": kpis.get("breaking_count", 0),
-        }
-
     def toggle_featured(self, article_id: int) -> bool:
         """Toggle featured/lead status of an article."""
         article = self.session.query(Article).filter(Article.id == article_id).first()

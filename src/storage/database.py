@@ -80,6 +80,35 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 
+def _ensure_indexes(table_name: str, wanted: dict) -> None:
+    """Create any missing index on ``table_name`` (portable SQLite/MySQL/MariaDB).
+
+    ``wanted`` maps index name -> tuple of column names. Indexes are only
+    created when absent so this is safe to run on every startup, and it works
+    on MySQL, which does not support ``CREATE INDEX IF NOT EXISTS``.
+    """
+    try:
+        from sqlalchemy import inspect
+
+        inspector = inspect(engine)
+        if table_name not in inspector.get_table_names():
+            return
+        existing = {idx["name"] for idx in inspector.get_indexes(table_name)}
+        for name, columns in wanted.items():
+            if name in existing:
+                continue
+            cols = ", ".join(columns)
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text(f"CREATE INDEX {name} ON {table_name} ({cols});"))
+                    conn.commit()
+                logger.info(f"Created index {name} on {table_name}({cols})")
+            except Exception as exc:
+                logger.debug(f"Index {name} not created (may already exist): {exc}")
+    except Exception as exc:
+        logger.debug(f"Index check skipped for {table_name}: {exc}")
+
+
 def init_db() -> None:
     """Initialize relational tables and SQLite FTS5 Full-Text Search index."""
     logger.info(f"Initializing database at {settings.DATABASE_URL}...")
@@ -130,12 +159,15 @@ def init_db() -> None:
         logger.debug(f"Column migration check note: {e}")
 
     # Public permalink slug lookup speed-up (safe to run repeatedly)
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles (slug);"))
-            conn.commit()
-    except Exception:
-        pass
+    _ensure_indexes(
+        "articles",
+        {
+            "idx_articles_slug": ("slug",),
+            "ix_articles_status_published": ("scrape_status", "published_at"),
+            "ix_articles_category_status_pubdate": ("category", "scrape_status", "published_at"),
+            "ix_articles_status_scheduled": ("scrape_status", "scheduled_at"),
+        },
+    )
 
     # Users table column migration (OTP / SMS support)
     try:

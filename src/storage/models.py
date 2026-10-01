@@ -62,6 +62,15 @@ class DateTime(TypeDecorator):
 class Article(Base):
     """Stores scraped news article text, metadata, and relations to media."""
     __tablename__ = "articles"
+    __table_args__ = (
+        # Homepage / archive: WHERE scrape_status='completed' ORDER BY published_at DESC
+        Index("ix_articles_status_published", "scrape_status", "published_at"),
+        # Section blocks: WHERE category = ? AND scrape_status = 'completed'
+        # ORDER BY published_at DESC (index-ordered, no filesort)
+        Index("ix_articles_category_status_pubdate", "category", "scrape_status", "published_at"),
+        # Scheduled publishing scan: WHERE scrape_status='scheduled' AND scheduled_at <= ?
+        Index("ix_articles_status_scheduled", "scrape_status", "scheduled_at"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(String(500), unique=True, nullable=False, index=True)

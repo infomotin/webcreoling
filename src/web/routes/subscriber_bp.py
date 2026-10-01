@@ -6,6 +6,7 @@ active subscription & AI token wallet, 2FA/OTP security settings, and digital in
 
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session as flask_session
+from sqlalchemy.orm import selectinload
 from src.storage.database import get_db_session
 from src.storage.models import Article, User
 from src.storage.repositories import PaymentRepository, SubscriptionPlanRepository, UserRepository
@@ -34,6 +35,7 @@ def portal_view():
         # Recommended personalized articles
         articles = (
             session.query(Article)
+            .options(selectinload(Article.images))
             .filter(Article.scrape_status == "completed")
             .order_by(Article.id.desc())
             .limit(8)

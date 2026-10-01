@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from config.settings import settings
+from sqlalchemy.orm import selectinload
 from src.storage.database import get_db_session
 from src.storage.models import Article, ScrapeLog, User, NewsletterSubscriber, Poll
 from src.storage.repositories import ArticleRepository
@@ -44,6 +45,7 @@ def index_view():
         # Fetch recent 8 articles
         recent_articles = (
             session.query(Article)
+            .options(selectinload(Article.images))
             .order_by(Article.id.desc())
             .limit(8)
             .all()

@@ -1,0 +1,122 @@
+{
+  "routes": [
+    {
+      "name": "portal_home",
+      "url": "/news/",
+      "status": 200,
+      "queries": 19,
+      "cold_queries": 29,
+      "median_ms": 108.65,
+      "p95_ms": 111.06,
+      "min_ms": 107.29
+    },
+    {
+      "name": "portal_section",
+      "url": "/news/section/politics",
+      "status": 200,
+      "queries": 8,
+      "cold_queries": 15,
+      "median_ms": 23.37,
+      "p95_ms": 26.2,
+      "min_ms": 22.27
+    },
+    {
+      "name": "portal_search",
+      "url": "/news/?q=%E0%A6%B8%E0%A6%82%E0%A6%B8%E0%A6%A6",
+      "status": 200,
+      "queries": 20,
+      "cold_queries": 29,
+      "median_ms": 119.55,
+      "p95_ms": 125.74,
+      "min_ms": 116.78
+    },
+    {
+      "name": "article_detail",
+      "url": "/news/article/2401",
+      "status": 200,
+      "queries": 11,
+      "cold_queries": 18,
+      "median_ms": 21.44,
+      "p95_ms": 23.01,
+      "min_ms": 19.81
+    },
+    {
+      "name": "articles_archive",
+      "url": "/articles",
+      "status": 200,
+      "queries": 5,
+      "cold_queries": 6,
+      "median_ms": 20.22,
+      "p95_ms": 21.87,
+      "min_ms": 19.36
+    },
+    {
+      "name": "dashboard",
+      "url": "/",
+      "status": 200,
+      "queries": 17,
+      "cold_queries": 18,
+      "median_ms": 36.53,
+      "p95_ms": 37.52,
+      "min_ms": 35.55
+    },
+    {
+      "name": "newsroom_admin",
+      "url": "/admin/newspaper?tab=articles",
+      "status": 200,
+      "queries": 51,
+      "cold_queries": 83,
+      "median_ms": 65.08,
+      "p95_ms": 82.48,
+      "min_ms": 62.77
+    },
+    {
+      "name": "login_page",
+      "url": "/auth/login",
+      "status": 302,
+      "queries": 1,
+      "cold_queries": 2,
+      "median_ms": 1.6,
+      "p95_ms": 2.54,
+      "min_ms": 1.44
+    }
+  ],
+  "db": [
+    {
+      "name": "feed_page (public filter + status + limit)",
+      "median_ms": 0.518,
+      "p95_ms": 0.746,
+      "rows": 12
+    },
+    {
+      "name": "category_list (no public filter)",
+      "median_ms": 0.372,
+      "p95_ms": 0.577,
+      "rows": 12
+    },
+    {
+      "name": "feed_count (COUNT with public filter)",
+      "median_ms": 15.366,
+      "p95_ms": 15.661,
+      "rows": 1
+    },
+    {
+      "name": "breaking_ticker",
+      "median_ms": 0.393,
+      "p95_ms": 0.538,
+      "rows": 9
+    },
+    {
+      "name": "site_configs bulk fetch",
+      "median_ms": 0.467,
+      "p95_ms": 0.634,
+      "rows": 14
+    },
+    {
+      "name": "article detail by id",
+      "median_ms": 0.491,
+      "p95_ms": 0.899,
+      "rows": 1
+    }
+  ]
+}

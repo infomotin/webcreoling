@@ -152,14 +152,20 @@ class SpecializedTaskManager:
 
         logger.info(f"Built task-specific dataset with {len(samples)} total samples across tasks: {selected_tasks}.")
         if not samples:
-            # Add at least one dummy sample to prevent dataset creation errors
-            samples.append({
-                "task": "summarize",
-                "text": "[টাস্ক: সারসংক্ষেপ তৈরি]\nখবর: বাংলাদেশ একটি সুন্দর দেশ।\n-> সারসংক্ষেপ: বাংলাদেশ সুন্দর দেশ।\n<|endoftext|>",
-                "target": "বাংলাদেশ সুন্দর দেশ।",
-            })
+            # Add 4 dummy samples so train_test_split always has a valid non-empty train split
+            for _ in range(4):
+                samples.append({
+                    "task": "summarize",
+                    "text": "[টাস্ক: সারসংক্ষেপ তৈরি]\nখবর: বাংলাদেশ একটি সুন্দর দেশ।\n-> সারসংক্ষেপ: বাংলাদেশ সুন্দর দেশ।\n<|endoftext|>",
+                    "target": "বাংলাদেশ সুন্দর দেশ।",
+                })
 
         dataset = Dataset.from_list(samples)
-        test_size = 0.15 if len(samples) > 5 else 0.01
+        n = len(samples)
+        if n < 4:
+            # Too few samples for a valid split — put everything in train, empty val
+            return DatasetDict({"train": dataset, "validation": Dataset.from_list([])})
+
+        test_size = 0.15 if n > 10 else max(1, int(n * 0.2))
         split = dataset.train_test_split(test_size=test_size, seed=42)
         return DatasetDict({"train": split["train"], "validation": split["test"]})

@@ -5,7 +5,10 @@ Trains task-specific adapters on top of a single base model for Categorization, 
 
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+import os
 import torch
+# Zero-GPU guarantee: ensure CUDA is hidden before any CUDA-checking HF code runs
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -172,7 +175,7 @@ class HybridFineTuner:
             save_strategy="epoch",
             save_total_limit=1,
             seed=settings.SEED,
-            use_cpu=True,
+            no_cuda=True,       # HF <= 4.34 compatibility
             report_to="none",
             dataloader_num_workers=0,
         )

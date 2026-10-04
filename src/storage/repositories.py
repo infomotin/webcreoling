@@ -382,10 +382,14 @@ class ArticleRepository:
             query = query.limit(limit)
 
         results = query.all()
-        # Eagerly access and expunge all attributes to prevent DetachedInstanceError
+        # Detach from session using make_transient so all loaded columns (including
+        # JSON-mapped `extracted_entities`) remain accessible after the session closes.
+        # This prevents DetachedInstanceError in the training pipeline.
+        from sqlalchemy.orm import make_transient
         for art in results:
-            _ = (art.id, art.title, art.content_text, art.category, art.summary, art.extracted_entities)
-            self.session.expunge(art)
+            # Force-load the JSON column before detaching
+            _ = art.extracted_entities
+            make_transient(art)
 
         return results
 
@@ -417,13 +421,19 @@ class ArticleRepository:
                 result = self.session.execute(sql, {"query": fts_match_expr, "limit": top_k}).fetchall()
                 records = []
                 for row in result:
+                    pub_at = row[5]
+                    # SQLite raw rows may return datetime or string depending on driver
+                    if pub_at is not None:
+                        pub_at_str = pub_at.isoformat() if isinstance(pub_at, datetime) else str(pub_at)
+                    else:
+                        pub_at_str = None
                     records.append({
                         "id": row[0],
                         "title": row[1],
                         "content_text": row[2],
                         "category": row[3],
                         "source": row[4],
-                        "published_at": row[5].isoformat() if row[5] else None,
+                        "published_at": pub_at_str,
                         "url": row[6],
                         "score": float(row[7]) if row[7] is not None else 0.0,
                     })

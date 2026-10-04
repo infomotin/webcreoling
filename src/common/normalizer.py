@@ -29,16 +29,22 @@ class BanglaTextNormalizer:
         "\u200f",  # Right-to-left mark
     ]
 
-    # Newspaper boilerplate artifacts and captions to remove
+    # Newspaper boilerplate artifacts and captions to remove.
+    # IMPORTANT: Bengali text has no case — re.IGNORECASE is NOT used for Bangla
+    # patterns because on Python 3.12+ it can interfere with non-ASCII Unicode
+    # regex matching (the flag causes the engine to alter code-point matching for
+    # case-folding, which can break multi-byte Bengali character sequences).
+    # The colon pattern is widened to handle both ':' and '-' separators with
+    # optional surrounding whitespace (e.g., "আরও পড়ুন : text" and "আরও পড়ুন: text").
     BOILERPLATE_PATTERNS: List[re.Pattern] = [
-        re.compile(r"আরও\s*পড়ুন\s*:\s*[^\n]+", re.IGNORECASE),
-        re.compile(r"ছবি\s*:\s*সংগৃহীত[^\n]*", re.IGNORECASE),
-        re.compile(r"ফাইল\s*ছবি[^\n]*", re.IGNORECASE),
-        re.compile(r"নিজস্ব\s*প্রতিবেদক\s*[,|\-]?\s*", re.IGNORECASE),
-        re.compile(r"অনলাইন\s*ডেস্ক\s*[,|\-]?\s*", re.IGNORECASE),
-        re.compile(r"বিশেষ\s*সংবাদদাতা\s*[,|\-]?\s*", re.IGNORECASE),
-        re.compile(r"বিজ্ঞাপন\s*", re.IGNORECASE),
-        re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE),  # URLs in body
+        re.compile("আরও\\s*পড়ুন\\s*[:\\-]?\\s*[^\\n]+", re.UNICODE),
+        re.compile("ছবি\\s*:\\s*সংগৃহীত[^\\n]*", re.UNICODE),
+        re.compile("ফাইল\\s*ছবি[^\\n]*", re.UNICODE),
+        re.compile("নিজস্ব\\s*প্রতিবেদক\\s*[,|\\-]?\\s*", re.UNICODE),
+        re.compile("অনলাইন\\s*ডেস্ক\\s*[,|\\-]?\\s*", re.UNICODE),
+        re.compile("বিশেষ\\s*সংবাদদাতা\\s*[,|\\-]?\\s*", re.UNICODE),
+        re.compile("বিজ্ঞাপন\\s*", re.UNICODE),
+        re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE),  # ASCII URL — flag is safe
     ]
 
     @classmethod
@@ -117,8 +123,8 @@ class BanglaTextNormalizer:
             text = cls.remove_boilerplates(text)
 
         # 4. Standardize quotes, dashes, and punctuation
-        text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
-        text = text.replace("—", " - ").replace("–", " - ")
+        text = text.replace("\u201c", '"').replace("\u201d", '"').replace("\u2018", "'").replace("\u2019", "'")
+        text = text.replace("\u2014", " - ").replace("\u2013", " - ")
 
         # 5. Clean whitespace
         text = cls.clean_whitespace(text)
@@ -127,9 +133,9 @@ class BanglaTextNormalizer:
 
     @classmethod
     def extract_sentences(cls, text: str) -> List[str]:
-        """Split Bangla text into sentences using Bangla dari (|) and English punctuation."""
+        """Split Bangla text into sentences using Bangla dari (।) and English punctuation."""
         if not text:
             return []
         # Split on Bangla dari (।), exclamation, question mark, or standard period
-        sentences = re.split(r"[।?!।\n]+", text)
+        sentences = re.split(r"[।?!\n]+", text)
         return [cls.clean_whitespace(s) for s in sentences if cls.clean_whitespace(s)]

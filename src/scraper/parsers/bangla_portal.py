@@ -6,7 +6,7 @@ and robust extraction of Bangla newspaper articles.
 
 import json
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from src.common.logger import get_logger
@@ -325,13 +325,22 @@ class BanglaPortalParser(BaseParser):
             return str(json_ld["articleBody"])
 
         # 3. Standard semantic article / main paragraphs
-        for container in soup.find_all(["article", "main", "div.story-content", "div.article-content"]):
-            paragraphs = container.find_all("p")
-            texts = [p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20]
-            if texts:
-                joined = "\n\n".join(texts)
-                if len(joined) >= 80:
-                    return joined
+        # Note: soup.find_all() tag-list does NOT support class-qualified names;
+        # use soup.select() for CSS selectors and plain tag names separately.
+        semantic_selectors = [
+            "article", "main",
+            "div.story-content", "div.article-content",
+            "div.article-body", "div.post-content",
+        ]
+        for selector in semantic_selectors:
+            containers = soup.select(selector)
+            for container in containers:
+                paragraphs = container.find_all("p")
+                texts = [p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20]
+                if texts:
+                    joined = "\n\n".join(texts)
+                    if len(joined) >= 80:
+                        return joined
 
         # 4. Fallback: all top-level p tags
         all_p = [p.get_text(strip=True) for p in soup.find_all("p") if len(p.get_text(strip=True)) > 25]

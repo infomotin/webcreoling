@@ -92,6 +92,26 @@ def save_storage_provider():
         credentials["ftp_host"] = request.form.get("ftp_host").strip()
         credentials["ftp_port"] = int(request.form.get("ftp_port", 22))
         credentials["username"] = request.form.get("ftp_user", "").strip()
+    if request.form.get("ftp_password") or request.form.get("password"):
+        credentials["password"] = (request.form.get("ftp_password") or request.form.get("password", "")).strip()
+    if request.form.get("ftp_remote_dir"):
+        credentials["remote_dir"] = request.form.get("ftp_remote_dir").strip()
+    if request.form.get("access_key_id"):
+        credentials["access_key_id"] = request.form.get("access_key_id", "").strip()
+    if request.form.get("secret_access_key"):
+        credentials["secret_access_key"] = request.form.get("secret_access_key", "").strip()
+    if request.form.get("region"):
+        credentials["region"] = request.form.get("region", "").strip()
+    if request.form.get("endpoint_url"):
+        credentials["endpoint_url"] = request.form.get("endpoint_url", "").strip()
+    if request.form.get("mega_email") or request.form.get("user_email"):
+        credentials["user_email"] = (request.form.get("mega_email") or request.form.get("user_email", "")).strip()
+    if request.form.get("mega_password"):
+        credentials["password"] = request.form.get("mega_password", "").strip()
+    if request.form.get("client_id"):
+        credentials["client_id"] = request.form.get("client_id", "").strip()
+    if request.form.get("client_secret"):
+        credentials["client_secret"] = request.form.get("client_secret", "").strip()
 
     pid = int(provider_id) if provider_id and provider_id.isdigit() else None
 

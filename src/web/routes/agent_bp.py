@@ -21,6 +21,7 @@ REQUEST_TYPE_LABELS = {
 }
 
 
+@agent_bp.route("")
 @agent_bp.route("/")
 @roles_required(*APPROVAL_ROLES)
 def index_view():

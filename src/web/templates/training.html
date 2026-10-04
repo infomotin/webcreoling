@@ -1934,6 +1934,23 @@ async function runPortalBrainSimulation() {
 
 document.addEventListener("DOMContentLoaded", () => {
     initSparsityGrid();
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+        const tabMap = {
+            'topics': 'tab-topics',
+            'finetune': 'tab-finetune',
+            'scrape-learn': 'tab-scrape-learn',
+            'local-upload': 'tab-local-upload',
+            'playground': 'tab-inference-playground',
+            'masterclass': 'tab-masterclass'
+        };
+        const targetId = tabMap[tab] || (tab.startsWith('tab-') ? tab : `tab-${tab}`);
+        const targetBtn = document.querySelector(`button[onclick*="'${targetId}'"]`);
+        if (targetBtn) {
+            switchStudioTab(targetId, targetBtn);
+        }
+    }
 });
 </script>
 {% endblock %}

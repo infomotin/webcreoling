@@ -1357,6 +1357,27 @@ function pollLiveAutomationStatus() {
         .catch(err => console.debug('Live polling error:', err));
 }
 
+// Support ?tab= URL parameter
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+        const tabMap = {
+            'jobs': 'tab-jobs',
+            'policy': 'tab-policy',
+            'live-stream': 'tab-live-stream',
+            'tasks': 'tab-tasks',
+            'logs': 'tab-logs',
+            'topology': 'tab-topology'
+        };
+        const targetId = tabMap[tab] || (tab.startsWith('tab-') ? tab : `tab-${tab}`);
+        const targetBtn = document.querySelector(`button[onclick*="'${targetId}'"]`);
+        if (targetBtn) {
+            switchAutoTab(targetId, targetBtn);
+        }
+    }
+});
+
 // Start live polling every 2.5 seconds
 setInterval(pollLiveAutomationStatus, 2500);
 </script>

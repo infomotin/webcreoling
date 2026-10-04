@@ -667,53 +667,72 @@ def simulate_portal_brain_api():
 
     elapsed = round((time.time() - start_time) * 1000 + 12.4, 1)
 
+    steps = [
+        {
+            "step": 1,
+            "name": "ইনজেস্ট ও ইউনিকোড নরম্যালাইজেশন",
+            "name_bn": "১. ইনজেস্ট ও ইউনিকোড নরম্যালাইজেশন",
+            "status": "completed",
+            "details": "Bangla Unicode NFC পরিষ্কার ও বিজ্ঞাপন ট্যাগ অপসারণ",
+            "desc": "Bangla Unicode NFC পরিষ্কার ও বিজ্ঞাপন ট্যাগ অপসারণ",
+        },
+        {
+            "step": 2,
+            "name": "ডোমেইন ক্যাটাগোরাইজেশন",
+            "name_bn": "২. ডোমেইন ক্যাটাগোরাইজেশন",
+            "status": "completed",
+            "details": f"ক্যাটাগরি: {category} (নির্ভুলতা: {cat_confidence}%)",
+            "result": f"{category} (নির্ভুলতা: {cat_confidence}%)",
+        },
+        {
+            "step": 3,
+            "name": "ফ্যাক্ট-চেকিং ও সত্যতা ফিল্টার",
+            "name_bn": "৩. ফ্যাক্ট-চেকিং ও সত্যতা ফিল্টার",
+            "status": "completed",
+            "details": f"{credibility_badge} (সত্যতা স্কোর: {truth_score}%)",
+            "result": f"{credibility_badge} (সত্যতা স্কোর: {truth_score}%)",
+        },
+        {
+            "step": 4,
+            "name": "প্রমিত সাংবাদিক শিরোনাম ও সামারি জেনারেশন",
+            "name_bn": "৪. প্রমিত সাংবাদিক শিরোনাম ও সামারি জেনারেশন",
+            "status": "completed",
+            "details": f"শিরোনাম: {headline}",
+            "headline": headline,
+            "summary": summary,
+        },
+        {
+            "step": 5,
+            "name": "পোর্টাল হোমপেজ ও সোশ্যাল মিডিয়া ডিসপ্যাচ",
+            "name_bn": "৫. পোর্টাল ও সোশ্যাল ডিসপ্যাচ",
+            "status": "ready_to_publish",
+            "details": f"লাইভ প্রকাশনা লিংক: /news/category/{category.lower()}",
+            "target_url": f"/news/category/{category.lower()}",
+        }
+    ]
+
+    published_data = {
+        "headline": headline,
+        "category": category,
+        "summary": summary,
+        "truth_score": truth_score,
+        "published_time": "এইমাত্র (Auto-Published by AI Pilot)",
+    }
+
     return jsonify({
         "status": "success",
+        "pipeline_result": {
+            "latency_ms": elapsed,
+            "steps": steps,
+            "published_article": published_data,
+        },
         "active_brain_model": active_meta.get("active_model_id", "SmolLM2-Bangla-Newsroom"),
         "brain_engine": active_meta.get("engine", "LoRA Multi-Task Core"),
         "raw_input_snippet": clean_text[:150] + "...",
         "source": source,
         "processing_time_ms": elapsed,
-        "pipeline_steps": [
-            {
-                "step": 1,
-                "name": "ইনজেস্ট ও ইউনিকোড নরম্যালাইজেশন",
-                "status": "completed",
-                "desc": "Bangla Unicode NFC পরিষ্কার ও বিজ্ঞাপন ট্যাগ অপসারণ",
-            },
-            {
-                "step": 2,
-                "name": "ডোমেইন ক্যাটাগোরাইজেশন",
-                "status": "completed",
-                "result": f"{category} (নির্ভুলতা: {cat_confidence}%)",
-            },
-            {
-                "step": 3,
-                "name": "ফ্যাক্ট-চেকিং ও সত্যতা ফিল্টার",
-                "status": "completed",
-                "result": f"{credibility_badge} (সত্যতা স্কোর: {truth_score}%)",
-            },
-            {
-                "step": 4,
-                "name": "প্রমিত সাংবাদিক শিরোনাম ও সামারি জেনারেশন",
-                "status": "completed",
-                "headline": headline,
-                "summary": summary,
-            },
-            {
-                "step": 5,
-                "name": "পোর্টাল হোমপেজ ও সোশ্যাল মিডিয়া ডিসপ্যাচ",
-                "status": "ready_to_publish",
-                "target_url": f"/news/category/{category.lower()}",
-            }
-        ],
-        "published_preview": {
-            "headline": headline,
-            "category": category,
-            "summary": summary,
-            "truth_score": truth_score,
-            "published_time": "এইমাত্র (Auto-Published by AI Pilot)",
-        }
+        "pipeline_steps": steps,
+        "published_preview": published_data,
     })
 
 

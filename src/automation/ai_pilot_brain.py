@@ -896,8 +896,6 @@ class AIPilotBrain:
         decisions_summary = []
 
         with get_db_session() as session:
-            repo = ArticleRepository(session)
-            ledger_repo = BlockchainLedgerRepository(session)
             rule_repo = AIBrainRuleRepository(session)
             config_repo = SiteConfigRepository(session)
             
@@ -909,80 +907,94 @@ class AIPilotBrain:
 
             active_rules = rule_repo.get_active_rules()
 
-            for item in raw_items:
-                try:
-                    processed = cls.process_raw_article(
-                        raw_article=item,
-                        active_rules=active_rules,
-                        auto_publish_threshold=auto_publish_threshold,
-                        max_allowed_fake_pct=effective_fake_threshold,
-                    )
+        for item in raw_items:
+            try:
+                processed = cls.process_raw_article(
+                    raw_article=item,
+                    active_rules=active_rules,
+                    auto_publish_threshold=auto_publish_threshold,
+                    max_allowed_fake_pct=effective_fake_threshold,
+                )
 
-                    # Upsert into database
-                    article_data = {
-                        "url": processed["url"],
-                        "source": processed["source"],
-                        "title": processed["title"],
-                        "author": processed["author"],
-                        "published_at": processed["published_at"],
-                        "category": processed["category"],
-                        "content_text": processed["content_text"],
-                        "summary": processed["summary"],
-                        "extracted_entities": processed["extracted_entities"],
-                        "scrape_status": processed["scrape_status"],
-                        "is_breaking": processed["is_breaking"],
-                        "is_featured": processed["is_featured"],
-                    }
+                # Upsert into database
+                article_data = {
+                    "url": processed["url"],
+                    "source": processed["source"],
+                    "title": processed["title"],
+                    "author": processed["author"],
+                    "published_at": processed["published_at"],
+                    "category": processed["category"],
+                    "content_text": processed["content_text"],
+                    "summary": processed["summary"],
+                    "extracted_entities": processed["extracted_entities"],
+                    "scrape_status": processed["scrape_status"],
+                    "is_breaking": processed["is_breaking"],
+                    "is_featured": processed["is_featured"],
+                }
 
-                    image_records = []
-                    for img in processed.get("images", []):
-                        image_records.append({
-                            "original_url": img["original_url"],
-                            "local_path": img["original_url"],  # CDN reference
-                            "file_hash": f"hash_{abs(hash(img['original_url']))}",
-                            "file_size_bytes": 102400,
-                            "mime_type": "image/jpeg",
-                            "caption": img.get("caption", ""),
-                            "is_lead_image": img.get("is_lead_image", False),
-                        })
+                image_records = []
+                for img in processed.get("images", []):
+                    image_records.append({
+                        "original_url": img["original_url"],
+                        "local_path": img["original_url"],  # CDN reference
+                        "file_hash": f"hash_{abs(hash(img['original_url']))}",
+                        "file_size_bytes": 102400,
+                        "mime_type": "image/jpeg",
+                        "caption": img.get("caption", ""),
+                        "is_lead_image": img.get("is_lead_image", False),
+                    })
 
+                saved_art_dict = None
+                saved_id = None
+                saved_title = ""
+                saved_source = ""
+                is_completed = (processed["scrape_status"] == "completed")
+
+                with get_db_session() as session:
+                    repo = ArticleRepository(session)
+                    ledger_repo = BlockchainLedgerRepository(session)
                     saved_art = repo.upsert_article(article_data=article_data, image_records=image_records)
-                    saved_count += 1
+                    saved_id = saved_art.id
+                    saved_title = saved_art.title
+                    saved_source = saved_art.source
+                    saved_art_dict = saved_art.to_dict()
 
-                    # If auto-published, immediately mint cryptographic blockchain block
-                    if processed["scrape_status"] == "completed":
+                    if is_completed:
                         auto_published_count += 1
-                        ledger_repo.mint_block_for_article(saved_art.id)
-
-                        # Step 5: Social Media Auto-Broadcasting
-                        if trigger_social_broadcast and processed.get("auto_broadcast_social"):
-                            try:
-                                broadcast_report = UnifiedSocialBroadcaster.broadcast_article(
-                                    article=saved_art.to_dict(),
-                                    base_url="http://127.0.0.1:8080",
-                                )
-                                social_broadcast_count += broadcast_report.get("dispatched_count", 0)
-                            except Exception as ex:
-                                logger.error(f"Social broadcast failed for article #{saved_art.id}: {ex}")
-
+                        try:
+                            ledger_repo.mint_block_for_article(saved_id)
+                        except Exception as lex:
+                            logger.warning(f"Ledger block minting skipped for article #{saved_id}: {lex}")
                     elif processed["scrape_status"] == "pending":
                         review_queued_count += 1
                     else:
                         rejected_count += 1
+                    saved_count += 1
 
-                    decisions_summary.append({
-                        "article_id": saved_art.id,
-                        "title": saved_art.title[:60],
-                        "source": saved_art.source,
-                        "score": processed["credibility_score"],
-                        "fake_pct": processed["fake_probability_pct"],
-                        "factuality": processed["factuality_score"],
-                        "decision": processed["ai_decision"],
-                        "rule": processed.get("matched_rule_name"),
-                        "status": processed["scrape_status"],
-                    })
-                except Exception as e:
-                    logger.error(f"[AI Pilot Brain] Error processing item {item.get('url')}: {e}")
+                # Step 5: Social Media Auto-Broadcasting (outside of article database session)
+                if is_completed and trigger_social_broadcast and processed.get("auto_broadcast_social") and saved_art_dict:
+                    try:
+                        broadcast_report = UnifiedSocialBroadcaster.broadcast_article(
+                            article=saved_art_dict,
+                            base_url="http://127.0.0.1:8080",
+                        )
+                        social_broadcast_count += broadcast_report.get("dispatched_count", 0)
+                    except Exception as ex:
+                        logger.error(f"Social broadcast failed for article #{saved_id}: {ex}")
+
+                decisions_summary.append({
+                    "article_id": saved_id,
+                    "title": saved_title[:60],
+                    "source": saved_source,
+                    "score": processed["credibility_score"],
+                    "fake_pct": processed["fake_probability_pct"],
+                    "factuality": processed["factuality_score"],
+                    "decision": processed["ai_decision"],
+                    "rule": processed.get("matched_rule_name"),
+                    "status": processed["scrape_status"],
+                })
+            except Exception as e:
+                logger.error(f"[AI Pilot Brain] Error processing item {item.get('url')}: {e}")
 
         logger.info(
             f"[AI Pilot Brain] Cycle Complete: Ingested {saved_count} articles | "

@@ -1560,37 +1560,64 @@ def automation_update_fake_news_policy():
     return redirect(url_for("admin.automation_view"))
 
 
-@admin_bp.route("/automation/run-full-cycle", methods=["POST"])
+@admin_bp.route("/automation/run-full-cycle", methods=["GET", "POST"])
 @login_required
 @roles_required("admin", "editor")
 def automation_run_full_cycle():
-    """Trigger immediate full AI Pilot Ingestion, Translation, Fact-Check & Auto-Publishing cycle."""
-    from src.automation.ai_pilot_brain import AIPilotBrain
+    """Trigger full AI Pilot Ingestion, Translation, Fact-Check & Auto-Publishing cycle asynchronously."""
+    from src.automation.task_manager import get_task_manager
 
     with get_db_session() as session:
         config_repo = SiteConfigRepository(session)
         policy = config_repo.get_fake_news_policy()
         max_fake = float(policy.get("max_fake_tolerance_pct", 50.0))
+        social_enabled = bool(policy.get("social_dispatch_enabled", True))
 
-    res = AIPilotBrain.ingest_and_autopilot_cycle(
-        include_youtube=True,
-        include_world=True,
-        include_social=True,
+    # Optional synchronous mode for CLI/testing (?sync=1)
+    if request.args.get("sync") == "1":
+        from src.automation.ai_pilot_brain import AIPilotBrain
+        res = AIPilotBrain.ingest_and_autopilot_cycle(
+            include_youtube=True,
+            include_world=True,
+            include_social=True,
+            max_allowed_fake_pct=max_fake,
+            max_per_source=3,
+            trigger_social_broadcast=social_enabled,
+        )
+        if request.headers.get("Accept") == "application/json" or request.is_json:
+            return jsonify({"status": "success", "result": res})
+        flash(
+            f"🚀 সম্পূর্ণ এআই অটোমেশন সাইকেল সম্পন্ন! "
+            f"মোট ইনজেস্ট: {res['total_raw_ingested']} | "
+            f"খাঁটি বলে স্বয়ংক্রিয় প্রকাশিত: {res['auto_published']} | "
+            f"সোশ্যাল মিডিয়ায় প্রেরিত: {res['social_broadcasts']} | "
+            f"রিভিউ কিউ: {res['review_queued']}",
+            "success",
+        )
+        return redirect(url_for("admin.automation_view"))
+
+    # Asynchronous background execution (prevents HTTP timeouts & connection resets)
+    task_manager = get_task_manager()
+    task = task_manager.submit_ai_pilot_task(
+        auto_publish_threshold=70,
         max_allowed_fake_pct=max_fake,
         max_per_source=3,
-        trigger_social_broadcast=policy.get("social_dispatch_enabled", True),
+        trigger_social_broadcast=social_enabled,
     )
 
+    if request.headers.get("Accept") == "application/json" or request.is_json:
+        return jsonify({
+            "status": "queued",
+            "task_id": task.task_id,
+            "message": f"পূর্ণাঙ্গ এআই অটোমেশন সাইকেল ব্যাকগ্রাউন্ডে শুরু হয়েছে (টাস্ক #{task.task_id})",
+        })
+
     flash(
-        f"🚀 সম্পূর্ণ এআই অটোমেশন সাইকেল সম্পন্ন! "
-        f"মোট ইনজেস্ট: {res['total_raw_ingested']} | "
-        f"খাঁটি বলে স্বয়ংক্রিয় প্রকাশিত: {res['auto_published']} | "
-        f"সোশ্যাল মিডিয়ায় প্রেরিত: {res['social_broadcasts']} | "
-        f"রিভিউ কিউ: {res['review_queued']} | "
-        f"ফেক/বাতিল: {res['rejected_or_archived']}",
+        f"🚀 পূর্ণাঙ্গ এআই অটোমেশন সাইকেল ব্যাকগ্রাউন্ডে শুরু হয়েছে (টাস্ক #{task.task_id})! "
+        f"অগ্রগতি নিচের 'হেভি অ্যাসিনক্রোনাস টাস্ক সেন্টার' ট্যাবে লাইভ দেখতে পাবেন।",
         "success",
     )
-    return redirect(url_for("admin.automation_view"))
+    return redirect(url_for("admin.automation_view") + "#tab-tasks")
 
 
 @admin_bp.route("/automation/run-fact-check-audit", methods=["POST"])

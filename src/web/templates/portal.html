@@ -340,7 +340,7 @@
             {% endif %}
 
             <!-- 4. Namaz / Prayer Times Widget (আজকের নামাজের সময়সূচি - ঢাকা) -->
-            <div class="palo-prayer-card">
+            <div id="prayerTimesBox" class="palo-prayer-card">
                 <div class="palo-prayer-header">
                     <span>🕌 নামাজের সময়সূচি (ঢাকা)</span>
                     <span style="font-size: 0.72rem; color: #166534; font-weight: 600;">আজকের দিন</span>
@@ -1068,6 +1068,7 @@
             100% { background: transparent; }
         }
     </style>
+    {% endif %}
 
 {% endblock %}
 

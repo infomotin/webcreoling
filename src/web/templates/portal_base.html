@@ -272,7 +272,7 @@
         <!-- ALL SECTIONS OFF-CANVAS DRAWER                                    -->
         <!-- ================================================================= -->
         <div id="allSectionsOverlay" class="palo-drawer-overlay" onclick="toggleAllSectionsDrawer()">
-            <div class="palo-drawer" onclick="event.stopPropagation()">
+            <div id="allSectionsDrawer" class="palo-drawer" onclick="event.stopPropagation()">
                 <div class="palo-drawer-header">
                     <h3 class="palo-drawer-title">
                         <span>📰</span> প্রথম আলো সকল বিভাগ ও আয়োজন
@@ -431,7 +431,7 @@
                         {{ site_branding.site_tagline or 'সত্যের সন্ধানে নির্ভীক। বাংলাদেশের সর্বাধিক পঠিত জাতীয় দৈনিক ও অনলাইন সংবাদমাধ্যম।' }}
                     </p>
                     <p class="palo-footer-contact" style="line-height: 1.6; font-size: 0.82rem; color: #94a3b8;">
-                        <strong style="color: #ffffff;">সম্পাদক ও প্রকাশক: {{ site_footer.editor_in_chief or 'মতিউর রহমান' }}</strong><br>
+                        <strong style="color: #ffffff;">সম্পাদক ও প্রকাশক: {{ site_footer.editor_in_chief if (site_footer.editor_in_chief and 'টেস্ট' not in site_footer.editor_in_chief) else 'মতিউর রহমান' }}</strong><br>
                         {{ site_footer.office_address or 'সিএ ভবন, ১০০ কাজী নজরুল ইসলাম এভিনিউ, কারওয়ান বাজার, ঢাকা ১২১৫' }}<br>
                         ইমেইল: {{ site_footer.contact_email or 'info@prothomalo.com' }} | ফোন: {{ site_footer.contact_phone or '+৮৮-০২-৮১৮০০৭৮-৮১' }}
                     </p>

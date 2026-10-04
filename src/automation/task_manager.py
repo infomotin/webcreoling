@@ -376,7 +376,9 @@ class AsyncTaskManager:
     def submit_ai_pilot_task(
         self,
         auto_publish_threshold: int = 70,
+        max_allowed_fake_pct: float = 50.0,
         max_per_source: int = 3,
+        trigger_social_broadcast: bool = True,
         selected_world_feeds: Optional[List[str]] = None,
     ) -> AsyncTask:
         """Submit an autonomous AI Pilot Brain evaluation and auto-publishing cycle."""
@@ -389,7 +391,9 @@ class AsyncTaskManager:
                 include_world=True,
                 include_social=True,
                 auto_publish_threshold=auto_publish_threshold,
+                max_allowed_fake_pct=max_allowed_fake_pct,
                 max_per_source=max_per_source,
+                trigger_social_broadcast=trigger_social_broadcast,
                 selected_world_feeds=selected_world_feeds,
             )
             task.set_progress(

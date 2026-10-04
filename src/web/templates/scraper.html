@@ -2844,7 +2844,40 @@ function refreshTaskStatus() {
     fetch('{{ url_for("scraper.api_scraper_status") }}')
         .then(res => res.json())
         .then(data => {
-            console.log("Scraper telemetry update:", data);
+            if (!data || !data.tasks) return;
+            const container = document.getElementById('live-tasks-container');
+            if (!container) return;
+
+            if (data.tasks.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1.5rem 0;">বর্তমানে কোনো ব্যাকগ্রাউন্ড টাস্ক চলমান নেই।</p>';
+                return;
+            }
+
+            let html = '';
+            data.tasks.forEach(task => {
+                let badgeClass = 'badge-youtube';
+                if (task.status === 'COMPLETED') badgeClass = 'badge-portal';
+                else if (task.status === 'RUNNING') badgeClass = 'badge-world';
+
+                html += `
+                <div style="background: rgba(255,255,255,0.03); padding: 0.85rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #fff; font-size: 0.85rem;">${task.name}</strong>
+                        <span class="source-badge ${badgeClass}" style="font-size: 0.7rem;">
+                            ${task.status} (${task.progress}%)
+                        </span>
+                    </div>
+                    <div class="progress-bar-wrap" style="height: 6px; margin: 0.5rem 0;">
+                        <div class="progress-bar-fill" style="width: ${task.progress}%;"></div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; justify-content: space-between;">
+                        <span>${task.message || ''}</span>
+                        <span>${(task.completed_at || task.started_at || '').substring(0, 19)}</span>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
         })
         .catch(err => console.error("Telemetry refresh error:", err));
 }

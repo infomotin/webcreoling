@@ -2289,3 +2289,388 @@ body.palo-body-canvas {
     }
 }
 
+/* ==========================================================================
+   20. AUTHENTIC PROTHOM ALO CLONE COMPONENTS (SUBTITLE, HORIZONTAL CARDS, DRAWER)
+   ========================================================================== */
+.palo-sub-title {
+    color: #e11d48;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-right: 6px;
+    display: inline-flex;
+    align-items: center;
+}
+.palo-sub-title::after {
+    content: "•";
+    margin-left: 6px;
+    color: #cbd5e1;
+    font-weight: normal;
+}
+
+/* Authentic Prothom Alo Left Image - Right News Horizontal Card */
+.palo-horizontal-news-card {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--palo-border-light);
+    background: #ffffff;
+    transition: background 0.15s ease;
+}
+.palo-horizontal-news-card:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.palo-horizontal-news-card:hover {
+    background: #fafafa;
+}
+.palo-horizontal-thumb-wrap {
+    width: 120px;
+    height: 80px;
+    border-radius: var(--palo-radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f1f5f9;
+    position: relative;
+}
+.palo-horizontal-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.palo-horizontal-news-card:hover .palo-horizontal-thumb {
+    transform: scale(1.05);
+}
+.palo-horizontal-content {
+    flex: 1;
+    min-width: 0;
+}
+.palo-horizontal-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.38;
+    margin: 0 0 0.3rem 0;
+}
+.palo-horizontal-title a {
+    color: var(--palo-heading);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.palo-horizontal-title a:hover {
+    color: var(--palo-red);
+}
+
+/* All Sections Off-Canvas Drawer (☰ সব বিভাগ) */
+.palo-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(2px);
+}
+.palo-drawer-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+.palo-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 90%;
+    max-width: 680px;
+    height: 100vh;
+    background: #ffffff;
+    z-index: 1001;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.palo-drawer-overlay.open .palo-drawer {
+    transform: translateX(0);
+}
+.palo-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--palo-heading);
+    background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.palo-drawer-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--palo-heading);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.palo-drawer-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+}
+.palo-drawer-close:hover {
+    color: var(--palo-red);
+    background: #fee2e2;
+}
+.palo-drawer-body {
+    padding: 1.5rem;
+    flex: 1;
+}
+.palo-drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+.palo-drawer-group-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--palo-red);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--palo-border);
+}
+.palo-drawer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.palo-drawer-links li a {
+    color: #334155;
+    text-decoration: none;
+    font-size: 0.94rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    display: block;
+    padding: 3px 0;
+}
+.palo-drawer-links li a:hover {
+    color: var(--palo-red);
+    transform: translateX(4px);
+}
+
+/* Division / District Filter Navigation Bar */
+.palo-district-nav {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding: 0.4rem 0 0.8rem 0;
+    scrollbar-width: none;
+    white-space: nowrap;
+}
+.palo-district-nav::-webkit-scrollbar {
+    display: none;
+}
+.palo-district-pill {
+    padding: 0.35rem 0.85rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.palo-district-pill:hover,
+.palo-district-pill.active {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+}
+
+/* Prayer Times (আজকের নামাজের সময়সূচি) Widget */
+.palo-prayer-card {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--palo-radius-sm);
+    padding: 0.85rem;
+    margin-top: 1.25rem;
+}
+.palo-prayer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #166534;
+}
+.palo-prayer-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.4rem;
+    text-align: center;
+}
+.palo-prayer-item {
+    background: #ffffff;
+    border: 1px solid #dcfce7;
+    border-radius: 4px;
+    padding: 0.35rem 0.2rem;
+}
+.palo-prayer-name {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 700;
+    display: block;
+}
+.palo-prayer-time {
+    font-size: 0.82rem;
+    color: #15803d;
+    font-weight: 800;
+    margin-top: 2px;
+}
+
+/* Live Sports Scorecard Strip */
+.palo-sports-live-strip {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+.palo-sports-match-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+.palo-sports-badge-live {
+    background: #dc2626;
+    color: #ffffff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    animation: paloPulse 1.4s infinite;
+}
+
+/* Photo Story Gallery Card */
+.palo-photo-story-card {
+    position: relative;
+    border-radius: var(--palo-radius-sm);
+    overflow: hidden;
+    height: 220px;
+    background: #0f172a;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.palo-photo-story-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+    opacity: 0.9;
+}
+.palo-photo-story-card:hover .palo-photo-story-img {
+    transform: scale(1.06);
+    opacity: 1;
+}
+.palo-photo-story-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+    color: #ffffff;
+}
+.palo-photo-count-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffffff;
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(4px);
+}
+.palo-photo-story-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0;
+    color: #ffffff;
+}
+
+/* Video Playlist Item Active State */
+.palo-video-playlist-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.palo-video-playlist-item:hover,
+.palo-video-playlist-item.active {
+    background: #1e293b !important;
+    border-left: 3px solid #e11d48;
+}
+
+/* Real-Time Live Feed Banner */
+.palo-live-feed-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1.25rem;
+}
+.palo-live-pulse-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #15803d;
+}
+.palo-live-dot-green {
+    width: 9px;
+    height: 9px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+    animation: paloPulse 1.2s infinite;
+}
+

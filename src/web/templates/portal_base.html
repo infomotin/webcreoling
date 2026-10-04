@@ -122,19 +122,30 @@
         <!-- ================================================================= -->
         <div class="palo-masthead-band">
             <div class="palo-container palo-masthead-inner">
-                <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap">
+                <a href="{{ url_for('portal.index_view') }}" class="palo-logo-wrap" title="প্রথম আলো | বাংলা নিউজ পেপার">
                     {% if site_branding.logo_image %}
                     <img src="{{ site_branding.logo_image }}" alt="{{ site_branding.site_title }}" style="height: 52px; object-fit: contain;">
                     {% else %}
-                    <div class="palo-logo-emblem">আলো</div>
-                    <div class="palo-logo-text">
-                        <div style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
-                            <h1 class="palo-brand-title" style="margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.5px;">{{ site_branding.logo_text or site_branding.site_title or site_identity.title }}</h1>
-                            <span style="font-size: 1rem; font-weight: 700; color: #64748b; font-family: 'Inter', sans-serif;">{{ site_identity.title_en }}</span>
+                    <!-- Iconic Prothom Alo Styled Sun & Circle Emblem -->
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+                            <circle cx="50" cy="50" r="48" fill="#e11d48" />
+                            <circle cx="50" cy="50" r="30" fill="#ffffff" />
+                            <path d="M50 15L54 36H46L50 15Z" fill="#e11d48" />
+                            <path d="M50 85L54 64H46L50 85Z" fill="#e11d48" />
+                            <path d="M15 50L36 46V54L15 50Z" fill="#e11d48" />
+                            <path d="M85 50L64 46V54L85 50Z" fill="#e11d48" />
+                            <circle cx="50" cy="50" r="16" fill="#e11d48" />
+                        </svg>
+                        <div class="palo-logo-text">
+                            <div style="display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;">
+                                <h1 class="palo-brand-title" style="margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; font-family: 'Noto Serif Bengali', serif; color: #09090b;">{{ site_branding.logo_text or site_branding.site_title or 'প্রথম আলো' }}</h1>
+                                <span style="font-size: 0.92rem; font-weight: 700; color: #64748b; font-family: 'Inter', sans-serif;">{{ site_identity.title_en or 'Prothom Alo' }}</span>
+                            </div>
+                            <span class="palo-brand-tagline" style="display: block; font-weight: 600; color: #dc2626; font-size: 0.78rem;">
+                                {{ site_branding.site_tagline or 'অনলাইন ডিজিটাল সংস্করণ' }} — <em>{{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}</em>
+                            </span>
                         </div>
-                        <span class="palo-brand-tagline" style="display: block; font-weight: 600; color: #0284c7;">
-                            {{ site_branding.site_tagline or 'পুরোপুরি এআই ভিত্তিক সংবাদ পোর্টাল' }} — <em>{{ site_branding.site_motto or 'বিশ্বের সব সংবাদ একই জায়গায় ও বাংলায়' }}</em>
-                        </span>
                     </div>
                     {% endif %}
                 </a>
@@ -161,7 +172,7 @@
 
                 <div class="palo-masthead-actions">
                     <form method="GET" action="{{ url_for('portal.index_view') }}" class="palo-search-form">
-                        <input type="text" name="q" class="palo-search-input" placeholder="দি ডেইলি এআই আলোতে খুঁজুন..." value="{{ search_query or '' }}">
+                        <input type="text" name="q" class="palo-search-input" placeholder="প্রথম আলোতে খুঁজুন..." value="{{ search_query or '' }}">
                         <button type="submit" class="palo-search-btn" title="Search">🔍</button>
                     </form>
 
@@ -173,11 +184,11 @@
         </div>
 
         <!-- ================================================================= -->
-        <!-- 3. STICKY CATEGORY NAVIGATION BAR                                 -->
+        <!-- 3. STICKY CATEGORY NAVIGATION BAR (PROTHOM ALO COMPLETE SUITE)    -->
         <!-- ================================================================= -->
         <nav class="palo-navbar-band">
-            <div class="palo-container">
-                <ul class="palo-nav-list">
+            <div class="palo-container" style="display: flex; align-items: center; justify-content: space-between;">
+                <ul class="palo-nav-list" style="flex: 1;">
                     <li class="palo-nav-item">
                         <a href="{{ url_for('portal.index_view') }}" class="palo-nav-link {% if not category and not category_filter and not search_query and request.endpoint == 'portal.index_view' %}active{% endif %}">
                             সর্বশেষ
@@ -194,6 +205,11 @@
                         </a>
                     </li>
                     <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.section_view', category='crime') }}" class="palo-nav-link {% if category == 'crime' or category_filter == 'crime' %}active{% endif %}">
+                            অপরাধ
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
                         <a href="{{ url_for('portal.section_view', category='business') }}" class="palo-nav-link {% if category == 'business' or category_filter == 'business' %}active{% endif %}">
                             বাণিজ্য
                         </a>
@@ -204,8 +220,28 @@
                         </a>
                     </li>
                     <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.opinion_view') }}" class="palo-nav-link {% if request.endpoint == 'portal.opinion_view' %}active{% endif %}" style="color: #b45309; font-weight: 800;">
+                            মতামত
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
                         <a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-nav-link {% if category == 'sports' or category_filter == 'sports' %}active{% endif %}">
                             খেলা
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.section_view', category='entertainment') }}" class="palo-nav-link {% if category == 'entertainment' or category_filter == 'entertainment' %}active{% endif %}">
+                            বিনোদন
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.section_view', category='jobs') }}" class="palo-nav-link {% if category == 'jobs' or category_filter == 'jobs' %}active{% endif %}">
+                            চাকরি
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.section_view', category='lifestyle') }}" class="palo-nav-link {% if category == 'lifestyle' or category_filter == 'lifestyle' %}active{% endif %}">
+                            জীবনযাপন
                         </a>
                     </li>
                     <li class="palo-nav-item">
@@ -214,23 +250,80 @@
                         </a>
                     </li>
                     <li class="palo-nav-item">
-                        <a href="{{ url_for('portal.opinion_view') }}" class="palo-nav-link {% if request.endpoint == 'portal.opinion_view' %}active{% endif %}" style="color: #b45309; font-weight: 800;">
-                            ✍️ মতামত ও সম্পাদকীয়
-                        </a>
-                    </li>
-                    <li class="palo-nav-item">
                         <a href="{{ url_for('portal.index_view') }}#videoTheatreSection" class="palo-nav-link" style="color: #e11d48; font-weight: 700;">
                             🎥 ভিডিও
                         </a>
                     </li>
                     <li class="palo-nav-item">
-                        <a href="{{ url_for('portal.archive_view') }}" class="palo-nav-link {% if request.endpoint == 'portal.archive_view' %}active{% endif %}">
-                            📅 আর্কাইভ
+                        <a href="{{ url_for('portal.index_view') }}#photoGallerySection" class="palo-nav-link">
+                            ছবি
                         </a>
                     </li>
                 </ul>
+
+                <!-- All Sections Drawer Button (☰ সব বিভাগ) -->
+                <button type="button" class="palo-drawer-toggle-btn" onclick="toggleAllSectionsDrawer()" style="background: none; border: none; font-size: 0.94rem; font-weight: 800; color: #18181b; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0.75rem 0.6rem; white-space: nowrap; flex-shrink: 0;" title="সকল বিভাগ ও সংকলন দেখুন">
+                    <span>☰</span> সব বিভাগ
+                </button>
             </div>
         </nav>
+
+        <!-- ================================================================= -->
+        <!-- ALL SECTIONS OFF-CANVAS DRAWER                                    -->
+        <!-- ================================================================= -->
+        <div id="allSectionsOverlay" class="palo-drawer-overlay" onclick="toggleAllSectionsDrawer()">
+            <div class="palo-drawer" onclick="event.stopPropagation()">
+                <div class="palo-drawer-header">
+                    <h3 class="palo-drawer-title">
+                        <span>📰</span> প্রথম আলো সকল বিভাগ ও আয়োজন
+                    </h3>
+                    <button type="button" class="palo-drawer-close" onclick="toggleAllSectionsDrawer()" title="বন্ধ করুন">✕</button>
+                </div>
+                <div class="palo-drawer-body">
+                    <div class="palo-drawer-grid">
+                        <div>
+                            <div class="palo-drawer-group-title">প্রধান বিভাগসমূহ</div>
+                            <ul class="palo-drawer-links">
+                                <li><a href="{{ url_for('portal.index_view') }}">সর্বশেষ সংবাদ</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='politics') }}">রাজনীতি</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='bangladesh') }}">বাংলাদেশ (সারাদেশ)</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='crime') }}">অপরাধ ও আইন</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='business') }}">বাণিজ্য ও অর্থনীতি</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='international') }}">আন্তর্জাতিক সংবাদ</a></li>
+                                <li><a href="{{ url_for('portal.opinion_view') }}">মতামত ও সম্পাদকীয়</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='sports') }}">খেলাধুলা ও ক্রিকেট</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='entertainment') }}">বিনোদন ও সংস্কৃতি</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='technology') }}">বিজ্ঞান ও প্রযুক্তি</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="palo-drawer-group-title">ফিচার ও প্রকাশনা</div>
+                            <ul class="palo-drawer-links">
+                                <li><a href="{{ url_for('portal.section_view', category='lifestyle') }}">জীবনযাপন ও স্বাস্থ্য</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='jobs') }}">চাকরি ও ক্যারিয়ার</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='education') }}">শিক্ষা ও ক্যাম্পাস</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='environment') }}">পরিবেশ ও প্রকৃতি</a></li>
+                                <li><a href="{{ url_for('portal.section_view', category='religion') }}">ধর্ম ও জীবন</a></li>
+                                <li><a href="{{ url_for('portal.opinion_view') }}">খোলামত ও চিঠি</a></li>
+                                <li><a href="{{ url_for('portal.index_view') }}#photoGallerySection">ছবির গল্প ও গ্যালারি</a></li>
+                                <li><a href="{{ url_for('portal.index_view') }}#videoTheatreSection">ভিডিও সংবাদ</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="palo-drawer-group-title">উদ্যোগ ও অন্যান্য সেবা</div>
+                            <ul class="palo-drawer-links">
+                                <li><a href="{{ url_for('chat.index_view') }}">🤖 এআই আরএজি চ্যাটবট</a></li>
+                                <li><a href="{{ url_for('portal.archive_view') }}">📅 সংবাদ আর্কাইভ</a></li>
+                                <li><a href="{{ url_for('portal.index_view') }}#poll-box">📊 জনমত জরিপ</a></li>
+                                <li><a href="{{ url_for('portal.index_view') }}#newsletter-box">📩 ই-বুলেটিন সাবস্ক্রিপশন</a></li>
+                                <li><a href="{{ url_for('admin.newspaper_management_view') }}">🛡️ সম্পাদকীয় CMS</a></li>
+                                <li><a href="{{ url_for('dashboard.index_view') }}">⚙️ সিস্টেম ড্যাশবোর্ড</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ================================================================= -->
         <!-- 4. TRENDING TOPICS SUB-RIBBON                                     -->
@@ -331,15 +424,16 @@
         <div class="palo-container">
             <div class="palo-footer-grid">
                 <div class="palo-footer-brand">
-                    <h3>{{ site_branding.site_title or site_identity.title }}</h3>
+                    <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 900; color: #ffffff; margin-bottom: 0.5rem;">
+                        {{ site_branding.site_title or site_identity.title or 'প্রথম আলো' }}
+                    </h3>
                     <p class="palo-footer-desc">
-                        {{ site_branding.site_tagline or 'সত্যের সন্ধানে নির্ভীক। কৃত্রিম বুদ্ধিমত্তা ও রিয়েল-টাইম স্ক্র্যাপিং দ্বারা পরিচালিত ডিজিটাল প্ল্যাটফর্ম।' }}
+                        {{ site_branding.site_tagline or 'সত্যের সন্ধানে নির্ভীক। বাংলাদেশের সর্বাধিক পঠিত জাতীয় দৈনিক ও অনলাইন সংবাদমাধ্যম।' }}
                     </p>
-                    <p class="palo-footer-contact">
-                        <strong>{{ site_footer.editor_in_chief or site_identity.editor_in_chief }}</strong><br>
-                        {{ site_footer.office_address or site_identity.office_address }}<br>
-                        {% if site_footer.contact_email %}ইমেইল: {{ site_footer.contact_email }} | {% endif %}
-                        {% if site_footer.contact_phone %}ফোন: {{ site_footer.contact_phone }}{% endif %}
+                    <p class="palo-footer-contact" style="line-height: 1.6; font-size: 0.82rem; color: #94a3b8;">
+                        <strong style="color: #ffffff;">সম্পাদক ও প্রকাশক: {{ site_footer.editor_in_chief or 'মতিউর রহমান' }}</strong><br>
+                        {{ site_footer.office_address or 'সিএ ভবন, ১০০ কাজী নজরুল ইসলাম এভিনিউ, কারওয়ান বাজার, ঢাকা ১২১৫' }}<br>
+                        ইমেইল: {{ site_footer.contact_email or 'info@prothomalo.com' }} | ফোন: {{ site_footer.contact_phone or '+৮৮-০২-৮১৮০০৭৮-৮১' }}
                     </p>
                 </div>
 
@@ -347,59 +441,58 @@
                     <h4>বিভাগসমূহ</h4>
                     <ul class="palo-footer-links">
                         <li><a href="{{ url_for('portal.section_view', category='politics') }}">রাজনীতি</a></li>
-                        <li><a href="{{ url_for('portal.section_view', category='bangladesh') }}">বাংলাদেশ</a></li>
+                        <li><a href="{{ url_for('portal.section_view', category='bangladesh') }}">বাংলাদেশ (সারাদেশ)</a></li>
+                        <li><a href="{{ url_for('portal.section_view', category='crime') }}">অপরাধ</a></li>
                         <li><a href="{{ url_for('portal.section_view', category='business') }}">অর্থনীতি ও বাণিজ্য</a></li>
                         <li><a href="{{ url_for('portal.section_view', category='international') }}">আন্তর্জাতিক</a></li>
+                        <li><a href="{{ url_for('portal.opinion_view') }}">মতামত ও সম্পাদকীয়</a></li>
                         <li><a href="{{ url_for('portal.section_view', category='sports') }}">খেলাধুলা</a></li>
+                        <li><a href="{{ url_for('portal.section_view', category='entertainment') }}">বিনোদন</a></li>
                         <li><a href="{{ url_for('portal.section_view', category='technology') }}">বিজ্ঞান ও প্রযুক্তি</a></li>
                     </ul>
                 </div>
 
                 <div class="palo-footer-col">
-                    <h4>অন্যান্য সেবা</h4>
+                    <h4>উদ্যোগ ও বিশেষ প্রকাশনা</h4>
                     <ul class="palo-footer-links">
+                        <li><a href="https://www.kishoralo.com/" target="_blank">কিশোর আলো</a></li>
+                        <li><a href="https://biggyanchinta.com/" target="_blank">বিজ্ঞানচিন্তা</a></li>
+                        <li><a href="https://www.prothoma.com/" target="_blank">প্রথমা প্রকাশন</a></li>
+                        <li><a href="https://bondhushava.prothomalo.com/" target="_blank">প্রথম আলো বন্ধুসভা</a></li>
+                        <li><a href="{{ url_for('portal.opinion_view') }}">অন্য আলো ও সাহিত্য</a></li>
                         <li><a href="{{ url_for('chat.index_view') }}">এআই আরএজি চ্যাটবট</a></li>
                         <li><a href="{{ url_for('portal.archive_view') }}">সংবাদ আর্কাইভ</a></li>
-                        <li><a href="{{ url_for('portal.index_view') }}#poll-box">জনমত জরিপ</a></li>
-                        <li><a href="{{ url_for('portal.index_view') }}#newsletter-box">ই-বুলেটিন সাবস্ক্রিপশন</a></li>
-                        <li><a href="{{ url_for('admin.newspaper_management_view') }}">সম্পাদকীয় CMS</a></li>
-                        <li><a href="{{ url_for('dashboard.index_view') }}">সিস্টেম ড্যাশবোর্ড</a></li>
+                        <li><a href="{{ url_for('portal.index_view') }}#poll-box">অনলাইন জনমত জরিপ</a></li>
                     </ul>
                 </div>
 
                 <div class="palo-footer-col">
                     <h4>মোবাইল অ্যাপ ও সোশ্যাল</h4>
-                    <div style="display: flex; gap: 0.6rem; margin-bottom: 0.8rem; font-size: 1.2rem;">
-                        {% if site_footer.facebook_url %}
-                        <a href="{{ site_footer.facebook_url }}" target="_blank" title="Facebook" style="text-decoration: none;">📘</a>
-                        {% endif %}
-                        {% if site_footer.youtube_url %}
-                        <a href="{{ site_footer.youtube_url }}" target="_blank" title="YouTube" style="text-decoration: none;">▶️</a>
-                        {% endif %}
-                        {% if site_footer.twitter_url %}
-                        <a href="{{ site_footer.twitter_url }}" target="_blank" title="Twitter / X" style="text-decoration: none;">🐦</a>
-                        {% endif %}
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.6rem;">সব সময় সাথে থাকতে ডাউনলোড করুন অ্যাপ:</p>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <a href="{{ site_footer.android_app_url or 'https://play.google.com/store/apps/details?id=com.prothomalo.android' }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">📱 Google Play</a>
+                        <a href="{{ site_footer.ios_app_url or 'https://apps.apple.com/app/prothom-alo/id1453285750' }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">🍎 App Store</a>
                     </div>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        {% if site_footer.android_app_url %}
-                        <a href="{{ site_footer.android_app_url }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">📱 Android App</a>
-                        {% endif %}
-                        {% if site_footer.ios_app_url %}
-                        <a href="{{ site_footer.ios_app_url }}" target="_blank" class="palo-app-badge" style="text-decoration: none;">🍎 iOS App</a>
-                        {% endif %}
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.4rem;">সোশ্যালে যুক্ত থাকুন:</div>
+                    <div style="display: flex; gap: 0.75rem; font-size: 1.3rem;">
+                        <a href="{{ site_footer.facebook_url or 'https://facebook.com/DailyProthomAlo' }}" target="_blank" title="Facebook" style="text-decoration: none;">📘</a>
+                        <a href="{{ site_footer.youtube_url or 'https://youtube.com/c/ProthomAlo' }}" target="_blank" title="YouTube" style="text-decoration: none;">▶️</a>
+                        <a href="{{ site_footer.twitter_url or 'https://twitter.com/ProthomAlo' }}" target="_blank" title="Twitter / X" style="text-decoration: none;">🐦</a>
+                        <a href="https://instagram.com/prothomalo" target="_blank" title="Instagram" style="text-decoration: none;">📷</a>
                     </div>
                 </div>
             </div>
 
             <div class="palo-footer-bottom">
                 <div>
-                    {{ site_footer.copyright_text or '© ২০২৬ প্রথম আলো অনলাইন সংস্করণ। সর্বস্বত্ব সংরক্ষিত।' }}
+                    {{ site_footer.copyright_text or '© ২০২৬ প্রথম আলো অনলাইন সংস্করণ | স্বত্ব দি ডেইলি এআই আলো | সর্বস্বত্ব সংরক্ষিত।' }}
                 </div>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <span>গোপনীয়তা নীতি</span>
-                    <span>ব্যবহারের শর্তাবলি</span>
-                    <span>বিজ্ঞাপন</span>
-                    <span>যোগাযোগ</span>
+                    <a href="{{ url_for('portal.index_view') }}" style="color: #94a3b8; text-decoration: none;">গোপনীয়তা নীতি</a>
+                    <a href="{{ url_for('portal.index_view') }}" style="color: #94a3b8; text-decoration: none;">ব্যবহারের শর্তাবলি</a>
+                    <a href="{{ url_for('portal.index_view') }}" style="color: #94a3b8; text-decoration: none;">বিজ্ঞাপন রেটকার্ড</a>
+                    <a href="{{ url_for('portal.index_view') }}" style="color: #94a3b8; text-decoration: none;">যোগাযোগ</a>
+                    <a href="{{ url_for('admin.newspaper_management_view') }}" style="color: #e11d48; text-decoration: none; font-weight: 700;">সম্পাদকীয় CMS</a>
                 </div>
             </div>
         </div>
@@ -429,6 +522,11 @@
     </div>
 
     <script>
+    function toggleAllSectionsDrawer() {
+        const overlay = document.getElementById('allSectionsOverlay');
+        if (overlay) overlay.classList.toggle('open');
+    }
+
     function toggleNotificationDropdown(e) {
         if (e) e.stopPropagation();
         const dd = document.getElementById('notifyDropdown');

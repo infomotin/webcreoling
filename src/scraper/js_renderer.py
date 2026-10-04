@@ -4,13 +4,31 @@ Handles per-site rendering strategies: 'bs4_only', 'selenium_only', 'hybrid', an
 Gracefully falls back to HTTP if Selenium/WebDriver is unavailable.
 """
 
-from typing import Optional, Tuple
+import atexit
+from typing import List, Optional, Tuple
 import httpx
 from bs4 import BeautifulSoup
 from config.settings import settings
 from src.common.logger import get_logger
 
 logger = get_logger("webcreoling.scraper.js_renderer")
+
+# Every driver we start is tracked here so the process always tears it down.
+# chromedriver.exe inherits our listening sockets on Windows; if it outlives us
+# the port stays bound to a dead owner and nothing can ever bind to it again.
+_LIVE_DRIVERS: List["JSRenderingManager"] = []
+
+
+def _shutdown_all_drivers() -> None:
+    for manager in list(_LIVE_DRIVERS):
+        try:
+            manager.close()
+        except Exception:  # noqa: BLE001 - interpreter is exiting
+            pass
+    _LIVE_DRIVERS.clear()
+
+
+atexit.register(_shutdown_all_drivers)
 
 
 class JSRenderingManager:
@@ -57,6 +75,8 @@ class JSRenderingManager:
 
             self._selenium_driver.set_page_load_timeout(settings.SELENIUM_TIMEOUT)
             self._selenium_available = True
+            if self not in _LIVE_DRIVERS:
+                _LIVE_DRIVERS.append(self)
             logger.info("Selenium Headless Chrome initialized successfully.")
             return True
         except Exception as e:
@@ -147,6 +167,8 @@ class JSRenderingManager:
 
     def close(self) -> None:
         """Close Selenium browser session if active."""
+        if self in _LIVE_DRIVERS:
+            _LIVE_DRIVERS.remove(self)
         if self._selenium_driver:
             try:
                 self._selenium_driver.quit()

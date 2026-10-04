@@ -121,6 +121,9 @@ sites:
         - "meta[property='article:published_time']"
         - ".date-display-single"
         - "time"
+        # The Daily Star prints the stamp as Bangla text under the headline:
+        # <div class="block-article-meta-block">… 26 সেপ্টেম্বর 2026, 01:12 অপরাহ্ন
+        - ".block-article-meta-block span"
       content:
         - ".article-body p"
         - "div[itemprop='articleBody'] p"

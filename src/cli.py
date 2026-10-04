@@ -134,11 +134,16 @@ def scrape_site(
     """Crawl a portal across all configured categories and download images."""
     pipeline = ScrapingPipeline()
     console.print(f"[bold cyan]Starting crawl for portal '{site_key}'...[/bold cyan]")
-    res = pipeline.run_site_crawl(
-        site_key=site_key,
-        max_pages_per_category=max_pages,
-        max_articles=max_articles,
-    )
+    try:
+        res = pipeline.run_site_crawl(
+            site_key=site_key,
+            max_pages_per_category=max_pages,
+            max_articles=max_articles,
+        )
+    finally:
+        # Release the headless browser — a leaked chromedriver keeps our
+        # listening sockets alive after this process exits.
+        pipeline.engine.close()
     console.print(
         f"[bold green]✓ Crawl complete![/bold green] Saved {res['articles_saved']}"
         f" of {res['articles_found']} discovered ({res['images_downloaded']} images,"

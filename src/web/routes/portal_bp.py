@@ -239,30 +239,22 @@ def index_view():
         video_news = article_repo.get_video_articles(limit=6)
         multimedia_news = highlighted[:4]
 
-        # Live infinite-scroll stream (date-time wise, newest first).
-        # Fetching limit+1 rows replaces the previous full-table COUNT(*)
-        # (a non-sargable scan that cost ~15 ms per homepage hit).
+        # "সর্বশেষ সংবাদ" — a fixed server-rendered list of the newest stories.
+        # The page never fetches more after it renders (no infinite scroll).
         feed_query = apply_public_content_filter(
             session.query(Article)
             .options(joinedload(Article.images))
             .filter(Article.scrape_status == "completed")
         )
-        feed_limit = 12
-        feed_rows = (
+        feed_limit = 24
+        feed_items = (
             feed_query.order_by(Article.published_at.desc(), Article.id.desc())
-            .limit(feed_limit + 1)
+            .limit(feed_limit)
             .all()
         )
-        feed_has_more = len(feed_rows) > feed_limit
-        feed_items = feed_rows[:feed_limit]
         # "Latest news" is simply the head of the same newest-first stream
         # (identical ordering & filters), so it needs no query of its own.
         latest_news = feed_items[:6]
-        feed_newest = (
-            feed_items[0].published_at.strftime("%Y-%m-%d %H:%M:%S")
-            if feed_items and feed_items[0].published_at
-            else None
-        )
 
         # If search or category filter active
         filter_results = None
@@ -279,8 +271,6 @@ def index_view():
             trending=trending,
             latest_news=latest_news,
             feed_items=feed_items,
-            feed_has_more=feed_has_more,
-            feed_newest=feed_newest,
             active_poll=active_poll.to_dict() if active_poll else None,
             national_news=national_news,
             politics_news=politics_news,

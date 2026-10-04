@@ -482,3 +482,51 @@ def test_ai_pilot_analysis_api(client):
     assert "generated_summary" in data["data"]
     assert len(data["data"]["suggested_headlines"]) > 0
 
+
+def test_dedicated_opinion_and_editorial_page(client):
+    """Test dedicated Editorial and Sub-Editorial/Deputy Editorial page."""
+    res_opinion = client.get("/news/opinion")
+    assert res_opinion.status_code == 200
+    assert "সম্পাদকীয়".encode("utf-8") in res_opinion.data
+    assert "উপ-সম্পাদকীয়".encode("utf-8") in res_opinion.data
+    assert "কলাম".encode("utf-8") in res_opinion.data or "মতামত".encode("utf-8") in res_opinion.data
+
+    res_editorial = client.get("/news/editorial")
+    assert res_editorial.status_code == 200
+    assert "প্রধান সম্পাদকীয়".encode("utf-8") in res_editorial.data
+
+
+def test_special_commemorative_edition_view(client):
+    """Test Special Commemorative Edition morphing on the homepage (Victory Day & Independence Day)."""
+    # 1. Victory Day (বিজয় দিবস)
+    res_vday = client.get("/news/?edition=victory_day")
+    assert res_vday.status_code == 200
+    assert "বিজয় দিবস".encode("utf-8") in res_vday.data
+    assert "১৬ ডিসেম্বর".encode("utf-8") in res_vday.data
+
+    # 2. Independence Day (স্বাধীনতা দিবস)
+    res_ind = client.get("/news/?edition=independence_day")
+    assert res_ind.status_code == 200
+    assert "স্বাধীনতা".encode("utf-8") in res_ind.data
+    assert "২৬ মার্চ".encode("utf-8") in res_ind.data
+
+
+def test_bulletins_and_realtime_api(client):
+    """Test real-time bulletins API for notification dropdown and emergency tickers."""
+    res = client.get("/news/api/bulletins")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "success"
+    assert "breaking" in data
+    assert "notices" in data
+    assert data["total_alerts"] >= 0
+
+
+def test_video_iframe_theatre_section(client):
+    """Test responsive video iframe theatre section on public portal."""
+    res = client.get("/news/")
+    assert res.status_code == 200
+    assert b"videoTheatreSection" in res.data
+    assert b"mainPortalVideoFrame" in res.data
+    assert b"<iframe" in res.data
+

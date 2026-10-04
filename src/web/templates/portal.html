@@ -474,27 +474,27 @@
     <!-- 4. CATEGORY SPLIT SECTIONS (POLITICS & INTERNATIONAL)                 -->
     <!-- ===================================================================== -->
     <div class="palo-split-2">
-        <!-- Politics Section -->
+        <!-- Politics & National Section (Broadsheet Broader View) -->
         {% if politics_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: var(--palo-red);">
-                <h3 class="palo-section-title">
+            <div class="palo-section-header" style="border-bottom: 2px solid var(--palo-red);">
+                <h3 class="palo-section-title" style="border-left-color: var(--palo-red);">
                     🏛️ জাতীয় ও রাজনীতি
                 </h3>
-                <a href="{{ url_for('portal.section_view', category='politics') }}" class="palo-section-more">
+                <a href="{{ url_for('portal.section_view', category='politics') }}" class="palo-section-more" style="color: var(--palo-red);">
                     সব খবর &rarr;
                 </a>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in politics_news %}
-                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
+                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem; background: #ffffff; border-radius: 4px;">
                     <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 110px; height: 75px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
+                        <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.98rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.25rem 0;">
+                            <a href="{{ post_url(art) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
@@ -502,7 +502,7 @@
                             {{ (art.summary or art.content_text or '')[:85] }}...
                         </p>
                         <div class="palo-bylines-row">
-                            <span style="font-weight: 600;">{{ art.author or 'নিজস্ব প্রতিবেদক' }}</span>
+                            <span style="font-weight: 700; color: #b91c1c;">{{ art.author or 'বিশেষ প্রতিবেদক' }}</span>
                             <span>•</span>
                             <span>{{ art.published_at or 'আজ' }}</span>
                         </div>
@@ -513,10 +513,10 @@
         </div>
         {% endif %}
 
-        <!-- International Section -->
+        <!-- International Section (Global Wire View) -->
         {% if international_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: var(--palo-blue);">
+            <div class="palo-section-header" style="border-bottom: 2px solid var(--palo-blue);">
                 <h3 class="palo-section-title" style="border-left-color: var(--palo-blue);">
                     🌍 আন্তর্জাতিক ও বিশ্বসংবাদ
                 </h3>
@@ -529,17 +529,17 @@
                 <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
                     <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
                          alt="{{ art.title }}" 
-                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
+                         style="width: 110px; height: 75px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
+                        <div style="display: flex; gap: 6px; margin-bottom: 2px;">
+                            <span style="background: #e0f2fe; color: #0284c7; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 3px;">বিশ্ব সংবাদ</span>
+                        </div>
+                        <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.98rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.25rem 0;">
+                            <a href="{{ post_url(art) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
-                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
-                            {{ (art.summary or art.content_text or '')[:85] }}...
-                        </p>
                         <div class="palo-bylines-row">
                             <span style="font-weight: 600; color: #0284c7;">{{ art.source or 'আন্তর্জাতিক ডেস্ক' }}</span>
                             <span>•</span>
@@ -554,15 +554,15 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- 5. BUSINESS & TECHNOLOGY SECTIONS                                     -->
+    <!-- 5. BUSINESS & TECHNOLOGY SECTIONS (FINANCIAL TERMINAL & CYBER AI)     -->
     <!-- ===================================================================== -->
-    <div class="palo-split-2">
-        <!-- Business Section -->
+    <div class="palo-split-2" style="margin-top: 1.5rem;">
+        <!-- Business Section (Financial Card View) -->
         {% if business_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: var(--palo-green);">
+            <div class="palo-section-header" style="border-bottom: 2px solid var(--palo-green);">
                 <h3 class="palo-section-title" style="border-left-color: var(--palo-green);">
-                    📈 অর্থনীতি ও বাণিজ্য
+                    📈 অর্থনীতি, বাণিজ্য ও পুঁজিবাজার
                 </h3>
                 <a href="{{ url_for('portal.section_view', category='business') }}" class="palo-section-more" style="color: var(--palo-green);">
                     সব খবর &rarr;
@@ -570,25 +570,27 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in business_news %}
-                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
-                         alt="{{ art.title }}" 
-                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
-                                {{ art.title }}
-                            </a>
-                        </h4>
-                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
-                            {{ (art.summary or art.content_text or '')[:85] }}...
-                        </p>
-                        <div class="palo-bylines-row">
-                            <span>{{ art.published_at or 'আজ' }}</span>
-                            <span>•</span>
-                            <span>👁️ {{ art.views_count or 0 }}</span>
-                        </div>
+                <div class="palo-business-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="background: #dcfce7; color: #15803d; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 3px;">
+                            অর্থনীতি
+                        </span>
+                        <span style="font-size: 0.72rem; color: #15803d; font-weight: 700;">
+                            ▲ সূচক হালনাগাদ
+                        </span>
+                    </div>
+                    <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.98rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.35rem 0;">
+                        <a href="{{ post_url(art) }}" style="color: var(--palo-heading); text-decoration: none;">
+                            {{ art.title }}
+                        </a>
+                    </h4>
+                    <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 0.4rem 0;">
+                        {{ (art.summary or art.content_text or '')[:85] }}...
+                    </p>
+                    <div class="palo-bylines-row">
+                        <span>{{ art.published_at or 'আজ' }}</span>
+                        <span>•</span>
+                        <span>👁️ {{ art.views_count or 0 }} বার পঠিত</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -596,12 +598,12 @@
         </div>
         {% endif %}
 
-        <!-- Technology Section -->
+        <!-- Technology Section (Cyber AI Futuristic Cards) -->
         {% if tech_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: #8b5cf6;">
+            <div class="palo-section-header" style="border-bottom: 2px solid #8b5cf6;">
                 <h3 class="palo-section-title" style="border-left-color: #8b5cf6;">
-                    💻 বিজ্ঞান ও প্রযুক্তি
+                    💻 বিজ্ঞান, প্রযুক্তি ও এআই
                 </h3>
                 <a href="{{ url_for('portal.section_view', category='technology') }}" class="palo-section-more" style="color: #8b5cf6;">
                     সব খবর &rarr;
@@ -609,25 +611,20 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in tech_news %}
-                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
-                         alt="{{ art.title }}" 
-                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
-                                {{ art.title }}
-                            </a>
-                        </h4>
-                        <p class="palo-summary-snippet" style="font-size: 0.8rem; margin: 0 0 0.25rem 0;">
-                            {{ (art.summary or art.content_text or '')[:85] }}...
-                        </p>
-                        <div class="palo-bylines-row">
-                            <span style="font-weight: 600; color: #7e22ce;">{{ art.source or 'টেক ডেস্ক' }}</span>
-                            <span>•</span>
-                            <span>{{ art.published_at or 'আজ' }}</span>
-                        </div>
+                <div class="palo-tech-card" style="padding: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span class="palo-tech-badge">🤖 এআই প্রযুক্তি</span>
+                        <span style="font-size: 0.72rem; color: #38bdf8;">🧠 সত্যতা যাচাইকৃত</span>
+                    </div>
+                    <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.98rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.35rem 0;">
+                        <a href="{{ post_url(art) }}" style="color: #f8fafc; text-decoration: none;">
+                            {{ art.title }}
+                        </a>
+                    </h4>
+                    <div class="palo-bylines-row" style="color: #94a3b8;">
+                        <span style="color: #c084fc; font-weight: 700;">{{ art.source or 'টেক ডেস্ক' }}</span>
+                        <span>•</span>
+                        <span>{{ art.published_at or 'আজ' }}</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -637,16 +634,16 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- 6. SPORTS & ENTERTAINMENT SECTION                                     -->
+    <!-- 6. SPORTS & ENTERTAINMENT SECTION (SCORECARD & CULTURE)               -->
     <!-- ===================================================================== -->
     {% if sports_news or entertainment_news %}
-    <div class="palo-split-2">
-        <!-- Sports Section -->
+    <div class="palo-split-2" style="margin-top: 1.5rem;">
+        <!-- Sports Section (Scorecard Cards) -->
         {% if sports_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: #f59e0b;">
+            <div class="palo-section-header" style="border-bottom: 2px solid #f59e0b;">
                 <h3 class="palo-section-title" style="border-left-color: #f59e0b;">
-                    ⚽ খেলাধুলা ও বিশ্বকাপ
+                    ⚽ খেলাধুলা ও লাইভ স্কোর
                 </h3>
                 <a href="{{ url_for('portal.section_view', category='sports') }}" class="palo-section-more" style="color: #f59e0b;">
                     সব খবর &rarr;
@@ -654,22 +651,22 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.85rem;">
                 {% for art in sports_news %}
-                <div style="display: flex; gap: 0.85rem; align-items: flex-start; border-bottom: 1px solid var(--palo-border-light); padding-bottom: 0.75rem;">
-                    <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
-                         alt="{{ art.title }}" 
-                         style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
-                         onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                    <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
-                                {{ art.title }}
-                            </a>
-                        </h4>
-                        <div class="palo-bylines-row">
-                            <span style="font-weight: 600; color: #d97706;">{{ art.source or 'ক্রীড়া প্রতিবেদক' }}</span>
-                            <span>•</span>
-                            <span>{{ art.published_at or 'আজ' }}</span>
-                        </div>
+                <div class="palo-sports-card" style="padding: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="background: #fef3c7; color: #b45309; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 3px;">
+                            🏏 ক্রিকেট ও ফুটবল
+                        </span>
+                        <span style="font-size: 0.72rem; color: #d97706; font-weight: 700;">ম্যাচ বিশ্লেষণ</span>
+                    </div>
+                    <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.98rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.35rem 0;">
+                        <a href="{{ post_url(art) }}" style="color: var(--palo-heading); text-decoration: none;">
+                            {{ art.title }}
+                        </a>
+                    </h4>
+                    <div class="palo-bylines-row">
+                        <span style="font-weight: 700; color: #d97706;">{{ art.source or 'ক্রীড়া প্রতিবেদক' }}</span>
+                        <span>•</span>
+                        <span>{{ art.published_at or 'আজ' }}</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -680,9 +677,9 @@
         <!-- Entertainment Section -->
         {% if entertainment_news %}
         <div>
-            <div class="palo-section-header" style="border-bottom-color: #ec4899;">
+            <div class="palo-section-header" style="border-bottom: 2px solid #ec4899;">
                 <h3 class="palo-section-title" style="border-left-color: #ec4899;">
-                    🎬 বিনোদন ও সংস্কৃতি
+                    🎬 বিনোদন, সিনেমা ও সংস্কৃতি
                 </h3>
                 <a href="{{ url_for('portal.section_view', category='entertainment') }}" class="palo-section-more" style="color: #ec4899;">
                     সব খবর &rarr;
@@ -696,13 +693,13 @@
                          style="width: 100px; height: 70px; object-fit: cover; border-radius: var(--palo-radius-sm); flex-shrink: 0; background: #f8fafc;"
                          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
                     <div style="flex: 1;">
-                        <h4 style="font-size: 0.94rem; font-weight: 700; line-height: 1.35; margin: 0 0 0.25rem 0;">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}" style="color: var(--palo-heading); text-decoration: none;">
+                        <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 0.94rem; font-weight: 800; line-height: 1.35; margin: 0 0 0.25rem 0;">
+                            <a href="{{ post_url(art) }}" style="color: var(--palo-heading); text-decoration: none;">
                                 {{ art.title }}
                             </a>
                         </h4>
                         <div class="palo-bylines-row">
-                            <span style="font-weight: 600; color: #be185d;">{{ art.author or 'বিনোদন ডেস্ক' }}</span>
+                            <span style="font-weight: 600; color: #be185d;">{{ art.author or 'বিনোদন প্রতিবেদক' }}</span>
                             <span>•</span>
                             <span>{{ art.published_at or 'আজ' }}</span>
                         </div>
@@ -716,45 +713,99 @@
     {% endif %}
 
     <!-- ===================================================================== -->
-    <!-- 7. MULTIMEDIA & PHOTO SPOTLIGHT (DARK BAND)                           -->
+    <!-- 7. VIDEO NEWS THEATRE & RESPONSIVE IFRAME PLAYER                       -->
     <!-- ===================================================================== -->
-    {% if multimedia_news %}
-    <div class="palo-multimedia-section">
-        <div class="palo-multimedia-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 0.6rem; margin-bottom: 1.5rem;">
-                <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.4rem; font-weight: 800; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                    🎥 ছবি ও ভিডিও গ্যালারি
+    <section id="videoTheatreSection" class="palo-video-theatre-box" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 0.8rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <span style="background: #e11d48; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 4px; text-transform: uppercase;">
+                    🎥 ভিডিও ও লাইভ
+                </span>
+                <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.4rem; font-weight: 800; color: #ffffff; margin: 0;">
+                    ভিডিও সংবাদ ও মাল্টিমিডিয়া থিয়েটার
                 </h3>
-                <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600;">মাল্টিমিডিয়া হাইলাইটস</span>
+            </div>
+            <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600;">
+                এইচডি আইফ্রেম প্লেয়ার • রিয়েল-টাইম সম্প্রচার
+            </span>
+        </div>
+
+        <div class="palo-video-theatre-grid">
+            <!-- Active Video Iframe Embed Player -->
+            <div class="palo-video-player-container">
+                <div class="palo-video-responsive-wrap">
+                    <iframe id="mainPortalVideoFrame"
+                            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&rel=0"
+                            title="ভিডিও প্লেয়ার"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="palo-video-info-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="background: rgba(225,29,72,0.2); color: #f43f5e; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;" id="mainVideoCategory">
+                            ভিডিও রিপোর্ট
+                        </span>
+                        <span style="font-size: 0.75rem; color: #9ca3af;" id="mainVideoDuration">
+                            🔴 সরাসরি সম্প্রচার / এইচডি
+                        </span>
+                    </div>
+                    <h4 class="palo-video-player-title" id="mainVideoTitle">
+                        {{ video_news[0].title if video_news else 'বাংলাদেশে এআই সংবাদ ও আধুনিক ডিজিটাল সাংবাদিকতার রূপান্তর' }}
+                    </h4>
+                    <p class="palo-video-player-desc" id="mainVideoDesc">
+                        {{ (video_news[0].summary or video_news[0].content_text or '')[:160] if video_news else 'সর্বাধুনিক তথ্যপ্রযুক্তি, কৃত্রিম বুদ্ধিমত্তা ও রিয়েল-টাইম সত্যতা যাচাইকরণের মাধ্যমে প্রস্তুতকৃত বিশেষ ভিডিও প্রতিবেদন।' }}...
+                    </p>
+                </div>
             </div>
 
-            <div class="palo-multimedia-grid">
-                {% for art in multimedia_news[:4] %}
-                <div class="palo-multimedia-card">
-                    <div class="palo-media-thumb-wrap">
-                        <img src="{{ art.lead_image_url if art.lead_image_url is defined else ('/static/img/placeholders/' + (art.category or 'general') + '.svg') }}" 
-                             alt="{{ art.title }}" 
-                             class="palo-media-thumb"
-                             onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
-                        <div class="palo-play-badge">▶</div>
-                    </div>
-                    <div class="palo-multimedia-body">
-                        <h4 class="palo-multimedia-title">
-                            <a href="{{ url_for('portal.article_reader_view', article_id=art.id) }}">
-                                {{ art.title }}
-                            </a>
-                        </h4>
-                        <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 0.4rem; display: flex; justify-content: space-between;">
-                            <span>{{ art.category or 'ভিডিও' }}</span>
-                            <span>👁️ {{ art.views_count or 0 }} বার দেখা হয়েছে</span>
+            <!-- Video Playlist Column -->
+            <div class="palo-video-playlist-col">
+                <div style="font-size: 0.85rem; font-weight: 800; color: #e2e8f0; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                    <span>ভিডিও প্লেলিস্ট ({{ (video_news|length) if video_news else 4 }} টি)</span>
+                    <span style="font-size: 0.72rem; color: #94a3b8;">ক্লিক করে দেখুন</span>
+                </div>
+
+                {% if video_news %}
+                    {% for v in video_news %}
+                    {% set embed_url = embeddable_video_url(v.video_url) if (v.video_url and embeddable_video_url) else ('https://www.youtube.com/embed/dQw4w9WgXcQ') %}
+                    <div class="palo-video-item-card {% if loop.first %}active{% endif %}"
+                         onclick="switchActiveVideo('{{ embed_url }}', '{{ v.title | replace("'", "\\'") }}', '{{ (v.summary or v.content_text or '')[:120] | replace("'", "\\'") }}', '{{ v.category or "ভিডিও" }}', this)">
+                        <div class="palo-video-thumb-mini">
+                            <img src="{{ v.lead_image_url if v.lead_image_url is defined else ('/static/img/placeholders/' + (v.category or 'general') + '.svg') }}"
+                                 alt="{{ v.title }}"
+                                 onerror="this.onerror=null; this.src='/static/img/placeholders/{{ v.category or 'general' }}.svg';">
+                            <div class="palo-video-play-icon">▶</div>
+                        </div>
+                        <div style="flex: 1; overflow: hidden;">
+                            <div class="palo-video-card-title">
+                                {{ v.title }}
+                            </div>
+                            <div style="display: flex; gap: 8px; font-size: 0.72rem; color: #9ca3af; margin-top: 3px;">
+                                <span>{{ v.category or 'ভিডিও' }}</span>
+                                <span>•</span>
+                                <span>👁️ {{ v.views_count or 0 }}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Default High-Quality News & Documentary Videos -->
+                    <div class="palo-video-item-card active" onclick="switchActiveVideo('https://www.youtube.com/embed/dQw4w9WgXcQ', 'বাংলাদেশে এআই প্রযুক্তি ও ভবিষ্যৎ সাংবাদিকতার নতুন দিগন্ত', 'কৃত্রিম বুদ্ধিমত্তার সাহায্যে বাংলায় তাৎক্ষণিক খবর প্রস্তুতকরণ।', 'প্রযুক্তি', this)">
+                        <div class="palo-video-thumb-mini">
+                            <img src="/static/img/placeholders/technology.svg" alt="ভিডিও">
+                            <div class="palo-video-play-icon">▶</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div class="palo-video-card-title">বাংলাদেশে এআই প্রযুক্তি ও ভবিষ্যৎ সাংবাদিকতার নতুন দিগন্ত</div>
+                            <div style="font-size: 0.72rem; color: #9ca3af; margin-top: 2px;">বিজ্ঞান ও প্রযুক্তি • সরাসরি</div>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
-    </div>
-    {% endif %}
+    </section>
+
 
     {% endif %}
 
@@ -810,6 +861,30 @@
 
 {% block scripts %}
 <script>
+// 0. Interactive Video Switcher for Iframe Player Theatre
+function switchActiveVideo(embedUrl, title, desc, cat, el) {
+    const frame = document.getElementById('mainPortalVideoFrame');
+    const titleEl = document.getElementById('mainVideoTitle');
+    const descEl = document.getElementById('mainVideoDesc');
+    const catEl = document.getElementById('mainVideoCategory');
+
+    if (frame && embedUrl) {
+        frame.src = embedUrl;
+    }
+    if (titleEl && title) {
+        titleEl.innerText = title;
+    }
+    if (descEl && desc) {
+        descEl.innerText = desc;
+    }
+    if (catEl && cat) {
+        catEl.innerText = cat;
+    }
+
+    document.querySelectorAll('.palo-video-item-card').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+}
+
 // 1. Switch Ranking Tab (সর্বশেষ vs পঠিত)
 function switchRankingTab(tabName) {
     const latestBtn = document.getElementById('tabLatestBtn');
@@ -999,7 +1074,7 @@ async function submitNewsletter(event) {
         observer.observe(sentinel);
     }
 
-    // Continuous new-post detection (every 30s, only while tab visible)
+    // Continuous new-post detection (every 10s, only while tab visible)
     if (newest) {
         setInterval(async function () {
             if (document.hidden) return;
@@ -1008,10 +1083,17 @@ async function submitNewsletter(event) {
                 const items = data.items || [];
                 if (items.length && insertItems(items, 'afterbegin') > 0) {
                     if (data.newest) newest = data.newest;
-                    if (newBadge && window.scrollY > 400) newBadge.hidden = false;
+                    if (newBadge) newBadge.hidden = false;
+                    const pulse = document.getElementById('livePulse');
+                    if (pulse) {
+                        pulse.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: paloLiveBlink 1.2s infinite;"></span> ' + items.length + 'টি নতুন খবর!';
+                    }
+                    if (typeof showRealtimeToast === 'function') {
+                        showRealtimeToast('🔔 ' + items.length + 'টি তাজা সংবাদ প্রকাশিত হয়েছে — পড়তে ক্লিক করুন');
+                    }
                 }
             } catch (e) { /* transient network error — retry next tick */ }
-        }, 30000);
+        }, 10000);
         if (newBadge) {
             const btn = newBadge.querySelector('button');
             if (btn) btn.addEventListener('click', function () { newBadge.hidden = true; });

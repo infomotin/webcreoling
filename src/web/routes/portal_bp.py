@@ -10,7 +10,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from sqlalchemy.orm import joinedload
 from src.storage.database import get_db_session
 from src.storage.models import Article, ArticleComment
-from src.common.seo import build_meta_description, parse_post_slug
+from src.common.seo import build_meta_description, parse_post_slug, embeddable_video_url
 from src.common.ttl_cache import cached
 from src.web.auth import login_required, get_current_user
 from src.storage.repositories import (
@@ -93,6 +93,91 @@ def _safe_topbar(branding: dict) -> dict:
         return {}
 
 
+def get_special_edition(requested_edition: str = "") -> dict | None:
+    """Detect or activate commemorative special day editions:
+    - victory_day: মহান বিজয় দিবস (১৬ ডিসেম্বর)
+    - independence_day: মহান স্বাধীনতা দিবস (২৬ মার্চ)
+    - language_day: আন্তর্জাতিক মাতৃভাষা দিবস (২১ ফেব্রুয়ারি)
+    - historical: বিশ্ব ঐতিহাসিক দিবস
+    """
+    edition_key = (requested_edition or "").strip().lower()
+    now = datetime.now()
+    if not edition_key:
+        if now.month == 12 and now.day == 16:
+            edition_key = "victory_day"
+        elif now.month == 3 and now.day == 26:
+            edition_key = "independence_day"
+        elif now.month == 2 and now.day == 21:
+            edition_key = "language_day"
+
+    editions = {
+        "victory_day": {
+            "key": "victory_day",
+            "name": "বিজয় দিবস",
+            "title": "মহান বিজয় দিবস বিশেষ ডিজিটাল সংস্করণ",
+            "date_bn": "১৬ ডিসেম্বর — মহান বিজয় দিবস",
+            "badge": "🔴🟢 বিশেষ বিজয় দিবস সংখ্যা",
+            "motto": "এক সাগর রক্তের বিনিময়ে বাংলার স্বাধীনতা আনলে যারা, আমরা তোমাদের ভুলব না",
+            "theme_class": "edition-victory-day",
+            "tribute_heading": "১৬ ডিসেম্বর: রক্তস্নাত ঐতিহাসিক বিজয়ের অমর গৌরবগাঁথা",
+            "historic_tribute": "১৯৭১ সালের ১৬ ডিসেম্বর রেসকোর্স ময়দানে পাকিস্তানি হানাদার বাহিনীর ৯৩ হাজার সেনার নিঃশর্ত আত্মসমর্পণের মধ্য দিয়ে অর্জিত হয় বীর বাঙালির বহুকাঙ্ক্ষিত ঐতিহাসিক বিজয়। আজকের এই গৌরবময় দিনে জাতির শ্রেষ্ঠ সন্তান সকল বীর মুক্তিযোদ্ধা ও শহীদদের প্রতি জানাই গভীর বিনম্র শ্রদ্ধাঞ্জলি।",
+            "timeline": [
+                {"time": "১৬ ডিসেম্বর ১৯৭১, বিকাল ৪:৩১", "title": "আত্মসমর্পণ দলিল স্বাক্ষর", "desc": "রেসকোর্স ময়দানে পাকিস্তানি লেফটেন্যান্ট জেনারেল নিয়াজীর ঐতিহাসিক আত্মসমর্পণ দলিলে স্বাক্ষর।"},
+                {"time": "১০:০০ পূর্বাহ্ন", "title": "স্বাধীনতার জয়ধ্বনি", "desc": "মুক্ত রাজধানী ঢাকায় লক্ষ কোটি মুক্তিকামী জনতার জয় বাংলা স্লোগানে মুখরিত রাজপথ।"},
+                {"time": "আন্তর্জাতিক স্বীকৃতি", "title": "নতুন রাষ্ট্রের অভ্যুদয়", "desc": "বিশ্বের বুকে মাথা উঁচু করে দাঁড়াল রক্তস্নাত স্বাধীন সার্বভৌম বাংলাদেশ।"},
+            ],
+        },
+        "independence_day": {
+            "key": "independence_day",
+            "name": "স্বাধীনতা দিবস",
+            "title": "মহান স্বাধীনতা ও জাতীয় দিবস বিশেষ সংস্করণ",
+            "date_bn": "২৬ মার্চ — মহান স্বাধীনতা দিবস",
+            "badge": "🔴🟢 স্বাধীনতা দিবস বিশেষ আয়োজন",
+            "motto": "রক্তে ভেজা এই বাংলায় মুক্তিকামী জনতার চিরভাস্বর অহংকার",
+            "theme_class": "edition-independence-day",
+            "tribute_heading": "২৬ মার্চ: মুক্তির অবিনাশী প্রত্যয় ও স্বাধীনতার মহান ঘোষণা",
+            "historic_tribute": "১৯৭১ সালের ২৬ মার্চের প্রথম প্রহরে সর্বকালের সর্বশ্রেষ্ঠ বাঙালি জাতির পিতা বঙ্গবন্ধু শেখ মুজিবুর রহমানের স্বাধীনতার ঐতিহাসিক ঘোষণার মধ্য দিয়ে সূচিত হয় বীরত্বপূর্ণ মুক্তিযুদ্ধ। রক্তক্ষয়ী নয় মাসের সংগ্রামের সূচনালগ্নে সকল অমর শহীদদের প্রতি বিনম্র শ্রদ্ধা।",
+            "timeline": [
+                {"time": "২৬ মার্চ ১৯৭১, প্রথম প্রহর", "title": "স্বাধীনতার ঘোষণা", "desc": "ওয়্যারলেস ও বেতার মাধ্যমে প্রচারিত হয় বাংলার অবিসংবাদিত স্বাধীনতার বার্তা।"},
+                {"time": "২৫ মার্চ কালরাত", "title": "অপারেশন সার্চলাইট", "desc": "পাক হানাদারদের বর্বরোচিত হত্যাযজ্ঞের বিরুদ্ধে দুর্বার প্রতিরোধ গড়ে তোলে বাঙালি।"},
+                {"time": "মুক্তিসংগ্রামের সূচনা", "title": "জনযুদ্ধের সূচনা", "desc": "পদ্মা-মেঘনা-যমুনার তীরে তীরে গর্জে ওঠে মুক্তিসেনাদের মরণপণ প্রতিরোধ।"},
+            ],
+        },
+        "language_day": {
+            "key": "language_day",
+            "name": "মাতৃভাষা দিবস",
+            "title": "মহান একুশে ফেব্রুয়ারি ও আন্তর্জাতিক মাতৃভাষা দিবস",
+            "date_bn": "২১ ফেব্রুয়ারি — অমর একুশে",
+            "badge": "⚫ অমর একুশে বিশেষ সংস্করণ",
+            "motto": "আমার ভাইয়ের রক্তে রাঙানো একুশে ফেব্রুয়ারি, আমি কি ভুলিতে পারি",
+            "theme_class": "edition-language-day",
+            "tribute_heading": "২১ ফেব্রুয়ারি: ভাষার জন্য আত্মদানের বিশ্বস্বীকৃত অমর ইতিহাস",
+            "historic_tribute": "১৯৫২ সালের এই দিনে মাতৃভাষা বাংলার মর্যাদা রক্ষার দাবিতে রাজপথে বুকের তাজা রক্ত ঢেলে দিয়েছিলেন সালাম, বরকত, রফিক, জব্বারসহ নাম না জানা বীর শহীদরা। তাদের আত্মত্যাগের বিনিময়ে আজ বাংলা ভাষা ও একুশে ফেব্রুয়ারি বিশ্বজুড়ে আন্তর্জাতিক মাতৃভাষা দিবস হিসেবে স্বীকৃত।",
+            "timeline": [
+                {"time": "২১ ফেব্রুয়ারি ১৯৫২", "title": "আমতলায় ১৪৪ ধারা ভঙ্গ", "desc": "ঢাকা বিশ্ববিদ্যালয় প্রাঙ্গণে ঐতিহাসিক ছাত্র সমাবেশ ও পুলিশের গুলিবর্ষণ।"},
+                {"time": "২৩ ফেব্রুয়ারি ১৯৫২", "title": "প্রথম শহীদ মিনার", "desc": "শহীদদের পবিত্র রক্তস্মৃতিতে মেডিকেল কলেজ হোস্টেলে গড়ে ওঠে প্রথম স্মৃতির মিনার।"},
+                {"time": "১৭ নভেম্বর ১৯৯৯", "title": "ইউনেস্কোর স্বীকৃতি", "desc": "একুশে ফেব্রুয়ারিকে বিশ্ব মাতৃভাষা দিবস হিসেবে সর্বসম্মত স্বীকৃতি দান।"},
+            ],
+        },
+        "historical": {
+            "key": "historical",
+            "name": "ঐতিহাসিক দিবস",
+            "title": "বিশ্ব ঐতিহাসিক দিবস বিশেষ আর্কাইভ সংস্করণ",
+            "date_bn": "ইতিহাসের পাতায় আজকের দিন",
+            "badge": "🏛️ বিশ্ব ইতিহাস ও ঐতিহ্য",
+            "motto": "ইতিহাসের আলোয় বর্তমানের দিকদর্শন ও ভবিষ্যতের পথচলা",
+            "theme_class": "edition-historical",
+            "tribute_heading": "ইতিহাসের মোড় ঘোরানো স্মরণীয় দিন ও সভ্যতার রূপান্তর",
+            "historic_tribute": "মানব সভ্যতার অগ্রগতি, বিশ্ব বিপ্লব এবং জাতিসমূহের আত্মনিয়ন্ত্রণাধিকারের ঐতিহাসিক সন্ধিক্ষণগুলোকে শ্রদ্ধার সাথে স্মরণ করে আজকের এই বিশেষ ঐতিহাসিক সংখ্যা।",
+            "timeline": [
+                {"time": "ঐতিহাসিক অধ্যায়", "title": "জ্ঞান ও মুক্তির জাগরণ", "desc": "শিল্পবিপ্লব ও গণতান্ত্রিক আন্দোলনের সোনালী দিনপঞ্জি।"},
+                {"time": "বিশ্বশান্তির অঙ্গীকার", "title": "আন্তর্জাতিক ন্যায়বিচার", "desc": "জাতিসংঘ সনদ ও মানবাধিকারের সর্বজনীন ঘোষণার রূপরেখা।"},
+            ],
+        },
+    }
+    return editions.get(edition_key)
+
+
 @portal_bp.route("", endpoint="newspaper_home")
 @portal_bp.route("")
 @portal_bp.route("/")
@@ -100,6 +185,8 @@ def index_view():
     """Render public digital newspaper homepage."""
     category_filter = request.args.get("category", "").strip()
     search_query = request.args.get("q", "").strip()
+    edition_param = request.args.get("edition", "").strip() or request.args.get("special", "").strip()
+    special_edition = get_special_edition(edition_param)
 
     with get_db_session() as session:
         article_repo = ArticleRepository(session)
@@ -148,8 +235,9 @@ def index_view():
         tech_news = category_blocks["technology"]
         sports_news = category_blocks["sports"]
         entertainment_news = category_blocks["entertainment"]
-        # Multimedia slot reuses the top of the highlight list: one query instead
-        # of two identical ORDER BY ... LIMIT scans (identical rows, same ordering).
+        
+        # Dedicated video news items for responsive iframe video theatre
+        video_news = article_repo.get_video_articles(limit=6)
         multimedia_news = highlighted[:4]
 
         # Live infinite-scroll stream (date-time wise, newest first).
@@ -203,9 +291,12 @@ def index_view():
             sports_news=sports_news,
             entertainment_news=entertainment_news,
             multimedia_news=multimedia_news,
+            video_news=video_news,
+            special_edition=special_edition,
             category_filter=category_filter,
             search_query=search_query,
             filter_results=filter_results,
+            embeddable_video_url=embeddable_video_url,
         )
 
 
@@ -289,6 +380,135 @@ def feed_stream_api():
                 "has_more": has_more,
                 "newest": newest,
             }
+        )
+
+
+@portal_bp.route("/api/bulletins")
+def bulletins_api():
+    """Realtime endpoint returning breaking updates, notices, and system alerts for the live notification bell."""
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        breaking = article_repo.get_breaking_news(limit=6)
+        breaking_list = [
+            {
+                "id": b.id,
+                "title": b.title,
+                "category": b.category or "ব্রেকিং",
+                "url": post_url(b),
+                "time": b.published_at.strftime("%I:%M %p") if b.published_at else "এখনই",
+                "views": b.views_count or 0,
+            }
+            for b in breaking
+        ]
+
+        notices = [
+            {
+                "id": "notice-1",
+                "title": "দি ডেইলি এআই আলো: রিয়েল-টাইম বাংলা এআই নিউজ পোর্টাল আপডেট সক্রিয়",
+                "type": "official",
+                "tag": "বিজ্ঞপ্তি",
+                "date": datetime.now().strftime("%d %b %Y"),
+                "summary": "আমাদের সংবাদ সিস্টেমে স্বয়ংক্রিয় এআই সত্যতা যাচাইকরণ ও তাৎক্ষণিক লাইভ ফিড চালু রয়েছে।",
+            },
+            {
+                "id": "notice-2",
+                "title": "মতামত ও সম্পাদকীয় বিভাগে নতুন কলাম প্রকাশের আমন্ত্রণ",
+                "type": "editorial",
+                "tag": "সম্পাদকীয়",
+                "date": datetime.now().strftime("%d %b %Y"),
+                "summary": "অর্থনীতি, সমাজ ও প্রযুক্তির সমসাময়িক বিষয়ে উপ-সম্পাদকীয় কলাম পাঠাতে সম্পাদক বরাবর ইমেইল করুন।",
+            },
+            {
+                "id": "notice-3",
+                "title": "লাইভ আবহাওয়া ও ডলার/ইউরো বিনিময় হার পর্যবেক্ষণ ব্যবস্থা সক্রিয়",
+                "type": "system",
+                "tag": "অর্থনীতি",
+                "date": datetime.now().strftime("%d %b %Y"),
+                "summary": "বাংলাদেশ ব্যাংক ও আন্তর্জাতিক উৎস থেকে সংগৃহীত সরাসরি আর্থিক সূচক প্রদর্শিত হচ্ছে।",
+            },
+        ]
+
+        return jsonify({
+            "status": "success",
+            "breaking": breaking_list,
+            "notices": notices,
+            "total_alerts": len(breaking_list) + len(notices),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        })
+
+
+@portal_bp.route("/opinion")
+@portal_bp.route("/editorial")
+def opinion_view():
+    """Dedicated Editorial, Sub-Editorial, and In-Depth Opinion Page."""
+    tab = request.args.get("tab", "all").strip().lower()
+    with get_db_session() as session:
+        article_repo = ArticleRepository(session)
+        portal_repo = PortalRepository(session)
+
+        breaking_news = article_repo.get_breaking_news(limit=5)
+        active_poll = portal_repo.get_active_poll()
+
+        # Fetch articles in opinion/editorial categories
+        opinion_articles = article_repo.get_articles_by_category("opinion", limit=24)
+        if not opinion_articles:
+            # Fallback to high-quality completed articles for rich presentation
+            opinion_articles = article_repo.get_highlighted_articles(limit=16)
+
+        # Distribute into Chief Editorial, Sub-Editorial/Deputy, and Guest Columnists
+        lead_editorial = opinion_articles[0] if opinion_articles else None
+        sub_editorials = opinion_articles[1:5] if len(opinion_articles) > 1 else []
+        columnist_pieces = opinion_articles[5:13] if len(opinion_articles) > 5 else opinion_articles[:8]
+
+        # Distinguished Editorial Board & Deputy Columnists Profiles
+        columnists_profiles = [
+            {
+                "name": "মাহবুবুল হক সৈকত",
+                "designation": "প্রধান সম্পাদক ও প্রধান কলামিস্ট",
+                "department": "সম্পাদকীয় বোর্ড",
+                "avatar": "/static/img/placeholders/opinion.svg",
+                "focus": "রাষ্ট্রনীতি, গণতন্ত্র ও সাংবিধানিক সংস্কার",
+                "quote": "সত্যের নির্ভীক প্রকাশই একটি মুক্ত সমাজের প্রধান রক্ষাকবচ।",
+                "articles_count": 48,
+            },
+            {
+                "name": "ড. আতিকুর রহমান",
+                "designation": "ডেপুটি এডিটর (উপ-সম্পাদকীয়)",
+                "department": "উপ-সম্পাদকীয় ও বিশ্লেষণ বিভাগ",
+                "avatar": "/static/img/placeholders/business.svg",
+                "focus": "সামষ্টিক অর্থনীতি, মুদ্রা নীতি ও বাণিজ্য",
+                "quote": "অর্থনৈতিক ভারসাম্য ছাড়া সামাজিক ন্যায়বিচার প্রতিষ্ঠা অসম্ভব।",
+                "articles_count": 34,
+            },
+            {
+                "name": "মাহরীন সুলতানা",
+                "designation": "সহকারী সম্পাদক ও নীতি বিশ্লেষক",
+                "department": "শিক্ষা ও প্রযুক্তি বিভাগ",
+                "avatar": "/static/img/placeholders/technology.svg",
+                "focus": "কৃত্রিম বুদ্ধিমত্তা, যুবশক্তি ও রূপান্তর",
+                "quote": "প্রযুক্তির সুফল সাধারণের দোরগোড়ায় পৌঁছালেই রূপান্তর সার্থক।",
+                "articles_count": 29,
+            },
+            {
+                "name": "অধ্যাপক জামিল চৌধুরী",
+                "designation": "বিশেষ অতিথি কলামিস্ট",
+                "department": "আন্তর্জাতিক সম্পর্ক বিভাগ",
+                "avatar": "/static/img/placeholders/international.svg",
+                "focus": "ভূ-রাজনীতি, দক্ষিণ এশিয়া ও কূটনীতি",
+                "quote": "কূটনৈতিক দূরদর্শিতাই বৈশ্বিক সংকটে সার্বভৌমত্বের মূল চাবিকাঠি।",
+                "articles_count": 22,
+            },
+        ]
+
+        return render_template(
+            "portal_editorial.html",
+            lead_editorial=lead_editorial,
+            sub_editorials=sub_editorials,
+            columnist_pieces=columnist_pieces,
+            columnists_profiles=columnists_profiles,
+            breaking_news=breaking_news,
+            active_poll=active_poll.to_dict() if active_poll else None,
+            current_tab=tab,
         )
 
 

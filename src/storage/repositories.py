@@ -122,6 +122,9 @@ CATEGORY_SYNONYMS = {
     "tech": ["tech", "technology", "বিজ্ঞান ও প্রযুক্তি", "প্রযুক্তি"],
     "sports": ["sports", "খেলাধুলা", "খেলা", "ক্রিকেট", "ফুটবল"],
     "entertainment": ["entertainment", "বিনোদন", "সংস্কৃতি", "তারকা"],
+    "opinion": ["opinion", "মতামত", "সম্পাদকীয়", "উপ-সম্পাদকীয়", "editorial", "কলাম"],
+    "editorial": ["editorial", "সম্পাদকীয়", "উপ-সম্পাদকীয়", "opinion", "মতামত", "কলাম"],
+    "video": ["video", "ভিডিও", "multimedia", "মাল্টিমিডিয়া"],
 }
 
 
@@ -638,6 +641,34 @@ class ArticleRepository:
             results.extend(filler)
 
         return results
+
+    def get_video_articles(self, limit: int = 6) -> List[Article]:
+        """Fetch articles with attached video embeds/uploads, or fallback to multimedia highlights."""
+        video_q = (
+            apply_public_content_filter(
+                self.session.query(Article)
+                .options(joinedload(Article.images))
+                .filter(Article.scrape_status == "completed")
+                .filter((Article.video_type == "EMBED") | (Article.video_url.isnot(None)))
+            )
+            .order_by(Article.is_pinned.desc(), Article.published_at.desc(), Article.id.desc())
+            .limit(limit)
+            .all()
+        )
+        if len(video_q) < limit:
+            exclude_ids = [a.id for a in video_q]
+            fallback_q = (
+                apply_public_content_filter(
+                    self.session.query(Article)
+                    .options(joinedload(Article.images))
+                    .filter(Article.scrape_status == "completed")
+                )
+            )
+            if exclude_ids:
+                fallback_q = fallback_q.filter(~Article.id.in_(exclude_ids))
+            fallback = fallback_q.order_by(Article.views_count.desc(), Article.id.desc()).limit(limit - len(video_q)).all()
+            return video_q + fallback
+        return video_q
 
     def get_articles_by_categories(
         self,

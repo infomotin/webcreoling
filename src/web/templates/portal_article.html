@@ -92,6 +92,24 @@
                 </div>
             </div>
 
+            <!-- Responsive Video Iframe Player if article has video -->
+            {% if article.video_url %}
+            <div style="margin-bottom: 1.5rem; background: #000000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
+                <div class="palo-video-responsive-wrap">
+                    <iframe src="{{ article.video_url }}" 
+                            title="{{ article.video_caption or article.title }}" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                {% if article.video_caption %}
+                <div style="background: #0f172a; color: #cbd5e1; font-size: 0.8rem; padding: 6px 12px; font-weight: 600;">
+                    🎥 {{ article.video_caption }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <!-- Lead Image with Absolute Fallback Resilience -->
             <div style="margin-bottom: 1.5rem; border-radius: var(--palo-radius-sm); overflow: hidden; border: 1px solid var(--palo-border); background: #f8fafc;">
                 <img src="{{ article.lead_image_url or (('/' + article.images[0].local_path) if article.images else ('/static/img/placeholders/' + (article.category or 'general') + '.svg')) }}" 

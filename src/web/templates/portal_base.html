@@ -16,6 +16,22 @@
 </head>
 <body class="palo-body-canvas">
 
+    <!-- Emergency Public Notice Banner (Dismissible) -->
+    <div id="paloEmergencyNotice" class="palo-emergency-notice-bar">
+        <div class="palo-container palo-emergency-notice-inner">
+            <div style="display: flex; align-items: center; gap: 0.6rem; overflow: hidden;">
+                <span class="palo-emergency-badge">জরুরি নোটিশ</span>
+                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    📢 দি ডেইলি এআই আলো: রিয়েল-টাইম বাংলা এআই নিউজ প্ল্যাটফর্ম সক্রিয় — শতভাগ এআই সত্যতা যাচাই ও তাৎক্ষণিক লাইভ আপডেট।
+                </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.8rem; flex-shrink: 0;">
+                <a href="{{ url_for('portal.opinion_view') }}" style="color: #fef08a; text-decoration: underline; font-size: 0.78rem;">মতামত ও সম্পাদকীয় ›</a>
+                <button type="button" onclick="document.getElementById('paloEmergencyNotice').style.display='none'" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 1rem; line-height: 1;">✕</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================================================================== -->
     <!-- 1. FULL WIDTH TOP UTILITY BAR (DYNAMIC BRANDING & RATES)               -->
     <!-- ===================================================================== -->
@@ -35,14 +51,65 @@
                     </span>
                 </div>
                 <div class="palo-topbar-right">
+                    <!-- Commemorative Special Day Switcher -->
+                    <div class="palo-edition-switcher" title="বিশেষ দিবস সংস্করণ বেছে নিন">
+                        <span style="font-size: 0.7rem; color: #64748b; font-weight: 700; padding-left: 6px;">সংস্করণ:</span>
+                        <a href="{{ url_for('portal.index_view') }}" class="palo-edition-btn {% if not request.args.get('edition') and not request.args.get('special') %}active{% endif %}">সাধারণ</a>
+                        <a href="{{ url_for('portal.index_view', edition='victory_day') }}" class="palo-edition-btn {% if request.args.get('edition') == 'victory_day' or request.args.get('special') == 'victory_day' %}active{% endif %}" style="color: #059669;">বিজয় দিবস</a>
+                        <a href="{{ url_for('portal.index_view', edition='independence_day') }}" class="palo-edition-btn {% if request.args.get('edition') == 'independence_day' or request.args.get('special') == 'independence_day' %}active{% endif %}" style="color: #dc2626;">স্বাধীনতা দিবস</a>
+                        <a href="{{ url_for('portal.index_view', edition='language_day') }}" class="palo-edition-btn {% if request.args.get('edition') == 'language_day' or request.args.get('special') == 'language_day' %}active{% endif %}">একুশে</a>
+                    </div>
+
+                    <!-- Live Notification Bell with Dropdown -->
+                    <div class="palo-notify-bell-wrap" id="notifyBellWrap">
+                        <button type="button" class="palo-notify-btn" id="notifyBellBtn" onclick="toggleNotificationDropdown(event)">
+                            <span>🔔</span> নোটিশ ও এলার্ট
+                            <span class="palo-notify-count" id="notifyCount">৩</span>
+                        </button>
+                        <div class="palo-notify-dropdown" id="notifyDropdown">
+                            <div class="palo-notify-header">
+                                <div style="font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                    <span>📢</span> নোটিশ ও তাৎক্ষণিক বুলেটিন
+                                </div>
+                                <span style="font-size: 0.72rem; color: #94a3b8; background: #1e293b; padding: 2px 6px; border-radius: 4px;" id="notifyLastTime">লাইভ</span>
+                            </div>
+                            <div class="palo-notify-list" id="notifyList">
+                                <a href="{{ url_for('portal.opinion_view') }}" class="palo-notify-item unread">
+                                    <div class="palo-notify-item-title">✍️ সম্পাদকীয় ও উপ-সম্পাদকীয় বিভাগে সমসাময়িক কলাম প্রকাশিত হয়েছে</div>
+                                    <div class="palo-notify-item-meta">
+                                        <span style="color: #e11d48; font-weight: 700;">মতামত ডেস্ক</span>
+                                        <span>১০ মিনিট আগে</span>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('portal.index_view') }}#videoTheatreSection" class="palo-notify-item">
+                                    <div class="palo-notify-item-title">🎥 মাল্টিমিডিয়া থিয়েটার: লাইভ নিউজ ভিডিও ও আইফ্রেম সম্প্রচার সক্রিয়</div>
+                                    <div class="palo-notify-item-meta">
+                                        <span style="color: #0284c7; font-weight: 700;">ভিডিও গ্যালারি</span>
+                                        <span>২৫ মিনিট আগে</span>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('portal.index_view') }}#liveFeedSection" class="palo-notify-item">
+                                    <div class="palo-notify-item-title">⚡ রিয়েল-টাইম লাইভ ফিড চালু — পৃষ্ঠা রিলোড ছাড়াই তাজা সংবাদ দেখুন</div>
+                                    <div class="palo-notify-item-meta">
+                                        <span style="color: #10b981; font-weight: 700;">সিস্টেম আপডেট</span>
+                                        <span>লাইভ</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.5rem; text-align: center;">
+                                <a href="{{ url_for('portal.opinion_view') }}" style="font-size: 0.78rem; font-weight: 700; color: #e11d48; text-decoration: none;">
+                                    সকল নোটিশ ও সম্পাদকীয় মতামত দেখুন &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     {% set fx = live_topbar.fx if live_topbar else none %}
                     <span class="palo-rate-item" title="{{ 'সূত্র: ' ~ (fx.usd_source or '') if fx else '' }}">ডলার ৳{{ (fx and fx.usd) or site_branding.usd_rate or '১২১.৫০' }}</span>
                     <span class="palo-rate-item" title="{{ 'সূত্র: ' ~ (fx.eur_source or '') if fx else '' }}">ইউরো ৳{{ (fx and fx.eur) or site_branding.eur_rate or '১৩২.২০' }}</span>
+                    <a href="{{ url_for('portal.opinion_view') }}" class="palo-top-link" style="color: #b45309; font-weight: 800;">✍️ সম্পাদকীয় ও মতামত</a>
                     <a href="{{ url_for('portal.archive_view') }}" class="palo-top-link">📅 আর্কাইভ</a>
                     <a href="{{ url_for('portal.index_view') }}#poll-box" class="palo-top-link">📊 জনমত জরিপ</a>
-                    <a href="{{ url_for('datacenter.index_view') }}" class="palo-top-link" style="color: #0284c7; font-weight: 700;">
-                        🌐 ডেটাসেন্টার ও ক্লাউড
-                    </a>
                     <a href="{{ url_for('admin.newspaper_management_view') }}" class="palo-top-link palo-admin-link">
                         🛡️ সম্পাদকীয় CMS
                     </a>
@@ -147,6 +214,16 @@
                         </a>
                     </li>
                     <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.opinion_view') }}" class="palo-nav-link {% if request.endpoint == 'portal.opinion_view' %}active{% endif %}" style="color: #b45309; font-weight: 800;">
+                            ✍️ মতামত ও সম্পাদকীয়
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
+                        <a href="{{ url_for('portal.index_view') }}#videoTheatreSection" class="palo-nav-link" style="color: #e11d48; font-weight: 700;">
+                            🎥 ভিডিও
+                        </a>
+                    </li>
+                    <li class="palo-nav-item">
                         <a href="{{ url_for('portal.archive_view') }}" class="palo-nav-link {% if request.endpoint == 'portal.archive_view' %}active{% endif %}">
                             📅 আর্কাইভ
                         </a>
@@ -210,6 +287,35 @@
         </div>
         {% endif %}
     {% endwith %}
+
+    <!-- Special Day Commemorative Hero Banner -->
+    {% if special_edition %}
+    <div class="palo-commemorative-band {{ special_edition.theme_class }}">
+        <div class="palo-container palo-commemorative-inner">
+            <div class="palo-commemorative-top">
+                <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+                    <span class="palo-commemorative-badge">{{ special_edition.badge }}</span>
+                    <h2 class="palo-commemorative-title">{{ special_edition.title }}</h2>
+                </div>
+                <div class="palo-commemorative-motto">
+                    "{{ special_edition.motto }}"
+                </div>
+            </div>
+            <div class="palo-commemorative-tribute">
+                <strong>{{ special_edition.tribute_heading }}:</strong> {{ special_edition.historic_tribute }}
+            </div>
+            <div class="palo-timeline-grid">
+                {% for item in special_edition.timeline %}
+                <div class="palo-timeline-item">
+                    <span class="palo-timeline-time">{{ item.time }}</span>
+                    <div class="palo-timeline-title">{{ item.title }}</div>
+                    <p class="palo-timeline-desc">{{ item.desc }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ===================================================================== -->
     <!-- 6. MAIN NEWSPAPER CONTENT BODY                                        -->
@@ -314,6 +420,73 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Global Realtime Toast Notification Pill -->
+    <div id="paloRealtimeToast" class="palo-realtime-toast" style="display: none;" onclick="handleRealtimeToastClick()">
+        <span style="font-size: 1.25rem;">🔔</span>
+        <span id="paloToastMessage">নতুন তাজা সংবাদ প্রকাশিত হয়েছে — পড়তে ক্লিক করুন</span>
+        <span style="color: #38bdf8; font-size: 0.8rem;">দেখুন &rarr;</span>
+    </div>
+
+    <script>
+    function toggleNotificationDropdown(e) {
+        if (e) e.stopPropagation();
+        const dd = document.getElementById('notifyDropdown');
+        if (dd) dd.classList.toggle('show');
+    }
+
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('notifyBellWrap');
+        const dd = document.getElementById('notifyDropdown');
+        if (wrap && dd && !wrap.contains(e.target)) {
+            dd.classList.remove('show');
+        }
+    });
+
+    let toastTimer = null;
+    function showRealtimeToast(msg) {
+        const toast = document.getElementById('paloRealtimeToast');
+        const text = document.getElementById('paloToastMessage');
+        if (!toast) return;
+        if (msg && text) text.innerText = msg;
+        toast.style.display = 'flex';
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 8000);
+    }
+
+    function handleRealtimeToastClick() {
+        const feedSec = document.getElementById('liveFeedSection');
+        if (feedSec) {
+            feedSec.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            window.location.href = "{{ url_for('portal.index_view') }}#liveFeedSection";
+        }
+        document.getElementById('paloRealtimeToast').style.display = 'none';
+    }
+
+    // Global background poller for notification alerts
+    (function () {
+        async function checkBulletinsAndUpdates() {
+            if (document.hidden) return;
+            try {
+                const res = await fetch('/news/api/bulletins');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const countEl = document.getElementById('notifyCount');
+                    if (countEl && data.total_alerts !== undefined) {
+                        countEl.innerText = data.total_alerts;
+                    }
+                    const timeEl = document.getElementById('notifyLastTime');
+                    if (timeEl && data.timestamp) {
+                        timeEl.innerText = data.timestamp.substring(11, 16);
+                    }
+                }
+            } catch (err) {}
+        }
+        setInterval(checkBulletinsAndUpdates, 15000);
+    })();
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

@@ -1,0 +1,339 @@
+{% extends "portal_base.html" %}
+
+{% block title %}মতামত ও সম্পাদকীয় — প্রধান সম্পাদকীয়, উপ-সম্পাদকীয় ও বিশ্লষণী কলাম | {{ site_branding.site_title or site_identity.title }}{% endblock %}
+
+{% block portal_content %}
+<div style="margin-bottom: 2.5rem;">
+
+    <!-- ===================================================================== -->
+    <!-- 1. EDITORIAL HEADER & SECTION BREADCRUMB                              -->
+    <!-- ===================================================================== -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #b45309; padding-bottom: 0.85rem; margin-bottom: 1.8rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="background: #fef3c7; color: #92400e; font-size: 0.75rem; font-weight: 800; padding: 2px 10px; border-radius: 999px; border: 1px solid #fde68a;">
+                    ✒️ মুক্ত মত ও বিশ্লেষণ
+                </span>
+                <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">সম্পাদকীয় পর্ষদ • দৈনিক সংস্করণ</span>
+            </div>
+            <h1 style="font-family: 'Noto Serif Bengali', serif; font-size: 2.2rem; font-weight: 900; color: #1e293b; margin: 0; line-height: 1.25;">
+                মতামত ও সম্পাদকীয়
+            </h1>
+            <p style="font-size: 0.95rem; color: #64748b; margin: 0.3rem 0 0 0;">
+                সমাজ, রাজনীতি, অর্থনীতি ও বৈশ্বিক প্রেক্ষাপটে নিরপেক্ষ বিশ্লেষণ, প্রধান সম্পাদকীয় এবং উপ-সম্পাদকীয় কলাম।
+            </p>
+        </div>
+
+        <!-- Filter Tab Pills -->
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('portal.opinion_view') }}" class="palo-edition-btn {% if current_tab == 'all' or not current_tab %}active{% endif %}">
+                সব মতামত
+            </a>
+            <a href="#chiefEditorial" class="palo-edition-btn">
+                প্রধান সম্পাদকীয়
+            </a>
+            <a href="#deputyEditorial" class="palo-edition-btn">
+                উপ-সম্পাদকীয় কলাম
+            </a>
+            <a href="#columnistsList" class="palo-edition-btn">
+                লেখকবৃন্দ
+            </a>
+            <a href="#submitOpEd" class="palo-edition-btn" style="color: #b45309; font-weight: 800;">
+                + লেখা পাঠান
+            </a>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- 2. MAIN LAYOUT: LEFT CONTENT (2 COLS) + RIGHT SIDEBAR                 -->
+    <!-- ===================================================================== -->
+    <div style="display: grid; grid-template-columns: 2.4fr 1fr; gap: 2rem;">
+
+        <!-- ----------------------------------------------------------------- -->
+        <!-- LEFT COLUMN: CHIEF EDITORIAL & SUB-EDITORIAL COLUMNS              -->
+        <!-- ----------------------------------------------------------------- -->
+        <div>
+
+            <!-- A. প্রধান সম্পাদকীয় (CHIEF EDITORIAL HERO) -->
+            <section id="chiefEditorial" class="palo-editorial-hero">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #fde68a; padding-bottom: 0.6rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #b45309; color: #ffffff; font-weight: 800; font-size: 0.75rem; padding: 2px 10px; border-radius: 4px; text-transform: uppercase;">
+                            প্রধান সম্পাদকীয়
+                        </span>
+                        <span style="font-size: 0.82rem; color: #92400e; font-weight: 700;">
+                            দি ডেইলি এআই আলো সম্পাদকীয় বোর্ডের আনুষ্ঠানিক অভিমত
+                        </span>
+                    </div>
+                    <span style="font-size: 0.78rem; color: #78350f; font-weight: 600;">
+                        ⏱️ ৭ মিনিট পাঠ
+                    </span>
+                </div>
+
+                {% if lead_editorial %}
+                <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.85rem; font-weight: 900; line-height: 1.35; margin: 0 0 0.85rem 0;">
+                    <a href="{{ post_url(lead_editorial) }}" style="color: #1c1917; text-decoration: none; transition: color 0.2s ease;">
+                        {{ lead_editorial.title }}
+                    </a>
+                </h2>
+
+                <!-- Pull Quote Styling -->
+                <div style="background: rgba(254, 243, 199, 0.45); border-left: 4px solid #b45309; padding: 1rem 1.4rem; border-radius: 0 8px 8px 0; margin-bottom: 1.25rem;">
+                    <span class="palo-editorial-quote-badge">“</span>
+                    <p style="font-family: 'Noto Serif Bengali', serif; font-size: 1.12rem; font-style: italic; color: #78350f; line-height: 1.6; margin: -1rem 0 0 0; font-weight: 600;">
+                        {{ lead_editorial.summary or 'রাষ্ট্র ও সমাজের রূপান্তরে সৎ সাংবাদিকতা ও গভীর নীতি পর্যালোচনাই গণতন্ত্রের মূল পথপ্রদর্শক।' }}
+                    </p>
+                </div>
+
+                <div style="font-size: 1.05rem; line-height: 1.8; color: #334155; margin-bottom: 1.4rem;">
+                    {{ (lead_editorial.content_text or '')[:450] }}...
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #fde68a; padding-top: 0.85rem; flex-wrap: wrap; gap: 0.8rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: #b45309; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
+                            আলো
+                        </div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">
+                                {{ site_footer.editor_in_chief or 'প্রধান সম্পাদক' }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #64748b;">
+                                সম্পাদকীয় বোর্ড • প্রকাশিত: {{ lead_editorial.published_at or 'আজকের বিশেষ সংখ্যা' }}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ post_url(lead_editorial) }}" style="display: inline-flex; align-items: center; gap: 6px; background: #b45309; color: #ffffff; padding: 8px 18px; border-radius: 6px; font-weight: 800; font-size: 0.88rem; text-decoration: none; box-shadow: 0 2px 6px rgba(180, 83, 9, 0.3);">
+                        সম্পূর্ণ সম্পাদকীয় পড়ুন &rarr;
+                    </a>
+                </div>
+                {% else %}
+                <p style="color: #64748b;">বর্তমানে কোনো প্রধান সম্পাদকীয় নিবন্ধ পাওয়া যায়নি।</p>
+                {% endif %}
+            </section>
+
+            <!-- B. উপ-সম্পাদকীয় ও বিশ্লেষণী মতামত (SUB-EDITORIAL / DEPUTY EDITORIAL) -->
+            <section id="deputyEditorial" style="margin-bottom: 2.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 0.5rem; margin-bottom: 1.25rem;">
+                    <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span> উপ-সম্পাদকীয় ও বিশ্লেষণী কলাম
+                    </h3>
+                    <span style="font-size: 0.82rem; color: #0284c7; font-weight: 700;">
+                        ডেপুটি এডিটর ও বিশেষজ্ঞ মতামত
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem;">
+                    {% for art in sub_editorials %}
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s ease;"
+                         onmouseover="this.style.borderColor='#0284c7'; this.style.boxShadow='0 6px 16px rgba(2,132,199,0.08)';"
+                         onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                                <span style="background: #e0f2fe; color: #0369a1; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">
+                                    উপ-সম্পাদকীয়
+                                </span>
+                                <span style="font-size: 0.74rem; color: #94a3b8;">
+                                    👁️ {{ art.views_count or 0 }} বার পঠিত
+                                </span>
+                            </div>
+
+                            <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.15rem; font-weight: 800; line-height: 1.4; margin: 0 0 0.5rem 0;">
+                                <a href="{{ post_url(art) }}" style="color: #0f172a; text-decoration: none;">
+                                    {{ art.title }}
+                                </a>
+                            </h4>
+
+                            <p style="font-size: 0.88rem; color: #64748b; line-height: 1.6; margin: 0 0 0.85rem 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ art.summary or (art.content_text or '')[:140] }}...
+                            </p>
+                        </div>
+
+                        <div style="border-top: 1px solid #f1f5f9; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.84rem; color: #1e293b;">
+                                    {{ art.author or 'উপ-সম্পাদকীয় বিভাগ' }}
+                                </div>
+                                <div style="font-size: 0.72rem; color: #94a3b8;">
+                                    {{ art.published_at or 'আজকের মতামত' }}
+                                </div>
+                            </div>
+                            <a href="{{ post_url(art) }}" style="color: #0284c7; font-weight: 800; font-size: 0.82rem; text-decoration: none;">
+                                পড়ুন &rarr;
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- C. কলামিস্ট ও বিশ্লেষক তালিকা (FEATURED COLUMNISTS BOARD) -->
+            <section id="columnistsList" style="margin-bottom: 2.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; margin-bottom: 1.25rem;">
+                    <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.45rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span>👥</span> বিশিষ্ট কলামিস্ট ও উপ-সম্পাদকীয় লেখকবৃন্দ
+                    </h3>
+                    <span style="font-size: 0.82rem; color: #8b5cf6; font-weight: 700;">সম্পাদকীয় বিশ্লেষক প্যানেল</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem;">
+                    {% for col in columnists_profiles %}
+                    <div class="palo-columnist-card">
+                        <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                            <div class="palo-columnist-avatar-wrap">
+                                <img src="{{ col.avatar }}" alt="{{ col.name }}" onerror="this.onerror=null; this.src='/static/img/placeholders/opinion.svg';">
+                            </div>
+                            <div style="flex: 1;">
+                                <h4 style="font-size: 1.05rem; font-weight: 800; margin: 0 0 2px 0; color: #0f172a;">
+                                    {{ col.name }}
+                                </h4>
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #0284c7;">
+                                    {{ col.designation }}
+                                </div>
+                                <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 6px;">
+                                    {{ col.department }} • বিশেষ ক্ষেত্র: {{ col.focus }}
+                                </div>
+                                <p style="font-family: 'Noto Serif Bengali', serif; font-style: italic; font-size: 0.84rem; color: #475569; margin: 0; line-height: 1.4;">
+                                    “{{ col.quote }}”
+                                </p>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px solid #f1f5f9; font-size: 0.76rem; color: #94a3b8;">
+                            <span>মোট নিবন্ধ: {{ col.articles_count }} টি</span>
+                            <span style="color: #b45309; font-weight: 700;">নিয়মিত কলামিস্ট</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- D. সমসাময়িক মতামত ও পাঠকের চিঠি (MORE OPINIONS) -->
+            {% if columnist_pieces %}
+            <section style="margin-bottom: 2.5rem;">
+                <div style="border-bottom: 2px solid #10b981; padding-bottom: 0.5rem; margin-bottom: 1.25rem;">
+                    <h3 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">
+                        📝 অন্যান্য উপ-সম্পাদকীয় ও নিবন্ধ
+                    </h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                    {% for art in columnist_pieces %}
+                    <div style="display: flex; gap: 1rem; align-items: flex-start; padding: 0.85rem 1rem; background: #ffffff; border: 1px solid #f1f5f9; border-radius: 6px; transition: background 0.15s ease;"
+                         onmouseover="this.style.background='#f8fafc';"
+                         onmouseout="this.style.background='#ffffff';">
+                        <div style="font-size: 1.5rem; color: #10b981; line-height: 1; flex-shrink: 0;">✍️</div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 0.98rem; font-weight: 800; margin: 0 0 0.3rem 0; line-height: 1.4;">
+                                <a href="{{ post_url(art) }}" style="color: #0f172a; text-decoration: none;">
+                                    {{ art.title }}
+                                </a>
+                            </h4>
+                            <p style="font-size: 0.82rem; color: #64748b; margin: 0 0 0.4rem 0;">
+                                {{ (art.summary or art.content_text or '')[:120] }}...
+                            </p>
+                            <div class="palo-bylines-row">
+                                <span style="font-weight: 700; color: #059669;">{{ art.author or 'মতামত প্রতিবেদক' }}</span>
+                                <span>•</span>
+                                <span>{{ art.published_at or 'আজ' }}</span>
+                                <span>•</span>
+                                <span>👁️ {{ art.views_count or 0 }} বার পঠিত</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+        </div>
+
+        <!-- ----------------------------------------------------------------- -->
+        <!-- RIGHT COLUMN: SIDEBAR (OP-ED SUBMISSION, POLL, AD)                 -->
+        <!-- ----------------------------------------------------------------- -->
+        <div>
+
+            <!-- 1. আপনার লেখা বা মতামত পাঠানোর বক্স -->
+            <div id="submitOpEd" style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 4px solid #b45309; border-radius: 8px; padding: 1.4rem; margin-bottom: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.6rem;">
+                    <span style="font-size: 1.4rem;">📬</span>
+                    <h4 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.15rem; font-weight: 800; margin: 0; color: #1e293b;">
+                        মতামত বা লেখা পাঠান
+                    </h4>
+                </div>
+                <p style="font-size: 0.84rem; color: #64748b; line-height: 1.5; margin-bottom: 1rem;">
+                    জাতীয়, আন্তর্জাতিক, অর্থনীতি ও সমাজ বিনির্মাণের সমসাময়িক বিষয়ে আপনার চিন্তা ও উপ-সম্পাদকীয় কলাম আমাদের সম্পাদকীয় পর্ষদের পর্যালোচনার জন্য জমা দিন।
+                </p>
+
+                <form onsubmit="handleOpEdSubmit(event)" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <input type="text" id="opedAuthor" class="palo-input-newsletter" placeholder="আপনার নাম ও পরিচিতি" required style="border-radius: 4px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1;">
+                    <input type="email" id="opedEmail" class="palo-input-newsletter" placeholder="আপনার সক্রিয় ইমেইল" required style="border-radius: 4px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1;">
+                    <input type="text" id="opedSubject" class="palo-input-newsletter" placeholder="নিবন্ধের শিরোনাম" required style="border-radius: 4px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1;">
+                    <textarea id="opedBody" rows="4" placeholder="আপনার লেখার মূল বক্তব্য বা খসড়া এখানে লিখুন (সর্বোচ্চ ১০০০ শব্দ)..." required style="width: 100%; border-radius: 4px; padding: 8px 12px; font-size: 0.85rem; border: 1px solid #cbd5e1; font-family: inherit; resize: vertical;"></textarea>
+                    <button type="submit" class="palo-btn-vote" style="background: #b45309; border-color: #92400e;">
+                        লেখা জমা দিন
+                    </button>
+                    <div id="opedStatus" style="font-size: 0.78rem; text-align: center; display: none; font-weight: 700; margin-top: 4px;"></div>
+                </form>
+            </div>
+
+            <!-- 2. সম্পাদকীয় নীতি ও নির্দেশিকা -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.8rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 6px;">
+                    <span>⚖️</span> সম্পাদকীয় নীতিমালা
+                </h4>
+                <ul style="font-size: 0.8rem; color: #64748b; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
+                    <li>লেখা মৌলিক এবং তথ্যনিষ্ঠ হতে হবে।</li>
+                    <li>কোনো ধরনের বিদ্বেষমূলক বক্তব্য বা অপতথ্য বর্জনীয়।</li>
+                    <li>এআই সত্যতা যাচাই অ্যালগরিদম ও সম্পাদকীয় বোর্ড কর্তৃক নিরীক্ষিত হয়।</li>
+                    <li>নির্বাচিত লেখা প্রকাশের চূড়ান্ত অধিকার সম্পাদকীয় বোর্ডের সংরক্ষিত।</li>
+                </ul>
+            </div>
+
+            <!-- 3. জনমত জরিপ (Sidebar Poll) -->
+            {% if active_poll %}
+            <div id="poll-box" class="palo-poll-card" style="margin-bottom: 1.8rem;">
+                <div class="palo-poll-header">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--palo-heading);">
+                        📊 জনমত জরিপ
+                    </span>
+                    <span class="palo-poll-badge">সক্রিয়</span>
+                </div>
+                <p class="palo-poll-question">
+                    {{ active_poll.question }}
+                </p>
+                <div style="font-size: 0.8rem; color: #64748b;">
+                    হোমপেজে গিয়ে আপনার মূল্যবান মতামত প্রদান করুন।
+                </div>
+                <a href="{{ url_for('portal.index_view') }}#poll-box" style="display: block; margin-top: 0.6rem; color: var(--palo-red); font-weight: 700; font-size: 0.84rem; text-decoration: none;">
+                    ভোট দিতে ক্লিক করুন &rarr;
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleOpEdSubmit(event) {
+    event.preventDefault();
+    const status = document.getElementById('opedStatus');
+    const author = document.getElementById('opedAuthor').value.trim();
+    const title = document.getElementById('opedSubject').value.trim();
+    if (!author || !title) return;
+
+    status.style.display = 'block';
+    status.style.color = '#15803d';
+    status.innerText = 'ধন্যবাদ! আপনার নিবন্ধটি সম্পাদকীয় বোর্ডে পর্যালোচনার জন্য গৃহীত হয়েছে।';
+
+    // Clear form
+    document.getElementById('opedAuthor').value = '';
+    document.getElementById('opedEmail').value = '';
+    document.getElementById('opedSubject').value = '';
+    document.getElementById('opedBody').value = '';
+}
+</script>
+{% endblock %}

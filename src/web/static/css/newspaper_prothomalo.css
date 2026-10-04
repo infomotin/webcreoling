@@ -1691,3 +1691,601 @@ body.palo-body-canvas {
     color: #38bdf8;
 }
 
+/* ==========================================================================
+   15. COMMEMORATIVE SPECIAL DAY EDITIONS (VICTORY DAY / INDEPENDENCE DAY)
+   ========================================================================== */
+.palo-commemorative-band {
+    background: linear-gradient(135deg, #004d38 0%, #006a4e 50%, #003627 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #f42a41;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 77, 56, 0.25);
+}
+
+.palo-commemorative-band::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: 5%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(244, 42, 65, 0.85) 0%, rgba(244, 42, 65, 0) 70%);
+    pointer-events: none;
+}
+
+.palo-commemorative-inner {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    position: relative;
+    z-index: 2;
+}
+
+.palo-commemorative-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.palo-commemorative-badge {
+    background: #f42a41;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(244, 42, 65, 0.4);
+}
+
+.palo-commemorative-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin: 0;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.palo-commemorative-motto {
+    font-size: 0.95rem;
+    color: #fef08a;
+    font-weight: 600;
+    font-style: italic;
+}
+
+.palo-commemorative-tribute {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #e2e8f0;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.85rem 1.2rem;
+    border-radius: 6px;
+    border-left: 4px solid #f42a41;
+}
+
+.palo-timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.palo-timeline-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.palo-timeline-time {
+    font-size: 0.78rem;
+    color: #38bdf8;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.palo-timeline-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 3px;
+}
+
+.palo-timeline-desc {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Commemorative theme variations */
+.edition-independence-day {
+    background: linear-gradient(135deg, #1e1b4b 0%, #065f46 50%, #831843 100%);
+    border-bottom-color: #10b981;
+}
+.edition-language-day {
+    background: linear-gradient(135deg, #09090b 0%, #1c1917 50%, #450a0a 100%);
+    border-bottom-color: #ef4444;
+}
+.edition-historical {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #312e81 100%);
+    border-bottom-color: #6366f1;
+}
+
+/* Special Edition Switcher Pills */
+.palo-edition-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 999px;
+    gap: 3px;
+    border: 1px solid #cbd5e1;
+}
+.palo-edition-btn {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.palo-edition-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.palo-edition-btn.active {
+    background: #e11d48;
+    color: #ffffff;
+    box-shadow: 0 1px 4px rgba(225, 29, 72, 0.3);
+}
+
+/* ==========================================================================
+   16. NOTIFICATIONS & NOTICE BELL WITH INTERACTIVE DROPDOWN
+   ========================================================================== */
+.palo-notify-bell-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.palo-notify-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.palo-notify-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.palo-notify-count {
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+    min-width: 18px;
+    text-align: center;
+    animation: paloPulseDot 2s infinite;
+}
+
+@keyframes paloPulseDot {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.palo-notify-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    max-width: 90vw;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    animation: paloFadeSlide 0.2s ease-out;
+}
+
+.palo-notify-dropdown.show {
+    display: block;
+}
+
+@keyframes paloFadeSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.palo-notify-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.palo-notify-list {
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.palo-notify-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.palo-notify-item:hover {
+    background: #f8fafc;
+}
+
+.palo-notify-item.unread {
+    background: #fff5f5;
+    border-left: 3px solid #e11d48;
+}
+
+.palo-notify-item-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.35;
+}
+
+.palo-notify-item-meta {
+    font-size: 0.72rem;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Emergency Notice Ticker */
+.palo-emergency-notice-bar {
+    background: linear-gradient(90deg, #991b1b 0%, #b91c1c 50%, #991b1b 100%);
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    padding: 6px 0;
+    border-bottom: 1px solid #7f1d1d;
+}
+
+.palo-emergency-notice-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.palo-emergency-badge {
+    background: #fef2f2;
+    color: #991b1b;
+    font-weight: 800;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+/* Real-Time Toast Notification */
+.palo-realtime-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    padding: 10px 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 700;
+    animation: paloToastPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s ease;
+}
+
+.palo-realtime-toast:hover {
+    transform: translateY(-2px);
+    background: #1e293b;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes paloToastPop {
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   17. VIDEO IFRAME THEATRE (RESPONSIVE 16:9 & PLAYLIST)
+   ========================================================================== */
+.palo-video-theatre-box {
+    background: #090d16;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border: 1px solid #1e293b;
+    margin-bottom: 2.5rem;
+    color: #ffffff;
+}
+
+.palo-video-theatre-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+.palo-video-player-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.palo-video-responsive-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background: #000000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.palo-video-responsive-wrap iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.palo-video-info-box {
+    background: #111827;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+}
+
+.palo-video-player-title {
+    font-family: 'Noto Serif Bengali', serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem 0;
+    color: #ffffff;
+    line-height: 1.35;
+}
+
+.palo-video-player-desc {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.palo-video-playlist-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.palo-video-item-card {
+    display: flex;
+    gap: 0.75rem;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    padding: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    align-items: center;
+}
+
+.palo-video-item-card:hover, .palo-video-item-card.active {
+    background: #1f2937;
+    border-color: #e11d48;
+    transform: translateX(4px);
+}
+
+.palo-video-thumb-mini {
+    position: relative;
+    width: 90px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #000;
+}
+
+.palo-video-thumb-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.palo-video-play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(225, 29, 72, 0.9);
+    color: #ffffff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+.palo-video-card-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #e5e7eb;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   18. DISTINCT SECTION STYLING (POLITICS, ECONOMY, INTERNATIONAL, TECH, SPORTS)
+   ========================================================================== */
+/* Tech / AI Futuristic Cards */
+.palo-tech-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #f8fafc;
+    transition: all 0.25s ease;
+}
+.palo-tech-card:hover {
+    transform: translateY(-3px);
+    border-color: #38bdf8;
+    box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1);
+}
+.palo-tech-badge {
+    background: linear-gradient(90deg, #0284c7, #8b5cf6);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* Sports Athletic Card */
+.palo-sports-card {
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    border-top: 3px solid #f59e0b;
+    transition: all 0.2s ease;
+}
+.palo-sports-card:hover {
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.15);
+}
+
+/* Economy / Business Terminal Card */
+.palo-business-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #059669;
+    border-radius: 6px;
+    padding: 0.85rem;
+    transition: all 0.2s ease;
+}
+.palo-business-card:hover {
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.1);
+}
+
+/* ==========================================================================
+   19. EDITORIAL & SUB-EDITORIAL DEDICATED PAGE STYLES
+   ========================================================================== */
+.palo-editorial-hero {
+    background: #fffbf5;
+    border: 1px solid #f0e6d2;
+    border-top: 4px solid #b45309;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 4px 12px rgba(180, 83, 9, 0.05);
+}
+
+.palo-editorial-quote-badge {
+    font-size: 3rem;
+    color: #b45309;
+    line-height: 1;
+    font-family: Georgia, serif;
+    display: inline-block;
+}
+
+.palo-columnist-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+}
+
+.palo-columnist-card:hover {
+    border-color: #0284c7;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.palo-columnist-avatar-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #0284c7;
+    flex-shrink: 0;
+    background: #f1f5f9;
+}
+
+.palo-columnist-avatar-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 900px) {
+    .palo-video-theatre-grid {
+        grid-template-columns: 1fr;
+    }
+    .palo-timeline-grid {
+        grid-template-columns: 1fr;
+    }
+    .palo-notify-dropdown {
+        width: 320px;
+        right: -50px;
+    }
+}
+

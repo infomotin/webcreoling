@@ -217,6 +217,29 @@ def init_db() -> None:
     except Exception as e:
         logger.debug(f"Users column migration note: {e}")
 
+    # Social channel configs column migration (OAuth2 refresh tokens & API version)
+    try:
+        from sqlalchemy import inspect
+        inspector = inspect(engine)
+        channel_columns = [
+            "refresh_token TEXT",
+            "api_version VARCHAR(50) DEFAULT 'v19.0'",
+            "extra_config JSON",
+        ]
+        if "social_channel_configs" in inspector.get_table_names():
+            existing_cols = {col["name"].lower() for col in inspector.get_columns("social_channel_configs")}
+            with engine.connect() as conn:
+                for col_def in channel_columns:
+                    col_name = col_def.split()[0].lower()
+                    if col_name not in existing_cols:
+                        try:
+                            conn.execute(text(f"ALTER TABLE social_channel_configs ADD COLUMN {col_def};"))
+                            conn.commit()
+                        except Exception:
+                            pass
+    except Exception as e:
+        logger.debug(f"Social channel column migration note: {e}")
+
     if "sqlite" in engine.url.drivername:
         with engine.begin() as conn:
             try:

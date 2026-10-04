@@ -3100,13 +3100,16 @@ class SocialChannelRepository:
         app_id: Optional[str] = None,
         app_secret: Optional[str] = None,
         access_token: Optional[str] = None,
+        refresh_token: Optional[str] = None,
         webhook_verify_token: Optional[str] = None,
+        api_version: Optional[str] = None,
+        extra_config: Optional[Dict[str, Any]] = None,
         is_active: bool = True,
         is_primary: bool = True,
         failover_account_id: Optional[int] = None,
         channel_id: Optional[int] = None,
     ) -> SocialChannelConfig:
-        """Add or update social media account credentials."""
+        """Add or update social media account credentials with secure secret preservation."""
         if channel_id:
             channel = self.get_channel_by_id(channel_id)
             if not channel:
@@ -3121,16 +3124,29 @@ class SocialChannelRepository:
         channel.page_id_or_channel_id = page_id_or_channel_id.strip()
         if app_id is not None:
             channel.app_id = app_id.strip()
-        if app_secret is not None:
+
+        # Only overwrite secrets/tokens if non-empty and not masked with asterisks or ellipsis
+        if app_secret is not None and app_secret.strip() and not set(app_secret.strip()).issubset({"*"}):
             channel.app_secret = app_secret.strip()
-        if access_token is not None:
+
+        if access_token is not None and access_token.strip() and "..." not in access_token:
             channel.access_token = access_token.strip()
+
+        if refresh_token is not None and refresh_token.strip() and not set(refresh_token.strip()).issubset({"*"}):
+            channel.refresh_token = refresh_token.strip()
+
         if webhook_verify_token is not None:
             channel.webhook_verify_token = webhook_verify_token.strip()
+        if api_version is not None and api_version.strip():
+            channel.api_version = api_version.strip()
+        if extra_config is not None:
+            channel.extra_config = extra_config
+
         channel.is_active = bool(is_active)
         channel.is_primary = bool(is_primary)
         channel.failover_account_id = failover_account_id if failover_account_id else None
-        channel.status = "HEALTHY"
+        if not channel.status or channel.status == "RESTRICTED":
+            channel.status = "HEALTHY"
         channel.updated_at = datetime.now(timezone.utc)
 
         self.session.flush()

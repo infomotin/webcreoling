@@ -1289,9 +1289,31 @@
 
                 <h4 style="color: #fff; font-size: 1.1rem; margin: 0 0 0.35rem 0;">{{ ch.account_name }}</h4>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-                    <span>ID: {{ ch.page_id_or_channel_id }}</span>
+                    <span>ID: <code>{{ ch.page_id_or_channel_id }}</code></span>
                     {% if ch.is_primary %}<span style="color: #38bdf8; margin-left: 0.5rem; font-weight: 600;">(Primary)</span>{% else %}<span style="color: #a855f7; margin-left: 0.5rem; font-weight: 600;">(Backup Page)</span>{% endif %}
                 </div>
+
+                <!-- Credential Metadata Badges -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem;">
+                    {% if ch.app_id %}
+                    <span class="source-badge" style="background: rgba(255,255,255,0.06); font-size: 0.7rem; color: #cbd5e1;">App: {{ ch.app_id[:12] }}...</span>
+                    {% endif %}
+                    <span class="source-badge" style="background: {% if ch.has_access_token %}rgba(16, 185, 129, 0.15){% else %}rgba(239, 68, 68, 0.15){% endif %}; color: {% if ch.has_access_token %}#34d399{% else %}#f87171{% endif %}; font-size: 0.7rem;">
+                        {% if ch.has_access_token %}টোকেন: সক্রিয় 🔑{% else %}টোকেন: অনুপস্থিত ⚠️{% endif %}
+                    </span>
+                    {% if ch.has_refresh_token %}
+                    <span class="source-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.7rem;">OAuth রিফ্রেশ 🔄</span>
+                    {% endif %}
+                    {% if ch.api_version %}
+                    <span class="source-badge" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; font-size: 0.7rem;">API {{ ch.api_version }}</span>
+                    {% endif %}
+                </div>
+
+                {% if ch.last_error_message %}
+                <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.4rem; padding: 0.4rem 0.6rem; font-size: 0.72rem; color: #fca5a5; margin-bottom: 0.6rem;">
+                    ⚠️ {{ ch.last_error_message[:100] }}
+                </div>
+                {% endif %}
 
                 {% if ch.failover_account_name %}
                 <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 0.5rem; padding: 0.5rem; font-size: 0.75rem; color: #c084fc; margin-bottom: 0.75rem;">
@@ -1307,6 +1329,11 @@
 
             <div style="display: flex; flex-direction: column; gap: 0.4rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem;">
                 <div style="display: flex; gap: 0.4rem;">
+                    <form method="POST" action="{{ url_for('scraper.verify_social_channel_credentials', channel_id=ch.id) }}" style="flex: 1.2;">
+                        <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.78rem; padding: 0.4rem; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4); font-weight: 700;">
+                            🔍 ভেরিফাই Auth
+                        </button>
+                    </form>
                     <form method="POST" action="{{ url_for('scraper.test_broadcast_channel', channel_id=ch.id) }}" style="flex: 1;">
                         <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.78rem; padding: 0.4rem;">
                             ⚡ টেস্ট পোস্ট
@@ -1314,7 +1341,7 @@
                     </form>
                     <form method="POST" action="{{ url_for('scraper.test_channel_failover', channel_id=ch.id) }}" style="flex: 1;">
                         <button type="submit" class="btn btn-secondary" style="width: 100%; font-size: 0.78rem; padding: 0.4rem; background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">
-                            🛡️ ফেইলওভার টেস্ট
+                            🛡️ ফেইলওভার
                         </button>
                     </form>
                 </div>
@@ -1406,54 +1433,76 @@
 
 <!-- Modal: Connect / Edit Social Channel -->
 <div id="socialChannelModal" class="modal-overlay">
-    <div class="modal-content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 id="social_modal_title" style="color: #fff; font-size: 1.3rem; margin: 0;">➕ নতুন সোশ্যাল অ্যাকাউন্ট সংযুক্ত করুন</h3>
+    <div class="modal-content" style="max-width: 720px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+            <h3 id="social_modal_title" style="color: #fff; font-size: 1.3rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span>📱</span> নতুন সোশ্যাল অ্যাকাউন্ট অথেন্টিকেশন ও কানেকশন
+            </h3>
             <button onclick="document.getElementById('socialChannelModal').classList.remove('active')" class="btn btn-secondary" style="padding: 0.2rem 0.6rem;">✕</button>
         </div>
 
-        <form method="POST" action="{{ url_for('scraper.save_social_channel') }}">
+        <!-- Dynamic Platform Authentication Guide Banner -->
+        <div id="social_platform_guide" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 0.6rem; padding: 0.85rem; font-size: 0.82rem; color: #cbd5e1; margin-bottom: 1.25rem; line-height: 1.5;">
+            <!-- Injected dynamically by JS -->
+        </div>
+
+        <form method="POST" action="{{ url_for('scraper.save_social_channel') }}" id="socialChannelForm">
             <input type="hidden" name="channel_id" id="social_channel_id" value="">
 
-            <div class="form-group">
-                <label class="form-label">প্ল্যাটফর্ম নির্বাচন করুন</label>
-                <select name="platform" id="social_platform_select" class="form-control" required>
-                    <option value="facebook">Facebook Page (ফেসবুক পেজ)</option>
-                    <option value="youtube">YouTube Channel (ইউটিউব ওয়্যার)</option>
-                    <option value="tiktok">TikTok News (টিকটক ওয়্যার)</option>
-                    <option value="telegram">Telegram Channel (টেলিগ্রাম চ্যানেল)</option>
-                </select>
+            <div class="grid-2" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;">🌐 প্ল্যাটফর্ম নির্বাচন করুন</label>
+                    <select name="platform" id="social_platform_select" class="form-control" onchange="updatePlatformHelper()" required>
+                        <option value="facebook" selected>🔵 Facebook Page (ফেসবুক পেজ)</option>
+                        <option value="youtube">🔴 YouTube Channel (ইউটিউব ওয়্যার)</option>
+                        <option value="tiktok">⚫ TikTok News (টিকটক ওয়্যার)</option>
+                        <option value="telegram">🔷 Telegram Channel (টেলিগ্রাম চ্যানেল)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;">🏷️ চ্যানেল বা পেজের ডিসপ্লে নাম</label>
+                    <input type="text" name="account_name" id="social_account_name" class="form-control" placeholder="যেমন: প্রথম আলো অফিসিয়াল নিউজ পেজ" required>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">অ্যাকাউন্ট বা পেজের নাম</label>
-                <input type="text" name="account_name" id="social_account_name" class="form-control" placeholder="যেমন: প্রথম আলো অফিসিয়াল ফেসবুক পেজ" required>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" style="color: #fff; font-weight: 700;" id="label_page_id">🆔 পেজ আইডি / চ্যানেল আইডি / চ্যাট আইডি</label>
+                <input type="text" name="page_id_or_channel_id" id="social_page_id" class="form-control" placeholder="109283746519283 বা UC_ProthomAloNews" required>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">পেজ আইডি / চ্যানেল আইডি / চ্যাট আইডি</label>
-                <input type="text" name="page_id_or_channel_id" id="social_page_id" class="form-control" placeholder="যেমন: 109283746519283 বা @ChannelName" required>
-            </div>
-
-            <div class="grid-2">
-                <div class="form-group">
-                    <label class="form-label">App ID / Client ID (ঐচ্ছিক)</label>
+            <div class="grid-2" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;" id="label_app_id">🔑 App ID / Client Key / Google Client ID</label>
                     <input type="text" name="app_id" id="social_app_id" class="form-control" placeholder="fb_app_982374615">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">App Secret (ঐচ্ছিক)</label>
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;" id="label_app_secret">🔒 App Secret / Client Secret</label>
                     <input type="password" name="app_secret" id="social_app_secret" class="form-control" placeholder="••••••••">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Page Access Token / Bot Token</label>
-                <textarea name="access_token" id="social_access_token" class="form-control" rows="2" placeholder="EAAK... অথবা Bot Token পেস্ট করুন"></textarea>
-                <small style="color: var(--text-muted); font-size: 0.75rem;">টেস্ট করার জন্য ডিফল্ট স্যাম্পল টোকেন রাখা যাবে।</small>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" style="color: #fff; font-weight: 700; display: flex; justify-content: space-between;" id="label_access_token">
+                    <span>🔑 Page Access Token / OAuth Bearer Token / Bot Token</span>
+                    <span style="font-size: 0.75rem; color: #38bdf8;">গোপন ও এনক্রিপ্টেড সংরক্ষিত হবে</span>
+                </label>
+                <textarea name="access_token" id="social_access_token" class="form-control" rows="2" placeholder="EAAK... অথবা ya29... অথবা Bot Token পেস্ট করুন"></textarea>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">অ্যান্টি-ব্যান ফেইলওভার অ্যাকাউন্ট (পেজ রেস্ট্রিক্ট হলে স্বয়ংক্রিয়ভাবে এটিতে পোস্ট যাবে)</label>
+            <div class="grid-2" style="margin-bottom: 1rem;" id="row_oauth_details">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;" id="label_refresh_token">🔄 OAuth2 Refresh Token (ঐচ্ছিক)</label>
+                    <input type="password" name="refresh_token" id="social_refresh_token" class="form-control" placeholder="1//04... (টোকেন মেয়াদ উত্তীর্ণ হলে রিনিউ করার জন্য)">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="color: #fff; font-weight: 700;">📡 API Version / Webhook Token</label>
+                    <input type="text" name="api_version" id="social_api_version" class="form-control" value="v19.0" placeholder="v19.0">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label" style="color: #fff; font-weight: 700;">🛡️ অ্যান্টি-ব্যান ফেইলওভার অ্যাকাউন্ট (পেজ রেস্ট্রিক্ট হলে স্বয়ংক্রিয়ভাবে এটিতে পোস্ট যাবে)</label>
                 <select name="failover_account_id" id="social_failover_select" class="form-control">
                     <option value="">-- কোনো ফেইলওভার পেজ নেই --</option>
                     {% for ch in social_channels %}
@@ -1462,13 +1511,29 @@
                 </select>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
-                <button type="button" onclick="document.getElementById('socialChannelModal').classList.remove('active')" class="btn btn-secondary">
-                    বাতিল
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; color: #e2e8f0; font-size: 0.85rem; cursor: pointer; margin: 0;">
+                    <input type="checkbox" name="verify_now" value="1" checked style="accent-color: #38bdf8; width: 16px; height: 16px;">
+                    <span>✅ সেভ করার পর তাৎক্ষণিক লাইভ অথেন্টিকেশন হ্যান্ডশেক চালান (Verify Credentials Immediately)</span>
+                </label>
+            </div>
+
+            <!-- Live Test Connection Feedback Area inside Modal -->
+            <div id="modal_conn_test_result" style="display: none; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">
+                <button type="button" onclick="testModalSocialConnection()" id="btn_modal_test_conn" class="btn btn-secondary" style="border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                    <span>🔍</span> ক্রেডেনশিয়াল লাইভ টেস্ট করুন (Test Connection)
                 </button>
-                <button type="submit" class="btn btn-primary" style="font-weight: 700;">
-                    💾 অ্যাকাউন্ট সংরক্ষণ করুন
-                </button>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="document.getElementById('socialChannelModal').classList.remove('active')" class="btn btn-secondary">
+                        বাতিল
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; font-weight: 700; padding: 0.6rem 1.4rem;">
+                        💾 অ্যাকাউন্ট সংরক্ষণ করুন
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -2223,16 +2288,85 @@ function runRuleVerificationTest() {
     });
 }
 
+// Platform helper text & dynamic labels for Social Channel Authentication
+function updatePlatformHelper() {
+    const sel = document.getElementById('social_platform_select');
+    const platform = sel ? sel.value : 'facebook';
+    const guide = document.getElementById('social_platform_guide');
+    const labelPage = document.getElementById('label_page_id');
+    const inputPage = document.getElementById('social_page_id');
+    const labelApp = document.getElementById('label_app_id');
+    const inputApp = document.getElementById('social_app_id');
+    const labelSecret = document.getElementById('label_app_secret');
+    const inputSecret = document.getElementById('social_app_secret');
+    const labelToken = document.getElementById('label_access_token');
+    const inputToken = document.getElementById('social_access_token');
+    const rowOauth = document.getElementById('row_oauth_details');
+
+    // Reset result box
+    const resBox = document.getElementById('modal_conn_test_result');
+    if (resBox) resBox.style.display = 'none';
+
+    if (platform === 'facebook') {
+        guide.innerHTML = `<strong>🔵 Facebook Page Authentication:</strong> Meta Graph API v19.0 দিয়ে ফেসবুক পেজে স্বয়ংক্রিয় প্রকাশনা। Meta App Dashboard থেকে <code>App ID</code>, <code>App Secret</code>, এবং আপনার ফেসবুক পেজের <code>Page ID</code> ও <code>Page Access Token</code> (অনুমোদন: <em>pages_manage_posts, pages_read_engagement</em>) দিন।`;
+        labelPage.innerHTML = '🆔 Facebook Page ID / Username';
+        inputPage.placeholder = 'যেমন: 109283746519283 বা ProthomAloDigital';
+        labelApp.innerHTML = '🔑 Meta App ID';
+        inputApp.placeholder = 'fb_app_982374615';
+        labelSecret.innerHTML = '🔒 Meta App Secret';
+        inputSecret.placeholder = '••••••••••••••••';
+        labelToken.innerHTML = '<span>🔑 Permanent Page Access Token</span><span style="font-size: 0.75rem; color: #38bdf8;">Graph API Explorer থেকে তৈরি</span>';
+        inputToken.placeholder = 'EAAK... দিয়ে শুরু হওয়া পেজ এক্সেস টোকেন পেস্ট করুন';
+        rowOauth.style.display = 'grid';
+    } else if (platform === 'youtube') {
+        guide.innerHTML = `<strong>🔴 YouTube Channel Authentication:</strong> Google Cloud Console থেকে YouTube Data API v3 সক্ষম করে <code>Client ID / API Key</code>, <code>Client Secret</code>, আপনার <code>Channel ID (UC...)</code> এবং OAuth2 Access/Refresh Token প্রদান করুন।`;
+        labelPage.innerHTML = '🆔 YouTube Channel ID';
+        inputPage.placeholder = 'যেমন: UC_ProthomAloNews বা UC...';
+        labelApp.innerHTML = '🔑 Google OAuth Client ID / API Key';
+        inputApp.placeholder = '109283746-abc.apps.googleusercontent.com বা AIzaSy...';
+        labelSecret.innerHTML = '🔒 Google Client Secret';
+        inputSecret.placeholder = 'GOCSPX-••••••••••••';
+        labelToken.innerHTML = '<span>🔑 OAuth2 Access Token / Bearer Token</span><span style="font-size: 0.75rem; color: #38bdf8;">Scope: youtube.upload</span>';
+        inputToken.placeholder = 'ya29.a0ARrdaM... টোকেন পেস্ট করুন';
+        rowOauth.style.display = 'grid';
+    } else if (platform === 'tiktok') {
+        guide.innerHTML = `<strong>⚫ TikTok News Wire Authentication:</strong> TikTok for Developers পোর্টাল থেকে <code>Client Key</code>, <code>Client Secret</code>, আপনার টিকটক <code>Username / OpenID</code> এবং User Access Token দিন (Scope: <em>video.upload, user.info.basic</em>)।`;
+        labelPage.innerHTML = '🆔 TikTok Creator Username / OpenID';
+        inputPage.placeholder = 'যেমন: @ProthomAloNewsDaily বা open_id_...';
+        labelApp.innerHTML = '🔑 TikTok Client Key';
+        inputApp.placeholder = 'awxxxxxxxxxxxxxx';
+        labelSecret.innerHTML = '🔒 TikTok Client Secret';
+        inputSecret.placeholder = '••••••••••••••••';
+        labelToken.innerHTML = '<span>🔑 TikTok User Access Token</span><span style="font-size: 0.75rem; color: #38bdf8;">OAuth2 Authorization Token</span>';
+        inputToken.placeholder = 'act.tiktok.open.token... পেস্ট করুন';
+        rowOauth.style.display = 'grid';
+    } else if (platform === 'telegram') {
+        guide.innerHTML = `<strong>🔷 Telegram Channel Authentication:</strong> Telegram-এ @BotFather দিয়ে বট তৈরি করে <code>Bot Token</code> নিন এবং আপনার চ্যানেলে বটটিকে <em>Administrator</em> (Post Messages অনুমতিসহ) হিসেবে যুক্ত করে চ্যানেলের <code>@ChannelUsername</code> বা <code>Chat ID</code> দিন।`;
+        labelPage.innerHTML = '🆔 Telegram Channel Username / Chat ID';
+        inputPage.placeholder = 'যেমন: @ProthomAloInstantWire বা -100192837465';
+        labelApp.innerHTML = '🔑 Bot Username (ঐচ্ছিক)';
+        inputApp.placeholder = '@WebCreolingNewsBot';
+        labelSecret.innerHTML = '🔒 সিক্রেট (প্রযোজ্য নয়)';
+        inputSecret.placeholder = 'খালি রাখুন';
+        labelToken.innerHTML = '<span>🔑 Telegram Bot Token</span><span style="font-size: 0.75rem; color: #38bdf8;">@BotFather থেকে সংগৃহীত</span>';
+        inputToken.placeholder = '192837465:AAH_SAMPLE_TELEGRAM_BOT_TOKEN...';
+        rowOauth.style.display = 'none';
+    }
+}
+
 // Open / Edit Social Channel Modals
 function openAddSocialModal() {
     document.getElementById('social_channel_id').value = '';
-    document.getElementById('social_modal_title').innerText = '➕ নতুন সোশ্যাল অ্যাকাউন্ট সংযুক্ত করুন';
+    document.getElementById('social_modal_title').innerHTML = '<span>➕</span> নতুন সোশ্যাল অ্যাকাউন্ট সংযুক্ত করুন';
     document.getElementById('social_account_name').value = '';
     document.getElementById('social_page_id').value = '';
     document.getElementById('social_app_id').value = '';
     document.getElementById('social_app_secret').value = '';
     document.getElementById('social_access_token').value = '';
+    if (document.getElementById('social_refresh_token')) document.getElementById('social_refresh_token').value = '';
+    if (document.getElementById('social_api_version')) document.getElementById('social_api_version').value = 'v19.0';
     document.getElementById('social_failover_select').value = '';
+    updatePlatformHelper();
     document.getElementById('socialChannelModal').classList.add('active');
 }
 
@@ -2245,16 +2379,90 @@ function editSocialChannelModal(channelId) {
                 return;
             }
             document.getElementById('social_channel_id').value = data.id;
-            document.getElementById('social_modal_title').innerText = '✏️ সোশ্যাল অ্যাকাউন্ট সম্পাদনা (ID: #' + data.id + ')';
+            document.getElementById('social_modal_title').innerHTML = '<span>✏️</span> সোশ্যাল অ্যাকাউন্ট ও ক্রেডেনশিয়াল সম্পাদনা (ID: #' + data.id + ')';
             document.getElementById('social_platform_select').value = data.platform || 'facebook';
             document.getElementById('social_account_name').value = data.account_name || '';
             document.getElementById('social_page_id').value = data.page_id_or_channel_id || '';
             document.getElementById('social_app_id').value = data.app_id || '';
-            document.getElementById('social_access_token').value = data.access_token || '';
+            document.getElementById('social_app_secret').value = data.has_app_secret ? '********' : '';
+            document.getElementById('social_access_token').value = data.has_access_token ? data.access_token : '';
+            if (document.getElementById('social_refresh_token')) {
+                document.getElementById('social_refresh_token').value = data.has_refresh_token ? '********' : '';
+            }
+            if (document.getElementById('social_api_version')) {
+                document.getElementById('social_api_version').value = data.api_version || 'v19.0';
+            }
             document.getElementById('social_failover_select').value = data.failover_account_id || '';
+            updatePlatformHelper();
             document.getElementById('socialChannelModal').classList.add('active');
         })
         .catch(err => console.error("Error fetching social channel:", err));
+}
+
+// Live Handshake / Connection Test inside Modal
+function testModalSocialConnection() {
+    const btn = document.getElementById('btn_modal_test_conn');
+    const resBox = document.getElementById('modal_conn_test_result');
+    const platform = document.getElementById('social_platform_select').value;
+    const pageId = document.getElementById('social_page_id').value.trim();
+    const appId = document.getElementById('social_app_id').value.trim();
+    const appSecret = document.getElementById('social_app_secret').value.trim();
+    const accessToken = document.getElementById('social_access_token').value.trim();
+    const refreshToken = document.getElementById('social_refresh_token') ? document.getElementById('social_refresh_token').value.trim() : '';
+    const apiVersion = document.getElementById('social_api_version') ? document.getElementById('social_api_version').value.trim() : 'v19.0';
+
+    if (!pageId) {
+        alert("অনুগ্রহ করে পেজ বা চ্যানেল আইডি প্রদান করুন।");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> হ্যান্ডশেক ও অথেন্টিকেশন চেক হচ্ছে...';
+    resBox.style.display = 'block';
+    resBox.style.background = 'rgba(56, 189, 248, 0.1)';
+    resBox.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+    resBox.style.color = '#38bdf8';
+    resBox.innerHTML = '🔄 API হ্যান্ডশেক ও ক্রেডেনশিয়াল পরীক্ষা করা হচ্ছে...';
+
+    const payload = {
+        platform: platform,
+        page_id_or_channel_id: pageId,
+        app_id: appId,
+        app_secret: appSecret,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        api_version: apiVersion
+    };
+
+    fetch('/scraper/api/social-channels/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔍</span> ক্রেডেনশিয়াল লাইভ টেস্ট করুন (Test Connection)';
+        if (data.success) {
+            resBox.style.background = 'rgba(16, 185, 129, 0.15)';
+            resBox.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+            resBox.style.color = '#34d399';
+            resBox.innerHTML = `<strong>✓ সফল অথেন্টিকেশন:</strong> ${data.message}`;
+        } else {
+            resBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            resBox.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+            resBox.style.color = '#f87171';
+            resBox.innerHTML = `<strong>✗ ভেরিফিকেশন সতর্কতা:</strong> ${data.message}`;
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔍</span> ক্রেডেনশিয়াল লাইভ টেস্ট করুন (Test Connection)';
+        resBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        resBox.style.border = '1px solid rgba(239, 68, 68, 0.4)';
+        resBox.style.color = '#f87171';
+        resBox.innerHTML = `<strong>ত্রুটি:</strong> সার্ভারে সংযোগ বিঘ্নিত হয়েছে।`;
+    });
 }
 
 // Toggle Select All Newspapers

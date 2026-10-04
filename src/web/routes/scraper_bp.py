@@ -135,12 +135,12 @@ def trigger_crawl():
 
     if not site_key:
         flash("Please select a valid site.", "danger")
-        return redirect(url_for("scraper.index_view"))
+        return redirect(url_for("scraper.index_view", tab="portals"))
 
     task_mgr = get_task_manager()
     task = task_mgr.submit_crawl_task(site_key=site_key, max_pages=max_pages)
     flash(f"Crawl job '{site_key}' submitted to background workers (Task ID: {task.task_id})!", "success")
-    return redirect(url_for("scraper.index_view"))
+    return redirect(url_for("scraper.index_view", tab="portals"))
 
 
 @scraper_bp.route("/trigger-social", methods=["POST"])
@@ -151,7 +151,7 @@ def trigger_social_crawl():
     task_mgr = get_task_manager()
     task = task_mgr.submit_social_crawl_task(max_per_source=max_items)
     flash(f"YouTube & Social Media Ingestion started (Task ID: {task.task_id})!", "success")
-    return redirect(url_for("scraper.index_view"))
+    return redirect(url_for("scraper.index_view", tab="youtube"))
 
 
 @scraper_bp.route("/trigger-world", methods=["POST"])
@@ -388,7 +388,7 @@ def scrape_single_url():
     except Exception as e:
         flash(f"Error scraping URL: {e}", "danger")
 
-    return redirect(url_for("scraper.index_view"))
+    return redirect(url_for("scraper.index_view", tab="portals"))
 
 
 @scraper_bp.route("/api/status")
@@ -569,7 +569,7 @@ def api_verify_rule():
 @scraper_bp.route("/social-channels/save", methods=["POST"])
 @roles_required("admin", "editor")
 def save_social_channel():
-    """Connect a new social account or update existing credentials."""
+    """Connect a new social account or update existing credentials with auto-authentication."""
     channel_id_raw = request.form.get("channel_id", "").strip()
     channel_id = int(channel_id_raw) if channel_id_raw and channel_id_raw.isdigit() else None
 
@@ -579,8 +579,12 @@ def save_social_channel():
     app_id = request.form.get("app_id", "").strip()
     app_secret = request.form.get("app_secret", "").strip()
     access_token = request.form.get("access_token", "").strip()
+    refresh_token = request.form.get("refresh_token", "").strip()
+    webhook_verify_token = request.form.get("webhook_verify_token", "").strip()
+    api_version = request.form.get("api_version", "").strip() or "v19.0"
     is_active = bool(request.form.get("is_active", True))
     is_primary = bool(request.form.get("is_primary", True))
+    verify_now = bool(request.form.get("verify_now", True))
 
     failover_raw = request.form.get("failover_account_id", "").strip()
     failover_id = int(failover_raw) if failover_raw and failover_raw.isdigit() else None
@@ -599,13 +603,70 @@ def save_social_channel():
             app_id=app_id if app_id else None,
             app_secret=app_secret if app_secret else None,
             access_token=access_token if access_token else None,
+            refresh_token=refresh_token if refresh_token else None,
+            webhook_verify_token=webhook_verify_token if webhook_verify_token else None,
+            api_version=api_version if api_version else "v19.0",
             is_active=is_active,
             is_primary=is_primary,
             failover_account_id=failover_id,
         )
-        flash(f"সোশ্যাল চ্যানেল '{ch.account_name}' ({platform.upper()}) সংরক্ষিত হয়েছে!", "success")
+        ch_id = ch.id
+        session.commit()
+
+    if verify_now:
+        success, v_msg, details = UnifiedSocialBroadcaster.verify_channel_credentials(ch_id)
+        if success:
+            flash(f"সোশ্যাল চ্যানেল '{account_name}' ({platform.upper()}) সংরক্ষিত ও ভেরিফাইড হয়েছে! {v_msg}", "success")
+        else:
+            flash(f"সোশ্যাল চ্যানেল '{account_name}' সংরক্ষিত হয়েছে, তবে ভেরিফিকেশন সতর্কতা: {v_msg}", "warning")
+    else:
+        flash(f"সোশ্যাল চ্যানেল '{account_name}' ({platform.upper()}) সংরক্ষিত হয়েছে!", "success")
 
     return redirect(url_for("scraper.index_view", tab="social"))
+
+
+@scraper_bp.route("/social-channels/verify-credentials/<int:channel_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def verify_social_channel_credentials(channel_id: int):
+    """Run live API authentication and connection test on a configured channel."""
+    success, msg, details = UnifiedSocialBroadcaster.verify_channel_credentials(channel_id)
+    if success:
+        flash(f"✅ {msg}", "success")
+    else:
+        flash(f"⚠️ {msg}", "warning")
+    return redirect(url_for("scraper.index_view", tab="social"))
+
+
+@scraper_bp.route("/api/social-channels/test-connection", methods=["POST"])
+@login_required
+def api_test_social_connection():
+    """AJAX live test & credential validation before saving."""
+    from src.automation.social_broadcaster import SocialAuthenticator
+    req_data = request.get_json(silent=True) or request.form.to_dict()
+    platform = (req_data.get("platform") or "facebook").strip().lower()
+    page_id = (req_data.get("page_id_or_channel_id") or "").strip()
+    app_id = (req_data.get("app_id") or "").strip()
+    app_secret = (req_data.get("app_secret") or "").strip()
+    access_token = (req_data.get("access_token") or "").strip()
+    refresh_token = (req_data.get("refresh_token") or "").strip()
+    api_version = (req_data.get("api_version") or "v19.0").strip()
+
+    dummy = type("DummyChannel", (), {
+        "platform": platform,
+        "page_id_or_channel_id": page_id,
+        "app_id": app_id if app_id else None,
+        "app_secret": app_secret if app_secret else None,
+        "access_token": access_token if access_token else None,
+        "refresh_token": refresh_token if refresh_token else None,
+        "api_version": api_version,
+    })()
+
+    success, msg, details = SocialAuthenticator.verify_channel(dummy)
+    return jsonify({
+        "success": success,
+        "message": msg,
+        "details": details,
+    })
 
 
 @scraper_bp.route("/social-channels/get/<int:channel_id>")
@@ -617,7 +678,11 @@ def get_social_channel_json(channel_id: int):
         channel = repo.get_channel_by_id(channel_id)
         if not channel:
             return jsonify({"error": "Channel not found"}), 404
-        return jsonify(channel.to_dict())
+        d = channel.to_dict()
+        d["refresh_token_masked"] = ("*" * 8) if channel.refresh_token else ""
+        d["webhook_verify_token"] = channel.webhook_verify_token or ""
+        d["api_version"] = channel.api_version or "v19.0"
+        return jsonify(d)
 
 
 @scraper_bp.route("/social-channels/toggle/<int:channel_id>", methods=["POST"])

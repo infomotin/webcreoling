@@ -718,6 +718,9 @@ class SocialChannelConfig(Base):
     app_secret = Column(String(255), nullable=True)
     access_token = Column(Text, nullable=True)
     webhook_verify_token = Column(String(255), nullable=True)
+    refresh_token = Column(Text, nullable=True)
+    api_version = Column(String(50), default="v19.0", nullable=True)
+    extra_config = Column(JSON, nullable=True, default=dict)
     is_active = Column(Boolean, default=True, index=True)
     is_primary = Column(Boolean, default=True)
     status = Column(String(50), default="HEALTHY", index=True)  # 'HEALTHY', 'RESTRICTED', 'TOKEN_EXPIRED', 'BACKUP_ACTIVE'
@@ -743,7 +746,14 @@ class SocialChannelConfig(Base):
             "page_id_or_channel_id": self.page_id_or_channel_id,
             "app_id": self.app_id,
             "app_secret": ("*" * 8) if self.app_secret else None,
+            "has_app_secret": bool(self.app_secret),
             "access_token": (self.access_token[:10] + "..." + self.access_token[-6:]) if self.access_token and len(self.access_token) > 16 else self.access_token,
+            "has_access_token": bool(self.access_token),
+            "refresh_token": ("*" * 8) if self.refresh_token else None,
+            "has_refresh_token": bool(self.refresh_token),
+            "webhook_verify_token": self.webhook_verify_token,
+            "api_version": self.api_version or "v19.0",
+            "extra_config": self.extra_config or {},
             "is_active": self.is_active,
             "is_primary": self.is_primary,
             "status": self.status,

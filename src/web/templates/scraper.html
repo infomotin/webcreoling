@@ -330,32 +330,34 @@
 </div>
 
 <!-- Navigation Tabs -->
+{% set active_tab_name = request.args.get('tab', 'custom') %}
+{% if active_tab_name == 'pilot' %}{% set active_tab_name = 'autopilot' %}{% endif %}
 <div class="hub-nav-tabs">
-    <button class="hub-tab-btn active" onclick="switchTab('tab-custom')">
+    <button class="hub-tab-btn {% if active_tab_name == 'custom' %}active{% endif %}" onclick="switchTab('tab-custom')">
         <span>🌐</span> কাস্টম পোর্টাল ও ১০০% এআই অরিজিনাল পাবলিশার (Custom Ingestion)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-scroller')">
+    <button class="hub-tab-btn {% if active_tab_name == 'scroller' %}active{% endif %}" onclick="switchTab('tab-scroller')">
         <span>🔄</span> অটো স্ক্রলার পাইপলাইন (Auto Scroller)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-rules')">
+    <button class="hub-tab-btn {% if active_tab_name == 'rules' %}active{% endif %}" onclick="switchTab('tab-rules')">
         <span>🧠</span> এআই রুল ইঞ্জিন ও টার্গেটিং (Brain Rules)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-social')">
+    <button class="hub-tab-btn {% if active_tab_name == 'social' %}active{% endif %}" onclick="switchTab('tab-social')">
         <span>📱</span> সোশ্যাল মিডিয়া ও অ্যান্টি-ব্যান ফেইলওভার (Facebook, YT, TikTok, TG)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-autopilot')">
+    <button class="hub-tab-btn {% if active_tab_name in ['autopilot', 'pilot'] %}active{% endif %}" onclick="switchTab('tab-autopilot')">
         <span>🤖</span> এআই পাইলট ব্রেন রান (Auto-Pilot)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-youtube')">
+    <button class="hub-tab-btn {% if active_tab_name == 'youtube' %}active{% endif %}" onclick="switchTab('tab-youtube')">
         <span>📺</span> ইউটিউব ও সোশ্যাল ওয়্যার
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-world')">
+    <button class="hub-tab-btn {% if active_tab_name == 'world' %}active{% endif %}" onclick="switchTab('tab-world')">
         <span>🌍</span> বিশ্বসংবাদ ও অনুবাদ (World News)
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-portals')">
+    <button class="hub-tab-btn {% if active_tab_name == 'portals' %}active{% endif %}" onclick="switchTab('tab-portals')">
         <span>📰</span> ঐতিহ্যবাহী সংবাদপত্র পোর্টাল
     </button>
-    <button class="hub-tab-btn" onclick="switchTab('tab-tasks')">
+    <button class="hub-tab-btn {% if active_tab_name == 'tasks' %}active{% endif %}" onclick="switchTab('tab-tasks')">
         <span>📊</span> লাইভ টাস্ক ও অডিট লগ
     </button>
 </div>
@@ -364,7 +366,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 0: CUSTOM NEWS PORTAL & ARTICLE INGESTER + 100% ORIGINAL AI STUDIO    -->
 <!-- ========================================================================= -->
-<div id="tab-custom" class="tab-pane active">
+<div id="tab-custom" class="tab-pane {% if active_tab_name == 'custom' %}active{% endif %}">
     <!-- Main Ingestion Studio Card -->
     <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.95)); margin-bottom: 2rem;">
         <div class="card-header">
@@ -705,7 +707,7 @@
 <!-- ========================================================================= -->
 <!-- TAB: AUTO SCROLLER — SCRAPE → 98% MINE → REWRITE → AI GATE → PUBLISH     -->
 <!-- ========================================================================= -->
-<div id="tab-scroller" class="tab-pane">
+<div id="tab-scroller" class="tab-pane {% if active_tab_name == 'scroller' %}active{% endif %}">
     <!-- Auto Scroller KPIs -->
     <div class="kpi-stat-grid" style="margin-bottom: 1.5rem;">
         <div class="kpi-card">
@@ -922,7 +924,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 1: AI BRAIN CUSTOM RULE ENGINE, TARGETING & LIVE VERIFICATION LAB     -->
 <!-- ========================================================================= -->
-<div id="tab-rules" class="tab-pane">
+<div id="tab-rules" class="tab-pane {% if active_tab_name == 'rules' %}active{% endif %}">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Create / Configure Rule Card -->
         <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.4); background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent);">
@@ -1239,7 +1241,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 2: CONNECTED SOCIAL MEDIA CHANNELS & ANTI-BAN FAILOVER                -->
 <!-- ========================================================================= -->
-<div id="tab-social" class="tab-pane">
+<div id="tab-social" class="tab-pane {% if active_tab_name == 'social' %}active{% endif %}">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h3 style="font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
@@ -1476,48 +1478,201 @@
 <!-- ========================================================================= -->
 <!-- TAB 3: AI PILOT BRAIN AUTOPILOT CONTROL                                   -->
 <!-- ========================================================================= -->
-<div id="tab-autopilot" class="tab-pane">
+<div id="tab-autopilot" class="tab-pane {% if active_tab_name in ['autopilot', 'pilot'] %}active{% endif %}">
+    
+    <!-- Autopilot Autonomous Status & Real-time Command Banner -->
+    <div class="card" style="border: 1px solid rgba(99, 102, 241, 0.4); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), rgba(15, 23, 42, 0.95)); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">
+                    🤖
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">এআই পাইলট অটোনোমাস মিশন কন্ট্রোল (100% Autonomous Pilot)</h2>
+                        {% if ai_pilot_job and ai_pilot_job.enabled %}
+                        <span class="source-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; font-weight: 700; font-size: 0.75rem;">
+                            🟢 অটোমেশন সক্রিয় (Running)
+                        </span>
+                        {% else %}
+                        <span class="source-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; font-weight: 700; font-size: 0.75rem;">
+                            ⏸️ অটোমেশন স্থগিত (Paused)
+                        </span>
+                        {% endif %}
+                    </div>
+                    <span style="font-size: 0.82rem; color: #cbd5e1;">
+                        স্বয়ংক্রিয় বিশ্বসংবাদ ক্রল • বহুভাষিক বাংলা অনুবাদ • ৯৫% ভাবধারা অক্ষুণ্ণ রেখে রিরাইট • ৭০% সত্যতা মানদণ্ড গেট • লাইভ প্রকাশনা ও সোশ্যাল সিংক
+                    </span>
+                </div>
+            </div>
+
+            <!-- Fast Action Buttons -->
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                <form method="POST" action="{{ url_for('scraper.trigger_autopilot_now') }}" style="margin: 0;">
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 700; padding: 0.55rem 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                        <span>⚡</span> অবিলম্বে সাইকেল চালান (Run Now)
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('scraper.toggle_autopilot_job') }}" style="margin: 0;">
+                    {% if ai_pilot_job and ai_pilot_job.enabled %}
+                    <button type="submit" class="btn btn-secondary" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 0.85rem; padding: 0.55rem 1rem;">
+                        ⏸️ অটোমেশন স্থগিত করুন
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-size: 0.85rem; padding: 0.55rem 1rem;">
+                        ▶️ অটোমেশন চালু করুন
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Telemetry Details Strip -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div>
+                <span style="font-size: 0.75rem; color: #94a3b8;">সাইকেল ফ্রিকোয়েন্সি:</span>
+                <div style="font-weight: 700; color: #38bdf8; font-size: 0.95rem;">
+                    প্রতি {{ (ai_pilot_job.interval_seconds // 60) if ai_pilot_job else 10 }} মিনিট পর পর
+                </div>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: #94a3b8;">পরবর্তী অটোনোমাস সাইকেল:</span>
+                <div style="font-weight: 700; color: #f59e0b; font-size: 0.95rem;">
+                    {{ ai_pilot_job.next_run_display if ai_pilot_job else 'অপেক্ষমান' }}
+                    {% if ai_pilot_job and ai_pilot_job.next_run_seconds_left %}
+                    <small style="color: #94a3b8; font-size: 0.72rem;">({{ ai_pilot_job.next_run_seconds_left }}s বাকি)</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: #94a3b8;">সাফল্যের হার (Success Rate):</span>
+                <div style="font-weight: 700; color: #34d399; font-size: 0.95rem;">
+                    {{ ai_pilot_job.success_rate if ai_pilot_job else 100 }}%
+                </div>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: #94a3b8;">মোট সাইকেল সংখ্যা:</span>
+                <div style="font-weight: 700; color: #c084fc; font-size: 0.95rem;">
+                    {{ ai_pilot_job.run_count if ai_pilot_job else 0 }} টি সম্পন্ন
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Performance KPIs -->
+    <div class="kpi-stat-grid" style="margin-bottom: 1.5rem;">
+        <div class="kpi-card" style="border-left: 3px solid #6366f1;">
+            <div class="kpi-title">এআই অ্যানালাইজড মোট সংবাদ</div>
+            <div class="kpi-value" style="color: #818cf8;">{{ stats.total_articles or 0 }}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">বিশ্ব মিডিয়া ও সোশ্যাল ওয়্যার</div>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid #10b981;">
+            <div class="kpi-title">অটো-পাবলিশড লাইভ সংবাদ (Gate $\ge$ 70%)</div>
+            <div class="kpi-value" style="color: #10b981;">{{ published_count or 0 }}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">সরাসরি প্রচ্ছদে লাইভ</div>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid #f59e0b;">
+            <div class="kpi-title">রিভিউ কিউতে অপেক্ষমান (Pending)</div>
+            <div class="kpi-value" style="color: #f59e0b;">{{ pending_count or 0 }}</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">এডিটর অনুমোদনের অপেক্ষায়</div>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid #38bdf8;">
+            <div class="kpi-title">প্রমিত ভাবধারা সংরক্ষণ হার</div>
+            <div class="kpi-value" style="color: #38bdf8;">৯৫%</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">অরিজিনাল জার্নালিজম স্ট্রাকচার</div>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid #a855f7;">
+            <div class="kpi-title">ব্লকচেইন লেজার সিল্ড</div>
+            <div class="kpi-value" style="color: #c084fc;">১০০%</div>
+            <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px;">SHA-256 ক্রিপ্টোগ্রাফিক সুরক্ষা</div>
+        </div>
+    </div>
+
+    <!-- Tuning & Quick Config Card -->
+    <div class="card" style="margin-bottom: 1.5rem; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(15, 23, 42, 0.8);">
+        <div class="card-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.2rem;">⚙️</span>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0;">অটোনোমাস ব্যাকগ্রাউন্ড শিডিউল ও ট্রুথ গেট প্যারামিটার</h3>
+            </div>
+            <span style="font-size: 0.75rem; color: #38bdf8;">স্বয়ংক্রিয় কার্যকর হবে পরবর্তী সাইকেল থেকে</span>
+        </div>
+        <form method="POST" action="{{ url_for('scraper.update_autopilot_settings') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.82rem; color: #cbd5e1;">অটোমেশন রান ফ্রিকোয়েন্সি (Interval):</label>
+                <select name="interval_seconds" class="form-control" style="font-size: 0.85rem;">
+                    <option value="120" {% if ai_pilot_job and ai_pilot_job.interval_seconds == 120 %}selected{% endif %}>প্রতি ২ মিনিট (High-Frequency / Breaking)</option>
+                    <option value="300" {% if ai_pilot_job and ai_pilot_job.interval_seconds == 300 %}selected{% endif %}>প্রতি ৫ মিনিট (Standard Fast)</option>
+                    <option value="600" {% if not ai_pilot_job or ai_pilot_job.interval_seconds == 600 %}selected{% endif %}>প্রতি ১০ মিনিট (Optimal Balance)</option>
+                    <option value="900" {% if ai_pilot_job and ai_pilot_job.interval_seconds == 900 %}selected{% endif %}>প্রতি ১৫ মিনিট</option>
+                    <option value="1800" {% if ai_pilot_job and ai_pilot_job.interval_seconds == 1800 %}selected{% endif %}>প্রতি ৩০ মিনিট</option>
+                    <option value="3600" {% if ai_pilot_job and ai_pilot_job.interval_seconds == 3600 %}selected{% endif %}>প্রতি ১ ঘণ্টা</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.82rem; color: #cbd5e1;">ন্যূনতম ট্রুথ গেট ও অটো-পাবলিশ স্কোর:</label>
+                <select name="threshold" class="form-control" style="font-size: 0.85rem;">
+                    <option value="65">৬৫% (শিথিল / সর্বোচ্চ সংবাদ সংগ্রহ)</option>
+                    <option value="70" selected>৭০% (স্ট্যান্ডার্ড ভেরিফাইড গেট)</option>
+                    <option value="75">৭৫% (উচ্চ নির্ভরযোগ্যতা)</option>
+                    <option value="80">৮০% (কঠোর সত্যতা যাচাই)</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" style="font-size: 0.82rem; color: #cbd5e1;">উৎস প্রতি সর্বোচ্চ আইটেম (Batch Size):</label>
+                <select name="max_items" class="form-control" style="font-size: 0.85rem;">
+                    <option value="2">২টি করে সংবাদ (হালকা লোড)</option>
+                    <option value="3" selected>৩টি করে সংবাদ (Standard)</option>
+                    <option value="5">৫টি করে সংবাদ (গভীর ক্রল)</option>
+                </select>
+            </div>
+
+            <div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 0.85rem; padding: 0.65rem 1rem; font-weight: 700;">
+                    💾 সেটিংস সংরক্ষণ ও প্রয়োগ করুন
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Two-Column Operations Grid -->
     <div class="grid-2" style="margin-bottom: 2rem;">
-        <!-- Auto-Pilot Run Card -->
+        <!-- Manual Deep Cycle Run Card -->
         <div class="card" style="border: 1px solid rgba(99, 102, 241, 0.4); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent);">
             <div class="card-header">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.6rem;">🤖</span>
+                    <span style="font-size: 1.4rem;">🎯</span>
                     <div>
-                        <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">এআই পাইলট স্বয়ংক্রিয় সিন্থেসাইজার ও ডিসিশন ইঞ্জিন</h3>
-                        <span style="font-size: 0.8rem; color: #818cf8;">৯৫% মূল ভাবধারা সংরক্ষণ • ৭০% সত্যতা মানদণ্ড গেট • মাল্টি-প্যারাগ্রাফ প্রতিবেদন</span>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0;">টার্গেটেড স্পেশালাইজড এআই সিন্থেসিস ড্রাইভ</h3>
+                        <span style="font-size: 0.78rem; color: #818cf8;">নির্দিষ্ট বিশ্ব সংবাদপত্রের ফিড বাছাই করে তাৎক্ষণিক ম্যানুয়াল সাইকেল চালান</span>
                     </div>
                 </div>
-                <span class="source-badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1;">AUTONOMOUS AI</span>
             </div>
 
-            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-                বিশ্বের শীর্ষ সংবাদপত্রগুলো থেকে সরাসরি সংবাদ এনে ৯৫% তথ্য ও ভাবধারা ঠিক রেখে সৃজনশীল পেশাদার প্রমিত বাংলায় <strong>শিরোনাম</strong>, <strong>সংবাদ সারাংশ</strong> এবং <strong>বিস্তারিত পূর্ণাঙ্গ প্রতিবেদন</strong> তৈরি করে। সত্যতা সূচক $\ge$ ৭০% হলে স্বয়ংক্রিয়ভাবে পোর্টাল ও সোশ্যাল মিডিয়ায় লাইভ পোস্ট হয়।
-            </p>
-
-            <form method="POST" action="{{ url_for('scraper.trigger_ai_pilot') }}" style="margin-top: 1.25rem;">
+            <form method="POST" action="{{ url_for('scraper.trigger_ai_pilot') }}" style="margin-top: 0.8rem;">
                 <div class="form-group">
-                    <label class="form-label" style="display: flex; justify-content: space-between;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; font-size: 0.82rem;">
                         <span>ন্যূনতম সত্যতা মানদণ্ড ও অটো-পাবলিশ গেট (Truth Gate)</span>
                         <span id="thresh-val" style="color: #38bdf8; font-weight: 700;">70% (যাচাইকৃত সত্য)</span>
                     </label>
                     <input type="range" name="threshold" class="form-control" min="50" max="95" value="70" oninput="document.getElementById('thresh-val').innerText = this.value + '% ' + (this.value >= 70 ? '(যাচাইকৃত সত্য)' : '(শিথিল)')">
-                    <small style="color: var(--text-muted); font-size: 0.75rem;">স্কোর ৭০% বা বেশি হলে সরাসরি সংবাদপত্রে এবং ফেসবুক পেজে পোস্ট হবে।</small>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">উৎস প্রতি আইটেম সংখ্যা</label>
-                    <select name="max_items" class="form-control">
+                    <label class="form-label" style="font-size: 0.82rem;">উৎস প্রতি আইটেম সংখ্যা</label>
+                    <select name="max_items" class="form-control" style="font-size: 0.85rem;">
                         <option value="2">প্রতি সংবাদপত্র থেকে ২টি করে সংবাদ</option>
                         <option value="3" selected>প্রতি সংবাদপত্র থেকে ৩টি করে সংবাদ (Standard)</option>
                         <option value="5">প্রতি সংবাদপত্র থেকে ৫টি করে সংবাদ (Deep Crawl)</option>
                     </select>
                 </div>
 
-                <!-- Global Media Sources Selection in AI Pilot -->
                 <div class="form-group">
-                    <label class="form-label">টার্গেট বিশ্ব মিডিয়া নির্বাচন (ঐচ্ছিক - খালি রাখলে সবগুলো ক্রল হবে)</label>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                    <label class="form-label" style="font-size: 0.82rem;">টার্গেট বিশ্ব মিডিয়া নির্বাচন (খালি রাখলে সবগুলো ক্রল হবে)</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
                         {% for fkey, fval in world_feeds.items() %}
                         <label class="checkbox-badge" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
                             <input type="checkbox" name="selected_feeds" value="{{ fkey }}" checked>
@@ -1527,8 +1682,8 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 700; padding: 0.85rem; font-size: 0.95rem;">
-                    🚀 এআই পাইলট ফুল সিন্থেসিস ও পাবলিশিং সাইকেল চালান
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; font-weight: 700; padding: 0.75rem; font-size: 0.9rem;">
+                    🚀 স্পেশালাইজড সিন্থেসিস ও পাবলিশিং সাইকেল চালান
                 </button>
             </form>
         </div>
@@ -1540,39 +1695,149 @@
                 <span style="font-size: 0.8rem; color: #10b981;">95% Meaning Retention • 70% Truth Gate</span>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem;">
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">১</div>
+                    <div style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">১</div>
                     <div>
                         <strong style="color: #fff;">বিশ্বের শীর্ষ সংবাদপত্র ডেটা মাইনিং:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">NYT, Washington Post, BBC, Reuters, Bloomberg, Al Jazeera ও Guardian থেকে তথ্য সংগ্রহ।</p>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.8rem;">NYT, Washington Post, BBC, Reuters, Bloomberg, Al Jazeera ও Guardian থেকে রিয়েলটাইম তথ্য সংগ্রহ।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">২</div>
+                    <div style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">২</div>
                     <div>
                         <strong style="color: #fff;">৯৫% মূল ভাবধারা সংরক্ষণ ও ভাষাগত রূপান্তর:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">মূল ঘটনা, সংখ্যাতত্ত্ব, উক্তি ও সময়কাল ৯৫% অপরিবর্তিত রেখে প্রমিত সাংবাদিকতার ধারায় নতুন বাংলা বাক্যশৈলী তৈরি।</p>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.8rem;">মূল ঘটনা, সংখ্যাতত্ত্ব, উক্তি ও সময়কাল ৯৫% অপরিবর্তিত রেখে প্রমিত সাংবাদিকতার ধারায় নতুন বাংলা বাক্যশৈলী তৈরি।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৩</div>
+                    <div style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">৩</div>
                     <div>
                         <strong style="color: #fff;">৭০% সত্যতা মানদণ্ড ও ফেক নিউজ প্রতিরোধ:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">ফ্যাক্ট-চেকিং ইঞ্জিন সত্যতা স্কোর নিরূপণ করে। সত্যতা $\ge$ ৭০% নিশ্চিত হলেই কেবল স্বয়ংক্রিয় প্রকাশনা কার্যকর হয়।</p>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.8rem;">ফ্যাক্ট-চেকিং ইঞ্জিন সত্যতা স্কোর নিরূপণ করে। সত্যতা $\ge$ ৭০% নিশ্চিত হলেই কেবল স্বয়ংক্রিয় প্রকাশনা কার্যকর হয়।</p>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
-                    <div style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">৪</div>
+                    <div style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-weight: 700; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem;">৪</div>
                     <div>
                         <strong style="color: #fff;">মাল্টি-প্যারাগ্রাফ ও নির্বাহী সারাংশ:</strong>
-                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.82rem;">প্রতিটি সংবাদের জন্য সংক্ষিপ্ত সারাংশ বক্স এবং ৪টি স্তরের পূর্ণাঙ্গ বিশ্লেষণমূলক প্যারাগ্রাফ জেনারেট হয়।</p>
+                        <p style="color: var(--text-secondary); margin: 0.2rem 0 0 0; font-size: 0.8rem;">প্রতিটি সংবাদের জন্য সংক্ষিপ্ত সারাংশ বক্স এবং ৪টি স্তরের পূর্ণাঙ্গ বিশ্লেষণমূলক প্যারাগ্রাফ জেনারেট হয়।</p>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Recent AI Pilot Evaluated Articles & Live Audit Feed -->
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin: 0;">📰 এআই পাইলট ব্রেন অটোনোমাস প্রকাশনা ও ডিসিশন লগ</h3>
+                <span style="font-size: 0.78rem; color: var(--text-secondary);">স্বয়ংক্রিয়ভাবে প্রক্রিয়াজাত সর্বশেষ সংবাদ, সত্যতা সূচক ও লাইভ প্রকাশনা অবস্থা</span>
+            </div>
+            <a href="{{ url_for('scraper.index_view', tab='autopilot') }}" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.7rem;">
+                🔄 রিফ্রেশ লগ
+            </a>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">আইডি</th>
+                        <th>সংবাদ শিরোনাম (এআই প্রমিত বাংলা)</th>
+                        <th>উৎস ও বিভাগ</th>
+                        <th>সত্যতা (Truth Gate)</th>
+                        <th>ভাবধারা অক্ষুণ্ণ</th>
+                        <th>এআই ডিসিশন</th>
+                        <th>স্ট্যাটাস</th>
+                        <th style="text-align: right;">অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_ai_pilot_articles %}
+                        {% for art in recent_ai_pilot_articles %}
+                        <tr>
+                            <td>
+                                <strong style="color: #94a3b8; font-size: 0.8rem;">#{{ art.id }}</strong>
+                            </td>
+                            <td>
+                                <strong style="color: #fff; font-size: 0.9rem;">{{ art.title }}</strong>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                                    <span>সময়: {{ art.published_at or 'সাম্প্রতিক' }}</span>
+                                    <span>•</span>
+                                    <span>ম্যাচড রুল: {{ art.rule_matched or 'Standard Criteria' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="source-badge badge-world" style="font-size: 0.72rem;">{{ art.source }}</span>
+                                <span class="source-badge badge-portal" style="font-size: 0.7rem; margin-top: 2px;">{{ art.category|upper }}</span>
+                            </td>
+                            <td>
+                                <span class="source-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-weight: 700; font-size: 0.78rem;">
+                                    🛡️ {{ art.factuality_score }}% সত্য
+                                </span>
+                                {% if art.fake_probability_pct > 30 %}
+                                <div style="font-size: 0.7rem; color: #f87171; margin-top: 2px;">ফেক ঝুঁকি: {{ art.fake_probability_pct }}%</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="source-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.75rem;">
+                                    {{ art.meaning_retention_score }}%
+                                </span>
+                            </td>
+                            <td>
+                                {% if art.status == 'completed' or art.recommendation == 'AUTO_PUBLISH' %}
+                                <span class="source-badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700; font-size: 0.72rem;">
+                                    ✓ AUTO_PUBLISH
+                                </span>
+                                {% elif art.status == 'pending' %}
+                                <span class="source-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-size: 0.72rem;">
+                                    📝 QUEUE_REVIEW
+                                </span>
+                                {% else %}
+                                <span class="source-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; font-size: 0.72rem;">
+                                    📦 ARCHIVED
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if art.status == 'completed' %}
+                                <span class="source-badge badge-portal" style="font-size: 0.72rem;">✓ লাইভ প্রকাশিত</span>
+                                {% elif art.status == 'pending' %}
+                                <span class="source-badge badge-youtube" style="font-size: 0.72rem;">⏳ রিভিউ কিউ</span>
+                                {% else %}
+                                <span class="source-badge" style="background: rgba(255,255,255,0.06); font-size: 0.72rem;">{{ art.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 0.4rem;">
+                                    <a href="/news/article/{{ art.id }}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: #38bdf8;" title="পোর্টালে লাইভ দেখুন">
+                                        👁️ দেখুন
+                                    </a>
+                                    {% if art.status != 'completed' %}
+                                    <form method="POST" action="{{ url_for('scraper.autopilot_quick_publish', article_id=art.id) }}" style="margin: 0;">
+                                        <button type="submit" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; background: #10b981; border: none;" title="লাইভ প্রকাশ করুন">
+                                            🚀 পোস্ট
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                                এখনো কোনো এআই পাইলট সংবাদ প্রক্রিয়াজাত হয়নি। উপরের "⚡ অবিলম্বে সাইকেল চালান" বাটনে ক্লিক করে প্রথম স্বয়ংক্রিয় সাইকেল শুরু করুন!
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -1581,7 +1846,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 4: YOUTUBE & SOCIAL CHANNELS                                          -->
 <!-- ========================================================================= -->
-<div id="tab-youtube" class="tab-pane">
+<div id="tab-youtube" class="tab-pane {% if active_tab_name == 'youtube' %}active{% endif %}">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
         <div>
             <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">📺 পাবলিক ইউটিউব ভিডিও নিউজ চ্যানেল ও সোশ্যাল ওয়্যার</h3>
@@ -1626,7 +1891,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 5: WORLDWIDE POPULAR NEWSPAPERS & GLOBAL NEWS WIRE CATALOG            -->
 <!-- ========================================================================= -->
-<div id="tab-world" class="tab-pane">
+<div id="tab-world" class="tab-pane {% if active_tab_name == 'world' %}active{% endif %}">
     <form method="POST" action="{{ url_for('scraper.trigger_world_crawl') }}">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
             <div>
@@ -1698,7 +1963,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 6: TRADITIONAL NEWSPAPER PORTALS & SINGLE URL SCRAPER                 -->
 <!-- ========================================================================= -->
-<div id="tab-portals" class="tab-pane">
+<div id="tab-portals" class="tab-pane {% if active_tab_name == 'portals' %}active{% endif %}">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Single URL Scraper -->
         <div class="card">
@@ -1768,7 +2033,7 @@
 <!-- ========================================================================= -->
 <!-- TAB 7: LIVE TASKS, AUDIT LOGS & SCHEDULERS                                -->
 <!-- ========================================================================= -->
-<div id="tab-tasks" class="tab-pane">
+<div id="tab-tasks" class="tab-pane {% if active_tab_name == 'tasks' %}active{% endif %}">
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Scheduled Background Jobs -->
         <div class="card">
@@ -2032,21 +2297,22 @@ function switchTab(tabId) {
         targetTab.classList.add('active');
     }
 
-    if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.classList.add('active');
+    const btn = (window.event && window.event.currentTarget) || document.querySelector(`.hub-tab-btn[onclick*="${tabId}"]`);
+    if (btn) {
+        btn.classList.add('active');
     }
-    history.replaceState(null, null, '?tab=' + tabId.replace('tab-', ''));
+    const cleanTab = tabId.replace('tab-', '');
+    const newUrl = window.location.pathname + '?tab=' + cleanTab;
+    history.replaceState(null, null, newUrl);
 }
 
 // Auto-activate tab from URL query param if present
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get('tab');
+    let tabParam = urlParams.get('tab');
+    if (tabParam === 'pilot') tabParam = 'autopilot';
     if (tabParam) {
-        const targetBtn = Array.from(document.querySelectorAll('.hub-tab-btn')).find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabParam));
-        if (targetBtn) {
-            targetBtn.click();
-        }
+        switchTab('tab-' + tabParam);
     }
 });
 

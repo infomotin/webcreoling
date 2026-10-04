@@ -413,6 +413,11 @@ class AutomationScheduler:
         self._log_event("JOB_UPDATED", f"Job updated: '{job.name}' ({job_id})")
         return job
 
+    def update_job_interval(self, job_id: str, interval_seconds: int) -> bool:
+        """Update the recurrence interval in seconds for any scheduled job."""
+        job = self.update_job(job_id, interval_seconds=interval_seconds)
+        return job is not None
+
     def delete_custom_job(self, job_id: str) -> bool:
         """[DELETE] Remove a custom scheduled job."""
         job = self.jobs.get(job_id)
@@ -662,7 +667,7 @@ class AutomationScheduler:
         active_jobs = [j for j in self.jobs.values() if j.enabled]
         total_runs = sum(j.run_count for j in self.jobs.values())
         total_errors = sum(j.error_count for j in self.jobs.values())
-        success_rate = round(((total_runs - total_errors) / max(1, total_runs)) * 100, 1)
+        success_rate = max(0.0, min(100.0, round(((total_runs - total_errors) / max(1, total_runs)) * 100, 1)))
 
         return {
             "is_active": self.is_active,

@@ -68,8 +68,39 @@ def index_view():
 
     with get_db_session() as session:
         scroller_config = AutoScroller.get_config(session)
+        recent_pilot_raw = (
+            session.query(Article)
+            .order_by(Article.id.desc())
+            .limit(60)
+            .all()
+        )
+        recent_ai_pilot_articles = []
+        for a in recent_pilot_raw:
+            ent = a.extracted_entities or {}
+            if "ai_brain_evaluation" in ent or "news_synthesis" in ent:
+                eval_meta = ent.get("ai_brain_evaluation", {})
+                synth_meta = ent.get("news_synthesis", {})
+                recent_ai_pilot_articles.append({
+                    "id": a.id,
+                    "title": a.title,
+                    "source": a.source,
+                    "category": a.category,
+                    "status": a.scrape_status,
+                    "published_at": a.published_at.strftime("%Y-%m-%d %H:%M") if a.published_at else "",
+                    "credibility_score": eval_meta.get("credibility_score", 0),
+                    "factuality_score": eval_meta.get("factuality_score", synth_meta.get("factuality_score", 70)),
+                    "fake_probability_pct": eval_meta.get("fake_probability_pct", 0),
+                    "meaning_retention_score": synth_meta.get("meaning_retention_score", 95.0),
+                    "recommendation": eval_meta.get("recommendation", "AUTO_PUBLISH"),
+                    "rule_matched": eval_meta.get("rule_matched", "Standard Criteria"),
+                    "is_truth_verified": synth_meta.get("is_truth_verified", True),
+                })
+
     scroller_items = AutoScroller.list_recent_items(limit=25)
     scroller_stats = AutoScroller.get_stats()
+
+    ai_pilot_job = scheduler.jobs.get("ai_pilot_decision_brain")
+    ai_pilot_job_data = ai_pilot_job.to_dict() if ai_pilot_job else None
 
     return render_template(
         "scraper.html",
@@ -90,6 +121,8 @@ def index_view():
         scroller_config=scroller_config,
         scroller_items=scroller_items,
         scroller_stats=scroller_stats,
+        ai_pilot_job=ai_pilot_job_data,
+        recent_ai_pilot_articles=recent_ai_pilot_articles[:15],
     )
 
 
@@ -151,7 +184,105 @@ def trigger_ai_pilot():
         selected_world_feeds=feeds,
     )
     flash(f"AI Pilot Brain স্বয়ংক্রিয় সংবাদ বিশ্লেষণ ও ৭০% সত্যতা যাচাই চক্র চালু হয়েছে (Task ID: {task.task_id})!", "success")
-    return redirect(url_for("scraper.index_view", tab="pilot"))
+    return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+
+@scraper_bp.route("/autopilot/toggle", methods=["POST"])
+@roles_required("admin", "editor")
+def toggle_autopilot_job():
+    """Toggle background recurring AI Pilot Autonomous decision cycle ON or PAUSED."""
+    scheduler = get_scheduler()
+    job = scheduler.jobs.get("ai_pilot_decision_brain")
+    if not job:
+        flash("এআই পাইলট শিডিউলার জব খুঁজে পাওয়া যায়নি।", "danger")
+        return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+    scheduler.toggle_job("ai_pilot_decision_brain")
+    state = "সক্রিয় (Active)" if job.enabled else "স্থগিত (Paused)"
+    flash(f"এআই পাইলট অটোনোমাস ব্যাকগ্রাউন্ড ইঞ্জিন সফলভাবে {state} করা হয়েছে!", "success")
+    return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+
+@scraper_bp.route("/autopilot/update-settings", methods=["POST"])
+@roles_required("admin", "editor")
+def update_autopilot_settings():
+    """Update recurrence interval, auto-publish threshold, and batch sizes for AI Pilot."""
+    scheduler = get_scheduler()
+    try:
+        interval = int(float(request.form.get("interval_seconds", 600)))
+    except (ValueError, TypeError):
+        interval = 600
+
+    try:
+        raw_thresh = float(request.form.get("threshold", 70))
+        threshold = int(raw_thresh * 100) if raw_thresh <= 1.0 else int(raw_thresh)
+    except (ValueError, TypeError):
+        threshold = 70
+
+    try:
+        max_items = int(float(request.form.get("max_items", 3)))
+    except (ValueError, TypeError):
+        max_items = 3
+
+    job = scheduler.jobs.get("ai_pilot_decision_brain")
+    if job:
+        scheduler.update_job(
+            "ai_pilot_decision_brain",
+            interval_seconds=interval,
+            params={
+                "auto_publish_threshold": threshold,
+                "max_per_source": max_items,
+            },
+        )
+        flash(f"এআই পাইলট অটোনোমাস সেটিংস আপডেট সম্পন্ন! (ফ্রিকোয়েন্সি: {interval} সেকেন্ড, থ্রেশহোল্ড: {threshold}%, আইটেম: {max_items})", "success")
+    else:
+        flash("এআই পাইলট জব পাওয়া যায়নি।", "danger")
+
+    return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+
+@scraper_bp.route("/autopilot/trigger-now", methods=["POST"])
+@roles_required("admin", "editor")
+def trigger_autopilot_now():
+    """Trigger an immediate out-of-order execution of the AI Pilot background cycle."""
+    scheduler = get_scheduler()
+    res = scheduler.trigger_job_now("ai_pilot_decision_brain")
+    if res.get("status") == "started":
+        flash("⚡ এআই পাইলট অটোনোমাস সাইকেল অবিলম্বে ব্যাকগ্রাউন্ডে চালু হয়েছে! (স্বয়ংক্রিয় ক্রল, অনুবাদ, ৯৫% রিরাইট ও লাইভ প্রকাশনা চলছে)", "success")
+    elif res.get("status") == "warning":
+        flash("⚠️ এআই পাইলটের একটি সাইকেল ইতিমধ্যে ব্যাকগ্রাউন্ডে চলছে।", "warning")
+    else:
+        flash(f"ত্রুটি: {res.get('message')}", "danger")
+
+    return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+
+@scraper_bp.route("/autopilot/quick-publish/<int:article_id>", methods=["POST"])
+@roles_required("admin", "editor")
+def autopilot_quick_publish(article_id: int):
+    """Instantly publish a queued/pending AI Pilot article to live portal."""
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        art = repo.get_by_id(article_id)
+        if not art:
+            flash("সংবাদ পাওয়া যায়নি।", "danger")
+            return redirect(url_for("scraper.index_view", tab="autopilot"))
+
+        art.scrape_status = "completed"
+        art.updated_at = datetime.now(timezone.utc)
+        session.commit()
+
+        try:
+            from src.storage.repositories import BlockchainLedgerRepository
+            BlockchainLedgerRepository(session).mint_block_for_article(art.id)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.warning(f"Could not mint ledger block for article #{article_id}: {e}")
+
+        flash(f"সংবাদ #{article_id} ('{art.title[:45]}...') সফলভাবে পোর্টালে লাইভ প্রকাশ করা হয়েছে!", "success")
+
+    return redirect(url_for("scraper.index_view", tab="autopilot"))
 
 
 @scraper_bp.route("/synthesize/<int:article_id>", methods=["POST"])

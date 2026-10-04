@@ -28,7 +28,7 @@ def test_login_flow_and_dashboard(client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert (b"Dashboard" in response.data or b"Executive" in response.data or b"\xe0\xa6\xa1\xe0\xa7\x8d\xe0\xa6\xaf\xe0\xa6\xbe\xe0\xa6\xb6\xe0\xa6\xac\xe0\xa7\x8b\xe0\xa6\xb0\xe0\xa7\x8d\xe0\xa6\xa1" in response.data)
+    assert (b"Dashboard" in response.data or b"Executive" in response.data or b"\xe0\xa6\xa1\xe0\xa7\x8d\xe0\xa6\xaf\xe0\xa6\xb6\xe0\xa6\xac\xe0\xa7\x8b\xe0\xa6\xb0\xe0\xa7\x8d\xe0\xa6\xa1" in response.data)
     assert (b"Article" in response.data or b"\xe0\xa6\xb8\xe0\xa6\x82\xe0\xa6\xac\xe0\xa6\xbe\xe0\xa6\xa6" in response.data)
 
 
@@ -71,3 +71,22 @@ def test_rbac_admin_full_access(client):
     res_training = client.get("/training", follow_redirects=True)
     assert res_training.status_code == 200
     assert b"Training" in res_training.data
+
+
+def test_subscriber_portal_view(client):
+    """Authenticated user should be able to access the subscriber portal."""
+    # Unauthenticated should redirect to login
+    res_unauth = client.get("/subscriber/portal", follow_redirects=False)
+    assert res_unauth.status_code == 302
+    assert "/auth/login" in res_unauth.headers["Location"]
+
+    # Login as admin
+    client.post(
+        "/auth/login",
+        data={"username": "admin", "password": "admin123"},
+        follow_redirects=True,
+    )
+    res_portal = client.get("/subscriber/portal", follow_redirects=True)
+    assert res_portal.status_code == 200
+    html_text = res_portal.data.decode("utf-8")
+    assert "Subscriber Portal" in html_text or "সাবস্ক্রাইবার" in html_text

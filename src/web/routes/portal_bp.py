@@ -93,6 +93,7 @@ def _safe_topbar(branding: dict) -> dict:
         return {}
 
 
+@portal_bp.route("", endpoint="newspaper_home")
 @portal_bp.route("")
 @portal_bp.route("/")
 def index_view():

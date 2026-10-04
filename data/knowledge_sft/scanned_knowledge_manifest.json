@@ -1,11 +1,11 @@
 {
   "version": "2.5",
-  "last_scan_time": "2026-10-04T03:05:06.024971+00:00",
-  "total_articles_scanned": 300,
-  "total_sft_pairs_generated": 900,
-  "domain_vocabulary_count": 2547,
+  "last_scan_time": "2026-10-04T04:23:48.370127+00:00",
+  "total_articles_scanned": 310,
+  "total_sft_pairs_generated": 930,
+  "domain_vocabulary_count": 2801,
   "topic_breakdown": {
-    "politics": 209,
+    "politics": 219,
     "sports": 4,
     "business": 22,
     "technology": 20,
@@ -13,6 +13,28 @@
     "national": 15
   },
   "datasets": [
+    {
+      "filename": "knowledge_multi_topic_20261004_042348.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20261004_042348.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-10-04T04:23:48.370154+00:00",
+      "size_kb": 75.57
+    },
+    {
+      "filename": "knowledge_multi_topic_20261004_031839.jsonl",
+      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20261004_031839.jsonl",
+      "articles_count": 5,
+      "sft_pairs_count": 15,
+      "topics": [
+        "politics"
+      ],
+      "created_at": "2026-10-04T03:18:39.416554+00:00",
+      "size_kb": 75.57
+    },
     {
       "filename": "knowledge_multi_topic_20261004_030506.jsonl",
       "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20261004_030506.jsonl",
@@ -209,28 +231,6 @@
         "politics"
       ],
       "created_at": "2026-09-27T00:39:46.794705",
-      "size_kb": 58.61
-    },
-    {
-      "filename": "knowledge_multi_topic_20260927_001738.jsonl",
-      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260927_001738.jsonl",
-      "articles_count": 5,
-      "sft_pairs_count": 15,
-      "topics": [
-        "politics"
-      ],
-      "created_at": "2026-09-27T00:17:38.986109",
-      "size_kb": 58.61
-    },
-    {
-      "filename": "knowledge_multi_topic_20260926_070414.jsonl",
-      "path": "D:\\laragon\\www\\webcreoling\\data\\knowledge_sft\\knowledge_multi_topic_20260926_070414.jsonl",
-      "articles_count": 5,
-      "sft_pairs_count": 15,
-      "topics": [
-        "politics"
-      ],
-      "created_at": "2026-09-26T07:04:14.487527",
       "size_kb": 58.61
     }
   ]

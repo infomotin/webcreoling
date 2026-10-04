@@ -801,23 +801,25 @@ class AIPilotBrain:
         is_fake_pass = fake_prob <= max_allowed_fake_pct
         is_truth_gate_pass = factuality_score >= 70.0
 
-        if not passes_rules:
-            decision = "REJECTED_RULE_MISMATCH"
-            final_status = "archived"
-            is_breaking = False
-            is_featured = False
-        elif not is_fake_pass:
+        if not is_fake_pass:
             decision = "QUARANTINED_HIGH_FAKE_RISK"
             final_status = "archived"
             is_breaking = False
             is_featured = False
-        elif is_truth_gate_pass and cred_score >= effective_threshold and auto_pub_allowed:
-            # Passed 70% Truth Gate, Credibility, and Rules -> Published Live!
+        elif passes_rules and is_truth_gate_pass and cred_score >= effective_threshold and auto_pub_allowed:
+            # Passed 70% Truth Gate, Credibility, and matched active rule -> Published Live!
             decision = "AUTO_PUBLISH"
             final_status = "completed"  # Published live on /news/
             is_breaking = cred_score >= 88 or "ব্রেকিং" in bn_title or "জরুরি" in bn_title
             is_featured = cred_score >= 90
+        elif (not active_rules or passes_rules) and is_truth_gate_pass and cred_score >= auto_publish_threshold:
+            # Standard newsroom publishing gate when no restrictive rule blocks it
+            decision = "AUTO_PUBLISH"
+            final_status = "completed"
+            is_breaking = cred_score >= 88 or "ব্রেকিং" in bn_title or "জরুরি" in bn_title
+            is_featured = cred_score >= 90
         elif is_truth_gate_pass or cred_score >= 50 or is_fake_pass:
+            # Quality authentic news queued for editorial review
             decision = "QUEUE_FOR_REVIEW"
             final_status = "pending"  # Editorial review queue
             is_breaking = False
@@ -998,4 +1000,8 @@ class AIPilotBrain:
             "decisions": decisions_summary[:20],
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+    # Alias for backward and forward compatibility
+    run_autonomous_cycle = ingest_and_autopilot_cycle
+
 

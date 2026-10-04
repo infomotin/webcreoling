@@ -107,7 +107,9 @@ def create_app(test_config: dict = None) -> Flask:
     with get_db_session() as session:
         user_repo = UserRepository(session)
         user_repo.seed_default_users()
-        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository, DataCenterRepository, SiteConfigRepository, SubscriptionPlanRepository, AdvertisementRepository
+        # Master / basic-configuration seeds only. Demo content (ads, polls) is
+        # intentionally NOT seeded — the portal ships without sample data.
+        from src.storage.repositories import SecurityRepository, BlockchainLedgerRepository, DataCenterRepository, SiteConfigRepository, SubscriptionPlanRepository
         sec_repo = SecurityRepository(session)
         sec_repo.seed_default_security_rules()
         ledger_repo = BlockchainLedgerRepository(session)
@@ -117,8 +119,6 @@ def create_app(test_config: dict = None) -> Flask:
         dc_repo.seed_default_replica_nodes()
         cfg_repo = SiteConfigRepository(session)
         cfg_repo.seed_default_configs()
-        ad_repo = AdvertisementRepository(session)
-        ad_repo.seed_default_ads()
         plan_repo = SubscriptionPlanRepository(session)
         plan_repo.ensure_default_plans()
 

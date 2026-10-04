@@ -198,8 +198,7 @@ def index_view():
         # per 30 s per process instead of on every single hit.
         cached("portal.scheduled_publish_tick", 30.0, article_repo.process_scheduled_publishing)
 
-        # Seed default poll if none exists (throttled the same way)
-        cached("portal.poll_seed_tick", 300.0, portal_repo.seed_default_poll)
+        # Demo polls are never seeded automatically; admins create them explicitly.
 
         # Track impression on header ad
         active_header = ad_repo.get_active_ad_by_slot("header_top")

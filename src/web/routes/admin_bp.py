@@ -206,9 +206,8 @@ def newspaper_management_view():
         cached("portal.scheduled_publish_tick", 30.0, article_repo.process_scheduled_publishing)
 
         def _seed_newsroom_defaults():
+            # Master configuration only — demo ads/polls are never re-seeded.
             cfg_repo.seed_default_configs()
-            ad_repo.seed_default_ads()
-            portal_repo.seed_default_poll()
             sec_repo.seed_default_security_rules()
             ledger_repo.ensure_genesis_block()
 
@@ -255,11 +254,26 @@ def newspaper_management_view():
         heavy_mgr = get_heavy_data_manager()
         heavy_metrics = heavy_mgr.get_heavy_data_metrics(session)
 
-        # Available unique categories in database
+        # Standard Prothom Alo style category dictionary + database discovery
+        STANDARD_CATEGORIES = [
+            ("bangladesh", "বাংলাদেশ"),
+            ("politics", "রাজনীতি"),
+            ("business", "বাণিজ্য ও অর্থনীতি"),
+            ("international", "আন্তর্জাতিক"),
+            ("sports", "খেলাধুলা"),
+            ("entertainment", "বিনোদন"),
+            ("technology", "বিজ্ঞান ও প্রযুক্তি"),
+            ("crime", "অপরাধ ও আইন"),
+            ("opinion", "মতামত ও সম্পাদকীয়"),
+            ("lifestyle", "জীবনযাপন"),
+            ("general", "সাধারণ সংবাদ"),
+        ]
         stats = cached("newsroom.stats", 30.0, article_repo.get_database_stats)
-        categories = list(stats.get("by_category", {}).keys())
-        if not categories:
-            categories = ["politics", "bangladesh", "business", "international", "sports", "technology", "news"]
+        db_cats = list(stats.get("by_category", {}).keys())
+        all_categories = [c[0] for c in STANDARD_CATEGORIES]
+        for c in db_cats:
+            if c and c not in all_categories:
+                all_categories.append(c)
 
         return render_template(
             "admin_newspaper.html",
@@ -272,7 +286,8 @@ def newspaper_management_view():
             category_filter=category,
             status_filter=status,
             active_tab=active_tab,
-            categories=categories,
+            categories=all_categories,
+            category_choices=STANDARD_CATEGORIES,
             polls=[p.to_dict() for p in polls],
             subscribers=[s.to_dict() for s in subscribers],
             archive_dates=archive_dates,
@@ -708,6 +723,77 @@ def toggle_article_breaking(article_id: int):
             ip_address=request.remote_addr,
         )
         flash(f"সংবাদ #{article_id}: {status_str}।", "success")
+    return redirect(url_for("admin.newspaper_management_view"))
+
+
+@admin_bp.route("/newspaper/articles/bulk-action", methods=["POST"])
+@login_required
+@roles_required("admin", "editor")
+def newspaper_bulk_action():
+    """Bulk operations on selected articles: publish, archive, delete, change category."""
+    action = request.form.get("action", "").strip()
+    article_ids_raw = request.form.getlist("article_ids")
+    if not article_ids_raw and request.form.get("selected_ids"):
+        article_ids_raw = [i.strip() for i in request.form.get("selected_ids").split(",") if i.strip()]
+
+    target_category = request.form.get("target_category", "").strip()
+
+    article_ids = []
+    for aid in article_ids_raw:
+        try:
+            article_ids.append(int(aid))
+        except (ValueError, TypeError):
+            continue
+
+    if not article_ids:
+        flash("কোনো সংবাদ নির্বাচন করা হয়নি / No articles selected.", "warning")
+        return redirect(url_for("admin.newspaper_management_view"))
+
+    with get_db_session() as session:
+        repo = ArticleRepository(session)
+        audit_repo = AuditLogRepository(session)
+        current_username = flask_session.get("username", "editor")
+
+        success_count = 0
+        if action == "publish":
+            for aid in article_ids:
+                if repo.approve_article(aid):
+                    success_count += 1
+            flash(f"সফলভাবে {success_count}টি সংবাদ সরাসরি প্রকাশিত করা হয়েছে!", "success")
+
+        elif action == "archive":
+            for aid in article_ids:
+                if repo.archive_article(aid):
+                    success_count += 1
+            flash(f"সফলভাবে {success_count}টি সংবাদ আর্কাইভে স্থানান্তরিত করা হয়েছে!", "info")
+
+        elif action == "delete":
+            for aid in article_ids:
+                if repo.delete_article(aid):
+                    success_count += 1
+            flash(f"সফলভাবে {success_count}টি সংবাদ স্থায়ীভাবে মুছে ফেলা হয়েছে!", "danger")
+
+        elif action == "change_category" and target_category:
+            for aid in article_ids:
+                art = session.query(Article).filter(Article.id == aid).first()
+                if art:
+                    art.category = target_category
+                    success_count += 1
+            session.commit()
+            flash(f"সফলভাবে {success_count}টি সংবাদের বিভাগ পরিবর্তন করে '{target_category}' করা হয়েছে!", "success")
+
+        else:
+            flash(f"অজানা অ্যাকশন '{action}'।", "warning")
+
+        audit_repo.log_action(
+            username=current_username,
+            action=f"bulk_{action}",
+            resource_type="article",
+            resource_id=",".join(str(i) for i in article_ids[:10]),
+            details={"action": action, "count": success_count, "target_category": target_category},
+            ip_address=request.remote_addr,
+        )
+
     return redirect(url_for("admin.newspaper_management_view"))
 
 

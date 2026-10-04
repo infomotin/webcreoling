@@ -129,12 +129,23 @@ def scrape_url(
 def scrape_site(
     site_key: str = typer.Argument(..., help="Portal key (e.g. 'prothom_alo', 'daily_star_bangla', 'bbc_bangla')"),
     max_pages: int = typer.Option(2, help="Max pagination depth per category"),
+    max_articles: int = typer.Option(30, help="Max articles to save for this portal"),
 ):
     """Crawl a portal across all configured categories and download images."""
     pipeline = ScrapingPipeline()
     console.print(f"[bold cyan]Starting crawl for portal '{site_key}'...[/bold cyan]")
-    res = pipeline.run_site_crawl(site_key=site_key, max_pages_per_category=max_pages)
-    console.print(f"[bold green]✓ Crawl complete![/bold green] Saved {res['articles_saved']} articles and {res['images_downloaded']} images.")
+    res = pipeline.run_site_crawl(
+        site_key=site_key,
+        max_pages_per_category=max_pages,
+        max_articles=max_articles,
+    )
+    console.print(
+        f"[bold green]✓ Crawl complete![/bold green] Saved {res['articles_saved']}"
+        f" of {res['articles_found']} discovered ({res['images_downloaded']} images,"
+        f" {res['errors']} errors)."
+    )
+    if res["articles_saved"] == 0:
+        raise typer.Exit(code=1)
 
 
 @app.command()

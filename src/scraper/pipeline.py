@@ -125,8 +125,17 @@ class ScrapingPipeline:
             category=category,
         )
 
+        # A record with no headline and no body is not publishable — drop it
+        # instead of persisting an empty row the portal would have to filter.
+        if not (article_data.get("title") or "").strip():
+            logger.warning(f"Skipping unparsable article (no headline): {article_url}")
+            return None
+
         repo = ArticleRepository(session)
         image_records = []
+        # Persist provenance: this record came straight off the source portal,
+        # unmodified — not synthesised by the local LLM.
+        article_data.setdefault("creation_origin", "SCRAPED")
 
         # Download images if requested
         if download_images and article_data.get("image_urls"):
@@ -154,6 +163,7 @@ class ScrapingPipeline:
         max_pages_per_category: int = 3,
         categories: Optional[List[str]] = None,
         download_images: bool = True,
+        max_articles: int = 30,
     ) -> Dict[str, Any]:
         """Crawl an entire site across its categories and persist all discovered articles."""
         site_config = self.engine.get_site_config(site_key)
@@ -167,6 +177,7 @@ class ScrapingPipeline:
         total_saved = 0
         total_images = 0
         errors = 0
+        seen_urls: set = set()
 
         with get_db_session() as session:
             log_repo = ScrapeLogRepository(session)
@@ -175,11 +186,23 @@ class ScrapingPipeline:
 
             try:
                 for cat_name in target_categories:
+                    if total_saved >= max_articles:
+                        logger.info(
+                            f"Reached max_articles={max_articles} for '{site_key}'. Stopping crawl."
+                        )
+                        break
                     for article_url in self.engine.crawl_category(
                         site_key=site_key,
                         category_name=cat_name,
                         max_pages=max_pages_per_category,
                     ):
+                        # The same story is often linked from several sections;
+                        # scrape it once.
+                        if article_url in seen_urls:
+                            continue
+                        seen_urls.add(article_url)
+                        if total_saved >= max_articles:
+                            break
                         total_found += 1
                         try:
                             article = self.process_and_save_article(
@@ -196,6 +219,7 @@ class ScrapingPipeline:
                         except Exception as e:
                             errors += 1
                             logger.error(f"Error processing article {article_url}: {e}", exc_info=True)
+                            session.rollback()
 
                 log_repo.finish_log(
                     log_id=log_entry.id,

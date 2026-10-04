@@ -290,6 +290,8 @@ class ArticleRepository:
             existing.missing_fields = article_data.get("missing_fields", existing.missing_fields)
             existing.retry_count = article_data.get("retry_count", existing.retry_count)
             existing.js_rendered = article_data.get("js_rendered", existing.js_rendered)
+            if article_data.get("creation_origin"):
+                existing.creation_origin = article_data["creation_origin"]
             existing.updated_at = datetime.now(timezone.utc)
             article = existing
         else:
@@ -308,6 +310,7 @@ class ArticleRepository:
                 missing_fields=article_data.get("missing_fields") or [],
                 retry_count=article_data.get("retry_count", 0),
                 js_rendered=article_data.get("js_rendered", False),
+                creation_origin=article_data.get("creation_origin") or "AI_SYNTHESIZED",
             )
             self.session.add(article)
             self.session.flush()  # populate article.id

@@ -140,6 +140,17 @@ class ScraperEngine:
                 break
 
             article_links = parser.extract_article_links(html, base_url=base_url)
+            # Never treat this site's own section/listing front pages as stories.
+            known_listing_urls = set()
+            for cat in site_config.get("categories", []):
+                for key in ("url", "pagination_pattern"):
+                    raw = cat.get(key) or ""
+                    if raw:
+                        known_listing_urls.add(raw.split("?")[0].rstrip("/"))
+            article_links = [
+                link for link in article_links
+                if link.split("?")[0].rstrip("/") not in known_listing_urls
+            ]
             logger.info(f"Discovered {len(article_links)} article links on page {page}.")
 
             if not article_links:

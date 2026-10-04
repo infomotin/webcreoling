@@ -1551,7 +1551,46 @@
             </button>
         </div>
 
-        <div class="nr-filter-bar">
+        <!-- Active Bulk Actions Toolbar (Shown when 1+ checkboxes selected) -->
+        <div id="bulkActionsBar" style="display: none; background: #1e1b4b; color: #fff; padding: 0.65rem 1.2rem; border-radius: 8px; margin-bottom: 0.9rem; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; box-shadow: 0 4px 15px rgba(30, 27, 75, 0.25);">
+            <div style="display: flex; align-items: center; gap: 0.7rem;">
+                <span style="font-size: 1.1rem;">⚡</span>
+                <span style="font-weight: 800; font-size: 0.9rem;"><span id="selectedCount">0</span>টি সংবাদ নির্বাচিত</span>
+            </div>
+            <form id="bulkActionForm" method="POST" action="{{ url_for('admin.newspaper_bulk_action') }}" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0;">
+                <input type="hidden" name="selected_ids" id="bulkSelectedIds">
+                
+                <button type="submit" name="action" value="publish" class="nr-btn nr-btn-sm nr-btn-success" style="font-weight: 700;">
+                    ✓ সরাসরি প্রকাশ করুন
+                </button>
+                <button type="submit" name="action" value="archive" class="nr-btn nr-btn-sm" style="background: #f59e0b; color: #fff; font-weight: 700;">
+                    📦 আর্কাইভে পাঠান
+                </button>
+                
+                <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 6px;">
+                    <select name="target_category" class="nr-form-control" style="width: auto; padding: 2px 6px; font-size: 0.78rem; background: #fff; color: #0f172a;">
+                        <option value="">-- বিভাগ নির্বাচন --</option>
+                        {% for cat_code, cat_bn in category_choices %}
+                        <option value="{{ cat_code }}">{{ cat_bn }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="change_category" class="nr-btn nr-btn-sm nr-btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.3); font-size: 0.76rem;">
+                        বিভাগ পরিবর্তন
+                    </button>
+                </div>
+
+                <button type="submit" name="action" value="delete" class="nr-btn nr-btn-sm nr-btn-danger" style="font-weight: 700;" onclick="return confirm('নির্বাচিত সকল সংবাদ স্থায়ীভাবে মুছে ফেলতে চান?')">
+                    🗑️ মুছে ফেলুন
+                </button>
+                
+                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" style="color: #cbd5e1; border-color: rgba(255,255,255,0.2);" onclick="clearAllSelections()">
+                    ✕ বাতিল
+                </button>
+            </form>
+        </div>
+
+        <div class="nr-filter-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <!-- Status Filter Pills -->
             <div class="nr-status-pills">
                 <a href="{{ url_for('admin.newspaper_management_view', category=category_filter, q=search_query) }}" class="nr-pill-btn {% if not status_filter %}active{% endif %}">
                     সকল ({{ kpis.total_articles }})
@@ -1567,23 +1606,49 @@
                 </a>
             </div>
 
-            <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+            <!-- Active By Group By Controller -->
+            <div style="display: flex; align-items: center; gap: 0.4rem; background: #f8fafc; border: 1px solid var(--nr-border); padding: 4px 8px; border-radius: 8px;">
+                <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">গ্রুপ ভিউ:</span>
+                <button type="button" class="nr-btn nr-btn-sm group-by-btn active" data-group="none" onclick="setGroupBy('none', this)" style="padding: 3px 8px; font-size: 0.75rem;">📋 সাধারণ</button>
+                <button type="button" class="nr-btn nr-btn-sm group-by-btn nr-btn-outline" data-group="category" onclick="setGroupBy('category', this)" style="padding: 3px 8px; font-size: 0.75rem;">🏷️ বিভাগ অনুযায়ী</button>
+                <button type="button" class="nr-btn nr-btn-sm group-by-btn nr-btn-outline" data-group="status" onclick="setGroupBy('status', this)" style="padding: 3px 8px; font-size: 0.75rem;">🚦 স্ট্যাটাস অনুযায়ী</button>
+            </div>
+
+            <!-- Category Dropdown and Search Input Filter Form -->
+            <form method="GET" action="{{ url_for('admin.newspaper_management_view') }}" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                 <input type="hidden" name="status" value="{{ status_filter }}">
-                <input type="hidden" name="q" value="{{ search_query }}">
                 
-                <select name="category" onchange="this.form.submit()" class="nr-form-control" style="width: auto; padding: 0.35rem 0.8rem; font-size: 0.85rem;">
-                    <option value="">সকল বিভাগ</option>
-                    {% for cat in categories %}
+                <div style="position: relative; display: flex; align-items: center;">
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="শিরোনাম বা সোর্স দিয়ে খুঁজুন..." class="nr-form-control" style="padding: 0.35rem 0.8rem; font-size: 0.85rem; width: 190px;">
+                    {% if search_query %}
+                    <a href="{{ url_for('admin.newspaper_management_view', category=category_filter, status=status_filter) }}" style="position: absolute; right: 8px; color: #94a3b8; text-decoration: none; font-size: 0.85rem;" title="অনুসন্ধান মুছুন">✕</a>
+                    {% endif %}
+                </div>
+
+                <!-- Rich Category Dropdown -->
+                <select name="category" onchange="this.form.submit()" class="nr-form-control" style="width: auto; min-width: 160px; padding: 0.35rem 0.8rem; font-size: 0.85rem; font-weight: 600;">
+                    <option value="">📂 সকল বিভাগ (All)</option>
+                    {% for cat_code, cat_bn in category_choices %}
+                    <option value="{{ cat_code }}" {% if category_filter == cat_code %}selected{% endif %}>{{ cat_bn }} ({{ cat_code }})</option>
+                    {% endfor %}
+                    {% for cat in categories if cat not in ['bangladesh', 'politics', 'business', 'international', 'sports', 'entertainment', 'technology', 'crime', 'opinion', 'lifestyle', 'general'] %}
                     <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat|capitalize }}</option>
                     {% endfor %}
                 </select>
+
+                <button type="submit" class="nr-btn nr-btn-sm nr-btn-primary" style="padding: 0.38rem 0.8rem;">
+                    🔍 ফিল্টার
+                </button>
             </form>
         </div>
 
         <div style="overflow-x: auto;">
-            <table class="nr-table">
+            <table class="nr-table" id="articlesAdminTable">
                 <thead>
                     <tr>
+                        <th style="width: 36px; text-align: center;">
+                            <input type="checkbox" id="selectAllArticles" onchange="toggleSelectAllArticles(this)" title="সবগুলো নির্বাচন করুন" style="cursor: pointer; width: 16px; height: 16px;">
+                        </th>
                         <th style="width: 60px;">ID / পিন</th>
                         <th style="width: 70px;">ছবি</th>
                         <th>সংবাদের শিরোনাম ও বিবরণ</th>
@@ -1594,10 +1659,21 @@
                         <th style="text-align: right; min-width: 260px;">সম্পাদকীয় অ্যাকশন</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="articlesTableBody">
                     {% if articles %}
                     {% for art in articles %}
-                    <tr id="articleRow{{ art.id }}" style="{% if art.is_pinned %}background: #f0fdf4;{% endif %}">
+                    <tr id="articleRow{{ art.id }}"
+                        class="article-row"
+                        data-article-id="{{ art.id }}"
+                        data-category="{{ art.category or 'general' }}"
+                        data-status="{{ art.scrape_status or 'draft' }}"
+                        style="{% if art.is_pinned %}background: #f0fdf4;{% endif %}">
+                        
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="article-select-cb" value="{{ art.id }}" onchange="onArticleSelectionChanged()" style="cursor: pointer; width: 16px; height: 16px;">
+                            <script type="application/json" id="artData{{ art.id }}">{{ art.to_dict() | tojson }}</script>
+                        </td>
+
                         <td style="color: var(--nr-text-muted); font-weight: 700;">
                             {% if art.is_pinned %}<span title="পিন করা সংবাদ">📌</span>{% endif %}
                             #{{ art.id }}
@@ -1708,7 +1784,7 @@
                                 </form>
                                 {% endif %}
 
-                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }}, '{{ (art.title or "") | js_escape }}', '{{ (art.category or "") | js_escape }}', '{{ (art.author or "") | js_escape }}', '{{ (art.summary or "") | js_escape }}', '{{ (art.content_text or "") | js_escape }}', '{{ (art.images[0].local_path if art.images else "") | js_escape }}', {{ 'true' if art.is_featured else 'false' }}, {{ 'true' if art.is_breaking else 'false' }}, '{{ (art.scrape_status or "") | js_escape }}', '{{ (art.scheduled_at or "") | js_escape }}', '{{ ((art.original_source_url or art.url) or "") | js_escape }}', '{{ (art.creation_origin or "MANUAL") | js_escape }}', '{{ (art.position_placement or "STANDARD") | js_escape }}', {{ art.display_order or 0 }}, {{ 'true' if art.is_pinned else 'false' }}, '{{ (art.source_status or "ACTIVE") | js_escape }}', '{{ (art.video_type or "NONE") | js_escape }}', '{{ (art.video_url or "") | js_escape }}', '{{ (art.video_caption or "") | js_escape }}')" title="সম্পাদনা করুন">
+                                <button type="button" class="nr-btn nr-btn-sm nr-btn-outline" onclick="openEditArticleModal({{ art.id }})" title="সম্পাদনা করুন">
                                     ✏️ এডিট
                                 </button>
 
@@ -1747,7 +1823,7 @@
                     {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 3rem; color: var(--nr-text-muted);">
+                        <td colspan="9" style="text-align: center; padding: 3rem; color: var(--nr-text-muted);">
                             কোনো সংবাদ পাওয়া যায়নি। ফিল্টার পরিবর্তন করে বা নতুন সংবাদ যুক্ত করে চেষ্টা করুন।
                         </td>
                     </tr>
@@ -1814,7 +1890,14 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="nr-form-group">
                             <label class="nr-form-label">বিভাগ (Category) *</label>
-                            <input type="text" id="newCategory" name="category" class="nr-form-control" placeholder="যেমন: politics, bangladesh, business, international, sports, technology, news" value="bangladesh" required>
+                            <select id="newCategory" name="category" class="nr-form-control" required>
+                                {% for cat_code, cat_bn in category_choices %}
+                                <option value="{{ cat_code }}" {% if cat_code == 'bangladesh' %}selected{% endif %}>{{ cat_bn }} ({{ cat_code }})</option>
+                                {% endfor %}
+                                {% for cat in categories if cat not in ['bangladesh', 'politics', 'business', 'international', 'sports', 'entertainment', 'technology', 'crime', 'opinion', 'lifestyle', 'general'] %}
+                                <option value="{{ cat }}">{{ cat|capitalize }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <div class="nr-form-group">
@@ -1957,7 +2040,14 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="nr-form-group">
                             <label class="nr-form-label">বিভাগ</label>
-                            <input type="text" id="editCategory" name="category" class="nr-form-control" required>
+                            <select id="editCategory" name="category" class="nr-form-control" required>
+                                {% for cat_code, cat_bn in category_choices %}
+                                <option value="{{ cat_code }}">{{ cat_bn }} ({{ cat_code }})</option>
+                                {% endfor %}
+                                {% for cat in categories if cat not in ['bangladesh', 'politics', 'business', 'international', 'sports', 'entertainment', 'technology', 'crime', 'opinion', 'lifestyle', 'general'] %}
+                                <option value="{{ cat }}">{{ cat|capitalize }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <div class="nr-form-group">
@@ -2160,13 +2250,182 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+/* Modal overlay and elevation guarantees */
+.nr-modal-backdrop {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(15, 23, 42, 0.72) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    z-index: 999999 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box !important;
+}
+
+.nr-modal-backdrop.show {
+    display: flex !important;
+}
+
+.nr-modal-box {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+    max-height: 92vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    animation: nrModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nr-modal-body {
+    overflow-y: auto !important;
+    padding: 1.4rem 1.6rem !important;
+}
+
+@keyframes nrModalFadeIn {
+    from { opacity: 0; transform: scale(0.96) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Group By Header Row Styling */
+.group-header-row td {
+    padding: 0.65rem 1.2rem !important;
+    font-weight: 800 !important;
+    font-size: 0.88rem !important;
+    letter-spacing: 0.2px !important;
+    border-top: 2px solid #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+.group-header-category td {
+    background: linear-gradient(90deg, #e0e7ff 0%, #f5f3ff 100%) !important;
+    color: #3730a3 !important;
+}
+
+.group-header-status td {
+    background: linear-gradient(90deg, #fef3c7 0%, #fffbeb 100%) !important;
+    color: #92400e !important;
+}
+
+.group-by-btn.active {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4f46e5 !important;
+}
+</style>
+
 <script>
+// =========================================================================
+// 1. MODAL CONTROLS & POPULATION
+// =========================================================================
+
 function openNewArticleModal() {
-    document.getElementById('newArticleModal').classList.add('show');
+    const modal = document.getElementById('newArticleModal');
+    if (modal) modal.classList.add('show');
 }
 
 function closeNewArticleModal() {
-    document.getElementById('newArticleModal').classList.remove('show');
+    const modal = document.getElementById('newArticleModal');
+    if (modal) modal.classList.remove('show');
+}
+
+function openEditArticleModal(id) {
+    const form = document.getElementById('editArticleForm');
+    if (!form) return;
+    form.action = `/admin/newspaper/article/edit/${id}`;
+
+    let art = {};
+    const scriptTag = document.getElementById('artData' + id);
+    if (scriptTag && scriptTag.textContent) {
+        try {
+            art = JSON.parse(scriptTag.textContent);
+        } catch (err) {
+            console.error('Error parsing article JSON for #' + id, err);
+        }
+    }
+
+    // Populate Fields safely
+    const setVal = (elemId, val) => {
+        const el = document.getElementById(elemId);
+        if (el) el.value = (val !== null && val !== undefined) ? val : '';
+    };
+
+    setVal('editTitle', art.title || '');
+    setVal('editAuthor', art.author || '');
+    setVal('editSummary', art.summary || '');
+    setVal('editContentText', art.content_text || '');
+    
+    // Image Path
+    let imgVal = '';
+    if (art.images && art.images.length > 0 && art.images[0].local_path) {
+        imgVal = art.images[0].local_path;
+    } else if (art.lead_image_url) {
+        imgVal = art.lead_image_url;
+    }
+    setVal('editImagePath', imgVal);
+
+    setVal('editStatus', art.scrape_status || 'completed');
+    setVal('editOriginalSourceUrl', art.original_source_url || art.url || '');
+    setVal('editCreationOrigin', art.creation_origin || 'MANUAL');
+    setVal('editPositionPlacement', art.position_placement || 'STANDARD');
+    setVal('editDisplayOrder', art.display_order || 0);
+
+    const isPinnedEl = document.getElementById('editIsPinned');
+    if (isPinnedEl) isPinnedEl.checked = Boolean(art.is_pinned);
+
+    setVal('editSourceStatus', art.source_status || 'ACTIVE');
+
+    // Category Dropdown Selection & Fallback Injection
+    const catSelect = document.getElementById('editCategory');
+    if (catSelect && art.category) {
+        let hasOption = false;
+        for (let i = 0; i < catSelect.options.length; i++) {
+            if (catSelect.options[i].value.toLowerCase() === art.category.toLowerCase()) {
+                catSelect.selectedIndex = i;
+                hasOption = true;
+                break;
+            }
+        }
+        if (!hasOption) {
+            const opt = document.createElement('option');
+            opt.value = art.category;
+            opt.textContent = art.category;
+            opt.selected = true;
+            catSelect.appendChild(opt);
+        }
+    }
+
+    // Video Fields
+    setVal('editVideoType', art.video_type || 'NONE');
+    setVal('editVideoUrl', art.video_url || '');
+    setVal('editVideoCaption', art.video_caption || '');
+    const videoFileEl = document.getElementById('editVideoFile');
+    if (videoFileEl) videoFileEl.value = '';
+    toggleVideoFields('edit');
+
+    // Scheduled Date formatting
+    if (art.scheduled_at && art.scheduled_at.length >= 16) {
+        setVal('editScheduledAt', art.scheduled_at.substring(0, 16));
+    } else {
+        setVal('editScheduledAt', '');
+    }
+
+    const editModal = document.getElementById('editArticleModal');
+    if (editModal) editModal.classList.add('show');
+}
+
+function closeEditArticleModal() {
+    const modal = document.getElementById('editArticleModal');
+    if (modal) modal.classList.remove('show');
 }
 
 function toggleVideoFields(scope) {
@@ -2179,58 +2438,6 @@ function toggleVideoFields(scope) {
     if (fileWrap) fileWrap.style.display = (type === 'UPLOAD') ? '' : 'none';
 }
 
-function openEditArticleModal(id, title, category, author, summary, content, imagePath, isFeatured, isBreaking, status, scheduledAt, originalUrl, origin, placement, displayOrder, isPinned, sourceStatus, videoType, videoUrl, videoCaption) {
-    const form = document.getElementById('editArticleForm');
-    form.action = `/admin/newspaper/article/edit/${id}`;
-
-    document.getElementById('editTitle').value = title || '';
-    document.getElementById('editCategory').value = category || '';
-    document.getElementById('editAuthor').value = author || '';
-    document.getElementById('editSummary').value = summary || '';
-    document.getElementById('editContentText').value = content || '';
-    document.getElementById('editImagePath').value = imagePath || '';
-    document.getElementById('editStatus').value = status || 'completed';
-    
-    if (document.getElementById('editOriginalSourceUrl')) {
-        document.getElementById('editOriginalSourceUrl').value = originalUrl || '';
-    }
-    if (document.getElementById('editCreationOrigin')) {
-        document.getElementById('editCreationOrigin').value = origin || 'MANUAL';
-    }
-    if (document.getElementById('editPositionPlacement')) {
-        document.getElementById('editPositionPlacement').value = placement || 'STANDARD';
-    }
-    if (document.getElementById('editDisplayOrder')) {
-        document.getElementById('editDisplayOrder').value = displayOrder || 0;
-    }
-    if (document.getElementById('editIsPinned')) {
-        document.getElementById('editIsPinned').checked = Boolean(isPinned);
-    }
-    if (document.getElementById('editSourceStatus')) {
-        document.getElementById('editSourceStatus').value = sourceStatus || 'ACTIVE';
-    }
-
-    if (document.getElementById('editVideoType')) {
-        document.getElementById('editVideoType').value = videoType || 'NONE';
-        document.getElementById('editVideoUrl').value = videoUrl || '';
-        document.getElementById('editVideoCaption').value = videoCaption || '';
-        document.getElementById('editVideoFile').value = '';
-        toggleVideoFields('edit');
-    }
-
-    if (scheduledAt && scheduledAt.length >= 16) {
-        document.getElementById('editScheduledAt').value = scheduledAt.substring(0, 16);
-    } else {
-        document.getElementById('editScheduledAt').value = '';
-    }
-
-    document.getElementById('editArticleModal').classList.add('show');
-}
-
-function closeEditArticleModal() {
-    document.getElementById('editArticleModal').classList.remove('show');
-}
-
 function openPlacementModal(id, placement, order, isPinned, sourceStatus, notice, url) {
     document.getElementById('placementArticleId').value = id;
     document.getElementById('quickPlacementSelect').value = placement || 'STANDARD';
@@ -2238,11 +2445,13 @@ function openPlacementModal(id, placement, order, isPinned, sourceStatus, notice
     document.getElementById('quickIsPinned').checked = Boolean(isPinned);
     document.getElementById('quickSourceStatus').value = sourceStatus || 'ACTIVE';
     document.getElementById('quickSourceNotice').value = notice || '';
-    document.getElementById('placementModal').classList.add('show');
+    const modal = document.getElementById('placementModal');
+    if (modal) modal.classList.add('show');
 }
 
 function closePlacementModal() {
-    document.getElementById('placementModal').classList.remove('show');
+    const modal = document.getElementById('placementModal');
+    if (modal) modal.classList.remove('show');
 }
 
 function submitPlacementForm(e) {
@@ -2309,10 +2518,182 @@ function auditSourceLive(articleId, btn) {
     });
 }
 
-// AI Pilot Analysis in Tab
+// =========================================================================
+// 2. SELECT ALL & BULK ACTIONS
+// =========================================================================
+
+function toggleSelectAllArticles(masterCb) {
+    const cbs = document.querySelectorAll('.article-select-cb');
+    cbs.forEach(cb => {
+        cb.checked = masterCb.checked;
+        const row = cb.closest('tr');
+        if (row && !row.classList.contains('group-header-row')) {
+            row.style.background = cb.checked ? '#f0fdf4' : '';
+        }
+    });
+    onArticleSelectionChanged();
+}
+
+function onArticleSelectionChanged() {
+    const allCbs = document.querySelectorAll('.article-select-cb');
+    const checkedCbs = document.querySelectorAll('.article-select-cb:checked');
+    const count = checkedCbs.length;
+
+    const countEl = document.getElementById('selectedCount');
+    if (countEl) countEl.textContent = count;
+
+    const ids = Array.from(checkedCbs).map(cb => cb.value);
+    const hiddenInput = document.getElementById('bulkSelectedIds');
+    if (hiddenInput) hiddenInput.value = ids.join(',');
+
+    const bar = document.getElementById('bulkActionsBar');
+    if (bar) {
+        bar.style.display = count > 0 ? 'flex' : 'none';
+    }
+
+    const masterCb = document.getElementById('selectAllArticles');
+    if (masterCb) {
+        if (count === 0) {
+            masterCb.checked = false;
+            masterCb.indeterminate = false;
+        } else if (count === allCbs.length) {
+            masterCb.checked = true;
+            masterCb.indeterminate = false;
+        } else {
+            masterCb.checked = false;
+            masterCb.indeterminate = true;
+        }
+    }
+
+    // Highlight selected rows
+    allCbs.forEach(cb => {
+        const row = cb.closest('tr');
+        if (row && !row.classList.contains('group-header-row')) {
+            if (cb.checked) {
+                row.style.backgroundColor = '#f0fdf4';
+            } else if (!row.dataset.pinned) {
+                row.style.backgroundColor = '';
+            }
+        }
+    });
+}
+
+function clearAllSelections() {
+    const masterCb = document.getElementById('selectAllArticles');
+    if (masterCb) masterCb.checked = false;
+    const cbs = document.querySelectorAll('.article-select-cb');
+    cbs.forEach(cb => { cb.checked = false; });
+    onArticleSelectionChanged();
+}
+
+// =========================================================================
+// 3. ACTIVE BY GROUP BY (None, Category, Status)
+// =========================================================================
+
+let _originalArticleRows = null;
+
+function setGroupBy(groupByType, btn) {
+    const tbody = document.getElementById('articlesTableBody');
+    if (!tbody) return;
+
+    // Cache initial row order once
+    if (!_originalArticleRows) {
+        _originalArticleRows = Array.from(tbody.querySelectorAll('.article-row'));
+    }
+
+    // Update button states
+    document.querySelectorAll('.group-by-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('nr-btn-outline');
+    });
+    if (btn) {
+        btn.classList.add('active');
+        btn.classList.remove('nr-btn-outline');
+    }
+
+    // Remove old header rows
+    tbody.querySelectorAll('.group-header-row').forEach(r => r.remove());
+
+    const rows = Array.from(tbody.querySelectorAll('.article-row'));
+    if (!rows.length) return;
+
+    if (groupByType === 'none') {
+        _originalArticleRows.forEach(r => tbody.appendChild(r));
+        return;
+    }
+
+    // Grouping dictionary
+    const groups = {};
+    rows.forEach(r => {
+        let key = '';
+        if (groupByType === 'category') {
+            key = (r.getAttribute('data-category') || 'general').trim().toLowerCase();
+        } else if (groupByType === 'status') {
+            key = (r.getAttribute('data-status') || 'draft').trim().toLowerCase();
+        }
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+    });
+
+    const categoryBnMap = {
+        'bangladesh': 'বাংলাদেশ',
+        'politics': 'রাজনীতি',
+        'business': 'বাণিজ্য',
+        'international': 'আন্তর্জাতিক',
+        'sports': 'খেলা',
+        'entertainment': 'বিনোদন',
+        'technology': 'বিজ্ঞান ও প্রযুক্তি',
+        'crime': 'অপরাধ',
+        'opinion': 'মতামত',
+        'lifestyle': 'জীবনযাপন',
+        'general': 'সাধারণ'
+    };
+
+    const statusBnMap = {
+        'completed': '✓ প্রকাশিত (Published)',
+        'scheduled': '⏱️ নির্ধারিত (Scheduled)',
+        'pending': '⏳ অনুমোদন অপেক্ষমাণ (Pending)',
+        'draft': '📝 খসড়া (Draft)',
+        'archived': '📦 আর্কাইভড (Archived)'
+    };
+
+    // Clear tbody and re-insert with headers
+    tbody.innerHTML = '';
+
+    const groupKeys = Object.keys(groups).sort();
+    groupKeys.forEach(grp => {
+        const headerTr = document.createElement('tr');
+        headerTr.className = `group-header-row ${groupByType === 'category' ? 'group-header-category' : 'group-header-status'}`;
+        
+        let label = grp;
+        if (groupByType === 'category') {
+            const bn = categoryBnMap[grp] || (grp.charAt(0).toUpperCase() + grp.slice(1));
+            label = `🏷️ বিভাগ: ${bn} (${grp})`;
+        } else if (groupByType === 'status') {
+            const bn = statusBnMap[grp] || grp;
+            label = `🚦 অবস্থা: ${bn}`;
+        }
+
+        const td = document.createElement('td');
+        td.colSpan = 9;
+        td.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>${label}</span>
+            <span style="font-size: 0.78rem; opacity: 0.85; font-weight: 600;">(${groups[grp].length} টি সংবাদ)</span>
+        </div>`;
+        headerTr.appendChild(td);
+        tbody.appendChild(headerTr);
+
+        groups[grp].forEach(r => tbody.appendChild(r));
+    });
+}
+
+// =========================================================================
+// 4. AI PILOT MODAL AUTO-FILL & ANALYSIS TAB
+// =========================================================================
+
 function runAIPilotAnalysis() {
-    const title = document.getElementById('aiTestTitle').value.trim();
-    const content_text = document.getElementById('aiTestContent').value.trim();
+    const title = (document.getElementById('aiTestTitle') ? document.getElementById('aiTestTitle').value : '').trim();
+    const content_text = (document.getElementById('aiTestContent') ? document.getElementById('aiTestContent').value : '').trim();
 
     if (!content_text) {
         alert('বিশ্লেষণের জন্য সংবাদের মূল বিবরণী প্রদান করুন।');
@@ -2328,24 +2709,28 @@ function runAIPilotAnalysis() {
     .then(data => {
         if (data.status === 'success') {
             const d = data.data;
-            document.getElementById('aiPredictedCat').textContent = d.predicted_category;
-            document.getElementById('aiReadTime').textContent = d.reading_time_mins;
-            document.getElementById('aiSentimentBadge').textContent = d.sentiment;
-            document.getElementById('aiSummaryText').textContent = d.generated_summary;
+            if (document.getElementById('aiPredictedCat')) document.getElementById('aiPredictedCat').textContent = d.predicted_category;
+            if (document.getElementById('aiReadTime')) document.getElementById('aiReadTime').textContent = d.reading_time_mins;
+            if (document.getElementById('aiSentimentBadge')) document.getElementById('aiSentimentBadge').textContent = d.sentiment;
+            if (document.getElementById('aiSummaryText')) document.getElementById('aiSummaryText').textContent = d.generated_summary;
 
             const list = document.getElementById('aiHeadlinesList');
-            list.innerHTML = '';
-            d.suggested_headlines.forEach(hl => {
-                const chip = document.createElement('div');
-                chip.style.cssText = 'background: #ffffff; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #1e293b;';
-                chip.innerHTML = `💡 ${hl} <span style="font-size: 0.72rem; color: #6366f1; float: right;">ক্লিক করে শিরোনামে নিন &rarr;</span>`;
-                chip.onclick = () => {
-                    document.getElementById('aiTestTitle').value = hl;
-                };
-                list.appendChild(chip);
-            });
+            if (list) {
+                list.innerHTML = '';
+                (d.suggested_headlines || []).forEach(hl => {
+                    const chip = document.createElement('div');
+                    chip.style.cssText = 'background: #ffffff; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1; cursor: pointer; font-size: 0.85rem; font-weight: 700; color: #1e293b;';
+                    chip.innerHTML = `💡 ${hl} <span style="font-size: 0.72rem; color: #6366f1; float: right;">ক্লিক করে শিরোনামে নিন &rarr;</span>`;
+                    chip.onclick = () => {
+                        const tInput = document.getElementById('aiTestTitle');
+                        if (tInput) tInput.value = hl;
+                    };
+                    list.appendChild(chip);
+                });
+            }
 
-            document.getElementById('aiAnalysisResult').style.display = 'block';
+            const resDiv = document.getElementById('aiAnalysisResult');
+            if (resDiv) resDiv.style.display = 'block';
         } else {
             alert(data.message || 'বিশ্লেষণ ব্যর্থ হয়েছে।');
         }
@@ -2356,7 +2741,6 @@ function runAIPilotAnalysis() {
     });
 }
 
-// AI Pilot Auto-fill helper inside Modal
 function autoFillComposerAI(type) {
     const titleEl = document.getElementById(type === 'new' ? 'newTitle' : 'editTitle');
     const contentEl = document.getElementById(type === 'new' ? 'newContentText' : 'editContentText');
@@ -2380,27 +2764,36 @@ function autoFillComposerAI(type) {
     .then(data => {
         if (data.status === 'success') {
             const d = data.data;
-            if (!titleEl.value && d.suggested_headlines.length > 0) {
+            if (!titleEl.value && d.suggested_headlines && d.suggested_headlines.length > 0) {
                 titleEl.value = d.suggested_headlines[0];
             }
-            summaryEl.value = d.generated_summary;
-            categoryEl.value = d.predicted_category;
+            if (summaryEl) summaryEl.value = d.generated_summary;
+            if (categoryEl && d.predicted_category) {
+                categoryEl.value = d.predicted_category;
+            }
             alert('✓ এআই পাইলট স্বয়ংক্রিয়ভাবে সারসংক্ষেপ ও বিভাগ পূরণ করেছে!');
         }
     })
     .catch(err => console.error(err));
 }
 
-// Close modals on backdrop click
+// Close modals on backdrop click or ESC key
 window.onclick = function(event) {
-    const newModal = document.getElementById('newArticleModal');
-    const editModal = document.getElementById('editArticleModal');
-    if (event.target === newModal) {
-        newModal.classList.remove('show');
+    ['newArticleModal', 'editArticleModal', 'placementModal'].forEach(id => {
+        const m = document.getElementById(id);
+        if (m && event.target === m) {
+            m.classList.remove('show');
+        }
+    });
+};
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        ['newArticleModal', 'editArticleModal', 'placementModal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m) m.classList.remove('show');
+        });
     }
-    if (event.target === editModal) {
-        editModal.classList.remove('show');
-    }
-}
+});
 </script>
 {% endblock %}

@@ -24,6 +24,41 @@ class BanglaPortalParser(BaseParser):
         self.config = site_config or {}
         self.selectors = self.config.get("selectors", {})
 
+    # Path fragments that can never point at an article body.
+    NON_ARTICLE_PATH_TOKENS = (
+        # Editorial taxonomy / account / site-utility pages
+        "/tag/", "/topic/", "/topics/", "/author/", "/login", "/register",
+        "/signup", "/search", "/privacy", "/terms", "/archive", "/about",
+        "/contact", "/comment", "/print", "/share", "/newsletter", "/category/",
+        # Platform / API / auth / infrastructure endpoints (e.g. /api/auth/v1/oauth/authorize)
+        "/api/", "/apis/", "/oauth", "/auth/", "/wp-admin", "/wp-content",
+        "/wp-json", "/wp-login", "/wp-includes", "/feed", "/rss", "/sitemap",
+        "/robots", "/xmlrpc", "/cdn-cgi", "/cdn/", "/static/", "/assets/",
+        "/javascript", "/browser", "/collection/", "/epaper", "/live-blog",
+        "/video", "/photo", "/gallery", "/institutional",
+        # Binary / non-HTML resources
+        ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp", ".ico",
+        ".js", ".css", ".json", ".xml", ".rss", ".zip", ".mp4",
+    )
+
+    # OAuth / SSO round-trip parameters — their paths are endpoints, not stories.
+    NON_ARTICLE_QUERY_TOKENS = ("client_id=", "response_type=", "redirect_uri=", "oauth")
+
+    # A trailing segment that is one of these words means the URL is a section
+    # front page (…/bangladesh/capital), not a story. Pure-alpha only: real
+    # slugs almost always carry an id, date or hyphenated tail.
+    NON_ARTICLE_LAST_SEGMENTS = frozenset({
+        "latest", "collection", "archive", "archives", "list", "index", "page",
+        "all", "more", "category", "section", "sections", "topic", "topics",
+        "video", "videos", "photo", "photos", "gallery", "galleries", "live",
+        "watch", "read", "popular", "subscribe", "epaper", "print", "search",
+        "login", "register", "signup", "about", "contact", "privacy", "terms",
+        # Common Bangla-portal section fronts
+        "capital", "coronavirus", "crime", "district", "education", "health",
+        "entertainment", "opinion", "international", "national", "politics",
+        "business", "sports", "technology", "world", "bangladesh", "city",
+    })
+
     def extract_article_links(self, html: str, base_url: str) -> List[str]:
         """Extract article URLs from catalog, section, or archive pages."""
         if not html:
@@ -52,27 +87,66 @@ class BanglaPortalParser(BaseParser):
                     # Filter out short or navigation links
                     links.add(full_url)
 
-        return sorted(list(links))
+        return self._drop_listing_prefixes(sorted(links))
+
+    @staticmethod
+    def _drop_listing_prefixes(links: List[str]) -> List[str]:
+        """Drop sub-section listing pages that other links live under.
+
+        e.g. ``/bangladesh/district`` is a section front page when
+        ``/bangladesh/district/06qvdfr6jp`` (a story) was also found.
+        Comparison is segment-boundary aware so no real slug is swallowed.
+        """
+        if len(links) < 2:
+            return list(links)
+        kept = []
+        for link in links:
+            prefix = link.split("?", 1)[0].rstrip("/")
+            if any(
+                other != link and other.split("?", 1)[0].rstrip("/").startswith(prefix + "/")
+                for other in links
+            ):
+                continue
+            kept.append(link)
+        return kept
 
     def _is_valid_article_url(self, url: str, domain: str) -> bool:
         """Filter out non-article URLs like categories, tag pages, javascript, or external ads."""
         parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
         # Verify same domain or subdomain
         if domain and not (parsed.netloc == domain or parsed.netloc.endswith("." + domain)):
             return False
 
         path = parsed.path.lower()
-        # Exclude common non-article routes
-        excluded_tokens = [
-            "/tag/", "/topic/", "/author/", "/login", "/register", "/search",
-            "/privacy", "/terms", "/archive", "/about", "/contact", ".pdf",
-            ".jpg", ".png", ".rss", "javascript:", "#",
-        ]
-        if any(token in path for token in excluded_tokens):
+        # Listing pages and bare domain roots are never stories
+        if not path or path in ("/", "/index.html", "/index.php"):
             return False
 
-        # Must have reasonable path depth
-        if path in ["", "/", "/index.html", "/index.php"]:
+        if any(token in path for token in self.NON_ARTICLE_PATH_TOKENS):
+            return False
+
+        query = parsed.query.lower()
+        if any(token in query for token in self.NON_ARTICLE_QUERY_TOKENS):
+            return False
+        # Paginated listing pages carry ?page=N — real permalinks do not.
+        if "page=" in query or query.startswith("p=") or "&p=" in query:
+            return False
+
+        # Real permalinks are at least <section>/<slug>: a single trailing
+        # segment ("/bangladesh", "/national") is a section front page.
+        segments = [seg for seg in path.split("/") if seg]
+        if len(segments) < 2:
+            return False
+        # Terminal segment must be a plausible slug, not an empty or stub id.
+        if len(segments[-1]) < 3:
+            return False
+        # …/bangladesh/capital is a section front page, …/district/06qvdfr6jp is a story.
+        if segments[-1] in self.NON_ARTICLE_LAST_SEGMENTS:
+            return False
+        if "-" not in segments[-1] and not segments[-1].isdigit() and segments[-1].isalpha():
+            # Single bare word with no id/date/hyphen → almost certainly a section.
             return False
 
         return True

@@ -89,16 +89,16 @@
                                     </div>
                                 </a>
                                 <a href="{{ url_for('portal.index_view') }}#liveFeedSection" class="palo-notify-item">
-                                    <div class="palo-notify-item-title">⚡ রিয়েল-টাইম লাইভ ফিড চালু — পৃষ্ঠা রিলোড ছাড়াই তাজা সংবাদ দেখুন</div>
+                                    <div class="palo-notify-item-title">⚡ {{ t('notif_live_feed') }}</div>
                                     <div class="palo-notify-item-meta">
-                                        <span style="color: #10b981; font-weight: 700;">সিস্টেম আপডেট</span>
-                                        <span>লাইভ</span>
+                                        <span style="color: #10b981; font-weight: 700;">{{ t('notif_system_update') }}</span>
+                                        <span>{{ t('feed_live') }}</span>
                                     </div>
                                 </a>
                             </div>
                             <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 0.5rem; text-align: center;">
                                 <a href="{{ url_for('portal.opinion_view') }}" style="font-size: 0.78rem; font-weight: 700; color: #e11d48; text-decoration: none;">
-                                    সকল নোটিশ ও সম্পাদকীয় মতামত দেখুন &rarr;
+                                    {{ t('notif_see_all') }} &rarr;
                                 </a>
                             </div>
                         </div>

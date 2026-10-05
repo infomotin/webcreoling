@@ -8,7 +8,7 @@
          onerror="this.onerror=null; this.src='/static/img/placeholders/{{ art.category or 'general' }}.svg';">
     <div style="flex: 1; min-width: 0;">
         <div class="palo-bylines-row" style="margin-bottom: 0.2rem;">
-            <span style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: var(--palo-red, #dc2626);">{{ art.category or 'জাতীয়' }}</span>
+            <span style="font-weight: 700; font-size: 0.72rem; text-transform: uppercase; color: var(--palo-red, #dc2626);">{{ art.category or t('feed_category_fallback') }}</span>
             <span>•</span>
             <span style="font-size: 0.76rem; color: var(--palo-text-muted, #64748b);">{{ art.source or site_identity.title }}</span>
         </div>
@@ -24,7 +24,7 @@
         </p>
         {% endif %}
         <div class="palo-bylines-row" style="font-size: 0.76rem;">
-            <span style="font-weight: 600;">🕒 {{ art.published_at.strftime('%d %b %Y, %I:%M %p') if art.published_at else 'সাম্প্রতিক' }}</span>
+            <span style="font-weight: 600;">🕒 {{ art.published_at.strftime('%d %b %Y, %I:%M %p') if art.published_at else t('feed_recent') }}</span>
             <span>•</span>
             <span>👁️ {{ art.views_count or 0 }}</span>
             <span>•</span>

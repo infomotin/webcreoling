@@ -2839,18 +2839,20 @@ function loadRecentCustomArticles() {
         .catch(err => console.error("Error loading recent articles:", err));
 }
 
-// Periodic live status refresher
+// Periodic live status refresher.
+// Returns a promise resolving to `true` while background work is running, so
+// the caller can decide whether to schedule the next tick.
 function refreshTaskStatus() {
-    fetch('{{ url_for("scraper.api_scraper_status") }}')
+    return fetch('{{ url_for("scraper.api_scraper_status") }}')
         .then(res => res.json())
         .then(data => {
-            if (!data || !data.tasks) return;
+            if (!data || !data.tasks) return false;
             const container = document.getElementById('live-tasks-container');
-            if (!container) return;
+            if (!container) return false;
 
             if (data.tasks.length === 0) {
                 container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1.5rem 0;">বর্তমানে কোনো ব্যাকগ্রাউন্ড টাস্ক চলমান নেই।</p>';
-                return;
+                return false;
             }
 
             let html = '';
@@ -2878,10 +2880,54 @@ function refreshTaskStatus() {
                 `;
             });
             container.innerHTML = html;
+            const active = data.tasks.some(task => {
+                const status = String(task.status || '').toUpperCase();
+                return status === 'RUNNING' || status === 'PENDING' || status === 'QUEUED';
+            });
+            return active;
         })
-        .catch(err => console.error("Telemetry refresh error:", err));
+        .catch(err => {
+            console.error("Telemetry refresh error:", err);
+            return false;
+        });
 }
 
-setInterval(refreshTaskStatus, 15000);
+// Live telemetry loop. It only runs while a background task is actually
+// running (or right after the user kicks one off) and never while the tab is
+// hidden — an idle scraper page issues no requests at all.
+(function () {
+    const TICK_MS = 15000;
+    let timer = null;
+    let inFlight = false;
+
+    function stop() {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+    }
+
+    function tick() {
+        stop();
+        if (document.hidden || inFlight) return;
+        inFlight = true;
+        refreshTaskStatus()
+            .then(active => {
+                if (active && !document.hidden) timer = setTimeout(tick, TICK_MS);
+            })
+            .catch(() => {})
+            .finally(() => { inFlight = false; });
+    }
+
+    function kick(event) {
+        const target = event.target;
+        if (target && target.closest && target.closest('form, button, .btn')) tick();
+    }
+
+    document.addEventListener('visibilitychange', tick);
+    document.addEventListener('submit', kick, true);
+    document.addEventListener('click', kick, true);
+    tick();
+})();
 </script>
 {% endblock %}

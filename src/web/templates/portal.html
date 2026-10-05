@@ -1027,13 +1027,13 @@
     <section id="liveFeedSection" style="margin: 0.5rem 0 2.5rem 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--palo-heading); padding-bottom: 0.6rem; margin-bottom: 0.5rem;">
             <h2 style="font-family: 'Noto Serif Bengali', serif; font-size: 1.5rem; font-weight: 800; color: var(--palo-heading); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                সর্বশেষ সংবাদ
+                {{ t('feed_latest') }}
                 <span id="livePulse" style="display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 0.7rem; font-weight: 800; color: #fff; background: var(--palo-red); padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em;">
                     <span style="width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: paloLiveBlink 1.2s infinite;"></span>
-                    লাইভ
+                    {{ t('feed_live') }}
                 </span>
             </h2>
-            <span style="font-size: 0.82rem; color: var(--palo-text-muted); font-weight: 600;">তারিখ-সময় অনুযায়ী • নতুন সবার উপরে</span>
+            <span style="font-size: 0.82rem; color: var(--palo-text-muted); font-weight: 600;">{{ t('feed_order_hint') }}</span>
         </div>
 
         <div id="liveFeedList">

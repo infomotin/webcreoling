@@ -109,6 +109,23 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "sms_gateway_title": {"bn": "এসএমএস গেটওয়ে হাব", "en": "SMS Gateway Hub"},
     "otp_system_title": {"bn": "ওটিপি (OTP) ও টু-ফ্যাক্টর অথেনটিকেশন (2FA)", "en": "OTP & Two-Factor Authentication (2FA)"},
     "otp_placeholder": {"bn": "৬-সংখ্যার কোড দিন", "en": "Enter 6-digit OTP code"},
+
+    # Public portal — latest news feed (fixed, server-rendered list)
+    "feed_latest": {"bn": "সর্বশেষ সংবাদ", "en": "Latest News"},
+    "feed_live": {"bn": "লাইভ", "en": "LIVE"},
+    "feed_order_hint": {"bn": "তারিখ-সময় অনুযায়ী • নতুন সবার উপরে", "en": "By date & time • Newest first"},
+    "feed_category_fallback": {"bn": "জাতীয়", "en": "National"},
+    "feed_recent": {"bn": "সাম্প্রতিক", "en": "Recent"},
+    "feed_empty": {"bn": "এখনো কোনো সংবাদ প্রকাশ হয়নি।", "en": "No news published yet."},
+    "notif_live_feed": {
+        "bn": "রিয়েল-টাইম লাইভ ফিড চালু — পৃষ্ঠা রিলোড ছাড়াই তাজা সংবাদ দেখুন",
+        "en": "Real-time live feed on — see fresh news without reloading",
+    },
+    "notif_system_update": {"bn": "সিস্টেম আপডেট", "en": "System Update"},
+    "notif_see_all": {
+        "bn": "সকল নোটিশ ও সম্পাদকীয় মতামত দেখুন",
+        "en": "See all notices & editorial opinions",
+    },
 }
 
 # Dynamic Fallback Vocabulary for Direct String Lookups

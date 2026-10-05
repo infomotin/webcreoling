@@ -1378,7 +1378,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Start live polling every 2.5 seconds
-setInterval(pollLiveAutomationStatus, 2500);
+// 7. Real-Time Live Polling (2.5s while watched, silent otherwise)
+// The endpoint is only hit while the pane that renders it is on screen and
+// the tab is visible — backgrounding the window or opening another tab stops
+// the loop completely instead of hammering the server forever.
+(function () {
+    const TICK_MS = 2500;
+    const WATCHED_PANES = ['tab-jobs', 'tab-live-stream'];
+    let timer = null;
+
+    function paneIsWatched() {
+        return WATCHED_PANES.some(id => {
+            const pane = document.getElementById(id);
+            return pane && pane.style.display !== 'none' && pane.offsetParent !== null;
+        });
+    }
+
+    function stop() {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+    }
+
+    function tick() {
+        stop();
+        if (document.hidden || !paneIsWatched()) return;
+        try {
+            pollLiveAutomationStatus();
+        } catch (err) {
+            console.debug('Live polling error:', err);
+        }
+        timer = setTimeout(tick, TICK_MS);
+    }
+
+    document.addEventListener('visibilitychange', tick);
+    document.querySelectorAll('.auto-tab-btn').forEach(btn => btn.addEventListener('click', tick));
+    tick();
+})();
 </script>
 {% endblock %}
